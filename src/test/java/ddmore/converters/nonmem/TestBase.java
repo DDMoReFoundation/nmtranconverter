@@ -9,8 +9,6 @@ import java.io.IOException;
 
 import org.junit.After;
 
-import com.csvreader.CsvReader;
-
 import crx.models.Example;
 
 public abstract class TestBase {
@@ -20,7 +18,8 @@ public abstract class TestBase {
 	protected String output_directory = "../output", expected_output_file1 = null, expected_output_file2 = null, expected_output_file3 = null;
 	protected File dir = null, f = null;
 	protected String interpreter_path =  "rscript.exe", command_format = "%s";
-	protected CsvReader data = null;
+	//Need javascv dependency for csvReader
+//	protected CsvReader data = null;
 	
 	public TestBase() {
 		Example.echoFile = false;
@@ -32,10 +31,10 @@ public abstract class TestBase {
 	
 	@After
 	public void tearDown() throws Exception {
-		if (data != null) {
-			data.close();
-			data = null;
-		}
+//		if (data != null) {
+//			data.close();
+//			data = null;
+//		}
 		
 	}
 	
