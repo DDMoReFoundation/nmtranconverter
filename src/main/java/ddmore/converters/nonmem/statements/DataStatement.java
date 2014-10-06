@@ -7,15 +7,13 @@ import java.util.List;
 import crx.converter.engine.ScriptDefinition;
 import crx.converter.engine.parts.DataFiles;
 import crx.converter.engine.parts.EstimationStep;
-import crx.converter.engine.parts.Part;
 import crx.converter.engine.parts.TabularDataset;
 import crx.converter.engine.parts.TrialDesignBlock;
-import crx.converter.engine.parts.TrialDesignBlock.ArmIndividual;
+import ddmore.converters.nonmem.utils.ParametersHelper;
 import eu.ddmore.libpharmml.dom.dataset.ColumnDefnType;
 import eu.ddmore.libpharmml.dom.modellingsteps.DatasetMappingType;
 import eu.ddmore.libpharmml.dom.modellingsteps.EstimationStepType;
 import eu.ddmore.libpharmml.dom.modellingsteps.NONMEMdataSetType;
-import eu.ddmore.libpharmml.dom.trialdesign.ActivityType;
 
 public class DataStatement {
 	
@@ -36,7 +34,7 @@ public class DataStatement {
 
 	public DataStatement(ScriptDefinition scriptDefinition,DataFiles dataFiles, String model_filename){
 		
-		TabularDataset td = getObjectiveDatasetMap(getEstimationStep(scriptDefinition));
+		TabularDataset td = getObjectiveDatasetMap(ParametersHelper.getEstimationStep(scriptDefinition));
 		dataFileName = generateDataFileName(model_filename);
 		if(td != null){
 			computeEstimationHeaders(td);
@@ -53,7 +51,6 @@ public class DataStatement {
 				
 				computeEstimationHeaders(nonmemDataSet);
 			}
-//			computeEstimationHeaders(nonmemDataSet);
 			
 		}
 		
@@ -64,25 +61,23 @@ public class DataStatement {
 	}
 	
 	private void composeData(ScriptDefinition scriptDefinition) {
-		TrialDesignBlock trialDesignBlock = scriptDefinition.getTrialDesignBlock();
-		TabularDataset td = getObjectiveDatasetMap(getEstimationStep(scriptDefinition));
+		TabularDataset td = getObjectiveDatasetMap(ParametersHelper.getEstimationStep(scriptDefinition));
 		
 		for (String columnName : td.getColumnNames()){
 			inputHeaders.add(columnName+" ");
 		}
 		inputHeaders.add("AMT");
 		
-		List<ArmIndividual> population = trialDesignBlock.getPopulation();
-		List<ActivityType> activityTypes= trialDesignBlock.getActivities();
+//		List<ArmIndividual> population = trialDesignBlock.getPopulation();
 		
-		for (ArmIndividual arm: population){
-			System.out.println("population ARM :"+arm.getArm());
-		}
+//		for (ArmIndividual arm: population){
+//			System.out.println("population ARM :"+arm.getArm());
+//		}
 		
 //		trialDesignBlock
-		for (ActivityType activityType: activityTypes){
-			System.out.println("population activity:");
-		}
+//		for (ActivityType activityType: activityTypes){
+//			System.out.println("population activity:");
+//		}
 		
 	}
 
@@ -126,19 +121,6 @@ public class DataStatement {
 		String dataStatement = getDataFileName()+" IGNORE=@";
 		return ("\n$DATA "+ dataStatement);
 	}
-	
-    private void computeDosingHeaders(List<String> dosingColumns) {
-    	inputHeaders.add("ARM");
-
-        for (String dosingColumn : dosingColumns) {
-			String columnName = ( dosingColumn == "DOSE" ? "AMT" : dosingColumn );
-            if (!inputHeaders.contains(columnName)) {
-            	inputHeaders.add(columnName);
-            }
-        }
-        inputHeaders.add("MDV");
-        inputHeaders.add("EVID");
-    }
     
     private TabularDataset getObjectiveDatasetMap(EstimationStep estimateStep){
     	TabularDataset dataset = null;
@@ -165,24 +147,6 @@ public class DataStatement {
 				inputHeaders.add(columnName+" ");
 			}
     	}
-		
-		List<ArmIndividual> population = tdblock.getPopulation();
-		List<ActivityType> activityTypes= tdblock.getActivities();
-		
-		for (ArmIndividual arm: population){
-			System.out.println(arm.getArm());
-		}
-		
 		return inputHeaders.toString().replaceAll("\\[|\\]|\\,", "");
 	}
-	
-	public EstimationStep getEstimationStep(ScriptDefinition scriptDefinition) {
-		EstimationStep step = null;
-		for (Part nextStep : scriptDefinition.getStepsMap().values()) {
-			if (nextStep instanceof EstimationStep) step = (EstimationStep) nextStep; 
-		}
-		return step;
-	}
-
-
 }
