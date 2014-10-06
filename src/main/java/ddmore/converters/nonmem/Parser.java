@@ -1,6 +1,27 @@
 
 package ddmore.converters.nonmem;
 
+import static crx.converter.engine.PharmMLTypeChecker.isActivity;
+import static crx.converter.engine.PharmMLTypeChecker.isCovariate;
+import static crx.converter.engine.PharmMLTypeChecker.isDerivative;
+import static crx.converter.engine.PharmMLTypeChecker.isFunction;
+import static crx.converter.engine.PharmMLTypeChecker.isGaussianError;
+import static crx.converter.engine.PharmMLTypeChecker.isGeneralError;
+import static crx.converter.engine.PharmMLTypeChecker.isIndependentVariable;
+import static crx.converter.engine.PharmMLTypeChecker.isIndividualParameter;
+import static crx.converter.engine.PharmMLTypeChecker.isInitialCondition;
+import static crx.converter.engine.PharmMLTypeChecker.isLocalVariable;
+import static crx.converter.engine.PharmMLTypeChecker.isObservationModel;
+import static crx.converter.engine.PharmMLTypeChecker.isParameter;
+import static crx.converter.engine.PharmMLTypeChecker.isParameterEstimate;
+import static crx.converter.engine.PharmMLTypeChecker.isPiece;
+import static crx.converter.engine.PharmMLTypeChecker.isPiecewise;
+import static crx.converter.engine.PharmMLTypeChecker.isRandomVariable;
+import static crx.converter.engine.PharmMLTypeChecker.isRootType;
+import static crx.converter.engine.PharmMLTypeChecker.isScalar;
+import static crx.converter.engine.PharmMLTypeChecker.isSequence;
+import static crx.converter.engine.PharmMLTypeChecker.isVector;
+
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
@@ -15,20 +36,19 @@ import crx.converter.engine.Accessor;
 import crx.converter.engine.BaseParser;
 import crx.converter.engine.parts.Artifact;
 import crx.converter.engine.parts.EstimationStep;
+import crx.converter.engine.parts.ParameterBlock;
 import crx.converter.engine.parts.EstimationStep.FixedParameter;
 import crx.converter.engine.parts.EstimationStep.ObjectiveFunctionParameter;
 import crx.converter.engine.parts.ObservationBlock;
 import crx.converter.engine.parts.ObservationBlock.ObservationParameter;
-import crx.converter.engine.parts.ParameterBlock;
 import crx.converter.engine.parts.SimulationStep;
 import crx.converter.engine.parts.StructuralBlock;
 import crx.converter.engine.parts.TrialDesignBlock.ArmIndividual;
 import crx.converter.tree.BinaryTree;
 import crx.converter.tree.Node;
 import crx.converter.tree.TreeMaker;
-import static crx.converter.engine.PharmMLTypeChecker.isIndependentVariable;
-import static crx.converter.engine.PharmMLTypeChecker.isScalar;
-import static crx.converter.engine.PharmMLTypeChecker.*;
+import ddmore.converters.nonmem.statements.SigmaStatement;
+import ddmore.converters.nonmem.utils.ParametersHelper;
 import eu.ddmore.libpharmml.dom.IndependentVariableType;
 import eu.ddmore.libpharmml.dom.commontypes.CommonVariableDefinitionType;
 import eu.ddmore.libpharmml.dom.commontypes.DerivativeVariableType;
@@ -47,20 +67,25 @@ import eu.ddmore.libpharmml.dom.maths.FunctionCallType;
 import eu.ddmore.libpharmml.dom.maths.FunctionCallType.FunctionArgument;
 import eu.ddmore.libpharmml.dom.maths.PieceType;
 import eu.ddmore.libpharmml.dom.maths.PiecewiseType;
+import eu.ddmore.libpharmml.dom.modeldefn.ContinuousCovariateType;
 import eu.ddmore.libpharmml.dom.modeldefn.CovariateDefinitionType;
+import eu.ddmore.libpharmml.dom.modeldefn.CovariateRelationType;
+import eu.ddmore.libpharmml.dom.modeldefn.FixedEffectRelationType;
 import eu.ddmore.libpharmml.dom.modeldefn.GaussianObsError;
 import eu.ddmore.libpharmml.dom.modeldefn.GeneralObsError;
+import eu.ddmore.libpharmml.dom.modeldefn.IndividualParameterType;
+import eu.ddmore.libpharmml.dom.modeldefn.LhsTransformationType;
+import eu.ddmore.libpharmml.dom.modeldefn.ParameterRandomEffectType;
 import eu.ddmore.libpharmml.dom.modeldefn.ParameterRandomVariableType;
 import eu.ddmore.libpharmml.dom.modeldefn.SimpleParameterType;
 import eu.ddmore.libpharmml.dom.modeldefn.StructuralModelType;
+import eu.ddmore.libpharmml.dom.modeldefn.IndividualParameterType.GaussianModel;
+import eu.ddmore.libpharmml.dom.modeldefn.IndividualParameterType.GaussianModel.LinearCovariate.PopulationParameter;
 import eu.ddmore.libpharmml.dom.modellingsteps.ContinuousObservationType;
 import eu.ddmore.libpharmml.dom.modellingsteps.InitialEstimateType;
 import eu.ddmore.libpharmml.dom.modellingsteps.ObservationsType;
-import eu.ddmore.libpharmml.dom.modellingsteps.ParameterEstimateType;
 import eu.ddmore.libpharmml.dom.modellingsteps.TimepointsType;
 import eu.ddmore.libpharmml.dom.trialdesign.ActivityType;
-import eu.ddmore.libpharmml.dom.uncertml.AbstractContinuousUnivariateDistributionType;
-import eu.ddmore.libpharmml.dom.uncertml.NormalDistribution;
 
 public class Parser extends BaseParser {
 	private HashMap<List<Artifact>, String> outputs_to_csvfile_map = new HashMap<List<Artifact>, String>();
@@ -123,9 +148,10 @@ public class Parser extends BaseParser {
 	@Override
 	protected String doParameter(SimpleParameterType p) {
 		if (lexer.isModelParameter(p.getSymbId())) {
-			Integer idx = lexer.getModelParameterIndex(p.getSymbId());
-			String format = "%s[%s]";
-			return String.format(format, param_model_symbol, idx);
+//			Integer idx = lexer.getModelParameterIndex(p.getSymbId());
+//			String format = "%s[%s]";
+//			return String.format(format, param_model_symbol, idx);
+			return p.getSymbId();
 		} else 
 			return p.getSymbId();
 	}
@@ -134,7 +160,7 @@ public class Parser extends BaseParser {
 	protected String doIndependentVariable(IndependentVariableType v) {
 		String symbol = v.getSymbId();
 		
-		if (symbol.equals("t") || symbol.equals("time")) symbol = "time_unit";
+		if (symbol.equals("t") || symbol.equals("time")) symbol = "TIME";
 		
 		return symbol;
 	}
@@ -253,7 +279,7 @@ public class Parser extends BaseParser {
 				// Logical blocks
 				Condition cond = piece.getCondition();
 				if (cond != null) {
-					conditional_trees[i] = lexer.getTreeMaker().createTree(piece.getCondition());
+					conditional_trees[i] = lexer.getTreeMaker().newInstance(piece.getCondition());
 					if (cond.getOtherwise() != null) {
 						else_block = piece;
 						else_index = i;
@@ -263,22 +289,22 @@ public class Parser extends BaseParser {
 				// Assignment block
 				BinaryTree assignment_tree = null;
 				if (piece.getBinop() != null) { 
-					assignment_tree = lexer.getTreeMaker().createTree(getEquation(piece.getBinop()));
+					assignment_tree = lexer.getTreeMaker().newInstance(getEquation(piece.getBinop()));
 					assignment_count++;
 				} else if (piece.getConstant() != null) {
-					assignment_tree = lexer.getTreeMaker().createTree(piece.getConstant());
+					assignment_tree = lexer.getTreeMaker().newInstance(piece.getConstant());
 					assignment_count++;
 				} else if (piece.getFunctionCall() != null) {
-					assignment_tree = lexer.getTreeMaker().createTree(getEquation(piece.getFunctionCall()));
+					assignment_tree = lexer.getTreeMaker().newInstance(getEquation(piece.getFunctionCall()));
 					assignment_count++;
 				} else if (piece.getScalar() != null) {
 					JAXBElement<?> scalar = piece.getScalar();
 					if (isScalar(scalar)) {
-						assignment_tree = lexer.getTreeMaker().createTree(getEquation(piece.getScalar()));
+						assignment_tree = lexer.getTreeMaker().newInstance(getEquation(piece.getScalar()));
 						assignment_count++;
 					}
 				} else if (piece.getSymbRef() != null) {
-					assignment_tree = lexer.getTreeMaker().createTree(piece.getSymbRef());
+					assignment_tree = lexer.getTreeMaker().newInstance(piece.getSymbRef());
 					assignment_count++;
 				}
 				if (assignment_tree != null) assignment_trees[i] = assignment_tree;
@@ -380,79 +406,61 @@ public class Parser extends BaseParser {
 		}
 	}
 	
-//	@Override
-//	public void writeParameters(PrintWriter fout) {
-//		writeStandardParameterAssignment(fout);
-//		if (lexer.hasDoneEstimation()) writeParameterAssignmentFromEstimation(fout); 
-//	}
-//	
-//	TODO: need to get getRandomVariableParameters in order to get this code working.
 	@Override
 	public void writeParameters(PrintWriter fout) {
+		
 		if (fout == null) return;
 		
 		if (lexer.getModelParameters().isEmpty()) {
 			return;
 		}
 		
-		final EstimationStep estimationStep = lexer.getEstimationStep();
-
-		final List<ParameterEstimateType> parametersToEstimate = (estimationStep.getParametersToEstimate()!=null)? estimationStep.getParametersToEstimate():new ArrayList<ParameterEstimateType>();
+		ParametersHelper parameters = new ParametersHelper(lexer.getScriptDefinition());
 		
-		// These are keyed by symbol ID
-		final Map<String, SimpleParameterType> simpleParams = new HashMap<String, SimpleParameterType>();
-		final Map<String, InitialEstimateType> initialEsts = new HashMap<String, InitialEstimateType>();
-		final Map<String, ScalarRhs> lowerBounds = new HashMap<String, ScalarRhs>();
-		final Map<String, ScalarRhs> upperBounds = new HashMap<String, ScalarRhs>();
+		parameters.getParameters(lexer.getModelParameters());
 		
-		// Add all the Model Parameters to begin with
-		final List<String> thetaParams = new ArrayList<String>();
-		for (SimpleParameterType simpleParam : lexer.getModelParameters()) {
-			thetaParams.add(simpleParam.getSymbId());
-			simpleParams.put(simpleParam.getSymbId(), simpleParam);
-		}
+		Map<String, SimpleParameterType> simpleParameters= parameters.getSimpleParams();
+		Map<String, InitialEstimateType> initialEstimates = parameters.getInitialEstimates();
+		Map<String, ScalarRhs> lowerBoundsMap = parameters.getLowerBounds();
+		Map<String, ScalarRhs> upperBoundsMap = parameters.getUpperBounds();
+		List<String> thetas = parameters.getThetaParams();
+		List<String> omegas = parameters.getOmegaParams();
 		
-		// Find any bounds and initial estimates
-		for (ParameterEstimateType paramEstimate : parametersToEstimate) {
-			final String symbolId = paramEstimate.getSymbRef().getSymbIdRef();
-			initialEsts.put(symbolId, paramEstimate.getInitialEstimate());
-			lowerBounds.put(symbolId, paramEstimate.getLowerBound());
-			upperBounds.put(symbolId, paramEstimate.getUpperBound());
-		}
+		SigmaStatement sigmaStatement = new SigmaStatement(parameters);
+		List<String> sigmaParams = sigmaStatement.getSigmaStatement();
 		
-		final List<String> omegaParams = new ArrayList<String>();
-		
-		// Identify the "omega" parameters, which are a subset of the model parameters
-		for (ParameterRandomVariableType rv : lexer.getParameterBlock().getRandomVariableParameters()) {
-			final AbstractContinuousUnivariateDistributionType distributionType = rv.getAbstractContinuousUnivariateDistribution().getValue();
-			if (distributionType instanceof NormalDistribution) {
-				if (((NormalDistribution) distributionType).getStddev() != null) {
-					omegaParams.add( ((NormalDistribution) distributionType).getStddev().getVar().getVarId() );
-				} else if (((NormalDistribution) distributionType).getVariance() != null) {
-					omegaParams.add( ((NormalDistribution) distributionType).getVariance().getVar().getVarId() );
-				}
-			}
-		}
-		
-		// Model parameters = "theta" parameters + "omega" parameters
-		thetaParams.removeAll(omegaParams);
-		
-		if (! thetaParams.isEmpty()) {
+		if (! thetas.isEmpty()) {
 			fout.write("\n$THETA\n");
-			for (final String thetaVar : thetaParams) {
-				writeParameter(thetaVar, initialEsts.get(thetaVar), lowerBounds.get(thetaVar), upperBounds.get(thetaVar), simpleParams.get(thetaVar), fout);
+			for (final String thetaVar : thetas) {
+				writeParameter(thetaVar, initialEstimates.get(thetaVar), lowerBoundsMap.get(thetaVar), upperBoundsMap.get(thetaVar), simpleParameters.get(thetaVar), fout);
 			}
 		}
 		
-		if (! omegaParams.isEmpty()) {
+		if (! omegas.isEmpty()) {
 			fout.write("\n$OMEGA\n");
-			for (final String omegaVar : omegaParams) {
-				writeParameter(omegaVar, initialEsts.get(omegaVar), lowerBounds.get(omegaVar), upperBounds.get(omegaVar), simpleParams.get(omegaVar), fout);
+			for (final String omegaVar : omegas) {
+				writeParameter(omegaVar, initialEstimates.get(omegaVar), lowerBoundsMap.get(omegaVar), upperBoundsMap.get(omegaVar), simpleParameters.get(omegaVar), fout);
+			}
+		}
+		
+		if(!sigmaParams.isEmpty()){
+			fout.write("\n$SIGMA\n");
+			for (final String sigmaVar: sigmaParams) {
+				fout.write(sigmaVar);
 			}
 		}
 
-		fout.write("\n"); 
+		fout.write("\n");
+		List<ParameterBlock> blocks = lexer.getScriptDefinition().getParameterBlocks();
+		for(ParameterBlock parameterBlock : blocks){
+			for(IndividualParameterType parameterType: parameterBlock.getIndividualParameters()){
+				fout.write(doIndividualParameterAssignment(parameterType));	
+			}
+			
+		}
+		
 	}
+	
 	
 	private void writeParameter(final String symbolId,
 								final InitialEstimateType initialEst, final ScalarRhs lowerBound, final ScalarRhs upperBound, final SimpleParameterType simpleParam,
@@ -478,29 +486,6 @@ public class Parser extends BaseParser {
 			// Just use the initial value defined in the ParameterModel block
 			parse(simpleParam, lexer.getStatement(simpleParam), fout);
 		}
-	}
-	
-	private void writeStandardParameterAssignment(PrintWriter fout) {
-		if (fout == null) return;
-		
-		String format = "%s Parameters\n";
-		
-		fout.write(String.format("%s Parameters\n", comment_char));
-		
-		if (lexer.getModelParameters().size() == 0) {
-			format = "%s <- c(0.0)\n\n";
-			fout.write(String.format(format, param_model_symbol));
-			return;
-		}	
-		
-		format = "%s <- rep.int(0.0, %d)\n";
-		fout.write(String.format(format, param_model_symbol, lexer.getModelParameters().size()));
-
-		for (SimpleParameterType p : lexer.getModelParameters()) {
-			if (!lexer.hasStatement(p)) continue;
-			parse(p, lexer.getStatement(p), fout);
-		}
-		fout.write("\n\n"); 
 	}
 	
 	@Override
@@ -537,7 +522,6 @@ public class Parser extends BaseParser {
 			throws IOException {
 		
 	}
-		
 
 	@Override
 	public void writeModelFunction(PrintWriter fout, StructuralBlock sb) throws IOException {
@@ -745,7 +729,7 @@ if (fout == null || step == null) return;
 			InitialConditionType ic = value.getInitialCondition();
 			if (ic == null) throw new NullPointerException("Initial condition not specified");
 			if (count > 0) fout.write(",");
-			parse(ic, lexer.getTreeMaker().createTree(ic), fout);
+			parse(ic, lexer.getTreeMaker().newInstance(ic), fout);
 			count++;
 		}
 		
@@ -809,8 +793,8 @@ if (fout == null || step == null) return;
 			if (value == null) continue;
 			
 			BinaryTree bt = null;
-			if (isSequence(value)) bt = tm.createTree((SequenceType) value);
-			else if (isVector(value)) bt = tm.createTree((VectorType) value);
+			if (isSequence(value)) bt = tm.newInstance((SequenceType) value);
+			else if (isVector(value)) bt = tm.newInstance((VectorType) value);
 			else throw new UnsupportedOperationException("Timepoints class not supported yet.");
 			
 			lexer.updateNestedTrees();
@@ -1064,10 +1048,10 @@ if (fout == null || step == null) return;
 			if (!isString_(leaf.data)) leaf.data = getSymbol(leaf.data);
 			String current_value = "", current_symbol = "_FAKE_FAKE_FAKE_FAKE_";
 			if (isDerivative(context) || isParameter(context) || isLocalVariable(context)) {
-				String format = "%s <- %s; %s %s\n", description = "";
+				String format = "(%s, FIX); %s\n", description = "";
 				if (isRootType(context)) description = readDescription((PharmMLRootType) context);
 				current_symbol = getSymbol(context);
-				current_value = String.format(format, current_symbol, leaf.data, comment_char, description);
+				current_value = String.format(format, leaf.data, description);
 			} else if (isInitialCondition(context) || isFunction(context) || isSequence(context) || isVector(context)) {
 				String format = "(%s) ";
 				current_value = String.format(format, (String) leaf.data);
@@ -1114,6 +1098,118 @@ if (fout == null || step == null) return;
 			}
 		} else
 			throw new IllegalStateException("Should be a statement string bound to the root.data element.");
+	}
+	
+	protected String doIndividualParameterAssignment(IndividualParameterType ip) {
+
+    	StringBuilder stmt = new StringBuilder();
+    	
+    	String variableSymbol = ip.getSymbId();
+    	
+    	if (ip.getAssign() != null) {
+    		stmt.append(String.format("%s = ", variableSymbol));
+    		String assignment = parse(new Object(), lexer.getStatement(ip.getAssign()));
+    		stmt.append(assignment);
+    		stmt.append(";\n");
+    	} else if (ip.getGaussianModel() != null) {
+    		String index_symbol = "ETA";
+    		GaussianModel m = ip.getGaussianModel();
+    		LhsTransformationType transform = m.getTransformation();
+    		GaussianModel.GeneralCovariate gcov = m.getGeneralCovariate();
+    		GaussianModel.LinearCovariate lcov = m.getLinearCovariate();
+    		List<ParameterRandomEffectType> random_effects = m.getRandomEffects();
+    		int nCovs = 0;
+    		
+    		if (transform == LhsTransformationType.LOG) variableSymbol = "log" + capitalise(variableSymbol);
+    		else if (transform == LhsTransformationType.LOGIT) variableSymbol = "logit" + capitalise(variableSymbol);
+    		else if (transform == LhsTransformationType.PROBIT) variableSymbol = "probit" + capitalise(variableSymbol);
+    		
+    		stmt.append(String.format("%s = ", variableSymbol));
+    		
+    		if (lcov != null) {
+    			String pop_param_symbol = null;
+    			
+    			PopulationParameter pop_param = lcov.getPopulationParameter();
+    			if (pop_param != null) {
+    				pop_param_symbol = parse(pop_param, lexer.getStatement(pop_param));
+    				
+    				if (transform == LhsTransformationType.LOG) pop_param_symbol = String.format("log(%s)", pop_param_symbol);
+    	    		else if (transform == LhsTransformationType.LOGIT) pop_param_symbol = String.format("logit(%s)", pop_param_symbol);
+    	    		else if (transform == LhsTransformationType.PROBIT) pop_param_symbol = String.format("probit(%s)", pop_param_symbol);
+    				
+    				stmt.append(String.format("(%s*ones(1, %s))", pop_param_symbol, index_symbol));
+    			} 
+    			
+    			List<CovariateRelationType> covariates = lcov.getCovariate();
+    			if (covariates != null) {
+    				if (pop_param_symbol != null) stmt.append(" + ");
+    				
+    				for (CovariateRelationType covariate : covariates) {
+    					if (covariate == null) continue;
+    					if (nCovs > 0) stmt.append(" + ");
+    					
+    					CovariateDefinitionType cdt = (CovariateDefinitionType) lexer.getAccessor().fetchElement(covariate.getSymbRef());
+    					if (cdt != null) {
+    						if (cdt.getContinuous() != null) {
+    							String cov_stmt = "";
+    							ContinuousCovariateType continuous = cdt.getContinuous();
+    							if (continuous.getTransformation() != null) cov_stmt = getSymbol(continuous.getTransformation());
+    							else cov_stmt = cdt.getSymbId();
+    							
+    							List<FixedEffectRelationType> fixed_effects = covariate.getFixedEffect();
+    							if (fixed_effects != null) {
+    								for (FixedEffectRelationType fixed_effect : fixed_effects) {
+    									if (fixed_effect == null) continue;
+    									String fixed_effect_stmt = parse(fixed_effect, lexer.getStatement(fixed_effect));
+    									cov_stmt = fixed_effect_stmt + " * " + cov_stmt;
+    									break;
+    								}
+    								
+    							}
+    							stmt.append(cov_stmt);
+    							nCovs++;
+    						} else if (cdt.getCategorical() != null) {
+    							throw new UnsupportedOperationException("No categorical yet");
+    						}
+    					}
+    				}
+    			}
+    		} else if (gcov != null) {
+    			String assignment = parse(gcov, lexer.getStatement(gcov));
+    			stmt.append(assignment);
+    			nCovs++;
+    		}
+    		
+    		int nRandomEffects = 0;
+			if (random_effects != null) {
+				if (!random_effects.isEmpty()) {
+					if (nCovs > 0) stmt.append(" + ");
+					for (ParameterRandomEffectType random_effect : random_effects) {
+						if (random_effect == null) continue;
+						if (nRandomEffects > 0) stmt.append(" + ");
+						stmt.append(parse(random_effect, lexer.getStatement(random_effect)));
+						nRandomEffects++;
+					}
+				}
+			}
+			stmt.append(";\n");
+			
+			if (transform == LhsTransformationType.LOG) {
+				String format = "%s = exp(%s);\n";
+				stmt.append(String.format(format, ip.getSymbId(), variableSymbol));
+			} else if (transform == LhsTransformationType.LOGIT) {
+				String format = "%s = 1./(1 + exp(-%s));\n";
+				stmt.append(String.format(format, ip.getSymbId(), variableSymbol));
+			} else if (transform == LhsTransformationType.PROBIT) {
+				String format = "%s = normcdf(%s);\n";
+				stmt.append(String.format(format, ip.getSymbId(), variableSymbol));
+			}
+    	}
+		stmt.append("\n");
+		
+		return stmt.toString();
+	
+		
 	}
 
 	@Override
