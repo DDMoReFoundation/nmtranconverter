@@ -7,8 +7,10 @@ import java.io.PrintWriter;
 
 import crx.converter.engine.Lexer;
 import crx.converter.engine.ScriptDefinition;
+import crx.converter.engine.parts.EstimationStep;
 import ddmore.converters.nonmem.statements.DataStatement;
 import ddmore.converters.nonmem.statements.EstimationStatement;
+import ddmore.converters.nonmem.statements.PredStatement;
 import ddmore.converters.nonmem.statements.SimulationStatement;
 import eu.ddmore.convertertoolbox.api.response.ConversionReport;
 import eu.ddmore.convertertoolbox.domain.LanguageVersionImpl;
@@ -103,6 +105,8 @@ public class ConverterProvider extends Lexer {
 		fout.write(getSimulationStatement());
 
 		parser.writeParameters(fout);
+		PredStatement predStatement = new PredStatement(scriptDefinition);
+		predStatement.getPredStatement(fout);
 		
 //		parser.getThetasStatement();
 //		parser.getOmegasStatement();
@@ -138,5 +142,11 @@ public class ConverterProvider extends Lexer {
 			return simulationStatement.getSimulationStatement();
 		}
 		return new String();
+	}
+	
+	@Override
+	protected void initialise() {
+		EstimationStep.setUseDefaultParameterEstimate(true);
+		EstimationStep.setDefaultParameterEstimateValue(1.0);
 	}
 }

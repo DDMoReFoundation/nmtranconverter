@@ -7,9 +7,7 @@ import org.junit.runners.Suite;
 
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
-	TestPiecewise1.class,
-	TestPiecewise2.class,
-	TestSine_Wave1.class,
+	TestExample5.class
 	//TestSine_Wave2.class,
 	//TestSine_Wave3.class,
 	//TestSine_Wave4.class,
