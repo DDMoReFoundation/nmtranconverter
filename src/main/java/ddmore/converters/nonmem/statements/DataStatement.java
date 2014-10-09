@@ -35,10 +35,11 @@ public class DataStatement {
 	public DataStatement(ScriptDefinition scriptDefinition,DataFiles dataFiles, String model_filename){
 		
 		TabularDataset td = getObjectiveDatasetMap(ParametersHelper.getEstimationStep(scriptDefinition));
-		dataFileName = generateDataFileName(model_filename);
+		dataFileName = null;
 		if(td != null){
 			computeEstimationHeaders(td);
 			//create data file using data file name
+			dataFileName = generateDataFileName(model_filename);
 			composeData(scriptDefinition);
 		}else {
 			//TODO: get nonmem dataset
@@ -46,7 +47,7 @@ public class DataStatement {
 				NONMEMdataSetType nonmemDataSet =  dataFiles.getNonmemDataSets().iterator().next();
 				//TODO: adding null check for time being as no examples for 0.3.1 or above are available right now.
 				if(nonmemDataSet.getDataSet().getImportData().getPath() != null){
-					dataFileName = generateDataFileName(nonmemDataSet.getDataSet().getImportData().getPath());	
+					dataFileName = nonmemDataSet.getDataSet().getImportData().getPath();	
 				}
 				
 				computeEstimationHeaders(nonmemDataSet);
@@ -119,6 +120,7 @@ public class DataStatement {
 	public String getDataStatement(){
 		
 		String dataStatement = getDataFileName()+" IGNORE=@";
+		//TODO : throw exception if null
 		return ("\n$DATA "+ dataStatement);
 	}
     

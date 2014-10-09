@@ -466,7 +466,10 @@ public class Parser extends BaseParser {
 								final InitialEstimateType initialEst, final ScalarRhs lowerBound, final ScalarRhs upperBound, final SimpleParameterType simpleParam,
 								final PrintWriter fout) {
 		
-		final String description = readDescription((PharmMLRootType) simpleParam);
+		String description = readDescription((PharmMLRootType) simpleParam);
+		if(description.isEmpty()){
+			description = symbolId;
+		}
 		
 		if (lowerBound != null && upperBound != null) {
 			fout.write("(");
@@ -1112,7 +1115,6 @@ if (fout == null || step == null) return;
     		stmt.append(assignment);
     		stmt.append(";\n");
     	} else if (ip.getGaussianModel() != null) {
-    		String index_symbol = "ETA";
     		GaussianModel m = ip.getGaussianModel();
     		LhsTransformationType transform = m.getTransformation();
     		GaussianModel.GeneralCovariate gcov = m.getGeneralCovariate();
@@ -1122,7 +1124,7 @@ if (fout == null || step == null) return;
     		
     		if (transform == LhsTransformationType.LOG) variableSymbol = "log" + capitalise(variableSymbol);
     		else if (transform == LhsTransformationType.LOGIT) variableSymbol = "logit" + capitalise(variableSymbol);
-    		else if (transform == LhsTransformationType.PROBIT) variableSymbol = "probit" + capitalise(variableSymbol);
+//    		else if (transform == LhsTransformationType.PROBIT) variableSymbol = "probit" + capitalise(variableSymbol);
     		
     		stmt.append(String.format("%s = ", variableSymbol));
     		
@@ -1135,9 +1137,9 @@ if (fout == null || step == null) return;
     				
     				if (transform == LhsTransformationType.LOG) pop_param_symbol = String.format("log(%s)", pop_param_symbol);
     	    		else if (transform == LhsTransformationType.LOGIT) pop_param_symbol = String.format("logit(%s)", pop_param_symbol);
-    	    		else if (transform == LhsTransformationType.PROBIT) pop_param_symbol = String.format("probit(%s)", pop_param_symbol);
+//    	    		else if (transform == LhsTransformationType.PROBIT) pop_param_symbol = String.format("probit(%s)", pop_param_symbol);
     				
-    				stmt.append(String.format("(%s*ones(1, %s))", pop_param_symbol, index_symbol));
+    				stmt.append(String.format("(%s))", pop_param_symbol));
     			} 
     			
     			List<CovariateRelationType> covariates = lcov.getCovariate();
@@ -1195,13 +1197,10 @@ if (fout == null || step == null) return;
 			stmt.append(";\n");
 			
 			if (transform == LhsTransformationType.LOG) {
-				String format = "%s = exp(%s);\n";
+				String format = "%s = EXP(%s);\n";
 				stmt.append(String.format(format, ip.getSymbId(), variableSymbol));
 			} else if (transform == LhsTransformationType.LOGIT) {
 				String format = "%s = 1./(1 + exp(-%s));\n";
-				stmt.append(String.format(format, ip.getSymbId(), variableSymbol));
-			} else if (transform == LhsTransformationType.PROBIT) {
-				String format = "%s = normcdf(%s);\n";
 				stmt.append(String.format(format, ip.getSymbId(), variableSymbol));
 			}
     	}
@@ -1238,12 +1237,6 @@ if (fout == null || step == null) return;
 		fout.write("rm(list=ls());\n\n");
 	}
 	
-	private void writeParameterAssignmentFromEstimation(PrintWriter fout) {
-		if (fout == null) return;
-		
-		System.err.println("INFO: Write parameter assessment from estimates...");
-	}
-
 	@Override
 	public void writeExternallyReferencedElement(PrintWriter fout, StructuralBlock sb) throws IOException {
 	}
