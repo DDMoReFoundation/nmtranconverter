@@ -1,9 +1,9 @@
-
 package ddmore.converters.nonmem;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.io.Writer;
 
 import crx.converter.engine.Lexer;
 import crx.converter.engine.ScriptDefinition;
@@ -16,8 +16,11 @@ import eu.ddmore.convertertoolbox.api.response.ConversionReport;
 import eu.ddmore.convertertoolbox.domain.LanguageVersionImpl;
 import eu.ddmore.convertertoolbox.domain.VersionImpl;
 
+
 public class ConverterProvider extends Lexer {
-	String model_filename = new String(); 
+	String model_filename = new String();
+	private static final String NEW_LINE = System.getProperty("line.separator");
+
 	public ConverterProvider() throws IOException, NullPointerException {
 		super();
 		
@@ -89,12 +92,21 @@ public class ConverterProvider extends Lexer {
 		
 		ScriptDefinition scriptDefinition = getScriptDefinition();
 		fout.write(getProblemStatement());
+
 		//Initialise data statement before generating input statement and data statement
-		DataStatement datastatement = new DataStatement(scriptDefinition,getDataFiles(),model_filename);
+		DataStatement dataStatement;
 		
-		fout.write(getInputStatement(datastatement));
-		fout.write(getDataStatement(datastatement));
+		if (getDataFiles().getNonmemDataSets().isEmpty()) {
+			dataStatement = new DataStatement(scriptDefinition, model_filename);
+		} else {
+			dataStatement = new DataStatement(getDataFiles().getNonmemDataSets());
+		}
 		
+		fout.write(getInputStatement(dataStatement));
+		writeNewLine(fout);
+		dataStatement.write(fout);
+
+
 		EstimationStatement estStatement = new EstimationStatement(scriptDefinition);
 		
 		if(!estStatement.getEstimationSteps().isEmpty()){
@@ -132,10 +144,6 @@ public class ConverterProvider extends Lexer {
 		return (title != null)?String.format(format, title):String.format(format);
 	}
 	
-	private String getDataStatement(DataStatement datastatement){
-		return datastatement.getDataStatement();	
-	}
-	
 	private String getSimulationStatement(){
 		SimulationStatement simulationStatement =new SimulationStatement(getSimulationStep());
 		if(simulationStatement.getSimulationStep()!=null){
@@ -143,7 +151,11 @@ public class ConverterProvider extends Lexer {
 		}
 		return new String();
 	}
-	
+
+	private void writeNewLine(Writer writer) throws IOException {
+		writer.write(NEW_LINE);
+	}
+
 	@Override
 	protected void initialise() {
 		EstimationStep.setUseDefaultParameterEstimate(true);
