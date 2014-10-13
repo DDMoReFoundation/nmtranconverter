@@ -20,11 +20,11 @@ import eu.ddmore.convertertoolbox.api.response.ConversionDetail.Severity;
 import eu.ddmore.convertertoolbox.api.response.ConversionReport;
 import eu.ddmore.convertertoolbox.api.response.ConversionReport.ConversionCode;
 
-public class TestExample5 extends TestBase {
+public class TestWarfarin extends TestBase {
 	@Before
 	public void setUp() throws Exception {
-		inputXMLFile = "example5/example5_NONMEM.xml";
-		init(inputXMLFile, V_0_3_SUBDIR);
+		inputXMLFile = "warfarin_PK_ODE/warfarin_PK_ODE_0.3.1.xml";
+		init(inputXMLFile, V_0_3_1_SUBDIR);
 	}
 
 	@Test
