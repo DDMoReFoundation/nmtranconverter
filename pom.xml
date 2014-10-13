@@ -18,8 +18,20 @@
 				</configuration>
 			</plugin>
 		</plugins>
-	</build>
-  
+  </build>
+
+  <repositories>
+    <!-- Note that this repository definition won't be used internally at Mango
+         since the Maven settings.xml specifies that our Artifactory server is
+         the universal mirror for all artifacts; but if this project is built by
+         someone external to Mango then this would kick in. -->
+    <repository>
+      <id>mango-ddmore-external-releases</id>
+      <name>Mango DDMoRe External Releases Repository</name>
+      <url>http://maven.mango-solutions.com/ddmore</url>
+    </repository>
+  </repositories>
+
   <dependencies>
     <dependency>
         <groupId>cyprotex</groupId>
