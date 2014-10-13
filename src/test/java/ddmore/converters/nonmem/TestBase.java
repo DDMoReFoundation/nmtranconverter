@@ -20,6 +20,7 @@ public abstract class TestBase {
 	final static String TEST_DATA_DIR = "/eu/ddmore/testdata/models/pharmml/";
     final static String WORKING_DIR = "target/MainTest_Working_Dir";
     final static String V_0_3_SUBDIR = "v0.3/";
+    final static String V_0_3_1_SUBDIR = "v0.3.1/";
     final static String V_0_4_SUBDIR = "v0.4/";
 	
 	
