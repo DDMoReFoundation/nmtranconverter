@@ -121,7 +121,7 @@ public class DataStatement implements Writeable {
 
 		if (dataColumns != null) {
 			for (ColumnDefnType dataColumn : dataColumns) {
-				inputHeaders.add(dataColumn.getColumnId());
+				inputHeaders.add(dataColumn.getColumnId().toUpperCase());
 			}
 		}
 	}
@@ -132,7 +132,7 @@ public class DataStatement implements Writeable {
 	 */
 	public String getDataStatement(){
 		
-		String dataStatement = getDataFileName()+" IGNORE=@";
+		String dataStatement = getDataFileName() + " IGNORE=@";
 		//TODO : throw exception if null
 		return ("$DATA "+ dataStatement);
 	}
@@ -159,7 +159,7 @@ public class DataStatement implements Writeable {
     	if(estimateStep != null){
 			td = getObjectiveDatasetMap(estimateStep);
 			for (String columnName : td.getColumnNames()){
-				inputHeaders.add(columnName+" ");
+				inputHeaders.add(columnName.toUpperCase() + " ");
 			}
     	}
 		return inputHeaders.toString().replaceAll("\\[|\\]|\\,", "");

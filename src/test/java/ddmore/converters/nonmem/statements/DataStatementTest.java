@@ -44,6 +44,7 @@ public class DataStatementTest {
 
 	private static final List<String> COLUMN_HEADERS = Arrays.asList(COL_ID_1, COL_ID_2, COL_ID_3);
 
+
 	@Before
 	public void setUp() throws Exception {
 	}
@@ -55,11 +56,7 @@ public class DataStatementTest {
 	@Test
 	public void shouldCreateValidDataStatementNONMEMdataSet() {
 
-		ImportDataType importData = new ImportDataType();
-		importData.setPath(DATA_FILE_NAME);
-
-		DataSetType dataset = new DataSetType();
-		dataset.setImportData(importData);
+		DataSetType dataset = createDataSet();
 
 		ColumnsDefinitionType columnsDefinition = new ColumnsDefinitionType();
 		List<ColumnDefnType> columns = columnsDefinition.getColumn();
@@ -68,12 +65,8 @@ public class DataStatementTest {
 		columns.add(createColumn(COL_ID_3, COL_TYPE_3, COL_VALUE_3, COL_NUM_3));
 		dataset.setDefinition(columnsDefinition);
 
-		NONMEMdataSetType nonmemDataSet = new NONMEMdataSetType();
-		nonmemDataSet.setDataSet(dataset);
-
-		ModellingStepsType modellingSteps = new ModellingStepsType();
-		modellingSteps.getNONMEMdataSet().add(nonmemDataSet);
-
+		ModellingStepsType modellingSteps = createModellingSteps(dataset);
+		
 		DataStatement dataStatement = new DataStatement(modellingSteps.getNONMEMdataSet());
 
 		assertNotNull("DataStatement should not be null.", dataStatement);
@@ -81,6 +74,47 @@ public class DataStatementTest {
 		assertEquals("dataFileName should be correct.", DATA_FILE_NAME, dataStatement.getDataFileName());
 		assertEquals("DataStatement should be correct.",
 				STATEMENT_BLOCK_NAME + " " + DATA_FILE_NAME + " " + IGNORE_STRING + "=" + IGNORE_CHAR, dataStatement.getDataStatement());
+	}
+
+	@Test
+	public void shouldCreateValidDataStatementNONMEMdataSetLowerCaseColumnIds() {
+
+		DataSetType dataset = createDataSet();
+
+		ColumnsDefinitionType columnsDefinition = new ColumnsDefinitionType();
+		List<ColumnDefnType> columns = columnsDefinition.getColumn();
+		columns.add(createColumn(COL_ID_1.toLowerCase(), COL_TYPE_1, COL_VALUE_1, COL_NUM_1));
+		columns.add(createColumn(COL_ID_2, COL_TYPE_2, COL_VALUE_2, COL_NUM_2));
+		columns.add(createColumn(COL_ID_3.toLowerCase(), COL_TYPE_3, COL_VALUE_3, COL_NUM_3));
+		dataset.setDefinition(columnsDefinition);
+
+		ModellingStepsType modellingSteps = createModellingSteps(dataset);
+		
+		DataStatement dataStatement = new DataStatement(modellingSteps.getNONMEMdataSet());
+
+		assertEquals("inputHeaders should be correct.", COLUMN_HEADERS, dataStatement.getInputHeaders());
+	}
+
+	private DataSetType createDataSet() {
+
+		ImportDataType importData = new ImportDataType();
+		importData.setPath(DATA_FILE_NAME);
+
+		DataSetType dataset = new DataSetType();
+		dataset.setImportData(importData);
+		
+		return dataset;
+	}
+
+	private ModellingStepsType createModellingSteps(DataSetType dataset) {
+
+		NONMEMdataSetType nonmemDataSet = new NONMEMdataSetType();
+		nonmemDataSet.setDataSet(dataset);
+
+		ModellingStepsType modellingSteps = new ModellingStepsType();
+		modellingSteps.getNONMEMdataSet().add(nonmemDataSet);
+
+		return modellingSteps;
 	}
 
 	private ColumnDefnType createColumn(String id, ColumnTypeType type, SymbolTypeType value, String num) {
