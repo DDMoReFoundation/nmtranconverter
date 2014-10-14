@@ -10,7 +10,9 @@ import crx.converter.engine.ScriptDefinition;
 import crx.converter.engine.parts.EstimationStep;
 import ddmore.converters.nonmem.statements.DataStatement;
 import ddmore.converters.nonmem.statements.EstimationStatement;
+import ddmore.converters.nonmem.statements.InputStatement;
 import ddmore.converters.nonmem.statements.PredStatement;
+import ddmore.converters.nonmem.statements.ProblemStatement;
 import ddmore.converters.nonmem.statements.SimulationStatement;
 import eu.ddmore.convertertoolbox.api.response.ConversionReport;
 import eu.ddmore.convertertoolbox.domain.LanguageVersionImpl;
@@ -91,18 +93,25 @@ public class ConverterProvider extends Lexer {
 		if (fout == null || output_dir == null) return;
 		
 		ScriptDefinition scriptDefinition = getScriptDefinition();
-		fout.write(getProblemStatement());
+
+		ProblemStatement problemStatement = new ProblemStatement(getModelName());
+		problemStatement.write(fout);
+		writeNewLine(fout);
 
 		//Initialise data statement before generating input statement and data statement
+		InputStatement inputStatement;
 		DataStatement dataStatement;
 		
 		if (getDataFiles().getNonmemDataSets().isEmpty()) {
+			inputStatement = new InputStatement(scriptDefinition);
 			dataStatement = new DataStatement(scriptDefinition, model_filename);
 		} else {
+			inputStatement = new InputStatement(getDataFiles().getNonmemDataSets());
 			dataStatement = new DataStatement(getDataFiles().getNonmemDataSets());
 		}
-		
-		fout.write(getInputStatement(dataStatement));
+
+		writeNewLine(fout);
+		inputStatement.write(fout);
 		writeNewLine(fout);
 		dataStatement.write(fout);
 
@@ -127,21 +136,6 @@ public class ConverterProvider extends Lexer {
 //		parser.getPredStatement(); 
 //		parser.getTableStatement();
 
-	}
-	
-	private String getInputStatement(DataStatement datastatement) {
-		StringBuilder stringBuilder = new StringBuilder();
-		stringBuilder.append("\n$INPUT ");
-		for (String nextColumn : datastatement.getInputHeaders()){
-			stringBuilder.append(nextColumn+ " ");
-		}
-		return stringBuilder.toString();
-	}
-
-	private String getProblemStatement(){
-		String title = getModelName();
-		String format = "\n$PROBLEM \t%s\n";
-		return (title != null)?String.format(format, title):String.format(format);
 	}
 	
 	private String getSimulationStatement(){
