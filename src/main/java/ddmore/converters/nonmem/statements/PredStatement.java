@@ -7,10 +7,14 @@ import java.util.List;
 import java.util.Set;
 
 import crx.converter.engine.ScriptDefinition;
-import crx.converter.engine.parts.CovariateBlock;
 import crx.converter.engine.parts.ParameterBlock;
 import crx.converter.engine.parts.StructuralBlock;
+import crx.converter.spi.IParser;
+import crx.converter.tree.BinaryTree;
+import ddmore.converters.nonmem.Parser;
 import eu.ddmore.libpharmml.dom.commontypes.DerivativeVariableType;
+import eu.ddmore.libpharmml.dom.commontypes.InitialValueType;
+import eu.ddmore.libpharmml.dom.commontypes.RealValueType;
 import eu.ddmore.libpharmml.dom.modeldefn.ContinuousCovariateType;
 import eu.ddmore.libpharmml.dom.modeldefn.CovariateDefinitionType;
 import eu.ddmore.libpharmml.dom.modeldefn.CovariateRelationType;
@@ -19,6 +23,7 @@ import eu.ddmore.libpharmml.dom.modeldefn.IndividualParameterType;
 import eu.ddmore.libpharmml.dom.modeldefn.LhsTransformationType;
 import eu.ddmore.libpharmml.dom.modeldefn.ParameterRandomEffectType;
 import eu.ddmore.libpharmml.dom.modeldefn.IndividualParameterType.GaussianModel;
+import eu.ddmore.libpharmml.dom.modeldefn.IndividualParameterType.GaussianModel.LinearCovariate;
 import eu.ddmore.libpharmml.dom.modeldefn.IndividualParameterType.GaussianModel.LinearCovariate.PopulationParameter;
 
 /**
@@ -31,9 +36,11 @@ public class PredStatement {
 	
 	ScriptDefinition scriptDefinition;
 	List<DerivativeVariableType> derivativeVarList = new ArrayList<DerivativeVariableType>();
+	Parser parser;
 
 
-	public PredStatement(ScriptDefinition scriptDefinition){
+	public PredStatement(ScriptDefinition scriptDefinition, Parser parser){
+		this.parser = parser;
 		this.scriptDefinition = scriptDefinition;
 		List<StructuralBlock> structuralBlocks = scriptDefinition.getStructuralBlocks();
 		for(StructuralBlock block : structuralBlocks){
@@ -43,12 +50,28 @@ public class PredStatement {
 	
 	public void getPredStatement(PrintWriter fout){
 //		StringBuilder predStatementblock = new StringBuilder();
-		
+		String StatementName = "\n$PRED\n";
 		if(!derivativeVarList.isEmpty()){
+			//Add $SUB block
+			fout.write(StatementName);
+			fout.write("\n$SUBS ADVAN13 TOL=9\n");
 			fout.write(getDerivativePredStatement().toString());
 		}else{
 			getNonDerivativePredStatement();
 		}
+	}
+	
+	public BinaryTree getStatement(Object key) {
+		BinaryTree bt = null;
+		
+		if (key != null) {
+			if (scriptDefinition.getStatementsMap().containsKey(key)) {
+				bt = scriptDefinition.getStatementsMap().get(key);
+				scriptDefinition.getStatementsMap().remove(key);
+			}
+		}
+		
+		return bt;
 	}
 
 	private void getNonDerivativePredStatement() {
@@ -58,166 +81,41 @@ public class PredStatement {
         getErrorStatement();
 		
 	}
+	
+	/**
+	 * This method will build theta assignment statements
+	 * @param fout
+	 */
+	public StringBuilder buildThetaAssignments() {
+		StringBuilder thetaAssignmentBlock = new StringBuilder();  
+    	for(String theta : parser.getParameters().getThetaParams().keySet()){
+    		thetaAssignmentBlock.append("\n"+theta+ " = "+parser.getThetaForSymbol(theta)+"\n");
+    	}
+    	return thetaAssignmentBlock;
+	}
 
 	/**
 	 * gets pred core statement for nonmem file.
 	 */
-	private void getPredCoreStatement() {
-		/*
-		 *         sb << getCovariatesFromModel()
-        sb << getIndividualsFromModel()
-        if (!getDerivativeVariableTypes()) {
-            sb << getStructuralParameters()
-        }
-        sb << getConditionalStatements().join("")
-		 */
-//		getCovariatesFromModel();
-	}
-
-	private StringBuilder getCovariatesFromModel() {
-		
+	private StringBuilder getPredCoreStatement() {
+		StringBuilder predCoreBlock = new StringBuilder();
 		List<ParameterBlock> blocks = scriptDefinition.getParameterBlocks();
+		predCoreBlock.append(buildThetaAssignments().toString());
+		
 		for(ParameterBlock parameterBlock : blocks){
-			List<IndividualParameterType> individualParams = parameterBlock.getIndividualParameters();
-			
-			for(IndividualParameterType individualParam: individualParams ){
-				String symbid = individualParam.getSymbId();
-				
-				if(individualParam.getGaussianModel() != null){
-					if(individualParam.getGaussianModel().getLinearCovariate() != null){
-						CovariateRelationType relationType = individualParam.getGaussianModel().getLinearCovariate().getCovariate().get(0);
-						
-					}
-				}
-				if(individualParam.getAssign()!=null){
-					
-				}
+			for(IndividualParameterType parameterType: parameterBlock.getIndividualParameters()){
+				predCoreBlock.append(doIndividualParameterAssignment(parameterType));	
 			}
 		}
-		
-		return null;
+		return predCoreBlock;
 	}
-	
-//	protected String doIndividualParameterAssignment(IndividualParameterType ip) {
-//
-//    	StringBuilder stmt = new StringBuilder();
-//    	
-//    	String variableSymbol = ip.getSymbId();
-//    	
-//    	if (ip.getAssign() != null) {
-//    		stmt.append(String.format("%s = ", variableSymbol));
-//    		String assignment = parse(new Object(), lexer.getStatement(ip.getAssign()));
-//    		stmt.append(assignment);
-//    		stmt.append(";\n");
-//    	} else if (ip.getGaussianModel() != null) {
-//    		String index_symbol = "ETA";
-//    		GaussianModel m = ip.getGaussianModel();
-//    		LhsTransformationType transform = m.getTransformation();
-//    		GaussianModel.GeneralCovariate gcov = m.getGeneralCovariate();
-//    		GaussianModel.LinearCovariate lcov = m.getLinearCovariate();
-//    		List<ParameterRandomEffectType> random_effects = m.getRandomEffects();
-//    		int nCovs = 0;
-//    		
-//    		if (transform == LhsTransformationType.LOG) variableSymbol = "log" + capitalise(variableSymbol);
-//    		else if (transform == LhsTransformationType.LOGIT) variableSymbol = "logit" + capitalise(variableSymbol);
-//    		else if (transform == LhsTransformationType.PROBIT) variableSymbol = "probit" + capitalise(variableSymbol);
-//    		
-//    		stmt.append(String.format("%s = ", variableSymbol));
-//    		
-//    		if (lcov != null) {
-//    			String pop_param_symbol = null;
-//    			
-//    			PopulationParameter pop_param = lcov.getPopulationParameter();
-//    			if (pop_param != null) {
-////    				pop_param_symbol = parse(pop_param, lexer.getStatement(pop_param));
-//    				
-//    				if (transform == LhsTransformationType.LOG) pop_param_symbol = String.format("log(%s)", pop_param_symbol);
-//    	    		else if (transform == LhsTransformationType.LOGIT) pop_param_symbol = String.format("logit(%s)", pop_param_symbol);
-//    	    		else if (transform == LhsTransformationType.PROBIT) pop_param_symbol = String.format("probit(%s)", pop_param_symbol);
-//    				
-//    				stmt.append(String.format("(%s*ones(1, %s))", pop_param_symbol, index_symbol));
-//    			} 
-//    			
-//    			List<CovariateRelationType> covariates = lcov.getCovariate();
-//    			if (covariates != null) {
-//    				if (pop_param_symbol != null) stmt.append(" + ");
-//    				
-//    				for (CovariateRelationType covariate : covariates) {
-//    					if (covariate == null) continue;
-//    					if (nCovs > 0) stmt.append(" + ");
-//    					
-////    					CovariateDefinitionType cdt = (CovariateDefinitionType) lexer.getAccessor().fetchElement(covariate.getSymbRef());
-//    					
-//    					if (cdt != null) {
-//    						if (cdt.getContinuous() != null) {
-//    							String cov_stmt = "";
-//    							ContinuousCovariateType continuous = cdt.getContinuous();
-//    							if (continuous.getTransformation() != null) cov_stmt = getSymbol(continuous.getTransformation());
-//    							else cov_stmt = cdt.getSymbId();
-//    							
-//    							List<FixedEffectRelationType> fixed_effects = covariate.getFixedEffect();
-//    							if (fixed_effects != null) {
-//    								for (FixedEffectRelationType fixed_effect : fixed_effects) {
-//    									if (fixed_effect == null) continue;
-//    									String fixed_effect_stmt = parse(fixed_effect, lexer.getStatement(fixed_effect));
-//    									cov_stmt = fixed_effect_stmt + " * " + cov_stmt;
-//    									break;
-//    								}
-//    								
-//    							}
-//    							stmt.append(cov_stmt);
-//    							nCovs++;
-//    						} else if (cdt.getCategorical() != null) {
-//    							throw new UnsupportedOperationException("No categorical yet");
-//    						}
-//    					}
-//    				}
-//    			}
-//    		} else if (gcov != null) {
-////    			String assignment = parse(gcov, lexer.getStatement(gcov));
-////    			stmt.append(assignment);
-//    			nCovs++;
-//    		}
-//    		
-//    		int nRandomEffects = 0;
-//			if (random_effects != null) {
-//				if (!random_effects.isEmpty()) {
-//					if (nCovs > 0) stmt.append(" + ");
-//					for (ParameterRandomEffectType random_effect : random_effects) {
-//						if (random_effect == null) continue;
-//						if (nRandomEffects > 0) stmt.append(" + ");
-////						stmt.append(parse(random_effect, lexer.getStatement(random_effect)));
-//						nRandomEffects++;
-//					}
-//				}
-//			}
-//			stmt.append(";\n");
-//			
-//			if (transform == LhsTransformationType.LOG) {
-//				String format = "%s = exp(%s);\n";
-//				stmt.append(String.format(format, ip.getSymbId(), variableSymbol));
-//			} else if (transform == LhsTransformationType.LOGIT) {
-//				String format = "%s = 1./(1 + exp(-%s));\n";
-//				stmt.append(String.format(format, ip.getSymbId(), variableSymbol));
-//			} else if (transform == LhsTransformationType.PROBIT) {
-//				String format = "%s = normcdf(%s);\n";
-//				stmt.append(String.format(format, ip.getSymbId(), variableSymbol));
-//			}
-//    	}
-//		stmt.append("\n");
-//		
-//		return stmt.toString();
-//	
-//		
-//	}
-	
 
 	private StringBuilder getDerivativePredStatement() {
 		StringBuilder DerivativePredblock = new StringBuilder();
 		DerivativePredblock.append(getModelStatement());
-		getAbbreviatedStatement();
-		getPKStatement();
-        getDifferentialEquationsStatement();
+		//TODO : getAbbreviatedStatement();
+		DerivativePredblock.append(getPKStatement());
+		DerivativePredblock.append(getDifferentialEquationsStatement());
 		getAESStatement();
         getErrorStatement();
         
@@ -245,31 +143,34 @@ public class PredStatement {
 	 * gets DES block for pred statement
 	 * 
 	 */
-	private void getDifferentialEquationsStatement() {
-		// TODO Auto-generated method stub
+	private StringBuilder getDifferentialEquationsStatement() {
+		
+		return new StringBuilder();
 		
 	}
 
 	/**
 	 * gets pk block for pred statement
 	 */
-	private void getPKStatement() {
-		// TODO Auto-generated method stub
-		List<ParameterBlock> blocks = scriptDefinition.getParameterBlocks();
-		getPredCoreStatement();
-		
+	private StringBuilder getPKStatement() {
+		StringBuilder pkStatementBlock = new StringBuilder();
+		pkStatementBlock.append("\n$PK\n");
+		pkStatementBlock.append(getPredCoreStatement());
+		pkStatementBlock.append(getDifferentialInitialConditions());
+		return pkStatementBlock;
 	}
 
 	/**
 	 * gets ABBR block for pred statement of nonmem file.
 	 */
-	private void getAbbreviatedStatement() {
+	private StringBuilder getAbbreviatedStatement() {
+		return null;
 		// TODO Auto-generated method stub
 		
 	}
 
 	/**
-	 * get model block for pred statement of nonmem file.
+	 * get model statement block for pred statement of nonmem file.
 	 */
 	private StringBuilder getModelStatement() {
 		StringBuilder modelBlock = new StringBuilder();
@@ -281,11 +182,58 @@ public class PredStatement {
 		return modelBlock;
 	}
 
+	/**
+	 * Collects all derivativeVariable types (state variables) from structural blocks in order to create model statement.
+	 * 
+	 * @return
+	 */
 	private Set<DerivativeVariableType> getAllStateVariables() {
 		Set<DerivativeVariableType> stateVariables = new HashSet<DerivativeVariableType>();
 		for(StructuralBlock structuralBlock : scriptDefinition.getStructuralBlocks() ){
 			stateVariables.addAll(structuralBlock.getStateVariables());
 		}
 		return stateVariables;
+	}
+	
+	/**
+	 * Creates DES statement block from differential initial conditions.
+	 * 
+	 * @return
+	 */
+	public StringBuilder getDifferentialInitialConditions(){
+		
+		StringBuilder builder = new StringBuilder();
+		
+		for(StructuralBlock structBlock : scriptDefinition.getStructuralBlocks()){
+			int i = 1;
+			for(DerivativeVariableType variableType : structBlock.getStateVariables()){
+				String initialCondition = new String();
+				if(variableType.getInitialCondition()!=null){
+					InitialValueType initialValueType = variableType.getInitialCondition().getInitialValue();
+					if(initialValueType!=null){
+						if(initialValueType.getAssign().getSymbRef()!=null){
+							initialCondition = initialValueType.getAssign().getSymbRef().getSymbIdRef();
+							builder.append("A_0("+i+") = NM_"+initialCondition.toUpperCase()+"\n"); 
+						}else if(initialValueType.getAssign().getScalar()!=null){
+							RealValueType test = (RealValueType) initialValueType.getAssign().getScalar().getValue();
+							initialCondition = Double.toString(test.getValue());
+							builder.append("A_0("+i+") = "+initialCondition+"\n");
+						}
+					}
+				}
+				i++;
+			}
+		}
+		return builder;
+	}
+	
+	/**
+	 * This method will create part of pred core statement block from individual parameter assignments.
+	 * Currently it refers to  
+	 * @param ip
+	 * @return
+	 */
+	public String doIndividualParameterAssignment(IndividualParameterType ip) {
+		return parser.doIndividualParameterAssignment(ip);
 	}
 }

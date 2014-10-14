@@ -126,8 +126,7 @@ public class ConverterProvider extends Lexer {
 		fout.write(getSimulationStatement());
 
 		parser.writeParameters(fout);
-		PredStatement predStatement = new PredStatement(scriptDefinition);
-		predStatement.getPredStatement(fout);
+//		predStatement.getPredStatement(fout);
 		
 //		parser.getThetasStatement();
 //		parser.getOmegasStatement();

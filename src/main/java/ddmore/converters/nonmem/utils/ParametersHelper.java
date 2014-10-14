@@ -7,6 +7,7 @@ import java.util.Map;
 
 import crx.converter.engine.ScriptDefinition;
 import crx.converter.engine.parts.EstimationStep;
+import crx.converter.engine.parts.EstimationStep.FixedParameter;
 import crx.converter.engine.parts.ParameterBlock;
 import crx.converter.engine.parts.Part;
 import eu.ddmore.libpharmml.dom.commontypes.ScalarRhs;
@@ -25,12 +26,13 @@ public class ParametersHelper {
 	
 	// These are keyed by symbol ID
 	final Map<String, SimpleParameterType> simpleParams = new HashMap<String, SimpleParameterType>();
-	final List<String> thetaParams = new ArrayList<String>();
-	final List<String> omegaParams = new ArrayList<String>();
+	final Map<String, Boolean> thetaParams = new HashMap<String, Boolean>();
+	final Map<String, Boolean> omegaParams = new HashMap<String, Boolean>();	
 	
 	final Map<String, InitialEstimateType> initialEstimates = new HashMap<String, InitialEstimateType>();
 
-	List<ParameterEstimateType> parametersToEstimate = new ArrayList<ParameterEstimateType>(); 
+	List<ParameterEstimateType> parametersToEstimate = new ArrayList<ParameterEstimateType>();
+	List<FixedParameter> fixedParameters = new ArrayList<FixedParameter>();
 
 	final Map<String, ScalarRhs> lowerBounds = new HashMap<String, ScalarRhs>();
 	final Map<String, ScalarRhs> upperBounds = new HashMap<String, ScalarRhs>();
@@ -45,8 +47,8 @@ public class ParametersHelper {
 		
 		final EstimationStep estimationStep = getEstimationStep(scriptDefinition);
 
-		parametersToEstimate = (estimationStep.getParametersToEstimate()!=null)? estimationStep.getParametersToEstimate():new ArrayList<ParameterEstimateType>();
-		
+		parametersToEstimate = (estimationStep.hasParametersToEstimate())? estimationStep.getParametersToEstimate():new ArrayList<ParameterEstimateType>();
+		fixedParameters = (estimationStep.hasFixedParameters())? estimationStep.getFixedParameters():new ArrayList<FixedParameter>();
 		// Find any bounds and initial estimates
 		setAllParameterBounds(parametersToEstimate);
 		
@@ -64,7 +66,7 @@ public class ParametersHelper {
 	 * 
 	 * @return
 	 */
-	public List<String> generateThetas(){
+	public Map<String, Boolean> generateThetas(){
 		//TODO: remove constant declarations and make sure they will be added as part of $PK block
 		return thetaParams;
 	}
@@ -73,9 +75,9 @@ public class ParametersHelper {
 	 * get omega parameters for $OMEGA statement block
 	 * @return
 	 */
-	public List<String> generateOmegas(){
+	public Map<String, Boolean> generateOmegas(){
 		//If any added checks or changes required for omega parameters block, it can be added here.
-			return omegaParams;
+		return omegaParams;
 	}
 	
 	/**
@@ -90,10 +92,16 @@ public class ParametersHelper {
 
 		for(ParameterEstimateType parameter : parametersToEstimate){
 				String paramName = parameter.getSymbRef().getSymbIdRef();
-				if(!(omegaParams.contains(paramName) || paramName.startsWith("sigma") || thetaParams.contains(paramName))){
-							thetaParams.add(paramName);
-						}
+				if(!(omegaParams.containsKey(paramName) || paramName.startsWith("sigma") || thetaParams.containsKey(paramName))){
+							thetaParams.put(paramName, false);
+				}
 			}
+		for(FixedParameter fixedParameter : fixedParameters){
+			String paramName = fixedParameter.p.getSymbRef().getSymbIdRef();
+			if(!(omegaParams.containsKey(paramName) || paramName.startsWith("sigma") || thetaParams.containsKey(paramName))){
+						thetaParams.put(paramName,true);
+			}
+		}
 	}
 	
 	private void setOmegaParameters(){
@@ -103,9 +111,9 @@ public class ParametersHelper {
 			for (ParameterRandomVariableType rv : parameterBlocks.get(0).getRandomVariables()) {
 				
 				if (getDistributionTypeStdDev(rv) != null) {
-					omegaParams.add( getDistributionTypeStdDev(rv).getVar().getVarId() );
+					omegaParams.put(getDistributionTypeStdDev(rv).getVar().getVarId(), false);
 				} else if (getDistributionTypeVariance(rv) != null) {
-					omegaParams.add( getDistributionTypeVariance(rv).getVar().getVarId() );
+					omegaParams.put( getDistributionTypeVariance(rv).getVar().getVarId(), false);
 				}
 			}
 		}
@@ -179,11 +187,11 @@ public class ParametersHelper {
 		return parametersToEstimate;
 	}
 	
-	public List<String> getThetaParams() {
+	public Map<String, Boolean> getThetaParams() {
 		return thetaParams;
 	}
 
-	public List<String> getOmegaParams() {
+	public Map<String, Boolean> getOmegaParams() {
 		return omegaParams;
 	}
 	
