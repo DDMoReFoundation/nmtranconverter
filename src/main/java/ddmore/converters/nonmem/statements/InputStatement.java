@@ -144,8 +144,7 @@ public class InputStatement implements Writeable {
 	}
 
 	/**
-	 * Writes this DataStatement to the given Writer 
-	 * @return
+	 * Writes this statement to the given Writer
 	 */
 	@Override
 	public void write(Writer writer) throws IOException {

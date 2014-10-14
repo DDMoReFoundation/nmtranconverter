@@ -35,8 +35,7 @@ public class ProblemStatement implements Writeable {
 	}
 
 	/**
-	 * Writes this statement to the given Writer 
-	 * @return
+	 * Writes this statement to the given Writer
 	 */
 	@Override
 	public void write(Writer writer) throws IOException {
