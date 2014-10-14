@@ -31,21 +31,23 @@ import javax.xml.bind.JAXBElement;
 
 import crx.converter.engine.Accessor;
 import crx.converter.engine.BaseParser;
+import crx.converter.engine.parts.Artifact;
+import crx.converter.engine.parts.EstimationStep;
+import crx.converter.engine.parts.ObservationBlock;
+import crx.converter.engine.parts.SimulationStep;
+import crx.converter.engine.parts.StructuralBlock;
 import crx.converter.engine.parts.EstimationStep.FixedParameter;
 import crx.converter.engine.parts.EstimationStep.ObjectiveFunctionParameter;
 import crx.converter.engine.parts.ObservationBlock.ObservationParameter;
-import crx.converter.engine.parts.ParameterBlock;
-import crx.converter.engine.parts.StructuralBlock;
+import crx.converter.engine.parts.TrialDesignBlock.ArmIndividual;
 import crx.converter.tree.BinaryTree;
 import crx.converter.tree.Node;
 import ddmore.converters.nonmem.statements.PredStatement;
 import ddmore.converters.nonmem.statements.SigmaStatement;
 import ddmore.converters.nonmem.utils.ParametersHelper;
 import eu.ddmore.libpharmml.dom.IndependentVariableType;
-import eu.ddmore.libpharmml.dom.commontypes.DerivativeVariableType;
-import eu.ddmore.libpharmml.dom.commontypes.InitialValueType;
+import eu.ddmore.libpharmml.dom.commontypes.FunctionDefinitionType;
 import eu.ddmore.libpharmml.dom.commontypes.PharmMLRootType;
-import eu.ddmore.libpharmml.dom.commontypes.RealValueType;
 import eu.ddmore.libpharmml.dom.commontypes.ScalarRhs;
 import eu.ddmore.libpharmml.dom.commontypes.SymbolRefType;
 import eu.ddmore.libpharmml.dom.maths.Condition;
@@ -527,5 +529,136 @@ public class Parser extends BaseParser {
 	public String getScriptFilename(String output_dir) {
 		String format = "%s/%s.%s";
 		return String.format(format, output_dir, run_id, script_file_suffix);
+	}
+	
+	
+	@Override
+	public void writeInterpreterPath(PrintWriter fout) throws IOException {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void writeFunctions(PrintWriter fout,
+			List<FunctionDefinitionType> functions) throws IOException {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void writeModelFunction(PrintWriter fout, StructuralBlock sb)
+			throws IOException {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void writeFunction(FunctionDefinitionType func, String output_dir)
+			throws IOException {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void writeEstimationPKPD(PrintWriter fout, EstimationStep block,
+			String output_dir) throws IOException {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void writeScriptLibraryReferences(PrintWriter fout)
+			throws IOException {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void writeTimeSpan(PrintWriter fout, SimulationStep step)
+			throws IOException {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void writeInitialConditions(PrintWriter fout, StructuralBlock block)
+			throws IOException {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void writeSimulation(PrintWriter fout, StructuralBlock sb)
+			throws IOException {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void writeSimulationOptions(PrintWriter fout) throws IOException {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public List<Artifact> writeContinuous(PrintWriter fout, SimulationStep step) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public String writeSaveCommand(PrintWriter fout, List<Artifact> refs,
+			String output_dir, String id1, String id2) throws IOException {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public void writeArmLoop(PrintWriter fout, List<ArmIndividual> list)
+			throws IOException {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void writeInitObservationBlockParameters(PrintWriter fout,
+			List<ObservationBlock> obs) throws IOException {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void writeVariableAssignments(PrintWriter fout, SimulationStep step)
+			throws IOException {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void writeErrorModel(PrintWriter fout, List<ObservationBlock> ems)
+			throws IOException {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void writePlottingBlockPkPdSimulation(PrintWriter fout,
+			List<Artifact> refs) throws IOException {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void writePlottingBlockPkPdSimulationWithDosing(PrintWriter fout)
+			throws IOException {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void writeExternallyReferencedElement(PrintWriter fout,
+			StructuralBlock sb) throws IOException {
+		// TODO Auto-generated method stub
+		
 	}
 }
