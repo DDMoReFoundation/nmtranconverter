@@ -11,6 +11,7 @@ import crx.converter.engine.parts.EstimationStep;
 import ddmore.converters.nonmem.statements.DataStatement;
 import ddmore.converters.nonmem.statements.EstimationStatement;
 import ddmore.converters.nonmem.statements.PredStatement;
+import ddmore.converters.nonmem.statements.ProblemStatement;
 import ddmore.converters.nonmem.statements.SimulationStatement;
 import eu.ddmore.convertertoolbox.api.response.ConversionReport;
 import eu.ddmore.convertertoolbox.domain.LanguageVersionImpl;
@@ -91,7 +92,10 @@ public class ConverterProvider extends Lexer {
 		if (fout == null || output_dir == null) return;
 		
 		ScriptDefinition scriptDefinition = getScriptDefinition();
-		fout.write(getProblemStatement());
+
+		ProblemStatement problemStatement = new ProblemStatement(getModelName());
+		problemStatement.write(fout);
+		writeNewLine(fout);
 
 		//Initialise data statement before generating input statement and data statement
 		DataStatement dataStatement;
@@ -138,12 +142,6 @@ public class ConverterProvider extends Lexer {
 		return stringBuilder.toString();
 	}
 
-	private String getProblemStatement(){
-		String title = getModelName();
-		String format = "\n$PROBLEM \t%s\n";
-		return (title != null)?String.format(format, title):String.format(format);
-	}
-	
 	private String getSimulationStatement(){
 		SimulationStatement simulationStatement =new SimulationStatement(getSimulationStep());
 		if(simulationStatement.getSimulationStep()!=null){
