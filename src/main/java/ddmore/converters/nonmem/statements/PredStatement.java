@@ -17,6 +17,7 @@ import ddmore.converters.nonmem.Parser;
 import eu.ddmore.libpharmml.dom.commontypes.DerivativeVariableType;
 import eu.ddmore.libpharmml.dom.commontypes.InitialValueType;
 import eu.ddmore.libpharmml.dom.commontypes.RealValueType;
+import eu.ddmore.libpharmml.dom.commontypes.VariableDefinitionType;
 import eu.ddmore.libpharmml.dom.modeldefn.ContinuousCovariateType;
 import eu.ddmore.libpharmml.dom.modeldefn.CovariateDefinitionType;
 import eu.ddmore.libpharmml.dom.modeldefn.CovariateRelationType;
@@ -64,6 +65,11 @@ public class PredStatement {
 		}
 	}
 	
+	/**
+	 * From lexer : can be removed
+	 * @param key
+	 * @return
+	 */
 	public BinaryTree getStatement(Object key) {
 		BinaryTree bt = null;
 		
@@ -152,18 +158,40 @@ public class PredStatement {
 		int i=1;
 		for (DerivativeVariableType variableType : derivativeVarList){
 			String variable = "NM_"+variableType.getSymbId().toUpperCase();
-			diffEqStatementBlock.append("\tNM_"+variableType.getSymbId().toUpperCase()+" = A("+i+")\n");
+			diffEqStatementBlock.append("NM_"+variableType.getSymbId().toUpperCase()+" = A("+i+")\n");
 			derivativeVariableMap.put(variable, "A("+i+")");
 			i++;
 		}
-		
-		//TODO : look through struct vars and get equations in place. and convert equations
-		
-		//TODO : Then convert piecewise equations. handle constants and other special chars.
-		
+		diffEqStatementBlock.append("\n");
+		for(StructuralBlock block : scriptDefinition.getStructuralBlocks()){
+			for (VariableDefinitionType definitionType: block.getLocalVariables()){
+				diffEqStatementBlock.append(parser.parse(definitionType));
+				
+			}
+			diffEqStatementBlock.append("\n");
+			for(DerivativeVariableType variableType: block.getStateVariables()){
+				diffEqStatementBlock.append(parser.parse(variableType));
+			}
+		}
 		return diffEqStatementBlock;
 
 	}
+	
+//	public String getStructuralParameters(){
+////		StructuralBlock block = lexer.getStructuralBlocks();
+//
+//		for(StructuralBlock block : scriptDefinition.getStructuralBlocks()){
+//			for (VariableDefinitionType definitionType: block.getLocalVariables()){
+//				String next = parser.parse(definitionType);
+//				
+//			}
+//			for(DerivativeVariableType variableType: block.getStateVariables()){
+//				String next = parser.parse(variableType);
+//				System.out.println("Equation : "+next);
+//			}
+//		}
+//		return "";
+//	}
 
 	/**
 	 * gets pk block for pred statement

@@ -49,9 +49,11 @@ import ddmore.converters.nonmem.statements.SigmaStatement;
 import ddmore.converters.nonmem.statements.ThetaStatement;
 import ddmore.converters.nonmem.utils.ParametersHelper;
 import eu.ddmore.libpharmml.dom.IndependentVariableType;
+import eu.ddmore.libpharmml.dom.commontypes.DerivativeVariableType;
 import eu.ddmore.libpharmml.dom.commontypes.FunctionDefinitionType;
 import eu.ddmore.libpharmml.dom.commontypes.PharmMLRootType;
 import eu.ddmore.libpharmml.dom.commontypes.SymbolRefType;
+import eu.ddmore.libpharmml.dom.commontypes.VariableDefinitionType;
 import eu.ddmore.libpharmml.dom.maths.Condition;
 import eu.ddmore.libpharmml.dom.maths.ConstantType;
 import eu.ddmore.libpharmml.dom.maths.PieceType;
@@ -73,7 +75,7 @@ public class Parser extends BaseParser {
 	ParametersHelper parameters;
 	ArrayList<String> thetaSet = new ArrayList<String>();
 	private final String THETA = "THETA";
-
+	
 	public ParametersHelper getParameters() {
 		return parameters;
 	}
@@ -106,19 +108,21 @@ public class Parser extends BaseParser {
 		if (isIndependentVariable(element)) symbol = doIndependentVariable((IndependentVariableType) element);
 		else if (lexer.isModelParameter(symbol)) {
 			Integer idx = lexer.getModelParameterIndex(symbol);
-			String format = "%s[%s]";
-			symbol = String.format(format, param_model_symbol, idx);
-		} else if (lexer.isStateVariable(symbol)) {
-			Integer idx = lexer.getStateVariableIndex(symbol);
-			String format = "%s[%s]";
-			symbol = String.format(format, state_vector_symbol, idx);
-		} else if (lexer.isIndividualParameter(symbol)) {
-			Integer idx = lexer.getIndividualParameterIndex(symbol);
-			String format = "%s[%s]";
-			symbol = String.format(format, indiv_param_symbol, idx);
+			String format = "%s_%s";
+			symbol = String.format(format, THETA, idx);
 		}
+		//TODO: need to verify NM_ appending to parameters.
+//		else if (lexer.isStateVariable(symbol)) {
+////			Integer idx = lexer.getStateVariableIndex(symbol);
+//			String format = "%s_%s";
+//			symbol = String.format(format, "NM", symbol.toUpperCase());
+//		} else if (lexer.isIndividualParameter(symbol)) {
+//			Integer idx = lexer.getIndividualParameterIndex(symbol);
+//			String format = "%s_%s";
+//			symbol = String.format(format, "NM", symbol.toUpperCase());
+//		}
 		
-		return symbol;
+		return "NM_"+symbol;
 	}
 	
 	@Override
@@ -131,11 +135,15 @@ public class Parser extends BaseParser {
 			
 			if (!isString_(leaf.data)) leaf.data = getSymbol(leaf.data);
 			String current_value = "", current_symbol = "_FAKE_FAKE_FAKE_FAKE_";
-			if (isDerivative(context) || isParameter(context) || isLocalVariable(context)) {
-				String format = "(%s); %s\n", description = "";
+			if(isLocalVariable(context)){
+				String format = "%s = %s\n";
+				current_symbol = "NM_"+getSymbol(context);
+				current_value = String.format(format, current_symbol, leaf.data);
+			}else if (isDerivative(context) || isParameter(context)) {
+				String format = "%s = %s\n", description = "";
 				if (isRootType(context)) description = readDescription((PharmMLRootType) context);
 				current_symbol = getSymbol(context);
-				current_value = String.format(format, leaf.data, description);
+				current_value = String.format(format, "NM_"+description, leaf.data);
 			} else if (isInitialCondition(context) || isFunction(context) || isSequence(context) || isVector(context)) {
 				String format = "(%s) ";
 				current_value = String.format(format, (String) leaf.data);
@@ -143,7 +151,7 @@ public class Parser extends BaseParser {
 				String format = "%s ";
 				current_value = String.format(format, (String) leaf.data);
 			} else if (isContinuous(context)) {
-				current_symbol = getSymbol(context);
+				current_symbol = "NM_"+getSymbol(context);
 				String format = "%s = %s; \n";
 				current_value = String.format(format, current_symbol, leaf.data);
 			} else if (isActivity(context)) { 
@@ -152,15 +160,15 @@ public class Parser extends BaseParser {
 				current_value = (String) leaf.data;
 			} else if (isRandomVariable(context)) {
 				ParameterRandomVariableType rv = (ParameterRandomVariableType) context;
-				String format = "%s <- %s;\n";
+				String format = "%s = %s;\n";
 				current_value = String.format(format, rv.getSymbId(), (String) leaf.data);
 			} else if (isCovariate(context)) { 
 				CovariateDefinitionType cov = (CovariateDefinitionType) context;
-				String format = "%s <- %s;\n";
+				String format = "%s = %s;\n";
 				current_value = String.format(format, cov.getSymbId(), (String) leaf.data);
 			} else if (isObservationParameter(context)) {
 				ObservationParameter op = (ObservationParameter) context;
-				String format = "%s <- %s;\n";
+				String format = "%s = %s;\n";
 				current_value = String.format(format, op.getName(), (String) leaf.data);
 			} else if (isCorrelation(context)) {
 				current_value = (String) leaf.data;
@@ -276,9 +284,9 @@ public class Parser extends BaseParser {
 			else if (piece.equals(else_block)) continue;
 			
 			if (!(conditional_stmts[i] != null && assignment_stmts[i] != null)) continue;	
-				String operator = "if", format = "%s (%s) {\n %s = %s \n";
+				String operator = "IF", format = "%s (%s) {\n %s = %s \n";
 				if (block_assignment > 0) {
-				operator = "} else if ";
+				operator = "} ELSE IF ";
 				format = " %s (%s) {\n %s = %s \n";
 			}
 				
@@ -287,7 +295,7 @@ public class Parser extends BaseParser {
 		}
 		
 		if (else_block != null && else_index >= 0) {
-			block.append("} else {\n");
+			block.append("} ELSE {\n");
 			String format = " %s = %s\n";
 			block.append(String.format(format, field_tag, assignment_stmts[else_index]));
 		}
@@ -390,7 +398,6 @@ public class Parser extends BaseParser {
 	 */
 	public void buildPredStatement(PrintWriter fout){
 		PredStatement predStatement = new PredStatement(lexer.getScriptDefinition(),this);
-		
 		predStatement.getPredStatement(fout);
 	}
 	
@@ -530,10 +537,15 @@ public class Parser extends BaseParser {
 		return String.format(format, output_dir, run_id, script_file_suffix);
 	}
 	
-	public String getStructuralParameters(){
-		List<StructuralBlock> block = lexer.getStructuralBlocks();
-		return "";
+	/**
+	 * Method to be used by other classes which doesnt have visibility to BaseParser
+	 * @param context
+	 * @return
+	 */
+	public String parse(Object context){
+		return parse(context, lexer.getStatement(context));
 	}
+	
 	
 	@Override
 	public void writeInterpreterPath(PrintWriter fout) throws IOException {
