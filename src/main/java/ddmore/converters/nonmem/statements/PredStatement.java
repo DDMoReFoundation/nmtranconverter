@@ -2,8 +2,10 @@ package ddmore.converters.nonmem.statements;
 
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import crx.converter.engine.ScriptDefinition;
@@ -36,6 +38,7 @@ public class PredStatement {
 	
 	ScriptDefinition scriptDefinition;
 	List<DerivativeVariableType> derivativeVarList = new ArrayList<DerivativeVariableType>();
+	Map<String, String> derivativeVariableMap = new HashMap<String, String>();
 	Parser parser;
 
 
@@ -144,9 +147,22 @@ public class PredStatement {
 	 * 
 	 */
 	private StringBuilder getDifferentialEquationsStatement() {
+		StringBuilder diffEqStatementBlock = new StringBuilder();
+		diffEqStatementBlock.append("\n$DES\n");
+		int i=1;
+		for (DerivativeVariableType variableType : derivativeVarList){
+			String variable = "NM_"+variableType.getSymbId().toUpperCase();
+			diffEqStatementBlock.append("\tNM_"+variableType.getSymbId().toUpperCase()+" = A("+i+")\n");
+			derivativeVariableMap.put(variable, "A("+i+")");
+			i++;
+		}
 		
-		return new StringBuilder();
+		//TODO : look through struct vars and get equations in place. and convert equations
 		
+		//TODO : Then convert piecewise equations. handle constants and other special chars.
+		
+		return diffEqStatementBlock;
+
 	}
 
 	/**

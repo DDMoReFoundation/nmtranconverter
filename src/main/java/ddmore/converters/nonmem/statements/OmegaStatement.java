@@ -10,12 +10,12 @@ import crx.converter.engine.ScriptDefinition;
  * @author sdeshmukh
  *
  */
-public class OmegaStatement {
+public class OmegaStatement extends Parameter {
 	
 	private ScriptDefinition scriptDefinition;
 
-	public OmegaStatement(ScriptDefinition scriptDefinition){
-		this.setScriptDefinition(scriptDefinition);
+	public OmegaStatement(String symbId){
+		super(symbId);
 	}
 	
 	public void getOmegaStatement(PrintWriter fout){

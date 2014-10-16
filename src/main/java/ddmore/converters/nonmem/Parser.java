@@ -33,22 +33,24 @@ import crx.converter.engine.Accessor;
 import crx.converter.engine.BaseParser;
 import crx.converter.engine.parts.Artifact;
 import crx.converter.engine.parts.EstimationStep;
-import crx.converter.engine.parts.ObservationBlock;
-import crx.converter.engine.parts.SimulationStep;
-import crx.converter.engine.parts.StructuralBlock;
 import crx.converter.engine.parts.EstimationStep.FixedParameter;
 import crx.converter.engine.parts.EstimationStep.ObjectiveFunctionParameter;
+import crx.converter.engine.parts.ObservationBlock;
 import crx.converter.engine.parts.ObservationBlock.ObservationParameter;
+import crx.converter.engine.parts.SimulationStep;
+import crx.converter.engine.parts.StructuralBlock;
 import crx.converter.engine.parts.TrialDesignBlock.ArmIndividual;
 import crx.converter.tree.BinaryTree;
 import crx.converter.tree.Node;
+import ddmore.converters.nonmem.statements.OmegaStatement;
+import ddmore.converters.nonmem.statements.Parameter;
 import ddmore.converters.nonmem.statements.PredStatement;
 import ddmore.converters.nonmem.statements.SigmaStatement;
+import ddmore.converters.nonmem.statements.ThetaStatement;
 import ddmore.converters.nonmem.utils.ParametersHelper;
 import eu.ddmore.libpharmml.dom.IndependentVariableType;
 import eu.ddmore.libpharmml.dom.commontypes.FunctionDefinitionType;
 import eu.ddmore.libpharmml.dom.commontypes.PharmMLRootType;
-import eu.ddmore.libpharmml.dom.commontypes.ScalarRhs;
 import eu.ddmore.libpharmml.dom.commontypes.SymbolRefType;
 import eu.ddmore.libpharmml.dom.maths.Condition;
 import eu.ddmore.libpharmml.dom.maths.ConstantType;
@@ -65,7 +67,6 @@ import eu.ddmore.libpharmml.dom.modeldefn.LhsTransformationType;
 import eu.ddmore.libpharmml.dom.modeldefn.ParameterRandomEffectType;
 import eu.ddmore.libpharmml.dom.modeldefn.ParameterRandomVariableType;
 import eu.ddmore.libpharmml.dom.modeldefn.SimpleParameterType;
-import eu.ddmore.libpharmml.dom.modellingsteps.InitialEstimateType;
 import eu.ddmore.libpharmml.dom.trialdesign.ActivityType;
 
 public class Parser extends BaseParser {
@@ -106,7 +107,7 @@ public class Parser extends BaseParser {
 		else if (lexer.isModelParameter(symbol)) {
 			Integer idx = lexer.getModelParameterIndex(symbol);
 			String format = "%s[%s]";
-			symbol = String.format(format, THETA, idx);
+			symbol = String.format(format, param_model_symbol, idx);
 		} else if (lexer.isStateVariable(symbol)) {
 			Integer idx = lexer.getStateVariableIndex(symbol);
 			String format = "%s[%s]";
@@ -131,7 +132,7 @@ public class Parser extends BaseParser {
 			if (!isString_(leaf.data)) leaf.data = getSymbol(leaf.data);
 			String current_value = "", current_symbol = "_FAKE_FAKE_FAKE_FAKE_";
 			if (isDerivative(context) || isParameter(context) || isLocalVariable(context)) {
-				String format = "(%s, FIX); %s\n", description = "";
+				String format = "(%s); %s\n", description = "";
 				if (isRootType(context)) description = readDescription((PharmMLRootType) context);
 				current_symbol = getSymbol(context);
 				current_value = String.format(format, leaf.data, description);
@@ -143,7 +144,7 @@ public class Parser extends BaseParser {
 				current_value = String.format(format, (String) leaf.data);
 			} else if (isContinuous(context)) {
 				current_symbol = getSymbol(context);
-				String format = "%s <- %s; \n";
+				String format = "%s = %s; \n";
 				current_value = String.format(format, current_symbol, leaf.data);
 			} else if (isActivity(context)) { 
 				current_value = getSymbol(new ActivityDoseAmountBlock((ActivityType) context, (String) leaf.data));
@@ -275,10 +276,10 @@ public class Parser extends BaseParser {
 			else if (piece.equals(else_block)) continue;
 			
 			if (!(conditional_stmts[i] != null && assignment_stmts[i] != null)) continue;	
-				String operator = "if", format = "%s (%s) {\n %s <- %s \n";
+				String operator = "if", format = "%s (%s) {\n %s = %s \n";
 				if (block_assignment > 0) {
 				operator = "} else if ";
-				format = " %s (%s) {\n %s <- %s \n";
+				format = " %s (%s) {\n %s = %s \n";
 			}
 				
 			block.append(String.format(format, operator, conditional_stmts[i], field_tag, assignment_stmts[i]));
@@ -287,7 +288,7 @@ public class Parser extends BaseParser {
 		
 		if (else_block != null && else_index >= 0) {
 			block.append("} else {\n");
-			String format = " %s <- %s\n";
+			String format = " %s = %s\n";
 			block.append(String.format(format, field_tag, assignment_stmts[else_index]));
 		}
 		block.append("}");
@@ -311,11 +312,8 @@ public class Parser extends BaseParser {
 		parameters.getParameters(lexer.getModelParameters());
 		
 		Map<String, SimpleParameterType> simpleParameters= parameters.getSimpleParams();
-		Map<String, InitialEstimateType> initialEstimates = parameters.getInitialEstimates();
-		Map<String, ScalarRhs> lowerBoundsMap = parameters.getLowerBounds();
-		Map<String, ScalarRhs> upperBoundsMap = parameters.getUpperBounds();
-		Map<String, Boolean> thetas = parameters.getThetaParams();
-		Map<String, Boolean> omegas = parameters.getOmegaParams();
+		Map<String, ThetaStatement> thetas = parameters.getThetaParams();
+		Map<String, OmegaStatement> omegas = parameters.getOmegaParams();
 
 		SigmaStatement sigmaStatement = new SigmaStatement(parameters);
 		List<String> sigmaParams = sigmaStatement.getSigmaStatement();
@@ -325,15 +323,15 @@ public class Parser extends BaseParser {
 
 		if (! thetas.isEmpty()) {
 			fout.write("\n$"+THETA+"\n");
-			for (final String thetaVar : thetas.keySet()) {
-				writeParameter(thetaVar, initialEstimates.get(thetaVar), lowerBoundsMap.get(thetaVar), upperBoundsMap.get(thetaVar), simpleParameters.get(thetaVar), fout);
+			for (String thetaVar : thetas.keySet()) {
+				writeParameter(thetas.get(thetaVar), simpleParameters.get(thetaVar), fout);
 			}
 		}
 
 		if (! omegas.isEmpty()) {
 			fout.write("\n$OMEGA\n");
 			for (final String omegaVar : omegas.keySet()) {
-				writeParameter(omegaVar, initialEstimates.get(omegaVar), lowerBoundsMap.get(omegaVar), upperBoundsMap.get(omegaVar), simpleParameters.get(omegaVar), fout);
+				writeParameter(omegas.get(omegaVar), simpleParameters.get(omegaVar), fout);
 			}
 		}
 
@@ -346,42 +344,44 @@ public class Parser extends BaseParser {
 	}
 
 	/**
+	 * Write Theta and omega parameters according to the initial estimates, lower and upper bounds provided.
+	 * TODO: Fixed parameter handling needs to be confirmed with @ Henrik.
 	 * 
-	 * @param symbolId
-	 * @param initialEst
-	 * @param lowerBound
-	 * @param upperBound
+	 * @param param
 	 * @param simpleParam
 	 * @param fout
 	 */
-	private void writeParameter(final String symbolId,
-								final InitialEstimateType initialEst, final ScalarRhs lowerBound, final ScalarRhs upperBound, final SimpleParameterType simpleParam,
-								final PrintWriter fout) {
-		
+	private void writeParameter(Parameter param, SimpleParameterType simpleParam, PrintWriter fout) {
+		String startParens = "(";
+		String endParens = ") ; ";
 		String description = readDescription((PharmMLRootType) simpleParam);
 		if(description.isEmpty()){
-			description = symbolId;
+			description = param.getSymbId();
 		}
 		
-		if (lowerBound != null && upperBound != null) {
-			fout.write("(");
-			parse(lowerBound, lexer.getStatement(lowerBound), fout);
-			if (initialEst != null) {
+		fout.write(startParens);
+		if (param.getLowerBound() != null && param.getUpperBound() != null) {
+			
+			//TODO: What to do if param.isFixed is true ?
+			parse(param.getLowerBound(), lexer.getStatement(param.getLowerBound()), fout);
+			if (param.getInitialEstimate() != null) {
 				fout.write(",");
-				parse(initialEst, lexer.getStatement(initialEst), fout);
+				parse(param.getInitialEstimate(), lexer.getStatement(param.getInitialEstimate()), fout);
 			}
 			fout.write(",");
-			parse(upperBound, lexer.getStatement(upperBound), fout);
-			fout.write(") ; " + description + "\n");
-		} else if (initialEst != null) {
-			fout.write("(");
-			parse(initialEst, lexer.getStatement(initialEst), fout);
-			fout.write(") ; " + description + "\n");
-		} else {
+			parse(param.getUpperBound(), lexer.getStatement(param.getUpperBound()), fout);			
+		} else if (param.getInitialEstimate() != null) {
+			parse(param.getInitialEstimate(), lexer.getStatement(param.getInitialEstimate()), fout);
+			//Add 'FIX' if its fixed parameter
+			endParens = (param.isFixed())? ", FIX"+endParens : endParens; 
+		}else {
 			// Just use the initial value defined in the ParameterModel block
+			//TODO: this approach needs to be confirmed
 			parse(simpleParam, lexer.getStatement(simpleParam), fout);
 		}
+		fout.write(endParens + description + "\n");
 	}
+
 	
 	/**
 	 * Builds and writes pred statement block to file.
@@ -506,7 +506,6 @@ public class Parser extends BaseParser {
 						if (random_effect == null) continue;
 						++nRandomEffects;
 						stmt.append(" ETA("+ nRandomEffects+")");
-						
 					}
 				}
 			}
@@ -531,6 +530,10 @@ public class Parser extends BaseParser {
 		return String.format(format, output_dir, run_id, script_file_suffix);
 	}
 	
+	public String getStructuralParameters(){
+		List<StructuralBlock> block = lexer.getStructuralBlocks();
+		return "";
+	}
 	
 	@Override
 	public void writeInterpreterPath(PrintWriter fout) throws IOException {

@@ -10,12 +10,12 @@ import crx.converter.engine.ScriptDefinition;
  * @author sdeshmukh
  *
  */
-public class ThetaStatement {
+public class ThetaStatement extends Parameter {
 	
 	private ScriptDefinition scriptDefinition;
 
-	public ThetaStatement(ScriptDefinition scriptDefinition){
-		this.setScriptDefinition(scriptDefinition);
+	public ThetaStatement(String symbId){
+		super(symbId);
 	}
 	
 	public void getThetaStatement(PrintWriter fout){
