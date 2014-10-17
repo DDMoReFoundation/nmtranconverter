@@ -460,7 +460,8 @@ public class Parser extends BaseParser {
     			
     			PopulationParameter pop_param = lcov.getPopulationParameter();
     			if (pop_param != null) {
-    				pop_param_symbol = getThetaForSymbol(pop_param.getAssign().getSymbRef().getSymbIdRef());
+    				//Using variable instead of Theta.
+    				pop_param_symbol = "NM_"+pop_param.getAssign().getSymbRef().getSymbIdRef();//getThetaForSymbol(pop_param.getAssign().getSymbRef().getSymbIdRef());
     				if (transform == LhsTransformationType.LOG) pop_param_symbol = String.format("LOG(%s)", pop_param_symbol);
     	    		else if (transform == LhsTransformationType.LOGIT) pop_param_symbol = String.format("LOGIT(%s)", pop_param_symbol);
     				stmt.append(String.format("(%s)", pop_param_symbol));
@@ -486,7 +487,7 @@ public class Parser extends BaseParser {
     							if (fixed_effects != null) {
     								for (FixedEffectRelationType fixed_effect : fixed_effects) {
     									if (fixed_effect == null) continue;
-    									String  fixed_effect_stmt = getThetaForSymbol(fixed_effect.getSymbRef().getSymbIdRef());
+    									String  fixed_effect_stmt = "NM_"+fixed_effect.getSymbRef().getSymbIdRef();//getThetaForSymbol(fixed_effect.getSymbRef().getSymbIdRef());
     									if(fixed_effect_stmt.isEmpty())
     										fixed_effect_stmt = parse(fixed_effect, lexer.getStatement(fixed_effect));
     									cov_stmt = fixed_effect_stmt + " * " + cov_stmt;

@@ -48,38 +48,24 @@ public class PredStatement {
 		String StatementName = "\n$PRED\n";
 		if(!derivativeVarList.isEmpty()){
 			//TODO: Add $SUB block. need to have details around it.
-			fout.write(StatementName);
 			fout.write("\n$SUBS ADVAN13 TOL=9\n");
 			fout.write(getDerivativePredStatement().toString());
 		}else{
+			fout.write(StatementName);
 			getNonDerivativePredStatement();
 		}
 	}
-	
-	/**
-	 * From lexer : can be removed
-	 * @param key
-	 * @return
-	 */
-	public BinaryTree getStatement(Object key) {
-		BinaryTree bt = null;
-		
-		if (key != null) {
-			if (scriptDefinition.getStatementsMap().containsKey(key)) {
-				bt = scriptDefinition.getStatementsMap().get(key);
-				scriptDefinition.getStatementsMap().remove(key);
-			}
-		}
-		
-		return bt;
-	}
 
+	/**
+	 * Returns non derivative pred statement.
+	 * 
+	 */
 	private void getNonDerivativePredStatement() {
         StringBuilder sb = new StringBuilder();
-        sb.append("IF (AMT.GT.0) ${rename('DOSE')}=AMT");
-        getPredCoreStatement();
-        getErrorStatement();
-		
+        //NM_D is for DOSE
+        sb.append("\nIF (AMT.GT.0) NM_D=AMT\n");
+        sb.append(getPredCoreStatement());
+        sb.append(getErrorStatement());
 	}
 	
 	/**
@@ -117,7 +103,7 @@ public class PredStatement {
 		DerivativePredblock.append(getPKStatement());
 		DerivativePredblock.append(getDifferentialEquationsStatement());
 		getAESStatement();
-        getErrorStatement();
+		DerivativePredblock.append(getErrorStatement());
         
         return DerivativePredblock;
 	}
@@ -159,17 +145,29 @@ public class PredStatement {
 	
 	/**
 	 * get Error statement for nonmem pred block
+	 * @return 
 	 * 
 	 */
-	private void getErrorStatement() {
-
+	private String getErrorStatement() {
+		StringBuilder errorBlock = new StringBuilder();
+		errorBlock.append("\n$ERROR\n");
+		
 		List<ObservationBlock> observationBlocks= scriptDefinition.getObservationBlocks();
 		for(ObservationBlock block : observationBlocks){
-			ObservationErrorType errorType = block.getObservationError(); 
+			ObservationErrorType errorType = block.getObservationError();
+			String name = errorType.getSymbId();
+			//Check if 'name' is in derivativeVarList or block.getLocalVariables(), 
+			//if it is part of block.getLocalVariables() then it needs to be renamed
+			
+			// this name will be first part of RHS of equation 
+			// Y= <name> + (function definition)*EPS(<sigma_dependent_index>)
+			
+			//for second part of this equation we need to get hold of function definition and index dependent on sigma.
 			
 		}
 		
 		
+		return "";
 	}
 
 	/**
