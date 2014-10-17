@@ -106,12 +106,13 @@ public class Parser extends BaseParser {
 		PharmMLRootType element = a.fetchElement(o);
 		
 		if (isIndependentVariable(element)) symbol = doIndependentVariable((IndependentVariableType) element);
-		else if (lexer.isModelParameter(symbol)) {
-			Integer idx = lexer.getModelParameterIndex(symbol);
-			String format = "%s_%s";
-			symbol = String.format(format, THETA, idx);
-		}
+		
 		//TODO: need to verify NM_ appending to parameters.
+//		else if (lexer.isModelParameter(symbol)) {
+//			Integer idx = lexer.getModelParameterIndex(symbol);
+//			String format = "%s_%s";
+//			symbol = String.format(format, "NM", symbol.toUpperCase());
+//		}
 //		else if (lexer.isStateVariable(symbol)) {
 ////			Integer idx = lexer.getStateVariableIndex(symbol);
 //			String format = "%s_%s";

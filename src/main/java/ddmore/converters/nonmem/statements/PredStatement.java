@@ -11,23 +11,13 @@ import java.util.Set;
 import crx.converter.engine.ScriptDefinition;
 import crx.converter.engine.parts.ParameterBlock;
 import crx.converter.engine.parts.StructuralBlock;
-import crx.converter.spi.IParser;
 import crx.converter.tree.BinaryTree;
 import ddmore.converters.nonmem.Parser;
 import eu.ddmore.libpharmml.dom.commontypes.DerivativeVariableType;
 import eu.ddmore.libpharmml.dom.commontypes.InitialValueType;
 import eu.ddmore.libpharmml.dom.commontypes.RealValueType;
 import eu.ddmore.libpharmml.dom.commontypes.VariableDefinitionType;
-import eu.ddmore.libpharmml.dom.modeldefn.ContinuousCovariateType;
-import eu.ddmore.libpharmml.dom.modeldefn.CovariateDefinitionType;
-import eu.ddmore.libpharmml.dom.modeldefn.CovariateRelationType;
-import eu.ddmore.libpharmml.dom.modeldefn.FixedEffectRelationType;
 import eu.ddmore.libpharmml.dom.modeldefn.IndividualParameterType;
-import eu.ddmore.libpharmml.dom.modeldefn.LhsTransformationType;
-import eu.ddmore.libpharmml.dom.modeldefn.ParameterRandomEffectType;
-import eu.ddmore.libpharmml.dom.modeldefn.IndividualParameterType.GaussianModel;
-import eu.ddmore.libpharmml.dom.modeldefn.IndividualParameterType.GaussianModel.LinearCovariate;
-import eu.ddmore.libpharmml.dom.modeldefn.IndividualParameterType.GaussianModel.LinearCovariate.PopulationParameter;
 
 /**
  * Creates and adds estimation statement to nonmem file from script definition.
@@ -53,10 +43,9 @@ public class PredStatement {
 	}
 	
 	public void getPredStatement(PrintWriter fout){
-//		StringBuilder predStatementblock = new StringBuilder();
 		String StatementName = "\n$PRED\n";
 		if(!derivativeVarList.isEmpty()){
-			//Add $SUB block
+			//TODO: Add $SUB block. need to have details around it.
 			fout.write(StatementName);
 			fout.write("\n$SUBS ADVAN13 TOL=9\n");
 			fout.write(getDerivativePredStatement().toString());
@@ -132,23 +121,6 @@ public class PredStatement {
 	}
 
 	/**
-	 * get Error statement for nonmem pred block
-	 * 
-	 */
-	private void getErrorStatement() {
-		// TODO Auto-generated method stub
-		
-	}
-
-	/**
-	 * 
-	 */
-	private void getAESStatement() {
-		// TODO Auto-generated method stub
-		
-	}
-
-	/**
 	 * gets DES block for pred statement
 	 * 
 	 */
@@ -159,40 +131,47 @@ public class PredStatement {
 		for (DerivativeVariableType variableType : derivativeVarList){
 			String variable = "NM_"+variableType.getSymbId().toUpperCase();
 			diffEqStatementBlock.append("NM_"+variableType.getSymbId().toUpperCase()+" = A("+i+")\n");
-			derivativeVariableMap.put(variable, "A("+i+")");
+			derivativeVariableMap.put(variable, Integer.toString(i));
 			i++;
 		}
 		diffEqStatementBlock.append("\n");
 		for(StructuralBlock block : scriptDefinition.getStructuralBlocks()){
 			for (VariableDefinitionType definitionType: block.getLocalVariables()){
 				diffEqStatementBlock.append(parser.parse(definitionType));
-				
 			}
 			diffEqStatementBlock.append("\n");
 			for(DerivativeVariableType variableType: block.getStateVariables()){
-				diffEqStatementBlock.append(parser.parse(variableType));
+				String parsedDADT = parser.parse(variableType);
+				String variable = "NM_"+variableType.getSymbId().toUpperCase();
+				if(derivativeVariableMap.keySet().contains(variable)){
+					String index = derivativeVariableMap.get(variable);
+					//TODO: String formatting can go as part of formatter class. 
+					parsedDADT = parsedDADT.replaceFirst(variable+" =", "DADT("+index+") =");
+				}
+				diffEqStatementBlock.append(parsedDADT);
 			}
 		}
 		return diffEqStatementBlock;
 
 	}
 	
-//	public String getStructuralParameters(){
-////		StructuralBlock block = lexer.getStructuralBlocks();
-//
-//		for(StructuralBlock block : scriptDefinition.getStructuralBlocks()){
-//			for (VariableDefinitionType definitionType: block.getLocalVariables()){
-//				String next = parser.parse(definitionType);
-//				
-//			}
-//			for(DerivativeVariableType variableType: block.getStateVariables()){
-//				String next = parser.parse(variableType);
-//				System.out.println("Equation : "+next);
-//			}
-//		}
-//		return "";
-//	}
+	/**
+	 * get Error statement for nonmem pred block
+	 * 
+	 */
+	private void getErrorStatement() {
 
+		
+	}
+
+	/**
+	 * 
+	 */
+	private void getAESStatement() {
+		// TODO Auto-generated method stub
+		
+	}
+	
 	/**
 	 * gets pk block for pred statement
 	 */
@@ -215,6 +194,7 @@ public class PredStatement {
 
 	/**
 	 * get model statement block for pred statement of nonmem file.
+	 * 
 	 */
 	private StringBuilder getModelStatement() {
 		StringBuilder modelBlock = new StringBuilder();
