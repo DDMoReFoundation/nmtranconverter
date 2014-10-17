@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Set;
 
 import crx.converter.engine.ScriptDefinition;
+import crx.converter.engine.parts.ObservationBlock;
 import crx.converter.engine.parts.ParameterBlock;
 import crx.converter.engine.parts.StructuralBlock;
 import crx.converter.tree.BinaryTree;
@@ -18,6 +19,7 @@ import eu.ddmore.libpharmml.dom.commontypes.InitialValueType;
 import eu.ddmore.libpharmml.dom.commontypes.RealValueType;
 import eu.ddmore.libpharmml.dom.commontypes.VariableDefinitionType;
 import eu.ddmore.libpharmml.dom.modeldefn.IndividualParameterType;
+import eu.ddmore.libpharmml.dom.modeldefn.ObservationErrorType;
 
 /**
  * Creates and adds estimation statement to nonmem file from script definition.
@@ -161,6 +163,12 @@ public class PredStatement {
 	 */
 	private void getErrorStatement() {
 
+		List<ObservationBlock> observationBlocks= scriptDefinition.getObservationBlocks();
+		for(ObservationBlock block : observationBlocks){
+			ObservationErrorType errorType = block.getObservationError(); 
+			
+		}
+		
 		
 	}
 

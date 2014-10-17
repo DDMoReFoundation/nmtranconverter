@@ -49,11 +49,9 @@ import ddmore.converters.nonmem.statements.SigmaStatement;
 import ddmore.converters.nonmem.statements.ThetaStatement;
 import ddmore.converters.nonmem.utils.ParametersHelper;
 import eu.ddmore.libpharmml.dom.IndependentVariableType;
-import eu.ddmore.libpharmml.dom.commontypes.DerivativeVariableType;
 import eu.ddmore.libpharmml.dom.commontypes.FunctionDefinitionType;
 import eu.ddmore.libpharmml.dom.commontypes.PharmMLRootType;
 import eu.ddmore.libpharmml.dom.commontypes.SymbolRefType;
-import eu.ddmore.libpharmml.dom.commontypes.VariableDefinitionType;
 import eu.ddmore.libpharmml.dom.maths.Condition;
 import eu.ddmore.libpharmml.dom.maths.ConstantType;
 import eu.ddmore.libpharmml.dom.maths.PieceType;
@@ -105,7 +103,10 @@ public class Parser extends BaseParser {
 		Accessor a = lexer.getAccessor();
 		PharmMLRootType element = a.fetchElement(o);
 		
-		if (isIndependentVariable(element)) symbol = doIndependentVariable((IndependentVariableType) element);
+		if (isIndependentVariable(element)) 
+			symbol = doIndependentVariable((IndependentVariableType) element);
+		else
+			symbol = "NM_"+symbol;
 		
 		//TODO: need to verify NM_ appending to parameters.
 //		else if (lexer.isModelParameter(symbol)) {
@@ -122,8 +123,7 @@ public class Parser extends BaseParser {
 //			String format = "%s_%s";
 //			symbol = String.format(format, "NM", symbol.toUpperCase());
 //		}
-		
-		return "NM_"+symbol;
+		return symbol;
 	}
 	
 	@Override
@@ -206,9 +206,9 @@ public class Parser extends BaseParser {
 		
 		String op = c.getOp();
 		if (op.equalsIgnoreCase("notanumber")) symbol = "NaN";
-		else if (op.equalsIgnoreCase("pi")) symbol = "pi";
-		else if (op.equalsIgnoreCase("exponentiale")) symbol = "exp(1)";
-		else if (op.equalsIgnoreCase("infinity")) symbol = "Inf";
+		else if (op.equalsIgnoreCase("pi")) symbol = "3.1416";
+		else if (op.equalsIgnoreCase("exponentiale")) symbol = "EXP(1)";
+		else if (op.equalsIgnoreCase("infinity")) symbol = "INF";
 	
 		return symbol;
 	}
@@ -278,29 +278,29 @@ public class Parser extends BaseParser {
 		}
 			
 		int block_assignment = 0;
-		StringBuilder block = new StringBuilder(" NaN;\n");
+		StringBuilder block = new StringBuilder(" 0.0;\n");
 		for (int i = 0; i < pieces.size(); i++) {
 			PieceType piece = pieces.get(i);
 			if (piece == null) continue;
 			else if (piece.equals(else_block)) continue;
 			
 			if (!(conditional_stmts[i] != null && assignment_stmts[i] != null)) continue;	
-				String operator = "IF", format = "%s (%s) {\n %s = %s \n";
+				String operator = "IF", format = "%s (%s) THEN\n %s = %s \n";
 				if (block_assignment > 0) {
-				operator = "} ELSE IF ";
-				format = " %s (%s) {\n %s = %s \n";
+				operator = " ELSE IF ";
+				format = " %s (%s) \n %s = %s \n";
 			}
-				
-			block.append(String.format(format, operator, conditional_stmts[i], field_tag, assignment_stmts[i]));
+			String conditionStatement = conditional_stmts[i].replaceAll("\\s+","");
+			block.append(String.format(format, operator, conditionStatement, field_tag, assignment_stmts[i]));
 			block_assignment++;
 		}
 		
 		if (else_block != null && else_index >= 0) {
-			block.append("} ELSE {\n");
+			block.append(" ELSE \n");
 			String format = " %s = %s\n";
 			block.append(String.format(format, field_tag, assignment_stmts[else_index]));
 		}
-		block.append("}");
+		block.append("ENDIF");
 		if (assignment_count == 0) throw new IllegalStateException("Piecewise statement assigned no conditional blocks.");
 		symbol = block.toString();
 			

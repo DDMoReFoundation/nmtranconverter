@@ -1,9 +1,9 @@
-lt <
-leq <=
-gt >
-geq >=
-eq ==
-neq =~
+lt .LT.
+leq .LEQ.
+gt .GT.
+geq .GEQ.
+eq .EQ.
+neq .NEQ.
 and &&
 or ||
 xor xor
