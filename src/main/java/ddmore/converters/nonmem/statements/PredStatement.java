@@ -18,11 +18,9 @@ import eu.ddmore.libpharmml.dom.commontypes.InitialValueType;
 import eu.ddmore.libpharmml.dom.commontypes.RealValueType;
 import eu.ddmore.libpharmml.dom.commontypes.VariableDefinitionType;
 import eu.ddmore.libpharmml.dom.maths.FunctionCallType;
-import eu.ddmore.libpharmml.dom.maths.FunctionCallType.FunctionArgument;
 import eu.ddmore.libpharmml.dom.modeldefn.GaussianObsError;
-import eu.ddmore.libpharmml.dom.modeldefn.IndividualParameterType;
-import eu.ddmore.libpharmml.dom.modeldefn.ObservationErrorType;
 import eu.ddmore.libpharmml.dom.modeldefn.GaussianObsError.ErrorModel;
+import eu.ddmore.libpharmml.dom.modeldefn.IndividualParameterType;
 
 /**
  * Creates and adds estimation statement to nonmem file from script definition.
