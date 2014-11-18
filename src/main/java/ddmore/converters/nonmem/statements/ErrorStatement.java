@@ -11,13 +11,11 @@ public class ErrorStatement {
 	String func = new String();
 	FunctionCallType functionCall = null;
 	
-	static final String COMBINED_ERROR_1 = "combined1";
-	static final String COMBINED_ERROR_2 = "combined2";
-	final String ADDITIVE = "a";
-	final String PROP = "b";
+	static final String COMBINED_ERROR_1 = "combinedError1";
+	static final String COMBINED_ERROR_2 = "combinedError2";
+	final String ADDITIVE = "additive";
+	final String PROP = "proportional";
 	final String FUNC = "f";
-	
-//	functionCall.getSymbRef().getSymbIdRef()
 	
 	ErrorStatement(FunctionCallType functionCallType){
 		if(functionCallType!=null){
@@ -67,7 +65,7 @@ public class ErrorStatement {
 		if(errorType.equals(COMBINED_ERROR_1)){
 			errorBlock.append("\nW = "+additive+"+"+proportional+"*IPRED");
 		}else if(errorType.equals(COMBINED_ERROR_2)){
-			errorBlock.append("\nSQRT(("+additive+"*"+additive+")"+"+ ("+proportional+"*"+proportional+"*IPRED*IPRED))");
+			errorBlock.append("\nW = SQRT(("+additive+"*"+additive+")"+"+ ("+proportional+"*"+proportional+"*IPRED*IPRED))");
 		}
 		errorBlock.append("\nY = "+func+"+W*EPS(1)");
 		errorBlock.append("\nIPRED = "+func);

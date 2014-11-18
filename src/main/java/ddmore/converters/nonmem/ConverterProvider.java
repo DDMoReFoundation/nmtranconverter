@@ -113,18 +113,17 @@ public class ConverterProvider extends Lexer {
 		inputStatement.write(fout);
 		writeNewLine(fout);
 		dataStatement.write(fout);
+		
+		fout.write(getSimulationStatement());
 
-
+		parser.writeParameters(fout);
+		
 		EstimationStatement estStatement = new EstimationStatement(scriptDefinition);
 		
 		if(!estStatement.getEstimationSteps().isEmpty()){
 			fout.write(estStatement.getEstimationStatement().toString());
 			fout.write(estStatement.getCovStatement());	
 		}
-		
-		fout.write(getSimulationStatement());
-
-		parser.writeParameters(fout);
 //		predStatement.getPredStatement(fout);
 		
 //		parser.getThetasStatement();

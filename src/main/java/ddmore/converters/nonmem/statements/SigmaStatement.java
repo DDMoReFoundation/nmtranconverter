@@ -63,31 +63,28 @@ public class SigmaStatement {
 		}
 		
 		for (ParameterRandomVariableType rv : randomVariableTypes) {
-			String symbol = rv.getVariabilityReference().getSymbRef().getSymbIdRef();
 
-			if(symbol.equals("residual") || symbol.equals("resErr")){
 
-				PositiveRealValueType stddevDistribution = parameters.getDistributionTypeStdDev(rv);
-				if(stddevDistribution!=null){
-					sigmaRepresentation = getSigmaFromStddevDistribution(stddevDistribution);
-				}
-
-				PositiveRealValueType varianceDistribution = parameters.getDistributionTypeVariance(rv);
-				if(varianceDistribution!=null){
-					sigmaRepresentation = getSigmaFromVarianceDistribution(varianceDistribution);
-				}
-
-				StringBuilder sigmaStatements = new StringBuilder();
-				if(isNumeric(sigmaRepresentation)){
-					sigmaStatements.append(Double.parseDouble(sigmaRepresentation) +" FIX\n");
-				}else {
-					String sigmastatement = getSigmaFromInitialEstimate(sigmaRepresentation);
-					sigmaStatements.append(sigmastatement);
-				}
-				
-				sigmaParams.add(sigmaStatements.toString());
-				
+			PositiveRealValueType stddevDistribution = parameters.getDistributionTypeStdDev(rv);
+			if(stddevDistribution!=null){
+				sigmaRepresentation = getSigmaFromStddevDistribution(stddevDistribution);
 			}
+
+			PositiveRealValueType varianceDistribution = parameters.getDistributionTypeVariance(rv);
+			if(varianceDistribution!=null){
+				sigmaRepresentation = getSigmaFromVarianceDistribution(varianceDistribution);
+			}
+
+			StringBuilder sigmaStatements = new StringBuilder();
+			if(isNumeric(sigmaRepresentation)){
+				sigmaStatements.append(Double.parseDouble(sigmaRepresentation) +" FIX\n");
+			}else {
+				String sigmastatement = getSigmaFromInitialEstimate(sigmaRepresentation);
+				sigmaStatements.append(sigmastatement);
+			}
+			
+			sigmaParams.add(sigmaStatements.toString());
+			
 		}
 		return sigmaParams;
 	}
@@ -144,8 +141,13 @@ public class SigmaStatement {
 	 */
 	private String getSigmaFromVarianceDistribution(PositiveRealValueType varianceDistribution) {
 		String sigmaRepresentation = new String();
-		if(varianceDistribution!=null){			 
-			sigmaRepresentation = varianceDistribution.getVar().getVarId();
+		if(varianceDistribution!=null){
+			if (varianceDistribution.getVar()!=null) {
+	        	sigmaRepresentation = varianceDistribution.getVar().getVarId();
+	        } else if(varianceDistribution.getPrVal()!=null){
+	            Double idVal = (varianceDistribution.getPrVal());
+	            sigmaRepresentation = idVal.toString();	            
+	        }
 		}
 		return sigmaRepresentation;
 	}
