@@ -11,7 +11,6 @@ import crx.converter.engine.parts.EstimationStep;
 import ddmore.converters.nonmem.statements.DataStatement;
 import ddmore.converters.nonmem.statements.EstimationStatement;
 import ddmore.converters.nonmem.statements.InputStatement;
-import ddmore.converters.nonmem.statements.PredStatement;
 import ddmore.converters.nonmem.statements.ProblemStatement;
 import ddmore.converters.nonmem.statements.SimulationStatement;
 import eu.ddmore.convertertoolbox.api.response.ConversionReport;

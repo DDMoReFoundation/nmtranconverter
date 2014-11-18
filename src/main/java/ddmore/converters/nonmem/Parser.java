@@ -460,11 +460,13 @@ public class Parser extends BaseParser {
     			
     			PopulationParameter pop_param = lcov.getPopulationParameter();
     			if (pop_param != null) {
-    				//Using variable instead of Theta.
+    				//TODO : Need to confirm why we need to have this check with latest 0.3.1 pharmML. 
+    				if(pop_param.getAssign().getSymbRef()!=null){
     				pop_param_symbol = "NM_"+pop_param.getAssign().getSymbRef().getSymbIdRef();//getThetaForSymbol(pop_param.getAssign().getSymbRef().getSymbIdRef());
     				if (transform == LhsTransformationType.LOG) pop_param_symbol = String.format("LOG(%s)", pop_param_symbol);
     	    		else if (transform == LhsTransformationType.LOGIT) pop_param_symbol = String.format("LOGIT(%s)", pop_param_symbol);
     				stmt.append(String.format("(%s)", pop_param_symbol));
+    				}
     			}
     			
     			List<CovariateRelationType> covariates = lcov.getCovariate();

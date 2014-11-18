@@ -12,14 +12,17 @@ import crx.converter.engine.ScriptDefinition;
 import crx.converter.engine.parts.ObservationBlock;
 import crx.converter.engine.parts.ParameterBlock;
 import crx.converter.engine.parts.StructuralBlock;
-import crx.converter.tree.BinaryTree;
 import ddmore.converters.nonmem.Parser;
 import eu.ddmore.libpharmml.dom.commontypes.DerivativeVariableType;
 import eu.ddmore.libpharmml.dom.commontypes.InitialValueType;
 import eu.ddmore.libpharmml.dom.commontypes.RealValueType;
 import eu.ddmore.libpharmml.dom.commontypes.VariableDefinitionType;
+import eu.ddmore.libpharmml.dom.maths.FunctionCallType;
+import eu.ddmore.libpharmml.dom.maths.FunctionCallType.FunctionArgument;
+import eu.ddmore.libpharmml.dom.modeldefn.GaussianObsError;
 import eu.ddmore.libpharmml.dom.modeldefn.IndividualParameterType;
 import eu.ddmore.libpharmml.dom.modeldefn.ObservationErrorType;
+import eu.ddmore.libpharmml.dom.modeldefn.GaussianObsError.ErrorModel;
 
 /**
  * Creates and adds estimation statement to nonmem file from script definition.
@@ -38,20 +41,18 @@ public class PredStatement {
 	public PredStatement(ScriptDefinition scriptDefinition, Parser parser){
 		this.parser = parser;
 		this.scriptDefinition = scriptDefinition;
-		List<StructuralBlock> structuralBlocks = scriptDefinition.getStructuralBlocks();
-		for(StructuralBlock block : structuralBlocks){
-			 derivativeVarList.addAll(block.getStateVariables());
-		}
+		derivativeVarList.addAll(getAllStateVariables());
 	}
 	
 	public void getPredStatement(PrintWriter fout){
-		String StatementName = "\n$PRED\n";
+		String statementName = "\n$PRED\n";
 		if(!derivativeVarList.isEmpty()){
 			//TODO: Add $SUB block. need to have details around it.
+			statementName = "\n$SUB\n";
 			fout.write("\n$SUBS ADVAN13 TOL=9\n");
 			fout.write(getDerivativePredStatement().toString());
 		}else{
-			fout.write(StatementName);
+			fout.write(statementName);
 			getNonDerivativePredStatement();
 		}
 	}
@@ -154,20 +155,15 @@ public class PredStatement {
 		
 		List<ObservationBlock> observationBlocks= scriptDefinition.getObservationBlocks();
 		for(ObservationBlock block : observationBlocks){
-			ObservationErrorType errorType = block.getObservationError();
-			String name = errorType.getSymbId();
-			//Check if 'name' is in derivativeVarList or block.getLocalVariables(), 
-			//if it is part of block.getLocalVariables() then it needs to be renamed
+			GaussianObsError error = (GaussianObsError) block.getObservationError();
+			ErrorModel errorModel = error.getErrorModel();
+			FunctionCallType functionCall = errorModel.getAssign().getEquation().getFunctionCall();
 			
-			// this name will be first part of RHS of equation 
-			// Y= <name> + (function definition)*EPS(<sigma_dependent_index>)
-			
-			//for second part of this equation we need to get hold of function definition and index dependent on sigma.
-			
+			ErrorStatement errorstmt = new ErrorStatement(functionCall);			
+			errorBlock.append(errorstmt.getErrorStatementDetails());
+
 		}
-		
-		
-		return "";
+		return errorBlock.toString();
 	}
 
 	/**
@@ -211,7 +207,7 @@ public class PredStatement {
 		}
 		return modelBlock;
 	}
-
+	
 	/**
 	 * Collects all derivativeVariable types (state variables) from structural blocks in order to create model statement.
 	 * 
