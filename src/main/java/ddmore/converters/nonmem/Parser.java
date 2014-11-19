@@ -47,6 +47,7 @@ import ddmore.converters.nonmem.statements.Parameter;
 import ddmore.converters.nonmem.statements.PredStatement;
 import ddmore.converters.nonmem.statements.SigmaStatement;
 import ddmore.converters.nonmem.statements.ThetaStatement;
+import ddmore.converters.nonmem.utils.Formatter;
 import ddmore.converters.nonmem.utils.ParametersHelper;
 import eu.ddmore.libpharmml.dom.IndependentVariableType;
 import eu.ddmore.libpharmml.dom.commontypes.FunctionDefinitionType;
@@ -106,7 +107,7 @@ public class Parser extends BaseParser {
 		if (isIndependentVariable(element)) 
 			symbol = doIndependentVariable((IndependentVariableType) element);
 		else
-			symbol = "NM_"+symbol;
+			symbol = Formatter.addPrefix(symbol);
 		
 		//TODO: need to verify NM_ appending to parameters.
 //		else if (lexer.isModelParameter(symbol)) {
@@ -137,14 +138,14 @@ public class Parser extends BaseParser {
 			if (!isString_(leaf.data)) leaf.data = getSymbol(leaf.data);
 			String current_value = "", current_symbol = "_FAKE_FAKE_FAKE_FAKE_";
 			if(isLocalVariable(context)){
-				String format = "%s = %s\n";
-				current_symbol = "NM_"+getSymbol(context);
-				current_value = String.format(format, current_symbol, leaf.data);
+				String format = "%s = %s";
+				current_symbol = Formatter.addPrefix(getSymbol(context));
+				current_value = Formatter.endline(String.format(format, current_symbol, leaf.data));
 			}else if (isDerivative(context) || isParameter(context)) {
-				String format = "%s = %s\n", description = "";
+				String format = "%s = %s", description = "";
 				if (isRootType(context)) description = readDescription((PharmMLRootType) context);
 				current_symbol = getSymbol(context);
-				current_value = String.format(format, "NM_"+description, leaf.data);
+				current_value = Formatter.endline(String.format(format, Formatter.addPrefix(description), leaf.data));
 			} else if (isInitialCondition(context) || isFunction(context) || isSequence(context) || isVector(context)) {
 				String format = "(%s) ";
 				current_value = String.format(format, (String) leaf.data);
@@ -152,25 +153,25 @@ public class Parser extends BaseParser {
 				String format = "%s ";
 				current_value = String.format(format, (String) leaf.data);
 			} else if (isContinuous(context)) {
-				current_symbol = "NM_"+getSymbol(context);
-				String format = "%s = %s; \n";
-				current_value = String.format(format, current_symbol, leaf.data);
+				current_symbol = Formatter.addPrefix(getSymbol(context));
+				String format = "%s = %s;";
+				current_value = Formatter.endline(String.format(format, current_symbol, leaf.data));
 			} else if (isActivity(context)) { 
 				current_value = getSymbol(new ActivityDoseAmountBlock((ActivityType) context, (String) leaf.data));
 			} else if (isIndividualParameter(context)) { 
 				current_value = (String) leaf.data;
 			} else if (isRandomVariable(context)) {
 				ParameterRandomVariableType rv = (ParameterRandomVariableType) context;
-				String format = "%s = %s;\n";
-				current_value = String.format(format, rv.getSymbId(), (String) leaf.data);
+				String format = "%s = %s;";
+				current_value = Formatter.endline(String.format(format, rv.getSymbId(), (String) leaf.data));
 			} else if (isCovariate(context)) { 
 				CovariateDefinitionType cov = (CovariateDefinitionType) context;
-				String format = "%s = %s;\n";
-				current_value = String.format(format, cov.getSymbId(), (String) leaf.data);
+				String format = "%s = %s;";
+				current_value = Formatter.endline(String.format(format, cov.getSymbId(), (String) leaf.data));
 			} else if (isObservationParameter(context)) {
 				ObservationParameter op = (ObservationParameter) context;
-				String format = "%s = %s;\n";
-				current_value = String.format(format, op.getName(), (String) leaf.data);
+				String format = "%s = %s;";
+				current_value = Formatter.endline(String.format(format, op.getName(), (String) leaf.data));
 			} else if (isCorrelation(context)) {
 				current_value = (String) leaf.data;
 			} else if (isObservationModel(context)) {
@@ -185,7 +186,7 @@ public class Parser extends BaseParser {
 			
 			if (current_value != null) {
 				if(inPiecewise) {
-					if (current_symbol != null) current_value = current_value.replaceAll(field_tag, current_symbol) + "\n";
+					if (current_symbol != null) current_value = Formatter.endline(current_value.replaceAll(field_tag, current_symbol));
 				}
 				fout.write(current_value);
 			}
@@ -331,21 +332,21 @@ public class Parser extends BaseParser {
 		buildPredStatement(fout);
 
 		if (! thetas.isEmpty()) {
-			fout.write("\n$"+THETA+"\n");
+			fout.write(Formatter.endline("\n$"+THETA));
 			for (String thetaVar : thetas.keySet()) {
 				writeParameter(thetas.get(thetaVar), simpleParameters.get(thetaVar), fout);
 			}
 		}
 
 		if (! omegas.isEmpty()) {
-			fout.write("\n$OMEGA\n");
+			fout.write(Formatter.endline("\n$OMEGA"));
 			for (final String omegaVar : omegas.keySet()) {
 				writeParameter(omegas.get(omegaVar), simpleParameters.get(omegaVar), fout);
 			}
 		}
 
 		if(!sigmaParams.isEmpty()){
-			fout.write("\n$SIGMA\n");
+			fout.write(Formatter.endline("\n$SIGMA"));
 			for (final String sigmaVar: sigmaParams) {
 				fout.write(sigmaVar);
 			}
@@ -441,8 +442,7 @@ public class Parser extends BaseParser {
     	if (ip.getAssign() != null) {
     		stmt.append(String.format("\n%s = ", variableSymbol));
     		String assignment = parse(new Object(), lexer.getStatement(ip.getAssign()));
-    		stmt.append(assignment);
-    		stmt.append(";\n");
+    		stmt.append(Formatter.endline(assignment+";"));
     	} else if (ip.getGaussianModel() != null) {
     		GaussianModel m = ip.getGaussianModel();
     		LhsTransformationType transform = m.getTransformation();
@@ -460,13 +460,10 @@ public class Parser extends BaseParser {
     			
     			PopulationParameter pop_param = lcov.getPopulationParameter();
     			if (pop_param != null) {
-    				//TODO : Need to confirm why we need to have this check with latest 0.3.1 pharmML. 
-    				if(pop_param.getAssign().getSymbRef()!=null){
-    				pop_param_symbol = "NM_"+pop_param.getAssign().getSymbRef().getSymbIdRef();//getThetaForSymbol(pop_param.getAssign().getSymbRef().getSymbIdRef());
+    				pop_param_symbol = Formatter.addPrefix(pop_param.getAssign().getEquation().getSymbRef().getSymbIdRef());//getThetaForSymbol(pop_param.getAssign().getSymbRef().getSymbIdRef());
     				if (transform == LhsTransformationType.LOG) pop_param_symbol = String.format("LOG(%s)", pop_param_symbol);
     	    		else if (transform == LhsTransformationType.LOGIT) pop_param_symbol = String.format("LOGIT(%s)", pop_param_symbol);
     				stmt.append(String.format("(%s)", pop_param_symbol));
-    				}
     			}
     			
     			List<CovariateRelationType> covariates = lcov.getCovariate();
@@ -489,7 +486,7 @@ public class Parser extends BaseParser {
     							if (fixed_effects != null) {
     								for (FixedEffectRelationType fixed_effect : fixed_effects) {
     									if (fixed_effect == null) continue;
-    									String  fixed_effect_stmt = "NM_"+fixed_effect.getSymbRef().getSymbIdRef();//getThetaForSymbol(fixed_effect.getSymbRef().getSymbIdRef());
+    									String  fixed_effect_stmt = Formatter.addPrefix(fixed_effect.getSymbRef().getSymbIdRef());//getThetaForSymbol(fixed_effect.getSymbRef().getSymbIdRef());
     									if(fixed_effect_stmt.isEmpty())
     										fixed_effect_stmt = parse(fixed_effect, lexer.getStatement(fixed_effect));
     									cov_stmt = fixed_effect_stmt + " * " + cov_stmt;
@@ -524,10 +521,10 @@ public class Parser extends BaseParser {
 			
 			if (transform == LhsTransformationType.LOG) {
 				String format = "%s = EXP(%s);\n";
-				stmt.append(String.format(format, "NM_"+ip.getSymbId(), variableSymbol));
+				stmt.append(String.format(format, Formatter.addPrefix(ip.getSymbId()), variableSymbol));
 			} else if (transform == LhsTransformationType.LOGIT) {
 				String format = "%s = 1./(1 + exp(-%s));\n";
-				stmt.append(String.format(format, "NM_"+ip.getSymbId(), variableSymbol));
+				stmt.append(String.format(format, Formatter.addPrefix(ip.getSymbId()), variableSymbol));
 			}
     	}
 		stmt.append("\n");

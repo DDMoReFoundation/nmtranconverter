@@ -13,6 +13,7 @@ import crx.converter.engine.parts.ObservationBlock;
 import crx.converter.engine.parts.ParameterBlock;
 import crx.converter.engine.parts.StructuralBlock;
 import ddmore.converters.nonmem.Parser;
+import ddmore.converters.nonmem.utils.Formatter;
 import eu.ddmore.libpharmml.dom.commontypes.DerivativeVariableType;
 import eu.ddmore.libpharmml.dom.commontypes.InitialValueType;
 import eu.ddmore.libpharmml.dom.commontypes.RealValueType;
@@ -33,6 +34,8 @@ public class PredStatement {
 	ScriptDefinition scriptDefinition;
 	List<DerivativeVariableType> derivativeVarList = new ArrayList<DerivativeVariableType>();
 	Map<String, String> derivativeVariableMap = new HashMap<String, String>();
+	//it will hold definition types and its parsed equations which we will need to add in Error statement.
+	Map<String, String> definitionsParsingMap = new HashMap<String, String>();
 	Parser parser;
 
 
@@ -116,20 +119,22 @@ public class PredStatement {
 		diffEqStatementBlock.append("\n$DES\n");
 		int i=1;
 		for (DerivativeVariableType variableType : derivativeVarList){
-			String variable = "NM_"+variableType.getSymbId().toUpperCase();
-			diffEqStatementBlock.append("NM_"+variableType.getSymbId().toUpperCase()+" = A("+i+")\n");
-			derivativeVariableMap.put(variable, Integer.toString(i));
-			i++;
+			String variable = Formatter.addPrefix(variableType.getSymbId());
+			diffEqStatementBlock.append(Formatter.endline(variable+" = A("+i+")"));
+			derivativeVariableMap.put(variable, Integer.toString(i++));
 		}
-		diffEqStatementBlock.append("\n");
+		diffEqStatementBlock.append(Formatter.endline());
 		for(StructuralBlock block : scriptDefinition.getStructuralBlocks()){
 			for (VariableDefinitionType definitionType: block.getLocalVariables()){
-				diffEqStatementBlock.append(parser.parse(definitionType));
+				String parsedDefType = parser.parse(definitionType);
+				String variable = Formatter.addPrefix(definitionType.getSymbId());
+				
+				diffEqStatementBlock.append(parsedDefType);
+				definitionsParsingMap.put(variable, parsedDefType.replaceFirst(variable+" =",""));
 			}
-			diffEqStatementBlock.append("\n");
 			for(DerivativeVariableType variableType: block.getStateVariables()){
 				String parsedDADT = parser.parse(variableType);
-				String variable = "NM_"+variableType.getSymbId().toUpperCase();
+				String variable = Formatter.addPrefix(variableType.getSymbId());
 				if(derivativeVariableMap.keySet().contains(variable)){
 					String index = derivativeVariableMap.get(variable);
 					//TODO: String formatting can go as part of formatter class. 
@@ -144,6 +149,7 @@ public class PredStatement {
 	
 	/**
 	 * get Error statement for nonmem pred block
+	 * This block will rename function name if it is already defined in DES and also redefine it in ERROR block.
 	 * @return 
 	 * 
 	 */
@@ -157,8 +163,8 @@ public class PredStatement {
 			ErrorModel errorModel = error.getErrorModel();
 			FunctionCallType functionCall = errorModel.getAssign().getEquation().getFunctionCall();
 			
-			ErrorStatement errorstmt = new ErrorStatement(functionCall);			
-			errorBlock.append(errorstmt.getErrorStatementDetails());
+			ErrorStatement errorStatement = new ErrorStatement(functionCall);
+			errorBlock.append(errorStatement.getErrorStatementDetails(definitionsParsingMap,derivativeVariableMap));
 
 		}
 		return errorBlock.toString();
@@ -185,11 +191,10 @@ public class PredStatement {
 
 	/**
 	 * gets ABBR block for pred statement of nonmem file.
+	 * TODO Currently ABBR block is not in scope.
 	 */
 	private StringBuilder getAbbreviatedStatement() {
 		return null;
-		// TODO Auto-generated method stub
-		
 	}
 
 	/**
@@ -201,7 +206,7 @@ public class PredStatement {
 		
 		modelBlock.append("\n$MODEL\n");
 		for(DerivativeVariableType stateVariable :getAllStateVariables()){
-			modelBlock.append("COMP "+"("+"NM_"+stateVariable.getSymbId()+")\n");
+			modelBlock.append("COMP "+"("+Formatter.addPrefix(stateVariable.getSymbId())+")\n");
 		}
 		return modelBlock;
 	}
@@ -237,7 +242,7 @@ public class PredStatement {
 					if(initialValueType!=null){
 						if(initialValueType.getAssign().getSymbRef()!=null){
 							initialCondition = initialValueType.getAssign().getSymbRef().getSymbIdRef();
-							builder.append("A_0("+i+") = NM_"+initialCondition.toUpperCase()+"\n"); 
+							builder.append("A_0("+i+") = "+Formatter.addPrefix(initialCondition.toUpperCase())+"\n"); 
 						}else if(initialValueType.getAssign().getScalar()!=null){
 							RealValueType test = (RealValueType) initialValueType.getAssign().getScalar().getValue();
 							initialCondition = Double.toString(test.getValue());
