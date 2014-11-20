@@ -32,6 +32,12 @@
     </repository>
   </repositories>
 
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <sonar.dynamicAnalysis>true</sonar.dynamicAnalysis>
+    <sonar.java.coveragePlugin>jacoco</sonar.java.coveragePlugin>
+  </properties>
+
   <dependencies>
     <dependency>
         <groupId>cyprotex</groupId>
