@@ -12,6 +12,7 @@ import static org.junit.Assert.assertTrue;
 import java.util.List;
 
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import crx.converter.engine.ConversionDetail_;
@@ -27,6 +28,7 @@ public class TestExample5 extends TestBase {
 		init(inputXMLFile, V_0_3_SUBDIR);
 	}
 
+	@Ignore
 	@Test
 	public void test() {
 		assertTrue(dir.exists());
