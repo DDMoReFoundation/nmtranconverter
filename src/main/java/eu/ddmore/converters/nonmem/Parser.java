@@ -23,7 +23,6 @@ import static crx.converter.engine.PharmMLTypeChecker.isVector;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -34,7 +33,6 @@ import crx.converter.engine.Accessor;
 import crx.converter.engine.BaseParser;
 import crx.converter.engine.parts.Artifact;
 import crx.converter.engine.parts.EstimationStep;
-import crx.converter.engine.parts.ParameterBlock;
 import crx.converter.engine.parts.EstimationStep.FixedParameter;
 import crx.converter.engine.parts.EstimationStep.ObjectiveFunctionParameter;
 import crx.converter.engine.parts.ObservationBlock;
@@ -309,8 +307,6 @@ public class Parser extends BaseParser {
 			
 		return symbol;
 	}
-	
-	Map<String, Integer> etaToOmegas = new HashMap<String, Integer>();
 
 	@Override
 	public void writeParameters(PrintWriter fout) {
@@ -321,15 +317,13 @@ public class Parser extends BaseParser {
 			return;
 		}
 		
-		setEtaToOmegaOrder();
-		parameters = new ParametersHelper(lexer.getScriptDefinition());		
-		parameters.setEtaToOmagaMap(etaToOmegas);
+		parameters = new ParametersHelper(lexer.getScriptDefinition());
+		
 		parameters.getParameters(lexer.getModelParameters());
 		
 		Map<String, SimpleParameterType> simpleParameters= parameters.getSimpleParams();
 		Map<String, ThetaStatement> thetas = parameters.getThetaParams();
 		Map<String, OmegaStatement> omegas = parameters.getOmegaParams();
-		Map<String, List<OmegaStatement>> omegaBlocks = parameters.getOmegaBlocks();
 
 		SigmaStatement sigmaStatement = new SigmaStatement(parameters);
 		List<String> sigmaParams = sigmaStatement.getSigmaStatement();
@@ -348,15 +342,6 @@ public class Parser extends BaseParser {
 			fout.write(Formatter.endline("\n$OMEGA"));
 			for (final String omegaVar : omegas.keySet()) {
 				writeParameter(omegas.get(omegaVar), simpleParameters.get(omegaVar), fout);
-			}
-		}
-		
-		if(!omegaBlocks.isEmpty()){
-			fout.write(Formatter.endline(parameters.getOmegaBlockTitle()));
-			for(String eta : parameters.getOrderedEtasMap().values()){
-				for(OmegaStatement omegaStatement : omegaBlocks.get(eta)){
-					writeParameter(omegaStatement, simpleParameters.get(omegaStatement.getSymbId()),fout);
-				}
 			}
 		}
 
@@ -387,22 +372,23 @@ public class Parser extends BaseParser {
 		fout.write(startParens);
 		if (param.getLowerBound() != null && param.getUpperBound() != null) {
 			
+			//TODO: What to do if param.isFixed is true ?
 			parse(param.getLowerBound(), lexer.getStatement(param.getLowerBound()), fout);
 			if (param.getInitialEstimate() != null) {
 				fout.write(",");
 				parse(param.getInitialEstimate(), lexer.getStatement(param.getInitialEstimate()), fout);
 			}
 			fout.write(",");
-			parse(param.getUpperBound(), lexer.getStatement(param.getUpperBound()), fout);
+			parse(param.getUpperBound(), lexer.getStatement(param.getUpperBound()), fout);			
 		} else if (param.getInitialEstimate() != null) {
 			parse(param.getInitialEstimate(), lexer.getStatement(param.getInitialEstimate()), fout);
 			//Add 'FIX' if its fixed parameter
+			endParens = (param.isFixed())? ", FIX"+endParens : endParens; 
 		}else {
 			// Just use the initial value defined in the ParameterModel block
 			//TODO: this approach needs to be confirmed
 			parse(simpleParam, lexer.getStatement(simpleParam), fout);
 		}
-		endParens = (param.isFixed())? " FIX"+endParens : endParens;
 		fout.write(endParens + description + "\n");
 	}
 
@@ -438,6 +424,8 @@ public class Parser extends BaseParser {
 		}
 		return symbol;
 	}
+
+	int nRandomEffects = 0;
 	
 	/**
 	 * Get individual parameter assignments from individual parameter type.
@@ -472,6 +460,7 @@ public class Parser extends BaseParser {
     			
     			PopulationParameter pop_param = lcov.getPopulationParameter();
     			if (pop_param != null) {
+    				//TODO : Need to confirm why we need to have this check with latest 0.3.1 pharmML.
     				pop_param_symbol = Formatter.addPrefix(pop_param.getAssign().getEquation().getSymbRef().getSymbIdRef());//getThetaForSymbol(pop_param.getAssign().getSymbRef().getSymbIdRef());
     				if (transform == LhsTransformationType.LOG) pop_param_symbol = String.format("LOG(%s)", pop_param_symbol);
     	    		else if (transform == LhsTransformationType.LOGIT) pop_param_symbol = String.format("LOGIT(%s)", pop_param_symbol);
@@ -518,14 +507,15 @@ public class Parser extends BaseParser {
     			stmt.append(assignment);
     			nCovs++;
     		}
-
+    		
 			if (random_effects != null) {
 				if (!random_effects.isEmpty()) {
 					if (nCovs > 0) stmt.append(" + ");
 					for (ParameterRandomEffectType random_effect : random_effects) {
 						if (random_effect == null) continue;
-						stmt.append("ETA("+etaToOmegas.get(random_effect.getSymbRef().get(0).getSymbIdRef())+")");
-					}					
+						++nRandomEffects;
+						stmt.append(" ETA("+ nRandomEffects+")");
+					}
 				}
 			}
 			stmt.append(";\n");
@@ -541,29 +531,6 @@ public class Parser extends BaseParser {
 		stmt.append("\n");
 		
 		return stmt.toString();
-	}
-	
-	/**
-	 * Checks the order of Etas and use this order while arranging Omega blocks.
-	 * This method will create map for EtaOrder which will be order for respective Omegas as well.
-	 * @return 
-	 */
-	public void setEtaToOmegaOrder(){
-		List<ParameterBlock> blocks = lexer.getScriptDefinition().getParameterBlocks();
-		Integer etaOrder = 0; 
-		for(ParameterBlock block : blocks ){
-			for(IndividualParameterType parameterType: block.getIndividualParameters()){
-				if (parameterType.getGaussianModel() != null) {
-		    		List<ParameterRandomEffectType> random_effects = parameterType.getGaussianModel().getRandomEffects();
-					if (!random_effects.isEmpty()) {
-						for (ParameterRandomEffectType random_effect : random_effects) {
-							if (random_effect == null) continue;
-							etaToOmegas.put(random_effect.getSymbRef().get(0).getSymbIdRef(), ++etaOrder);
-						}
-					}
-				}
-			}
-		}
 	}
 
 	@Override
