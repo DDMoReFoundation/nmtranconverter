@@ -20,8 +20,8 @@ import eu.ddmore.libpharmml.dom.commontypes.RealValueType;
 import eu.ddmore.libpharmml.dom.commontypes.VariableDefinitionType;
 import eu.ddmore.libpharmml.dom.maths.FunctionCallType;
 import eu.ddmore.libpharmml.dom.modeldefn.GaussianObsError;
-import eu.ddmore.libpharmml.dom.modeldefn.GaussianObsError.ErrorModel;
 import eu.ddmore.libpharmml.dom.modeldefn.IndividualParameterType;
+import eu.ddmore.libpharmml.dom.modeldefn.GaussianObsError.ErrorModel;
 
 /**
  * Creates and adds estimation statement to nonmem file from script definition.
@@ -90,11 +90,7 @@ public class PredStatement {
 		List<ParameterBlock> blocks = scriptDefinition.getParameterBlocks();
 		predCoreBlock.append(buildThetaAssignments().toString());
 		
-		for(ParameterBlock parameterBlock : blocks){
-			for(IndividualParameterType parameterType: parameterBlock.getIndividualParameters()){
-				predCoreBlock.append(doIndividualParameterAssignment(parameterType));	
-			}
-		}
+		predCoreBlock.append(getAllIndividualParamAssignments(blocks));
 		return predCoreBlock;
 	}
 
@@ -193,9 +189,9 @@ public class PredStatement {
 	 * gets ABBR block for pred statement of nonmem file.
 	 * TODO Currently ABBR block is not in scope.
 	 */
-	private StringBuilder getAbbreviatedStatement() {
-		return null;
-	}
+//	private StringBuilder getAbbreviatedStatement() {
+//		return null;
+//	}
 
 	/**
 	 * get model statement block for pred statement of nonmem file.
@@ -257,12 +253,18 @@ public class PredStatement {
 	}
 	
 	/**
-	 * This method will create part of pred core statement block from individual parameter assignments.
-	 * Currently it refers to  
-	 * @param ip
+	 * This method will collect all the parsing for Individual parameter assignments.
+	 *  
+	 * @param blocks
 	 * @return
 	 */
-	public String doIndividualParameterAssignment(IndividualParameterType ip) {
-		return parser.doIndividualParameterAssignment(ip);
+	public StringBuilder getAllIndividualParamAssignments(List<ParameterBlock> blocks) {
+		StringBuilder IndividualParamAssignmentBlock = new StringBuilder();
+		for(ParameterBlock parameterBlock : blocks){
+			for(IndividualParameterType parameterType: parameterBlock.getIndividualParameters()){
+				IndividualParamAssignmentBlock.append(parser.doIndividualParameterAssignment(parameterType));	
+			}
+		}
+		return IndividualParamAssignmentBlock;
 	}
 }
