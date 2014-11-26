@@ -79,7 +79,7 @@ public class TableStatement {
 			}
 		}
 		stdTable.append(" "+ErrorStatement.IPRED+" "+ErrorStatement.IRES+" "+ErrorStatement.IWRES+" "+ErrorStatement.Y);
-		stdTable.append(DV);
+		stdTable.append(" "+DV);
 		return stdTable;
 	}
 	
