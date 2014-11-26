@@ -17,6 +17,8 @@ import crx.converter.engine.parts.Part;
 import eu.ddmore.converters.nonmem.statements.OmegaStatement;
 import eu.ddmore.converters.nonmem.statements.ThetaStatement;
 import eu.ddmore.libpharmml.dom.commontypes.ScalarRhs;
+import eu.ddmore.libpharmml.dom.modeldefn.IndividualParameterType;
+import eu.ddmore.libpharmml.dom.modeldefn.ParameterRandomEffectType;
 import eu.ddmore.libpharmml.dom.modeldefn.ParameterRandomVariableType;
 import eu.ddmore.libpharmml.dom.modeldefn.SimpleParameterType;
 import eu.ddmore.libpharmml.dom.modellingsteps.InitialEstimateType;
@@ -56,8 +58,8 @@ public class ParametersHelper {
 			setSimpleParameterTypes(simpleParameterTypes);
 		}
 		
+		setEtaToOmagaMap(setEtaToOmegaOrder());
 		final EstimationStep estimationStep = getEstimationStep(scriptDefinition);
-
 		parametersToEstimate = (estimationStep.hasParametersToEstimate())? estimationStep.getParametersToEstimate():new ArrayList<ParameterEstimateType>();
 		fixedParameters = (estimationStep.hasFixedParameters())? estimationStep.getFixedParameters():new ArrayList<FixedParameter>();
 		// Find any bounds and initial estimates
@@ -355,6 +357,32 @@ public class ParametersHelper {
 			if (nextStep instanceof EstimationStep) step = (EstimationStep) nextStep; 
 		}
 		return step;
+	}
+	
+	/**
+	 * Checks the order of Etas and use this order while arranging Omega blocks.
+	 * This method will create map for EtaOrder which will be order for respective Omegas as well.
+	 * @return 
+	 */
+	public Map<String, Integer> setEtaToOmegaOrder(){
+		Map<String, Integer> etasOrder = new HashMap<String, Integer>();
+		Integer etaOrder = 0;
+		
+		List<ParameterBlock> blocks = scriptDefinition.getParameterBlocks();
+		for(ParameterBlock block : blocks ){
+			for(IndividualParameterType parameterType: block.getIndividualParameters()){
+				if (parameterType.getGaussianModel() != null) {
+		    		List<ParameterRandomEffectType> randomEffects = parameterType.getGaussianModel().getRandomEffects();
+					if (!randomEffects.isEmpty()) {
+						for (ParameterRandomEffectType random_effect : randomEffects) {
+							if (random_effect == null) continue;
+							etasOrder.put(random_effect.getSymbRef().get(0).getSymbIdRef(), ++etaOrder);
+						}
+					}
+				}
+			}
+		}
+		return etasOrder;
 	}
 
 	//Getters and setters

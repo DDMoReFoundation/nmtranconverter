@@ -3,7 +3,6 @@ package eu.ddmore.converters.nonmem.statements;
 import eu.ddmore.libpharmml.dom.commontypes.ScalarRhs;
 import eu.ddmore.libpharmml.dom.modellingsteps.InitialEstimateType;
 
-
 /**
  * Creates and adds parameter details.
  * 
@@ -18,6 +17,7 @@ public class Parameter {
 	ScalarRhs upperBound;	
 	Integer index;
 	boolean fixed = false;
+	boolean isStdDev = false;
 
 	public Parameter(String symbId){
 		this.symbId = symbId;
@@ -84,5 +84,13 @@ public class Parameter {
 
 	public void setIndex(Integer index) {
 		this.index = index;
+	}
+	
+	public boolean isStdDev() {
+		return isStdDev;
+	}
+
+	public void setStdDev(boolean isStdDev) {
+		this.isStdDev = isStdDev;
 	}
 }

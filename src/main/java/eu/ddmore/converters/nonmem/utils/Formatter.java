@@ -2,7 +2,7 @@ package eu.ddmore.converters.nonmem.utils;
 
 public class Formatter {
 	
-	private static final String PREFIX = "NM_";
+	private static final String PREFIX = "";//"NM_";
 	
 	public static String addPrefix(String paramName){
 		return (!paramName.contains(PREFIX))?PREFIX + paramName.toUpperCase():paramName.toUpperCase();

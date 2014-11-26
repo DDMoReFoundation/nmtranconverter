@@ -13,6 +13,7 @@ import eu.ddmore.converters.nonmem.statements.EstimationStatement;
 import eu.ddmore.converters.nonmem.statements.InputStatement;
 import eu.ddmore.converters.nonmem.statements.ProblemStatement;
 import eu.ddmore.converters.nonmem.statements.SimulationStatement;
+import eu.ddmore.converters.nonmem.statements.TableStatement;
 import eu.ddmore.convertertoolbox.api.response.ConversionReport;
 import eu.ddmore.convertertoolbox.domain.LanguageVersionImpl;
 import eu.ddmore.convertertoolbox.domain.VersionImpl;
@@ -110,9 +111,9 @@ public class ConverterProvider extends Lexer {
 		}
 
 		writeNewLine(fout);
-		inputStatement.write(fout);
+		fout.write(inputStatement.getStatement());
 		writeNewLine(fout);
-		dataStatement.write(fout);
+		fout.write(dataStatement.getStatement());
 		
 		fout.write(getSimulationStatement());
 
@@ -124,15 +125,9 @@ public class ConverterProvider extends Lexer {
 			fout.write(estStatement.getEstimationStatement().toString());
 			fout.write(estStatement.getCovStatement());	
 		}
-//		predStatement.getPredStatement(fout);
 		
-//		parser.getThetasStatement();
-//		parser.getOmegasStatement();
-//		parser.getSigmasStatement();
-//		parser.getPriorStatement();
-//		parser.getPredStatement(); 
-//		parser.getTableStatement();
-
+		TableStatement tableStatement = new TableStatement(scriptDefinition,inputStatement);
+		fout.write(tableStatement.getStatements().toString());
 	}
 	
 	private String getSimulationStatement(){
