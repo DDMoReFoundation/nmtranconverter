@@ -1,7 +1,5 @@
 package eu.ddmore.converters.nonmem.statements;
 
-import java.io.IOException;
-import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -11,13 +9,17 @@ import crx.converter.engine.parts.EstimationStep;
 import crx.converter.engine.parts.TabularDataset;
 import crx.converter.engine.parts.TrialDesignBlock;
 import eu.ddmore.converters.nonmem.utils.ParametersHelper;
+import eu.ddmore.libpharmml.dom.commontypes.SymbolTypeType;
 import eu.ddmore.libpharmml.dom.dataset.ColumnDefnType;
+import eu.ddmore.libpharmml.dom.dataset.ColumnTypeType;
 import eu.ddmore.libpharmml.dom.modellingsteps.DatasetMappingType;
 import eu.ddmore.libpharmml.dom.modellingsteps.EstimationStepType;
 import eu.ddmore.libpharmml.dom.modellingsteps.NONMEMdataSetType;
 
-public class InputStatement implements Writeable {
+public class InputStatement {
 	
+	final List<String> catCovTableColumns = new ArrayList<String>();
+	final List<String> contCovTableColumns = new ArrayList<String>();
 	List<String> inputHeaders = new ArrayList<String>();
 	String statement;
 	
@@ -42,14 +44,10 @@ public class InputStatement implements Writeable {
 			throw new IllegalStateException("NONMEM data set(s) cannot be null");
 		}
 
-		// TODO: Handle multiple data sets
-
 		Iterator<NONMEMdataSetType> dsIterator = dataFiles.iterator();
-
 		if (!dsIterator.hasNext()) {
 			throw new IllegalStateException("NONMEM data set(s) cannot be empty");
 		}
-
 		while (dsIterator.hasNext()) {
 			computeEstimationHeaders(dsIterator.next());
 		}
@@ -87,12 +85,33 @@ public class InputStatement implements Writeable {
 		} else {
 			for (ColumnDefnType dataColumn : dataColumns) {
 				String colId = dataColumn.getColumnId().toUpperCase();
+				ColumnTypeType columnType = dataColumn.getColumnType();
+				SymbolTypeType valueType =  dataColumn.getValueType();
 				
 				if (inputHeaders.contains(colId)) {
 					throw new IllegalStateException("NONMEM data set contains duplicate columns");
 				} else {
-					inputHeaders.add(colId);					
+					inputHeaders.add(colId);
+					populateCovTableDetails(columnType,valueType,colId);
 				}
+			}
+		}
+	}
+	
+	/**
+	 * This method populates cov table column details and creates lists of categorical cov tables and continuous cov tables.
+	 * These lists are used while creating table statements.
+	 * @param columnType
+	 * @param valueType
+	 * @param symbol
+	 */
+	public void populateCovTableDetails(ColumnTypeType columnType, SymbolTypeType valueType, String symbol){
+		if(columnType.equals(ColumnTypeType.COVARIATE)){
+			if(valueType.equals(SymbolTypeType.INT)){
+			catCovTableColumns.add(symbol.toUpperCase());	
+			}
+			if(valueType.equals(SymbolTypeType.REAL)){
+			contCovTableColumns.add(symbol.toUpperCase());
 			}
 		}
 	}
@@ -142,12 +161,12 @@ public class InputStatement implements Writeable {
     	}
 		return inputHeaders.toString().replaceAll("\\[|\\]|\\,", "");
 	}
+	
+	public List<String> getCatCovTableColumns() {
+		return catCovTableColumns;
+	}
 
-	/**
-	 * Writes this statement to the given Writer
-	 */
-	@Override
-	public void write(Writer writer) throws IOException {
-		writer.write(getStatement());
+	public List<String> getContCovTableColumns() {
+		return contCovTableColumns;
 	}
 }

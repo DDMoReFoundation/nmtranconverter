@@ -34,7 +34,6 @@ import crx.converter.engine.Accessor;
 import crx.converter.engine.BaseParser;
 import crx.converter.engine.parts.Artifact;
 import crx.converter.engine.parts.EstimationStep;
-import crx.converter.engine.parts.ParameterBlock;
 import crx.converter.engine.parts.EstimationStep.FixedParameter;
 import crx.converter.engine.parts.EstimationStep.ObjectiveFunctionParameter;
 import crx.converter.engine.parts.ObservationBlock;
@@ -310,7 +309,7 @@ public class Parser extends BaseParser {
 		return symbol;
 	}
 	
-	Map<String, Integer> etaToOmegas = new HashMap<String, Integer>();
+	Map<String, Integer> etasOrder = new HashMap<String, Integer>();
 
 	@Override
 	public void writeParameters(PrintWriter fout) {
@@ -321,9 +320,8 @@ public class Parser extends BaseParser {
 			return;
 		}
 		
-		setEtaToOmegaOrder();
-		parameters = new ParametersHelper(lexer.getScriptDefinition());		
-		parameters.setEtaToOmagaMap(etaToOmegas);
+		parameters = new ParametersHelper(lexer.getScriptDefinition());
+		etasOrder = parameters.setEtaToOmegaOrder();
 		parameters.getParameters(lexer.getModelParameters());
 		
 		Map<String, SimpleParameterType> simpleParameters= parameters.getSimpleParams();
@@ -524,7 +522,7 @@ public class Parser extends BaseParser {
 					if (nCovs > 0) stmt.append(" + ");
 					for (ParameterRandomEffectType random_effect : random_effects) {
 						if (random_effect == null) continue;
-						stmt.append("ETA("+etaToOmegas.get(random_effect.getSymbRef().get(0).getSymbIdRef())+")");
+						stmt.append("ETA("+etasOrder.get(random_effect.getSymbRef().get(0).getSymbIdRef())+")");
 					}					
 				}
 			}
@@ -543,28 +541,7 @@ public class Parser extends BaseParser {
 		return stmt.toString();
 	}
 	
-	/**
-	 * Checks the order of Etas and use this order while arranging Omega blocks.
-	 * This method will create map for EtaOrder which will be order for respective Omegas as well.
-	 * @return 
-	 */
-	public void setEtaToOmegaOrder(){
-		List<ParameterBlock> blocks = lexer.getScriptDefinition().getParameterBlocks();
-		Integer etaOrder = 0; 
-		for(ParameterBlock block : blocks ){
-			for(IndividualParameterType parameterType: block.getIndividualParameters()){
-				if (parameterType.getGaussianModel() != null) {
-		    		List<ParameterRandomEffectType> random_effects = parameterType.getGaussianModel().getRandomEffects();
-					if (!random_effects.isEmpty()) {
-						for (ParameterRandomEffectType random_effect : random_effects) {
-							if (random_effect == null) continue;
-							etaToOmegas.put(random_effect.getSymbRef().get(0).getSymbIdRef(), ++etaOrder);
-						}
-					}
-				}
-			}
-		}
-	}
+
 
 	@Override
 	public String getScriptFilename(String output_dir) {

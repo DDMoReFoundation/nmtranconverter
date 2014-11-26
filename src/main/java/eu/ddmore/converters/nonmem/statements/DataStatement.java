@@ -1,8 +1,6 @@
 package eu.ddmore.converters.nonmem.statements;
 
 import java.io.File;
-import java.io.IOException;
-import java.io.Writer;
 import java.util.Iterator;
 import java.util.List;
 
@@ -14,7 +12,7 @@ import eu.ddmore.libpharmml.dom.modellingsteps.DatasetMappingType;
 import eu.ddmore.libpharmml.dom.modellingsteps.EstimationStepType;
 import eu.ddmore.libpharmml.dom.modellingsteps.NONMEMdataSetType;
 
-public class DataStatement implements Writeable {
+public class DataStatement{
 	
 	String dataFileName = "";
 	String statement;
@@ -32,20 +30,16 @@ public class DataStatement implements Writeable {
 		}
 
 		dataFileName = generateDataFileName(modelName);
-		composeData(scriptDefinition);
 	}
 
 		
 	public DataStatement(List<NONMEMdataSetType> dataFiles) {
 		
-		// TODO: Handle multiple data sets
-
 		if (null == dataFiles) {
 			throw new IllegalStateException("NONMEM data set(s) cannot be null");
 		}
 
 		// TODO: Handle multiple data sets
-
 		Iterator<NONMEMdataSetType> dsIterator = dataFiles.iterator();
 
 		if (!dsIterator.hasNext()) {
@@ -64,22 +58,6 @@ public class DataStatement implements Writeable {
 	private  String generateDataFileName(String dataFile) {
 		return new File(dataFile).getName().replace(".xml", "") +"_data.csv";
 	}
-	
-	private void composeData(ScriptDefinition scriptDefinition) {
-//		TabularDataset td = getObjectiveDatasetMap(ParametersHelper.getEstimationStep(scriptDefinition));
-		
-//		List<ArmIndividual> population = trialDesignBlock.getPopulation();
-		
-//		for (ArmIndividual arm: population){
-//			System.out.println("population ARM :"+arm.getArm());
-//		}
-		
-//		trialDesignBlock
-//		for (ActivityType activityType: activityTypes){
-//			System.out.println("population activity:");
-//		}	
-	}
-
 	
 	/**
 	 * @return the printable version of this statement
@@ -113,12 +91,4 @@ public class DataStatement implements Writeable {
     	}
 		return dataset;
     }
-
-	/**
-	 * Writes this statement to the given Writer
-	 */
-	@Override
-	public void write(Writer writer) throws IOException {
-		writer.write(getStatement());
-	}
 }

@@ -1,7 +1,5 @@
 package eu.ddmore.converters.nonmem.statements;
 
-import java.io.PrintWriter;
-
 import crx.converter.engine.ScriptDefinition;
 
 /**
@@ -16,10 +14,6 @@ public class OmegaStatement extends Parameter {
 
 	public OmegaStatement(String symbId){
 		super(symbId);
-	}
-	
-	public void getOmegaStatement(PrintWriter fout){
-		
 	}
 
 	public ScriptDefinition getScriptDefinition() {
