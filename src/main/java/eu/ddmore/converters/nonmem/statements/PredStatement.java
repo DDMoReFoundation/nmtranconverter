@@ -70,6 +70,7 @@ public class PredStatement {
         sb.append(getErrorStatement());
 	}
 	
+	
 	/**
 	 * This method will build theta assignment statements
 	 * @param fout
