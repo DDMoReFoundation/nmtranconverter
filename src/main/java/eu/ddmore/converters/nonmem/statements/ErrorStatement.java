@@ -7,7 +7,15 @@ import eu.ddmore.libpharmml.dom.maths.FunctionCallType;
 import eu.ddmore.libpharmml.dom.maths.FunctionCallType.FunctionArgument;
 
 public class ErrorStatement {
+
+	public static final String IWRES = "IWRES";
+
+	public static final String IRES = "IRES";
+
+	public static final String IPRED = "IPRED";
 	
+	public static final String Y = "Y";
+
 	String errorType, additive, proportional, function, functionEquation;
 
 	FunctionCallType functionCall = null;
@@ -52,7 +60,6 @@ public class ErrorStatement {
 	 * 		IPRED = <f>  	 
 	 *  	W = THETA(x)+THETA(y)*IPRED 
 	 *  	Y = <f>+W*EPS(z) 
-	 *  	IPRED = <f> 
 	 *  	IRES = DV - IPRED 
 	 *  	IWRES = IRES / W
 	 *  	where Additive is THETA(x), proportional is THETA(y) and f is <f>
@@ -67,19 +74,18 @@ public class ErrorStatement {
 			errorBlock.append(Formatter.endline("\n"+function+" = "+functionEquation));
 		}
 		
-		errorBlock.append(Formatter.endline("IPRED = "+function));
+		errorBlock.append(Formatter.endline(IPRED+" = "+function));
 		
 		// Simplified as we have details of two error types at this moment. 
 		// This might need updates depending upon further error types details.
 		if(errorType.equals(COMBINED_ERROR_1)){
-			errorBlock.append(Formatter.endline("W = "+additive+"+"+proportional+"*IPRED"));
+			errorBlock.append(Formatter.endline("W = "+additive+"+"+proportional+"*"+IPRED));
 		}else if(errorType.equals(COMBINED_ERROR_2)){
-			errorBlock.append(Formatter.endline("W = SQRT(("+additive+"*"+additive+")"+"+ ("+proportional+"*"+proportional+"*IPRED*IPRED))"));
+			errorBlock.append(Formatter.endline("W = SQRT(("+additive+"*"+additive+")"+"+ ("+proportional+"*"+proportional+"*"+IPRED+"*"+IPRED+"))"));
 		}
-		errorBlock.append(Formatter.endline("Y = "+function+"+W*EPS(1)"));
-		errorBlock.append(Formatter.endline("IPRED = "+function));
-		errorBlock.append(Formatter.endline("IRES = DV - IPRED"));
-		errorBlock.append(Formatter.endline("IWRES = IRES / W"));
+		errorBlock.append(Formatter.endline(Y+" = "+function+"+W*EPS(1)"));
+		errorBlock.append(Formatter.endline(IRES+" = DV - "+IPRED));
+		errorBlock.append(Formatter.endline(IWRES+" = "+IRES+"/ W"));
 		
 		return errorBlock;	
 	}
