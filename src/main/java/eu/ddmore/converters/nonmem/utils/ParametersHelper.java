@@ -29,16 +29,16 @@ import eu.ddmore.libpharmml.dom.uncertml.PositiveRealValueType;
 
 public class ParametersHelper {
 	
+	private static final String CORRELATION = "CORRELATION";
 	ScriptDefinition scriptDefinition;
 	List<SimpleParameterType> simpleParameterTypes = new ArrayList<SimpleParameterType>();
 	final Map<String, ThetaStatement> thetaStatements = new HashMap<String, ThetaStatement>();
 	final Map<String, OmegaStatement> OmegaStatements = new HashMap<String, OmegaStatement>();
 	
 	final Map<String, List<OmegaStatement>> OmegaBlocks = new HashMap<String, List<OmegaStatement>>();
-	String omegaBlockTitle;
-
-//	Map<String, String> randomVarsInCorrelation = new HashMap<String>();
 	Map<String, String> etasToOmegasInCorrelation = new HashMap<String, String>();
+	String omegaBlockTitle;
+	Boolean isOmegaBlockFromStdDev = false;
 	
 	// These are keyed by symbol ID
 	final Map<String, SimpleParameterType> simpleParams = new HashMap<String, SimpleParameterType>();
@@ -49,6 +49,7 @@ public class ParametersHelper {
 	final Map<String, InitialEstimateType> initialEstimates = new HashMap<String, InitialEstimateType>();
 	final Map<String, ScalarRhs> lowerBounds = new HashMap<String, ScalarRhs>();
 	final Map<String, ScalarRhs> upperBounds = new HashMap<String, ScalarRhs>();
+	private static final String SD = "SD";
 	
 	public void getParameters(List<SimpleParameterType> simpleParameterTypes){
 				
@@ -125,14 +126,14 @@ public class ParametersHelper {
 			for(String eta : orderedEtasMap.values()){
 
 				for(Correlation correlation :  correlations){
-					String randomVar1 = correlation.rnd1.getSymbId();
-					String randomVar2 = correlation.rnd2.getSymbId();
-					int column = getOrderedEtaIndex(randomVar1);
-					int row = getOrderedEtaIndex(randomVar2);
+					String firstRandomVar = correlation.rnd1.getSymbId();
+					String secondRandomVar = correlation.rnd2.getSymbId();
+					int column = getOrderedEtaIndex(firstRandomVar);
+					int row = getOrderedEtaIndex(secondRandomVar);
 
 					createFirstMatrixRow(eta, correlation.rnd1);
 						
-					List<OmegaStatement> omegas = OmegaBlocks.get(randomVar2);
+					List<OmegaStatement> omegas = OmegaBlocks.get(secondRandomVar);
 					if(omegas.get(row)==null){
 						omegas.remove(row);
 						String symbId = getNameFromParamRandomVariable(correlation.rnd2);
@@ -159,8 +160,10 @@ public class ParametersHelper {
 	 */
 	private String createOmegaBlockTitle(List<Correlation> correlations) {
 		Integer blocksCount = etaToOmagaMap.size();
+		StringBuilder description = new StringBuilder();
 		//This will change in case of 0.4 as it will need to deal with matrix types as well.
-		String description = (!correlations.isEmpty())?"CORRELATION":"";
+		description.append((!correlations.isEmpty())?CORRELATION:" ");
+		description.append((isOmegaBlockFromStdDev)?" "+SD:"");
 		String title = "\n$OMEGA BLOCK("+blocksCount+") "+description;
 		return title;
 	}
@@ -242,12 +245,19 @@ public class ParametersHelper {
 	 */
 	public void initialiseOmegaBlocks(List<Correlation> correlations){
 		OmegaBlocks.clear();
-		//create correlations map
+
 		for(Correlation correlation : correlations){
-			etasToOmegasInCorrelation.put(correlation.rnd1.getSymbId(),getNameFromParamRandomVariable(correlation.rnd1));
-			etasToOmegasInCorrelation.put(correlation.rnd2.getSymbId(),getNameFromParamRandomVariable(correlation.rnd2));
-			etasToOmegasInCorrelation.put(correlation.correlationCoefficient.getSymbRef().getSymbIdRef(), 
-					correlation.correlationCoefficient.getSymbRef().getSymbIdRef());
+			String firstVar = correlation.rnd1.getSymbId();			
+			String secondVar = correlation.rnd2.getSymbId();
+			String coefficient = correlation.correlationCoefficient.getSymbRef().getSymbIdRef();
+			//Need to set SD attribute for whole block if even a single value is from std dev
+			if(!isOmegaBlockFromStdDev){
+				isOmegaBlockFromStdDev = isParamFromStdDev(correlation.rnd1) || isParamFromStdDev(correlation.rnd1);
+			}
+			//create correlations map			
+			etasToOmegasInCorrelation.put(firstVar,getNameFromParamRandomVariable(correlation.rnd1));
+			etasToOmegasInCorrelation.put(secondVar,getNameFromParamRandomVariable(correlation.rnd2));
+			etasToOmegasInCorrelation.put(coefficient,coefficient);
 		}
 		
 		for(Iterator<Entry<String, Integer>> it = etaToOmagaMap.entrySet().iterator(); it.hasNext();) {
@@ -270,15 +280,38 @@ public class ParametersHelper {
 	 */
 	private void setOmegaParameters(){
 		List<ParameterBlock> parameterBlocks = getScriptDefinition().getParameterBlocks();
+
 		//Unless parameterBlocks is empty, getting first parameter Block.
-		createOmegaBlocks();
 		if(!parameterBlocks.isEmpty()){
 			for (ParameterRandomVariableType rv : parameterBlocks.get(0).getRandomVariables()) {
 				String symbId = getNameFromParamRandomVariable(rv);
 					OmegaStatement omegaStatement = getOmegaFromRandomVariable(symbId);
-					if(omegaStatement!=null)
-						OmegaStatements.put(symbId, omegaStatement);					
+					if(omegaStatement!=null){
+						for(Iterator<FixedParameter> it= fixedParameters.iterator();it.hasNext();){
+							String paramName = it.next().p.getSymbRef().getSymbIdRef();
+							if(paramName.equals(symbId)){
+								omegaStatement.setFixed(true);
+								it.remove();
+							}
+						}
+						if(isParamFromStdDev(rv)){
+							omegaStatement.setStdDev(true);
+						}
+						
+						OmegaStatements.put(symbId, omegaStatement);
+					}
 			}
+		}
+	}
+	
+	/**
+	 * Add SD attribute to sigma statement if value is obtained from standard deviation.
+	 * @param statement
+	 * @param isStdDev
+	 */
+	public void addAttributeForStdDev(StringBuilder statement, Boolean isStdDev) {
+		if(isStdDev){
+			statement.append(Formatter.endline(" "+SD));
 		}
 	}
 
@@ -296,6 +329,16 @@ public class ParametersHelper {
 			symbId = getDistributionTypeVariance(rv).getVar().getVarId();
 		}
 		return symbId;
+	}
+	
+	public Boolean isParamFromStdDev(ParameterRandomVariableType rv) {
+		if (getDistributionTypeStdDev(rv) != null) {
+			return true;					
+		} else if (getDistributionTypeVariance(rv) != null) {
+			return false;
+		}else{
+			throw new IllegalStateException("Distribution type for variable "+rv.getSymbId()+" is unknown");
+		}
 	}
 
 	/**

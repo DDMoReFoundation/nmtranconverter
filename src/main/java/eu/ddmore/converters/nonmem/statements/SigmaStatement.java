@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Set;
 
 import crx.converter.engine.parts.ObservationBlock;
+import eu.ddmore.converters.nonmem.utils.Formatter;
 import eu.ddmore.converters.nonmem.utils.ParametersHelper;
 import eu.ddmore.libpharmml.dom.commontypes.RealValueType;
 import eu.ddmore.libpharmml.dom.modeldefn.ParameterRandomVariableType;
@@ -20,6 +21,7 @@ import eu.ddmore.libpharmml.dom.uncertml.PositiveRealValueType;
  */
 public class SigmaStatement {
 	
+	private static final String FIX = "FIX";
 	private ParametersHelper parameters;
 	List<String> sigmaParams = new ArrayList<String>();
 
@@ -63,8 +65,9 @@ public class SigmaStatement {
 		}
 		
 		for (ParameterRandomVariableType rv : randomVariableTypes) {
-
-
+			
+			Boolean isStdDev = false;
+			
 			PositiveRealValueType stddevDistribution = parameters.getDistributionTypeStdDev(rv);
 			if(stddevDistribution!=null){
 				sigmaRepresentation = getSigmaFromStddevDistribution(stddevDistribution);
@@ -74,17 +77,20 @@ public class SigmaStatement {
 			if(varianceDistribution!=null){
 				sigmaRepresentation = getSigmaFromVarianceDistribution(varianceDistribution);
 			}
+			
+			isStdDev = parameters.isParamFromStdDev(rv);
 
 			StringBuilder sigmaStatements = new StringBuilder();
 			if(isNumeric(sigmaRepresentation)){
-				sigmaStatements.append(Double.parseDouble(sigmaRepresentation) +" FIX\n");
+				sigmaStatements.append(Double.parseDouble(sigmaRepresentation) +" "+FIX);
 			}else {
-				String sigmastatement = getSigmaFromInitialEstimate(sigmaRepresentation);
+				String sigmastatement = getSigmaFromInitialEstimate(sigmaRepresentation, isStdDev);
 				sigmaStatements.append(sigmastatement);
 			}
+			parameters.addAttributeForStdDev(sigmaStatements,isStdDev);
+			sigmaStatements.append(Formatter.endline());
 			
 			sigmaParams.add(sigmaStatements.toString());
-			
 		}
 		return sigmaParams;
 	}
@@ -94,23 +100,28 @@ public class SigmaStatement {
 	 * We need to look for value of this variable and return value of the same. 
 	 * 
 	 * @param varId
+	 * @param isStdDev 
 	 * @return
 	 */
-	private String getSigmaFromInitialEstimate(String varId) {
-		String sigmastatement = new String();
+	private String getSigmaFromInitialEstimate(String varId, Boolean isStdDev) {
+		StringBuilder sigmastatement = new StringBuilder();
 		for(ParameterEstimateType params : parameters.getParametersToEstimate()){
 			String symbId = params.getSymbRef().getSymbIdRef();
 			if(symbId.equals(varId)){
-				if(params.getInitialEstimate().isFixed()){
-					symbId = "FIX";
-				}
 				RealValueType value = (RealValueType) params.getInitialEstimate().getScalar().getValue();
-				
-				sigmastatement = value.getValue()+ " ;"+ symbId+"\n";
-				
+				sigmastatement.append(value.getValue());
+				if(params.getInitialEstimate().isFixed()){
+					sigmastatement.append(FIX);
+					parameters.addAttributeForStdDev(sigmastatement,isStdDev);
+					sigmastatement.append(Formatter.endline());
+				}else{
+					sigmastatement.append(value.getValue());
+					parameters.addAttributeForStdDev(sigmastatement,isStdDev);
+					sigmastatement.append(" ;"+ symbId+"\n");
+				}
 			}
 		}
-		return sigmastatement;
+		return sigmastatement.toString();
 	}
 
 	/**
