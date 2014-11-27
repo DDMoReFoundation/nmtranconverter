@@ -21,7 +21,6 @@ import eu.ddmore.libpharmml.dom.uncertml.PositiveRealValueType;
  */
 public class SigmaStatement {
 	
-	private static final String FIX = "FIX";
 	private ParametersHelper parameters;
 	List<String> sigmaParams = new ArrayList<String>();
 
@@ -82,7 +81,7 @@ public class SigmaStatement {
 
 			StringBuilder sigmaStatements = new StringBuilder();
 			if(isNumeric(sigmaRepresentation)){
-				sigmaStatements.append(Double.parseDouble(sigmaRepresentation) +" "+FIX);
+				sigmaStatements.append(Double.parseDouble(sigmaRepresentation) +" "+ParametersHelper.FIX);
 			}else {
 				String sigmastatement = getSigmaFromInitialEstimate(sigmaRepresentation, isStdDev);
 				sigmaStatements.append(sigmastatement);
@@ -111,7 +110,7 @@ public class SigmaStatement {
 				RealValueType value = (RealValueType) params.getInitialEstimate().getScalar().getValue();
 				sigmastatement.append(value.getValue());
 				if(params.getInitialEstimate().isFixed()){
-					sigmastatement.append(FIX);
+					sigmastatement.append(ParametersHelper.FIX);
 					parameters.addAttributeForStdDev(sigmastatement,isStdDev);
 					sigmastatement.append(Formatter.endline());
 				}else{

@@ -43,6 +43,7 @@ import crx.converter.engine.parts.StructuralBlock;
 import crx.converter.engine.parts.TrialDesignBlock.ArmIndividual;
 import crx.converter.tree.BinaryTree;
 import crx.converter.tree.Node;
+import eu.ddmore.converters.nonmem.statements.OmegaBlockStatement;
 import eu.ddmore.converters.nonmem.statements.OmegaStatement;
 import eu.ddmore.converters.nonmem.statements.Parameter;
 import eu.ddmore.converters.nonmem.statements.PredStatement;
@@ -327,7 +328,9 @@ public class Parser extends BaseParser {
 		Map<String, SimpleParameterType> simpleParameters= parameters.getSimpleParams();
 		Map<String, ThetaStatement> thetas = parameters.getThetaParams();
 		Map<String, OmegaStatement> omegas = parameters.getOmegaParams();
-		Map<String, List<OmegaStatement>> omegaBlocks = parameters.getOmegaBlocks();
+		
+		OmegaBlockStatement omegaBlockStatement = parameters.getOmegaBlockStatement();
+		Map<String, List<OmegaStatement>> omegaBlocks = omegaBlockStatement.getOmegaBlocks();
 
 		SigmaStatement sigmaStatement = new SigmaStatement(parameters);
 		List<String> sigmaParams = sigmaStatement.getSigmaStatement();
@@ -350,8 +353,8 @@ public class Parser extends BaseParser {
 		}
 		
 		if(!omegaBlocks.isEmpty()){
-			fout.write(Formatter.endline(parameters.getOmegaBlockTitle()));
-			for(String eta : parameters.getOrderedEtasMap().values()){
+			fout.write(Formatter.endline(omegaBlockStatement.getOmegaBlockTitle()));
+			for(String eta : omegaBlockStatement.getOrderedEtasMap().values()){
 				for(OmegaStatement omegaStatement : omegaBlocks.get(eta)){
 					writeParameter(omegaStatement, simpleParameters.get(omegaStatement.getSymbId()),fout);
 				}
@@ -401,10 +404,10 @@ public class Parser extends BaseParser {
 			parse(simpleParam, lexer.getStatement(simpleParam), fout);
 		}
 		if(param.isFixed()){
-			fout.write("FIX");
+			fout.write(ParametersHelper.FIX+" ");
 		}
 		if(param.isStdDev()){
-			fout.write(" SD ");
+			fout.write(ParametersHelper.SD+" ");
 		}
 		fout.write(Formatter.endline(Formatter.indent(" ;" + description)));
 	}

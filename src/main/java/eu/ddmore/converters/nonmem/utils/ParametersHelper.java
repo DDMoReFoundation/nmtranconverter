@@ -5,15 +5,13 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
-import java.util.TreeMap;
 
 import crx.converter.engine.ScriptDefinition;
-import crx.converter.engine.parts.BaseRandomVariableBlock.Correlation;
 import crx.converter.engine.parts.EstimationStep;
 import crx.converter.engine.parts.EstimationStep.FixedParameter;
 import crx.converter.engine.parts.ParameterBlock;
 import crx.converter.engine.parts.Part;
+import eu.ddmore.converters.nonmem.statements.OmegaBlockStatement;
 import eu.ddmore.converters.nonmem.statements.OmegaStatement;
 import eu.ddmore.converters.nonmem.statements.ThetaStatement;
 import eu.ddmore.libpharmml.dom.commontypes.ScalarRhs;
@@ -29,28 +27,24 @@ import eu.ddmore.libpharmml.dom.uncertml.PositiveRealValueType;
 
 public class ParametersHelper {
 	
-	private static final String CORRELATION = "CORRELATION";
+	public static final String CORRELATION = "CORRELATION";
+	public static final String FIX = "FIX";
+	public static final String SD = "SD";
+	
 	ScriptDefinition scriptDefinition;
 	List<SimpleParameterType> simpleParameterTypes = new ArrayList<SimpleParameterType>();
 	final Map<String, ThetaStatement> thetaStatements = new HashMap<String, ThetaStatement>();
 	final Map<String, OmegaStatement> OmegaStatements = new HashMap<String, OmegaStatement>();
 	
-	final Map<String, List<OmegaStatement>> OmegaBlocks = new HashMap<String, List<OmegaStatement>>();
-	Map<String, String> etasToOmegasInCorrelation = new HashMap<String, String>();
-	String omegaBlockTitle;
-	Boolean isOmegaBlockFromStdDev = false;
-	
 	// These are keyed by symbol ID
 	final Map<String, SimpleParameterType> simpleParams = new HashMap<String, SimpleParameterType>();
-	Map<String, Integer> etaToOmagaMap = new HashMap<String, Integer>();
-	Map<Integer, String> orderedEtasMap;
 	List<ParameterEstimateType> parametersToEstimate = new ArrayList<ParameterEstimateType>();
 	List<FixedParameter> fixedParameters = new ArrayList<FixedParameter>();
 	final Map<String, InitialEstimateType> initialEstimates = new HashMap<String, InitialEstimateType>();
 	final Map<String, ScalarRhs> lowerBounds = new HashMap<String, ScalarRhs>();
 	final Map<String, ScalarRhs> upperBounds = new HashMap<String, ScalarRhs>();
-	private static final String SD = "SD";
-	
+	OmegaBlockStatement omegaBlockStatement = new OmegaBlockStatement(this);
+
 	public void getParameters(List<SimpleParameterType> simpleParameterTypes){
 				
 		if (simpleParameterTypes.isEmpty()) {
@@ -59,16 +53,16 @@ public class ParametersHelper {
 			setSimpleParameterTypes(simpleParameterTypes);
 		}
 		
-		setEtaToOmagaMap(setEtaToOmegaOrder());
 		final EstimationStep estimationStep = getEstimationStep(scriptDefinition);
 		parametersToEstimate = (estimationStep.hasParametersToEstimate())? estimationStep.getParametersToEstimate():new ArrayList<ParameterEstimateType>();
 		fixedParameters = (estimationStep.hasFixedParameters())? estimationStep.getFixedParameters():new ArrayList<FixedParameter>();
 		// Find any bounds and initial estimates
 		setAllParameterBounds(parametersToEstimate);
 		
-		//need to set omegas before setting theta params
 		//setOmegaBlocks before omega params and theta
-		createOmegaBlocks();
+		omegaBlockStatement.setEtaToOmagaMap(setEtaToOmegaOrder());
+		omegaBlockStatement.createOmegaBlocks();
+		//need to set omegas before setting theta params
 		setOmegaParameters();
 		setThetaParameters();
 		
@@ -103,123 +97,17 @@ public class ParametersHelper {
 		}
 	}
 
+	/**
+	 * Validate parameter before adding it to Theta, by checking if it is omega or sigma or already added to theta.
+	 * 
+	 * 
+	 * @param paramName
+	 * @return
+	 */
 	private boolean validateParamName(String paramName) {
-		return !(paramName== null ||  OmegaStatements.containsKey(paramName) || etasToOmegasInCorrelation.values().contains(paramName) || 
+		return !(paramName== null ||  OmegaStatements.containsKey(paramName) || 
+				omegaBlockStatement.getEtasToOmegasInCorrelation().values().contains(paramName) || 
 				paramName.startsWith("sigma") || thetaStatements.containsKey(paramName));
-	}
-	
-	/**
-	 * This method will create omega blocks if there are any.
-	 * We will need ordered etas and eta to omega map to determine order of the omega block elements.
-	 * Currently only correlations are supported.
-	 *  
-	 * @return
-	 */
-	public void createOmegaBlocks(){
-		List<Correlation> correlations = getAllCorrelations();
-		
-		if(!correlations.isEmpty()){
-			initialiseOmegaBlocks(correlations);
-			orderedEtasMap = reverseMap(etaToOmagaMap);
-			omegaBlockTitle = createOmegaBlockTitle(correlations);
-
-			for(String eta : orderedEtasMap.values()){
-
-				for(Correlation correlation :  correlations){
-					String firstRandomVar = correlation.rnd1.getSymbId();
-					String secondRandomVar = correlation.rnd2.getSymbId();
-					int column = getOrderedEtaIndex(firstRandomVar);
-					int row = getOrderedEtaIndex(secondRandomVar);
-
-					createFirstMatrixRow(eta, correlation.rnd1);
-						
-					List<OmegaStatement> omegas = OmegaBlocks.get(secondRandomVar);
-					if(omegas.get(row)==null){
-						omegas.remove(row);
-						String symbId = getNameFromParamRandomVariable(correlation.rnd2);
-						omegas.add(row, getOmegaFromRandomVariable(symbId));
-					}
-					
-					if(omegas.get(column)==null){
-						String symbId = correlation.correlationCoefficient.getSymbRef().getSymbIdRef();
-						omegas.remove(column);
-						omegas.add(column, getOmegaFromRandomVariable(symbId));	
-					}
-				}
-			}
-		}
-	}
-
-	/**
-	 * Creates title for omega blocks.
-	 * Currently it gets block count for BLOCK(n) and identify in correlations are used.
-	 * This will be updated for matrix types in future.
-	 * 
-	 * @param correlations
-	 * @return
-	 */
-	private String createOmegaBlockTitle(List<Correlation> correlations) {
-		Integer blocksCount = etaToOmagaMap.size();
-		StringBuilder description = new StringBuilder();
-		//This will change in case of 0.4 as it will need to deal with matrix types as well.
-		description.append((!correlations.isEmpty())?CORRELATION:" ");
-		description.append((isOmegaBlockFromStdDev)?" "+SD:"");
-		String title = "\n$OMEGA BLOCK("+blocksCount+") "+description;
-		return title;
-	}
-
-	/**
-	 * This method will return index from ordered eta map for random var name provided. 
-	 * 
-	 * @param randomVariable
-	 * @return
-	 */
-	private int getOrderedEtaIndex(String randomVariable) {
-		return (etaToOmagaMap.get(randomVariable)>0)?etaToOmagaMap.get(randomVariable)-1:0;
-	}
-	
-	/**
-	 * This method will reverse the map and return a tree map (ordered in natural order of keys).
-	 * 
-	 * @param map
-	 * @return
-	 */
-	private <K,V> TreeMap<V,K> reverseMap(Map<K,V> map) {
-		TreeMap<V,K> rev = new TreeMap<V, K>();
-	    for(Map.Entry<K,V> entry : map.entrySet())
-	        rev.put(entry.getValue(), entry.getKey());
-	    return rev;
-	}
-
-	/**
-	 * Collects correlations from all the prameter blocks. 
-	 * 
-	 * @return
-	 */
-	private List<Correlation> getAllCorrelations() {
-		List<Correlation> correlations = new ArrayList<Correlation>();
-		List<ParameterBlock> parameterBlocks = getScriptDefinition().getParameterBlocks();
-		if(!parameterBlocks.isEmpty()){
-			for(ParameterBlock block : parameterBlocks){
-				correlations.addAll(block.getCorrelations());				
-			}
-		}
-		return correlations;
-	}
-
-	/**
-	 * Creates first matrix row which will have only first omega as element.
-	 * 
-	 * @param eta
-	 * @param randomVar1
-	 */
-	private void createFirstMatrixRow(String eta, ParameterRandomVariableType randomVar1) {
-		if(etaToOmagaMap.get(randomVar1.getSymbId())== 1 && eta.equals(randomVar1.getSymbId())){
-			List<OmegaStatement> matrixRow = new ArrayList<OmegaStatement>();
-			String symbId = getNameFromParamRandomVariable(randomVar1);
-			matrixRow.add(getOmegaFromRandomVariable(symbId));
-			OmegaBlocks.put(randomVar1.getSymbId(), matrixRow);
-		}
 	}
 
 	/**
@@ -239,42 +127,6 @@ public class ParametersHelper {
 	}
 	
 	/**
-	 * Initialise omega blocks maps and also update ordered eta to omegas from correlations map.
-	 * 
-	 * @param correlations
-	 */
-	public void initialiseOmegaBlocks(List<Correlation> correlations){
-		OmegaBlocks.clear();
-
-		for(Correlation correlation : correlations){
-			String firstVar = correlation.rnd1.getSymbId();			
-			String secondVar = correlation.rnd2.getSymbId();
-			String coefficient = correlation.correlationCoefficient.getSymbRef().getSymbIdRef();
-			//Need to set SD attribute for whole block if even a single value is from std dev
-			if(!isOmegaBlockFromStdDev){
-				isOmegaBlockFromStdDev = isParamFromStdDev(correlation.rnd1) || isParamFromStdDev(correlation.rnd1);
-			}
-			//create correlations map			
-			etasToOmegasInCorrelation.put(firstVar,getNameFromParamRandomVariable(correlation.rnd1));
-			etasToOmegasInCorrelation.put(secondVar,getNameFromParamRandomVariable(correlation.rnd2));
-			etasToOmegasInCorrelation.put(coefficient,coefficient);
-		}
-		
-		for(Iterator<Entry<String, Integer>> it = etaToOmagaMap.entrySet().iterator(); it.hasNext();) {
-		      Entry<String, Integer> entry = it.next();
-		      if(!etasToOmegasInCorrelation.keySet().contains(entry.getKey())){
-		    	  it.remove();
-		      }
-		}
-
-		for(String eta : etaToOmagaMap.keySet()){
-			ArrayList<OmegaStatement> statements = new ArrayList<OmegaStatement>();
-			for(int i=0;i<etaToOmagaMap.keySet().size();i++) statements.add(null);
-			OmegaBlocks.put(eta, statements);
-		}
-	}
-	
-	/**
 	 * This method will set omega parameters apart from omega blocks.
 	 * 
 	 */
@@ -285,21 +137,20 @@ public class ParametersHelper {
 		if(!parameterBlocks.isEmpty()){
 			for (ParameterRandomVariableType rv : parameterBlocks.get(0).getRandomVariables()) {
 				String symbId = getNameFromParamRandomVariable(rv);
-					OmegaStatement omegaStatement = getOmegaFromRandomVariable(symbId);
-					if(omegaStatement!=null){
-						for(Iterator<FixedParameter> it= fixedParameters.iterator();it.hasNext();){
-							String paramName = it.next().p.getSymbRef().getSymbIdRef();
-							if(paramName.equals(symbId)){
-								omegaStatement.setFixed(true);
-								it.remove();
-							}
+				OmegaStatement omegaStatement = getOmegaFromRandomVariable(symbId);
+				if(omegaStatement!=null){
+					for(Iterator<FixedParameter> it= fixedParameters.iterator();it.hasNext();){
+						String paramName = it.next().p.getSymbRef().getSymbIdRef();
+						if(paramName.equals(symbId)){
+							omegaStatement.setFixed(true);
+							it.remove();
 						}
-						if(isParamFromStdDev(rv)){
-							omegaStatement.setStdDev(true);
-						}
-						
-						OmegaStatements.put(symbId, omegaStatement);
 					}
+					if(isParamFromStdDev(rv)){
+						omegaStatement.setStdDev(true);
+					}
+					OmegaStatements.put(symbId, omegaStatement);
+				}
 			}
 		}
 	}
@@ -331,6 +182,12 @@ public class ParametersHelper {
 		return symbId;
 	}
 	
+	/**
+	 * Identifies if current parameter is from Standard Deviation.
+	 * 
+	 * @param rv
+	 * @return
+	 */
 	public Boolean isParamFromStdDev(ParameterRandomVariableType rv) {
 		if (getDistributionTypeStdDev(rv) != null) {
 			return true;					
@@ -445,10 +302,6 @@ public class ParametersHelper {
 	public void setSimpleParameterTypes(List<SimpleParameterType> simpleParameterTypes) {
 		this.simpleParameterTypes = simpleParameterTypes;
 	}
-
-	public ParametersHelper(ScriptDefinition scriptDefinition){
-		this.scriptDefinition = scriptDefinition;		
-	}
 	
 	public List<ParameterEstimateType> getParametersToEstimate() {
 		return parametersToEstimate;
@@ -462,40 +315,15 @@ public class ParametersHelper {
 		return OmegaStatements;
 	}
 	
-	public Map<String, InitialEstimateType> getInitialEstimates() {
-		return initialEstimates;
-	}
-
-	public Map<String, ScalarRhs> getLowerBounds() {
-		return lowerBounds;
-	}
-
-	public Map<String, ScalarRhs> getUpperBounds() {
-		return upperBounds;
-	}
-	
 	public Map<String, SimpleParameterType> getSimpleParams() {
 		return simpleParams;
 	}
 	
-	public Map<String, Integer> setEtaToOmagaMap() {
-		return etaToOmagaMap;
-	}
-	
-	public Map<Integer, String> getOrderedEtasMap() {
-		return orderedEtasMap;
+	public OmegaBlockStatement getOmegaBlockStatement() {
+		return omegaBlockStatement;
 	}
 
-	public void setEtaToOmagaMap(Map<String, Integer> etaToOmagaMap) {
-		this.etaToOmagaMap = etaToOmagaMap;
+	public ParametersHelper(ScriptDefinition scriptDefinition){
+		this.scriptDefinition = scriptDefinition;		
 	}
-	
-	public Map<String, List<OmegaStatement>> getOmegaBlocks() {
-		return OmegaBlocks;
-	}
-	
-	public String getOmegaBlockTitle() {
-		return omegaBlockTitle;
-	}
-
 }
