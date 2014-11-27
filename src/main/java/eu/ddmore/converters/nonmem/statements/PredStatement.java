@@ -68,7 +68,7 @@ public class PredStatement {
         sb.append("\nIF (AMT.GT.0) NM_D=AMT\n");
         sb.append(getPredCoreStatement());
         sb.append(getErrorStatement());
-	}
+	}	
 	
 	/**
 	 * This method will build theta assignment statements

@@ -375,14 +375,14 @@ public class Parser extends BaseParser {
 	 * @param fout
 	 */
 	private void writeParameter(Parameter param, SimpleParameterType simpleParam, PrintWriter fout) {
-		String startParens = "(";
-		String endParens = ") ; ";
+//		String startParens = "(";
+//		String endParens = ") ; ";
 		String description = readDescription((PharmMLRootType) simpleParam);
 		if(description.isEmpty()){
 			description = param.getSymbId();
 		}
 		
-		fout.write(startParens);
+//		fout.write(startParens);
 		if (param.getLowerBound() != null && param.getUpperBound() != null) {
 			
 			parse(param.getLowerBound(), lexer.getStatement(param.getLowerBound()), fout);
@@ -400,8 +400,13 @@ public class Parser extends BaseParser {
 			//TODO: this approach needs to be confirmed
 			parse(simpleParam, lexer.getStatement(simpleParam), fout);
 		}
-		endParens = (param.isFixed())? " FIX"+endParens : endParens;
-		fout.write(endParens + description + "\n");
+		if(param.isFixed()){
+			fout.write("FIX");
+		}
+		if(param.isStdDev()){
+			fout.write(" SD ");
+		}
+		fout.write(Formatter.endline(Formatter.indent(" ;" + description)));
 	}
 
 	

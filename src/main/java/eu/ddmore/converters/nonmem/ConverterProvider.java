@@ -35,7 +35,7 @@ public class ConverterProvider extends Lexer {
 		source = new LanguageVersionImpl("PharmML", source_version);
 		
 		VersionImpl target_version = new VersionImpl(7, 2, 0);
-		target = new LanguageVersionImpl("nonmem", target_version);
+		target = new LanguageVersionImpl("NMTRAN", target_version);
 	}
 	
 	@Override
