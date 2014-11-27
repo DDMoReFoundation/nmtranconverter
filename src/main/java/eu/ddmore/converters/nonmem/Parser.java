@@ -199,7 +199,7 @@ public class Parser extends BaseParser {
 	@Override
 	protected String doIndependentVariable(IndependentVariableType v) {
 		String symbol = v.getSymbId();
-		if (symbol.equals("t") || symbol.equals("time")) symbol = "TIME";
+		if (symbol.equals("t") || symbol.equals("time")) symbol = "T";
 		return symbol;
 	}
 	
