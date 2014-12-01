@@ -35,7 +35,7 @@ public class ParametersHelper {
 	private static final String MU = "MU_";
 	public static final String CORRELATION = "CORRELATION";
 	public static final String FIX = "FIX";
-	public static final String SD = "SD";
+	public static final String SD = "SD"; 
 	
 	ScriptDefinition scriptDefinition;
 	List<SimpleParameterType> simpleParameterTypes = new ArrayList<SimpleParameterType>();

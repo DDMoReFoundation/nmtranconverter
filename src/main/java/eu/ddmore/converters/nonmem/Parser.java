@@ -344,13 +344,20 @@ public class Parser extends BaseParser {
 				writeParameter(thetas.get(thetaVar), simpleParameters.get(thetaVar), fout);
 			}
 		}
-		//Write Omega blocks before rest of Omega 
+
 		if(!omegaBlocks.isEmpty()){
 			fout.write(Formatter.endline(omegaBlockStatement.getOmegaBlockTitle()));
 			for(String eta : omegaBlockStatement.getOrderedEtasToOmegaMap().values()){
 				for(OmegaStatement omegaStatement : omegaBlocks.get(eta)){
 					writeParameter(omegaStatement, simpleParameters.get(omegaStatement.getSymbId()),fout);
 				}
+			}
+		}
+		
+		if (!omegas.isEmpty()) {
+			fout.write(Formatter.endline("\n$OMEGA"));
+			for (final String omegaVar : omegas.keySet()) {
+				writeParameter(omegas.get(omegaVar), simpleParameters.get(omegaVar), fout);
 			}
 		}
 		
