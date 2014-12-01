@@ -65,7 +65,7 @@ import eu.ddmore.libpharmml.dom.modeldefn.CovariateRelationType;
 import eu.ddmore.libpharmml.dom.modeldefn.FixedEffectRelationType;
 import eu.ddmore.libpharmml.dom.modeldefn.IndividualParameterType;
 import eu.ddmore.libpharmml.dom.modeldefn.IndividualParameterType.GaussianModel;
-import eu.ddmore.libpharmml.dom.modeldefn.IndividualParameterType.GaussianModel.LinearCovariate.PopulationParameter;
+import eu.ddmore.libpharmml.dom.modeldefn.IndividualParameterType.GaussianModel.GeneralCovariate;
 import eu.ddmore.libpharmml.dom.modeldefn.LhsTransformationType;
 import eu.ddmore.libpharmml.dom.modeldefn.ParameterRandomEffectType;
 import eu.ddmore.libpharmml.dom.modeldefn.ParameterRandomVariableType;
@@ -73,6 +73,8 @@ import eu.ddmore.libpharmml.dom.modeldefn.SimpleParameterType;
 import eu.ddmore.libpharmml.dom.trialdesign.ActivityType;
 
 public class Parser extends BaseParser {
+	private static final String LOGIT = "LOGIT";
+	private static final String LOG = "LOG";
 	ParametersHelper parameters;
 	ArrayList<String> thetaSet = new ArrayList<String>();
 	private final String THETA = "THETA";
@@ -440,110 +442,147 @@ public class Parser extends BaseParser {
 	}
 	
 	/**
-	 * Get individual parameter assignments from individual parameter type.
+	 * Get individual parameter definition from individual parameter type.
 	 * This method is used as part of pred core block.
 	 * 
 	 * @param ip
 	 * @return
 	 */
-	public String doIndividualParameterAssignment(IndividualParameterType ip) {
-
-    	StringBuilder stmt = new StringBuilder();
+	public String createIndividualDefinition(IndividualParameterType ip){
+		
+    	StringBuilder statement = new StringBuilder();
     	
     	String variableSymbol = ip.getSymbId();    	
     	if (ip.getAssign() != null) {
-    		stmt.append(String.format("\n%s = ", variableSymbol));
-    		String assignment = parse(new Object(), lexer.getStatement(ip.getAssign()));
-    		stmt.append(Formatter.endline(assignment+";"));
-    	} else if (ip.getGaussianModel() != null) {
-    		GaussianModel m = ip.getGaussianModel();
-    		LhsTransformationType transform = m.getTransformation();
-    		GaussianModel.GeneralCovariate gcov = m.getGeneralCovariate();
-    		GaussianModel.LinearCovariate lcov = m.getLinearCovariate();
-    		List<ParameterRandomEffectType> random_effects = m.getRandomEffects();
+    		statement = getIndivDefinitionForAssign(ip);
+    	} 
+    	else if (ip.getGaussianModel() != null) {
     		
-    		int nCovs = 0;
-    		if (transform == LhsTransformationType.LOG) variableSymbol = "log" + capitalise(variableSymbol);
-    		else if (transform == LhsTransformationType.LOGIT) variableSymbol = "logit" + capitalise(variableSymbol);
+    		GaussianModel gaussianModel = ip.getGaussianModel();
+    		String logType = getLogType(gaussianModel.getTransformation());
+    		String pop_param_symbol = parameters.getPopSymbol(gaussianModel);
+    		variableSymbol = (pop_param_symbol.isEmpty())?variableSymbol:parameters.getMUSymbol(pop_param_symbol);
+
+    		statement.append(String.format("%s = ", variableSymbol));
     		
-    		stmt.append(String.format("%s = ", variableSymbol));
-    		if (lcov != null) {
-    			String pop_param_symbol = null;
-    			
-    			PopulationParameter pop_param = lcov.getPopulationParameter();
-    			if (pop_param != null) {
-    				pop_param_symbol = Formatter.addPrefix(pop_param.getAssign().getEquation().getSymbRef().getSymbIdRef());//getThetaForSymbol(pop_param.getAssign().getSymbRef().getSymbIdRef());
-    				if (transform == LhsTransformationType.LOG) pop_param_symbol = String.format("LOG(%s)", pop_param_symbol);
-    	    		else if (transform == LhsTransformationType.LOGIT) pop_param_symbol = String.format("LOGIT(%s)", pop_param_symbol);
-    				stmt.append(String.format("(%s)", pop_param_symbol));
+    		if(gaussianModel.getLinearCovariate()!=null){
+    			if (!pop_param_symbol.isEmpty()) {
+    				statement.append(String.format(logType+"(%s)", Formatter.addPrefix(pop_param_symbol)));
     			}
     			
-    			List<CovariateRelationType> covariates = lcov.getCovariate();
+    			List<CovariateRelationType> covariates = gaussianModel.getLinearCovariate().getCovariate();
     			if (covariates != null) {
-    				if (pop_param_symbol != null) stmt.append(" + ");
-    				
     				for (CovariateRelationType covariate : covariates) {
     					if (covariate == null) continue;
-    					if (nCovs > 0) stmt.append(" + ");
     					
-    					CovariateDefinitionType cdt = (CovariateDefinitionType) lexer.getAccessor().fetchElement(covariate.getSymbRef());
-    					if (cdt != null) {
-    						if (cdt.getContinuous() != null) {
-    							String cov_stmt = "";
-    							ContinuousCovariateType continuous = cdt.getContinuous();
-    							if (continuous.getTransformation() != null) cov_stmt = getSymbol(continuous.getTransformation());
-    							else cov_stmt = cdt.getSymbId();
+    					CovariateDefinitionType covariateDef = (CovariateDefinitionType) lexer.getAccessor().fetchElement(covariate.getSymbRef());
+    					if (covariateDef != null) {
+    						if (covariateDef.getContinuous() != null) {
+    							String covStatement = "";
+    							ContinuousCovariateType continuous = covariateDef.getContinuous();
+    							if (continuous.getTransformation() != null) covStatement = getSymbol(continuous.getTransformation());
+    							else covStatement = covariateDef.getSymbId();
     							
-    							List<FixedEffectRelationType> fixed_effects = covariate.getFixedEffect();
-    							if (fixed_effects != null) {
-    								for (FixedEffectRelationType fixed_effect : fixed_effects) {
-    									if (fixed_effect == null) continue;
-    									String  fixed_effect_stmt = Formatter.addPrefix(fixed_effect.getSymbRef().getSymbIdRef());//getThetaForSymbol(fixed_effect.getSymbRef().getSymbIdRef());
-    									if(fixed_effect_stmt.isEmpty())
-    										fixed_effect_stmt = parse(fixed_effect, lexer.getStatement(fixed_effect));
-    									cov_stmt = fixed_effect_stmt + " * " + cov_stmt;
-    									break;
-    								}
-    							}
-    							stmt.append(cov_stmt);
-    							nCovs++;
-    						} else if (cdt.getCategorical() != null) {
+    							covStatement = addFixedEffectsStatementToIndivParamDef(covariate, covStatement);
+    							if(!covStatement.isEmpty())
+    								statement.append("+"+covStatement);
+    						} else if (covariateDef.getCategorical() != null) {
     							throw new UnsupportedOperationException("No categorical yet");
     						}
     					}
     				}
     			}
-    		} else if (gcov != null) {
-    			String assignment = parse(gcov, lexer.getStatement(gcov));
-    			stmt.append(assignment);
-    			nCovs++;
     		}
-
-			if (random_effects != null) {
-				if (!random_effects.isEmpty()) {
-					if (nCovs > 0) stmt.append(" + ");
-					for (ParameterRandomEffectType random_effect : random_effects) {
-						if (random_effect == null) continue;
-						stmt.append("ETA("+etasOrder.get(random_effect.getSymbRef().get(0).getSymbIdRef())+")");
-					}					
-				}
-			}
-			stmt.append(";\n");
-			
-			if (transform == LhsTransformationType.LOG) {
-				String format = "%s = EXP(%s);\n";
-				stmt.append(String.format(format, Formatter.addPrefix(ip.getSymbId()), variableSymbol));
-			} else if (transform == LhsTransformationType.LOGIT) {
+    		else if (gaussianModel.getGeneralCovariate() != null) {
+    			GeneralCovariate generalCov = gaussianModel.getGeneralCovariate(); 
+    			String assignment = parse(generalCov, lexer.getStatement(generalCov));
+    			statement.append(assignment);
+    		}
+    		statement.append(Formatter.endline(";"));
+    		
+    		StringBuilder etas = addEtasStatementsToIndivParamDef(gaussianModel.getRandomEffects());
+			if (logType.equals(LOG)) {
+				String format = "%s = EXP(%s %s);\n";
+				statement.append(String.format(format, Formatter.addPrefix(ip.getSymbId()), variableSymbol,etas));
+			} else if (logType.equals(LOGIT)) {
 				String format = "%s = 1./(1 + exp(-%s));\n";
-				stmt.append(String.format(format, Formatter.addPrefix(ip.getSymbId()), variableSymbol));
+				statement.append(String.format(format, Formatter.addPrefix(ip.getSymbId()), variableSymbol));
 			}
     	}
-		stmt.append("\n");
+		statement.append(Formatter.endline());
 		
-		return stmt.toString();
+		return statement.toString();
+	}
+
+	/**
+	 * This method adds etas from random effects to individual parameter definitions.
+	 * @param random_effects
+	 * @return
+	 */
+	private StringBuilder addEtasStatementsToIndivParamDef(List<ParameterRandomEffectType> random_effects) {
+		StringBuilder etas = new StringBuilder();
+		if (random_effects != null && !random_effects.isEmpty()) {
+			for (ParameterRandomEffectType random_effect : random_effects) {
+				if (random_effect == null) continue;
+				etas.append("+ ");
+				etas.append("ETA("+etasOrder.get(random_effect.getSymbRef().get(0).getSymbIdRef())+")");
+			}
+		}
+		return etas;
+	}
+
+	/**
+	 * This method parses and adds fixed effects statements from covariates to individual parameter definition .
+	 * @param covariate
+	 * @param covStatement
+	 * @return
+	 */
+	private String addFixedEffectsStatementToIndivParamDef(CovariateRelationType covariate, String covStatement) {
+		List<FixedEffectRelationType> fixedEffects = covariate.getFixedEffect();
+		if (fixedEffects != null) {
+			for (FixedEffectRelationType fixed_effect : fixedEffects) {
+				if (fixed_effect == null) continue;
+				String  fixedEffectStatement = Formatter.addPrefix(fixed_effect.getSymbRef().getSymbIdRef());
+				if(fixedEffectStatement.isEmpty())
+					fixedEffectStatement = parse(fixed_effect, lexer.getStatement(fixed_effect));
+				covStatement = fixedEffectStatement + " * " + covStatement;
+				break;
+			}
+		}
+		return covStatement;
 	}
 	
+	/**
+	 * This method will return individual definition details if assignment is present.
+	 * @param ip
+	 * @return
+	 */
+	private StringBuilder getIndivDefinitionForAssign(IndividualParameterType ip) {
+		StringBuilder statement = new StringBuilder();
+		if (ip.getAssign() != null) {
+			statement.append(String.format("\n%s = ", ip.getSymbId()));
+			String assignment = parse(new Object(), lexer.getStatement(ip.getAssign()));
+			statement.append(Formatter.endline(assignment+";"));
+		}
+		return statement;
+	}
 
+	/**
+	 * Return log type in constant format depending on transformation type
+	 * This method is mainly used to help creation of individual parameter definitions.
+	 * 
+	 * @param transform
+	 * @return
+	 */
+	private String getLogType(LhsTransformationType transform) {
+		if (transform == LhsTransformationType.LOG){
+			return LOG;
+		}else if (transform == LhsTransformationType.LOGIT){
+			return LOGIT;
+		}else{
+			throw new  UnsupportedOperationException("Tranformation type "+transform.name()+" not yet supported");
+		}
+	}
 
 	@Override
 	public String getScriptFilename(String output_dir) {

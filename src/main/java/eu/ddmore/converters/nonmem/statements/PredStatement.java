@@ -181,8 +181,6 @@ public class PredStatement {
 		StringBuilder pkStatementBlock = new StringBuilder();
 		pkStatementBlock.append(Formatter.endline("\n$PK\n"));
 		pkStatementBlock.append(getPredCoreStatement());
-		//we will need to add mu statement created from theta to eta order
-		pkStatementBlock.append(parser.getParameters().addMUStatements());
 		pkStatementBlock.append(getDifferentialInitialConditions());
 		return pkStatementBlock;
 	}
@@ -264,7 +262,7 @@ public class PredStatement {
 		StringBuilder IndividualParamAssignmentBlock = new StringBuilder();
 		for(ParameterBlock parameterBlock : blocks){
 			for(IndividualParameterType parameterType: parameterBlock.getIndividualParameters()){
-				IndividualParamAssignmentBlock.append(parser.doIndividualParameterAssignment(parameterType));	
+				IndividualParamAssignmentBlock.append(parser.createIndividualDefinition(parameterType));	
 			}
 		}
 		return IndividualParamAssignmentBlock;

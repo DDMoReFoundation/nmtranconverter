@@ -20,6 +20,7 @@ import eu.ddmore.converters.nonmem.statements.ThetaStatement;
 import eu.ddmore.libpharmml.dom.commontypes.ScalarRhs;
 import eu.ddmore.libpharmml.dom.modeldefn.IndividualParameterType;
 import eu.ddmore.libpharmml.dom.modeldefn.IndividualParameterType.GaussianModel;
+import eu.ddmore.libpharmml.dom.modeldefn.IndividualParameterType.GaussianModel.LinearCovariate;
 import eu.ddmore.libpharmml.dom.modeldefn.ParameterRandomEffectType;
 import eu.ddmore.libpharmml.dom.modeldefn.ParameterRandomVariableType;
 import eu.ddmore.libpharmml.dom.modeldefn.SimpleParameterType;
@@ -136,11 +137,21 @@ public class ParametersHelper {
 	 */
 	public StringBuilder addMUStatements(){
 		StringBuilder muStatement = new StringBuilder();
-		for(Integer etaOrder : thetasToEtaOrder.keySet()){
-			muStatement.append(Formatter.endline(MU+etaOrder+" = "+LOG+"("+thetasToEtaOrder.get(etaOrder)+")" ));
+		for(Integer thetaOrder : thetasToEtaOrder.keySet()){
+			muStatement.append(Formatter.endline(MU+thetaOrder+" = "+LOG+"("+thetasToEtaOrder.get(thetaOrder)+")" ));
 		}
 		
 		return muStatement;
+	}
+	
+	public String getMUSymbol(String popSymbol){
+		for(Integer thetaOrder: thetasToEtaOrder.keySet()){
+			if(popSymbol.equals(thetasToEtaOrder.get(thetaOrder))){
+				return new String(MU+thetaOrder);
+			}
+		}
+		return new String(); 
+		
 	}
 
 	/**
@@ -381,8 +392,13 @@ public class ParametersHelper {
 		}
 	}
 
-	private String getPopSymbol(final GaussianModel gaussianModel) {
-		return gaussianModel.getLinearCovariate().getPopulationParameter().getAssign().getEquation().getSymbRef().getSymbIdRef();
+	public String getPopSymbol(final GaussianModel gaussianModel) {
+		LinearCovariate lcov =  gaussianModel.getLinearCovariate();
+		if(lcov!=null && lcov.getPopulationParameter()!=null){
+				return lcov.getPopulationParameter().getAssign().getEquation().getSymbRef().getSymbIdRef();		
+		}else{
+			return new String();
+		}
 	}
 	
 	public LinkedHashMap<String, String> addCorrelationValuesToMap(List<Correlation> correlations) {
