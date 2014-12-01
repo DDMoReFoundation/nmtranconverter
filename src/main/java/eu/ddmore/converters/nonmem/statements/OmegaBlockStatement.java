@@ -3,6 +3,7 @@ package eu.ddmore.converters.nonmem.statements;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -16,17 +17,12 @@ import eu.ddmore.libpharmml.dom.modeldefn.ParameterRandomVariableType;
 public class OmegaBlockStatement {
 	
 	final Map<String, List<OmegaStatement>> OmegaBlocks = new HashMap<String, List<OmegaStatement>>();
-	Map<String, String> etasToOmegasInCorrelation = new HashMap<String, String>();
-
-	Map<String, Integer> etaToOmagaMap = new HashMap<String, Integer>();
+	LinkedHashMap<String, String> etasToOmegasInCorrelation = new LinkedHashMap<String, String>();
+	
 	String omegaBlockTitle;
-	public String getOmegaBlockTitle() {
-		return omegaBlockTitle;
-	}
-
-
 	Boolean isOmegaBlockFromStdDev = false;
-	Map<Integer, String> orderedEtasMap;
+	Map<String, Integer> etaToOmagaMap = new HashMap<String, Integer>();
+	Map<Integer, String> orderedEtasToOmegaMap = new TreeMap<Integer, String>();
 	ParametersHelper paramHelper;
 	
 	public OmegaBlockStatement(ParametersHelper parameters) {
@@ -46,10 +42,10 @@ public class OmegaBlockStatement {
 		
 		if(!correlations.isEmpty()){
 			initialiseOmegaBlocks(correlations);
-			orderedEtasMap = reverseMap(etaToOmagaMap);
+			orderedEtasToOmegaMap = paramHelper.reverseMap(etaToOmagaMap);
 			omegaBlockTitle = createOmegaBlockTitle(correlations);
 
-			for(String eta : orderedEtasMap.values()){
+			for(String eta : orderedEtasToOmegaMap.values()){
 
 				for(Correlation correlation :  correlations){
 					String firstRandomVar = correlation.rnd1.getSymbId();
@@ -103,19 +99,6 @@ public class OmegaBlockStatement {
 	private int getOrderedEtaIndex(String randomVariable) {
 		return (etaToOmagaMap.get(randomVariable)>0)?etaToOmagaMap.get(randomVariable)-1:0;
 	}
-	
-	/**
-	 * This method will reverse the map and return a tree map (ordered in natural order of keys).
-	 * 
-	 * @param map
-	 * @return
-	 */
-	private <K,V> TreeMap<V,K> reverseMap(Map<K,V> map) {
-		TreeMap<V,K> rev = new TreeMap<V, K>();
-	    for(Map.Entry<K,V> entry : map.entrySet())
-	        rev.put(entry.getValue(), entry.getKey());
-	    return rev;
-	}
 
 	/**
 	 * Collects correlations from all the prameter blocks. 
@@ -159,12 +142,11 @@ public class OmegaBlockStatement {
 		for(Correlation correlation : correlations){
 			//Need to set SD attribute for whole block if even a single value is from std dev
 			setStdDevAttributeForOmegaBlock(correlation);
-			addCorrelationValuesToMap(correlation);
+			paramHelper.addCorrelationToMap(etasToOmegasInCorrelation,correlation);
 		}
 		
 		for(Iterator<Entry<String, Integer>> it = etaToOmagaMap.entrySet().iterator(); it.hasNext();) {
-		      Entry<String, Integer> entry = it.next();
-		      if(!etasToOmegasInCorrelation.keySet().contains(entry.getKey())){
+			if(!etasToOmegasInCorrelation.keySet().contains(it.next().getKey())){
 		    	  it.remove();
 		      }
 		}
@@ -175,18 +157,6 @@ public class OmegaBlockStatement {
 			OmegaBlocks.put(eta, statements);
 		}
 	}
-
-
-	private void addCorrelationValuesToMap(Correlation correlation) {
-		String firstVar = correlation.rnd1.getSymbId();			
-		String secondVar = correlation.rnd2.getSymbId();
-		String coefficient = correlation.correlationCoefficient.getSymbRef().getSymbIdRef();
-		//add to correlations map			
-		etasToOmegasInCorrelation.put(firstVar,paramHelper.getNameFromParamRandomVariable(correlation.rnd1));
-		etasToOmegasInCorrelation.put(secondVar,paramHelper.getNameFromParamRandomVariable(correlation.rnd2));
-		etasToOmegasInCorrelation.put(coefficient,coefficient);
-	}
-
 
 	private void setStdDevAttributeForOmegaBlock(Correlation correlation) {
 		if(!isOmegaBlockFromStdDev){
@@ -203,18 +173,20 @@ public class OmegaBlockStatement {
 		this.etaToOmagaMap = etaToOmagaMap;
 	}
 
-
-	public Map<Integer, String> getOrderedEtasMap() {
-		return orderedEtasMap;
-	}
-
 	public Map<String, List<OmegaStatement>> getOmegaBlocks() {
 		return OmegaBlocks;
 	}
 
-
 	public Map<String, String> getEtasToOmegasInCorrelation() {
 		return etasToOmegasInCorrelation;
+	}
+	public Map<Integer, String> getOrderedEtasToOmegaMap() {
+		return orderedEtasToOmegaMap;
+	}
+
+
+	public String getOmegaBlockTitle() {
+		return omegaBlockTitle;
 	}
 
 }

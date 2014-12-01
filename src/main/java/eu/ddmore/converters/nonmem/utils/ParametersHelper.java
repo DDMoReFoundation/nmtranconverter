@@ -3,11 +3,14 @@ package eu.ddmore.converters.nonmem.utils;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 
 import crx.converter.engine.ScriptDefinition;
 import crx.converter.engine.parts.EstimationStep;
+import crx.converter.engine.parts.BaseRandomVariableBlock.Correlation;
 import crx.converter.engine.parts.EstimationStep.FixedParameter;
 import crx.converter.engine.parts.ParameterBlock;
 import crx.converter.engine.parts.Part;
@@ -16,6 +19,7 @@ import eu.ddmore.converters.nonmem.statements.OmegaStatement;
 import eu.ddmore.converters.nonmem.statements.ThetaStatement;
 import eu.ddmore.libpharmml.dom.commontypes.ScalarRhs;
 import eu.ddmore.libpharmml.dom.modeldefn.IndividualParameterType;
+import eu.ddmore.libpharmml.dom.modeldefn.IndividualParameterType.GaussianModel;
 import eu.ddmore.libpharmml.dom.modeldefn.ParameterRandomEffectType;
 import eu.ddmore.libpharmml.dom.modeldefn.ParameterRandomVariableType;
 import eu.ddmore.libpharmml.dom.modeldefn.SimpleParameterType;
@@ -27,14 +31,17 @@ import eu.ddmore.libpharmml.dom.uncertml.PositiveRealValueType;
 
 public class ParametersHelper {
 	
+	private static final String LOG = "LOG";
+	private static final String MU = "MU_";
 	public static final String CORRELATION = "CORRELATION";
 	public static final String FIX = "FIX";
 	public static final String SD = "SD";
 	
 	ScriptDefinition scriptDefinition;
 	List<SimpleParameterType> simpleParameterTypes = new ArrayList<SimpleParameterType>();
-	final Map<String, ThetaStatement> thetaStatements = new HashMap<String, ThetaStatement>();
-	final Map<String, OmegaStatement> OmegaStatements = new HashMap<String, OmegaStatement>();
+	final LinkedHashMap<String, ThetaStatement> thetaStatements = new LinkedHashMap<String, ThetaStatement>();
+	final LinkedHashMap<String, OmegaStatement> OmegaStatements = new LinkedHashMap<String, OmegaStatement>();
+	final TreeMap<Integer, String> thetasToEtaOrder = new TreeMap<Integer, String>();
 	
 	// These are keyed by symbol ID
 	final Map<String, SimpleParameterType> simpleParams = new HashMap<String, SimpleParameterType>();
@@ -60,9 +67,11 @@ public class ParametersHelper {
 		setAllParameterBounds(parametersToEstimate);
 		
 		//setOmegaBlocks before omega params and theta
-		omegaBlockStatement.setEtaToOmagaMap(setEtaToOmegaOrder());
-		omegaBlockStatement.createOmegaBlocks();
+		omegaBlockStatement.setEtaToOmagaMap(createOrderedEtasMap());
+		createOrderedThetasToEtaMap();
+		
 		//need to set omegas before setting theta params
+		omegaBlockStatement.createOmegaBlocks();
 		setOmegaParameters();
 		setThetaParameters();
 		
@@ -78,23 +87,33 @@ public class ParametersHelper {
 			simpleParams.put(simpleParam.getSymbId(), simpleParam);
 		}
 
+		final Map<String, ThetaStatement> thetaStatementMap = new HashMap<String, ThetaStatement>();
 		for(ParameterEstimateType parameter : parametersToEstimate){
 			String paramName = parameter.getSymbRef().getSymbIdRef();
 			if(validateParamName(paramName)){
-				ThetaStatement thetaStatement = new ThetaStatement(paramName);
-				thetaStatement.setParameterBounds(initialEstimates.get(paramName),lowerBounds.get(paramName),upperBounds.get(paramName));
-				thetaStatements.put(paramName, thetaStatement);					
+				if(!thetasToEtaOrder.containsValue(paramName)){
+					addThetaToMap(thetaStatementMap, paramName,false);
+				}
+				addThetaToMap(thetaStatements, paramName,false);
 			}
 		}
 		for(FixedParameter fixedParameter : fixedParameters){
 			String paramName = fixedParameter.p.getSymbRef().getSymbIdRef();
 			if(validateParamName(paramName)){
-				ThetaStatement thetaStatement = new ThetaStatement(paramName);
-				thetaStatement.setParameterBounds(initialEstimates.get(paramName),lowerBounds.get(paramName),upperBounds.get(paramName));
-				thetaStatement.setFixed(true);
-				thetaStatements.put(paramName, thetaStatement);					
+				if(!thetasToEtaOrder.containsValue(paramName)){
+					addThetaToMap(thetaStatementMap, paramName,true);
+				}
+				addThetaToMap(thetaStatements, paramName,true);
 			}
 		}
+		thetaStatements.putAll(thetaStatementMap);
+	}
+
+	private void addThetaToMap(final Map<String, ThetaStatement> thetaStatementMap, String paramName, Boolean isFixed) {
+			ThetaStatement thetaStatement = new ThetaStatement(paramName);
+			thetaStatement.setParameterBounds(initialEstimates.get(paramName),lowerBounds.get(paramName),upperBounds.get(paramName));
+			if(isFixed!=null) thetaStatement.setFixed(isFixed);
+			thetaStatementMap.put(paramName, thetaStatement);
 	}
 
 	/**
@@ -108,6 +127,20 @@ public class ParametersHelper {
 		return !(paramName== null ||  OmegaStatements.containsKey(paramName) || 
 				omegaBlockStatement.getEtasToOmegasInCorrelation().values().contains(paramName) || 
 				paramName.startsWith("sigma") || thetaStatements.containsKey(paramName));
+	}
+	
+	/**
+	 * This method will add MU statements as per ordered thets map.
+	 * It will be added after individual parameter definitions.
+	 * @return
+	 */
+	public StringBuilder addMUStatements(){
+		StringBuilder muStatement = new StringBuilder();
+		for(Integer etaOrder : thetasToEtaOrder.keySet()){
+			muStatement.append(Formatter.endline(MU+etaOrder+" = "+LOG+"("+thetasToEtaOrder.get(etaOrder)+")" ));
+		}
+		
+		return muStatement;
 	}
 
 	/**
@@ -131,26 +164,21 @@ public class ParametersHelper {
 	 * 
 	 */
 	private void setOmegaParameters(){
-		List<ParameterBlock> parameterBlocks = getScriptDefinition().getParameterBlocks();
-
-		//Unless parameterBlocks is empty, getting first parameter Block.
-		if(!parameterBlocks.isEmpty()){
-			for (ParameterRandomVariableType rv : parameterBlocks.get(0).getRandomVariables()) {
-				String symbId = getNameFromParamRandomVariable(rv);
-				OmegaStatement omegaStatement = getOmegaFromRandomVariable(symbId);
-				if(omegaStatement!=null){
-					for(Iterator<FixedParameter> it= fixedParameters.iterator();it.hasNext();){
-						String paramName = it.next().p.getSymbRef().getSymbIdRef();
-						if(paramName.equals(symbId)){
-							omegaStatement.setFixed(true);
-							it.remove();
-						}
+		for (ParameterRandomVariableType rv : getRandomVarsFromParameterBlock()) {
+			String symbId = getNameFromParamRandomVariable(rv);
+			OmegaStatement omegaStatement = getOmegaFromRandomVariable(symbId);
+			if(omegaStatement!=null){
+				for(Iterator<FixedParameter> it= fixedParameters.iterator();it.hasNext();){
+					String paramName = it.next().p.getSymbRef().getSymbIdRef();
+					if(paramName.equals(symbId)){
+						omegaStatement.setFixed(true);
+						it.remove();
 					}
-					if(isParamFromStdDev(rv)){
-						omegaStatement.setStdDev(true);
-					}
-					OmegaStatements.put(symbId, omegaStatement);
 				}
+				if(isParamFromStdDev(rv)){
+					omegaStatement.setStdDev(true);
+				}
+				OmegaStatements.put(symbId, omegaStatement);
 			}
 		}
 	}
@@ -264,25 +292,157 @@ public class ParametersHelper {
 	 * This method will create map for EtaOrder which will be order for respective Omegas as well.
 	 * @return 
 	 */
-	public Map<String, Integer> setEtaToOmegaOrder(){
-		Map<String, Integer> etasOrder = new HashMap<String, Integer>();
-		Integer etaOrder = 0;
+	public LinkedHashMap<String, Integer> createOrderedEtasMap(){
+		LinkedHashMap<String, Integer> etasOrderMap = new LinkedHashMap<String, Integer>();
+		//We need to have this as list as this will retains order of etas
+		List<String> etasOrder = getAllEtasList();
 		
+		if(!etasOrder.isEmpty()){
+			Integer etaCount = 0;
+			Map<String, String> etaTocorrelationsMap = addCorrelationValuesToMap(getAllCorrelations());
+			
+			List<String> nonOmegaBlockEtas = new ArrayList<String>();
+			//order etas map
+			for(String eta : etasOrder) {
+				//no correlations so no Omega block
+				if(!etaTocorrelationsMap.isEmpty() && etaTocorrelationsMap.keySet().contains(eta)){
+					++etaCount;
+					etasOrderMap.put(eta,etaCount);
+				}else{
+					nonOmegaBlockEtas.add(eta);
+				}
+			}
+			for(String nonOmegaEta : nonOmegaBlockEtas){
+				etasOrderMap.put(nonOmegaEta, ++etaCount);
+			}
+		}
+		
+		return etasOrderMap;
+	}
+
+	/**
+	 * This is helper method to create ordered Etas map which gets all etas list from individual parameters. 
+	 * @return
+	 */
+	private List<String> getAllEtasList() {
+		List<String> etasOrder = new ArrayList<String>();
 		List<ParameterBlock> blocks = scriptDefinition.getParameterBlocks();
+		
 		for(ParameterBlock block : blocks ){
 			for(IndividualParameterType parameterType: block.getIndividualParameters()){
 				if (parameterType.getGaussianModel() != null) {
 		    		List<ParameterRandomEffectType> randomEffects = parameterType.getGaussianModel().getRandomEffects();
-					if (!randomEffects.isEmpty()) {
-						for (ParameterRandomEffectType random_effect : randomEffects) {
-							if (random_effect == null) continue;
-							etasOrder.put(random_effect.getSymbRef().get(0).getSymbIdRef(), ++etaOrder);
-						}
+					for (ParameterRandomEffectType randomEffect : randomEffects) {
+						if (randomEffect == null) continue;
+						String eta = randomEffect.getSymbRef().get(0).getSymbIdRef();
+						etasOrder.add(eta);
 					}
 				}
 			}
 		}
 		return etasOrder;
+	}
+	
+	/**
+	 * Create ordered thetas to eta map from ordered etas map.
+	 * The order is used to add Thetas in order of thetas.
+	 */
+	public void createOrderedThetasToEtaMap(){
+		LinkedHashMap<String, Integer> etasOrderMap = createOrderedEtasMap();
+		for(Integer nextEtaOrder : etasOrderMap.values()){
+			if(thetasToEtaOrder.get(nextEtaOrder)==null || thetasToEtaOrder.get(nextEtaOrder).isEmpty()){
+				addToThetasOrderMap(etasOrderMap, nextEtaOrder);
+			}
+		}
+	}
+
+	/**
+	 * Creates ordered thetas list with help of etasOrderMap and individual parameters
+	 * @param etasOrderMap
+	 * @param nextEtaOrder
+	 */
+	private void addToThetasOrderMap(LinkedHashMap<String, Integer> etasOrderMap, Integer nextEtaOrder) {
+		for(ParameterBlock block : scriptDefinition.getParameterBlocks()){
+			for(IndividualParameterType parameterType: block.getIndividualParameters()){
+				final GaussianModel gaussianModel = parameterType.getGaussianModel();
+				if (gaussianModel != null) {
+					String popSymbol = getPopSymbol(gaussianModel);
+		    		List<ParameterRandomEffectType> randomEffects = gaussianModel.getRandomEffects();
+					for (ParameterRandomEffectType randomEffect : randomEffects) {
+						if (randomEffect == null) continue;
+						String eta = randomEffect.getSymbRef().get(0).getSymbIdRef();
+						if(etasOrderMap.get(eta).equals(nextEtaOrder)){
+							thetasToEtaOrder.put(nextEtaOrder, popSymbol);
+							return;
+						}
+					}
+				}
+			}
+		}
+	}
+
+	private String getPopSymbol(final GaussianModel gaussianModel) {
+		return gaussianModel.getLinearCovariate().getPopulationParameter().getAssign().getEquation().getSymbRef().getSymbIdRef();
+	}
+	
+	public LinkedHashMap<String, String> addCorrelationValuesToMap(List<Correlation> correlations) {
+		//We need to have it as linked hash map so that order in which correlations are added to map will be retained.
+		LinkedHashMap<String, String> etaTocorrelationsMap = new LinkedHashMap<String, String>();
+		for(Correlation correlation : correlations){
+			addCorrelationToMap(etaTocorrelationsMap,correlation);	
+		}
+		return etaTocorrelationsMap;
+	}
+	
+	public void addCorrelationToMap(LinkedHashMap<String, String> etaTocorrelationsMap, Correlation correlation) {
+			String firstVar = correlation.rnd1.getSymbId();			
+			String secondVar = correlation.rnd2.getSymbId();
+			String coefficient = correlation.correlationCoefficient.getSymbRef().getSymbIdRef();
+			//add to correlations map			
+			etaTocorrelationsMap.put(firstVar,getNameFromParamRandomVariable(correlation.rnd1));
+			etaTocorrelationsMap.put(secondVar,getNameFromParamRandomVariable(correlation.rnd2));
+			etaTocorrelationsMap.put(coefficient,coefficient);
+	}
+	
+	/**
+	 * Collects correlations from all the prameter blocks. 
+	 * 
+	 * @return
+	 */
+	public List<Correlation> getAllCorrelations() {
+		List<Correlation> correlations = new ArrayList<Correlation>();
+		List<ParameterBlock> parameterBlocks = getScriptDefinition().getParameterBlocks();
+		if(!parameterBlocks.isEmpty()){
+			for(ParameterBlock block : parameterBlocks){
+				correlations.addAll(block.getCorrelations());				
+			}
+		}
+		return correlations;
+	}
+
+	private List<ParameterRandomVariableType> getRandomVarsFromParameterBlock() {
+		List<ParameterBlock> parameterBlocks = getScriptDefinition().getParameterBlocks();
+	
+		//Unless parameterBlocks is empty, getting first parameter Block.
+		if(!parameterBlocks.isEmpty()){
+			return parameterBlocks.get(0).getRandomVariables();
+		}
+		else{
+			throw new IllegalStateException("parameterBlocks cannot be empty");
+		}
+	}
+	
+	/**
+	 * This method will reverse the map and return a tree map (ordered in natural order of keys).
+	 * 
+	 * @param map
+	 * @return
+	 */
+	public <K,V> TreeMap<V,K> reverseMap(Map<K,V> map) {
+		TreeMap<V,K> rev = new TreeMap<V, K>();
+	    for(Map.Entry<K,V> entry : map.entrySet())
+	        rev.put(entry.getValue(), entry.getKey());
+	    return rev;
 	}
 
 	//Getters and setters
@@ -307,11 +467,11 @@ public class ParametersHelper {
 		return parametersToEstimate;
 	}
 	
-	public Map<String, ThetaStatement> getThetaParams() {
+	public LinkedHashMap<String, ThetaStatement> getThetaParams() {
 		return thetaStatements;
 	}
 
-	public Map<String, OmegaStatement> getOmegaParams() {
+	public LinkedHashMap<String, OmegaStatement> getOmegaParams() {
 		return OmegaStatements;
 	}
 	

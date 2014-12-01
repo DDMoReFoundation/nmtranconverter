@@ -77,7 +77,7 @@ public class PredStatement {
 	public StringBuilder buildThetaAssignments() {
 		StringBuilder thetaAssignmentBlock = new StringBuilder();  
     	for(String theta : parser.getParameters().getThetaParams().keySet()){
-    		thetaAssignmentBlock.append("\n"+theta+ " = "+parser.getThetaForSymbol(theta)+"\n");
+    		thetaAssignmentBlock.append(Formatter.endline(theta+ " = "+parser.getThetaForSymbol(theta)));
     	}
     	return thetaAssignmentBlock;
 	}
@@ -88,7 +88,7 @@ public class PredStatement {
 	private StringBuilder getPredCoreStatement() {
 		StringBuilder predCoreBlock = new StringBuilder();
 		List<ParameterBlock> blocks = scriptDefinition.getParameterBlocks();
-		predCoreBlock.append(buildThetaAssignments().toString());
+		predCoreBlock.append(Formatter.endline(buildThetaAssignments().toString()));
 		
 		predCoreBlock.append(getAllIndividualParamAssignments(blocks));
 		return predCoreBlock;
@@ -179,8 +179,10 @@ public class PredStatement {
 	 */
 	private StringBuilder getPKStatement() {
 		StringBuilder pkStatementBlock = new StringBuilder();
-		pkStatementBlock.append("\n$PK\n");
+		pkStatementBlock.append(Formatter.endline("\n$PK\n"));
 		pkStatementBlock.append(getPredCoreStatement());
+		//we will need to add mu statement created from theta to eta order
+		pkStatementBlock.append(parser.getParameters().addMUStatements());
 		pkStatementBlock.append(getDifferentialInitialConditions());
 		return pkStatementBlock;
 	}

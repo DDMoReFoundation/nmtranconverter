@@ -322,7 +322,7 @@ public class Parser extends BaseParser {
 		}
 		
 		parameters = new ParametersHelper(lexer.getScriptDefinition());
-		etasOrder = parameters.setEtaToOmegaOrder();
+		etasOrder = parameters.createOrderedEtasMap();
 		parameters.getParameters(lexer.getModelParameters());
 		
 		Map<String, SimpleParameterType> simpleParameters= parameters.getSimpleParams();
@@ -338,26 +338,26 @@ public class Parser extends BaseParser {
 		setThetaAssigments();
 		buildPredStatement(fout);
 
-		if (! thetas.isEmpty()) {
+		if (!thetas.isEmpty()) {
 			fout.write(Formatter.endline("\n$"+THETA));
 			for (String thetaVar : thetas.keySet()) {
 				writeParameter(thetas.get(thetaVar), simpleParameters.get(thetaVar), fout);
 			}
 		}
-
-		if (! omegas.isEmpty()) {
-			fout.write(Formatter.endline("\n$OMEGA"));
-			for (final String omegaVar : omegas.keySet()) {
-				writeParameter(omegas.get(omegaVar), simpleParameters.get(omegaVar), fout);
-			}
-		}
-		
+		//Write Omega blocks before rest of Omega 
 		if(!omegaBlocks.isEmpty()){
 			fout.write(Formatter.endline(omegaBlockStatement.getOmegaBlockTitle()));
-			for(String eta : omegaBlockStatement.getOrderedEtasMap().values()){
+			for(String eta : omegaBlockStatement.getOrderedEtasToOmegaMap().values()){
 				for(OmegaStatement omegaStatement : omegaBlocks.get(eta)){
 					writeParameter(omegaStatement, simpleParameters.get(omegaStatement.getSymbId()),fout);
 				}
+			}
+		}
+		
+		if (!omegas.isEmpty()) {
+			fout.write(Formatter.endline("\n$OMEGA"));
+			for (final String omegaVar : omegas.keySet()) {
+				writeParameter(omegas.get(omegaVar), simpleParameters.get(omegaVar), fout);
 			}
 		}
 
@@ -378,14 +378,10 @@ public class Parser extends BaseParser {
 	 * @param fout
 	 */
 	private void writeParameter(Parameter param, SimpleParameterType simpleParam, PrintWriter fout) {
-//		String startParens = "(";
-//		String endParens = ") ; ";
 		String description = readDescription((PharmMLRootType) simpleParam);
 		if(description.isEmpty()){
 			description = param.getSymbId();
 		}
-		
-//		fout.write(startParens);
 		if (param.getLowerBound() != null && param.getUpperBound() != null) {
 			
 			parse(param.getLowerBound(), lexer.getStatement(param.getLowerBound()), fout);
@@ -397,10 +393,8 @@ public class Parser extends BaseParser {
 			parse(param.getUpperBound(), lexer.getStatement(param.getUpperBound()), fout);
 		} else if (param.getInitialEstimate() != null) {
 			parse(param.getInitialEstimate(), lexer.getStatement(param.getInitialEstimate()), fout);
-			//Add 'FIX' if its fixed parameter
 		}else {
 			// Just use the initial value defined in the ParameterModel block
-			//TODO: this approach needs to be confirmed
 			parse(simpleParam, lexer.getStatement(simpleParam), fout);
 		}
 		if(param.isFixed()){
