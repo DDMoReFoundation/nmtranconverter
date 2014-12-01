@@ -360,13 +360,6 @@ public class Parser extends BaseParser {
 				writeParameter(omegas.get(omegaVar), simpleParameters.get(omegaVar), fout);
 			}
 		}
-		
-		if (!omegas.isEmpty()) {
-			fout.write(Formatter.endline("\n$OMEGA"));
-			for (final String omegaVar : omegas.keySet()) {
-				writeParameter(omegas.get(omegaVar), simpleParameters.get(omegaVar), fout);
-			}
-		}
 
 		if(!sigmaParams.isEmpty()){
 			fout.write(Formatter.endline("\n$SIGMA"));
