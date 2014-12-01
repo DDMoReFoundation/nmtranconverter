@@ -22,6 +22,7 @@ import eu.ddmore.convertertoolbox.domain.VersionImpl;
 public class ConverterProvider extends Lexer {
 	String model_filename = new String();
 	private static final String NEW_LINE = System.getProperty("line.separator");
+	private static final String SCRIPT_FILE_SUFFIX = "ctl";
 
 	public ConverterProvider() throws IOException, NullPointerException {
 		super();
@@ -72,8 +73,7 @@ public class ConverterProvider extends Lexer {
 	private File createScript(File src, File outputDirectory) throws Exception {
 		if (outputDirectory == null) throw new NullPointerException("The output directroy is NULL");
 		model_filename = src.getName().replace(".xml", ""); 
-//		writeFunction
-		String output_filename = parser.getScriptFilename(outputDirectory.getAbsolutePath());
+		String output_filename = getScriptFilename(outputDirectory.getAbsolutePath(),model_filename);
 		PrintWriter fout = new PrintWriter(output_filename);
 		
 		createPKPDScript(fout, outputDirectory);
@@ -87,6 +87,11 @@ public class ConverterProvider extends Lexer {
 		
 		return f;
 		
+	}
+	
+	public String getScriptFilename(String output_dir, String modelFileName) {
+		String format = "%s/%s.%s";
+		return String.format(format, output_dir, modelFileName, SCRIPT_FILE_SUFFIX);
 	}
 	
 	private void createPKPDScript(PrintWriter fout, File output_dir) throws IOException {

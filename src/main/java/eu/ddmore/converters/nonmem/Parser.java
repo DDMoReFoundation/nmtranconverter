@@ -384,8 +384,8 @@ public class Parser extends BaseParser {
 		if(description.isEmpty()){
 			description = param.getSymbId();
 		}
+		fout.write("(");
 		if (param.getLowerBound() != null && param.getUpperBound() != null) {
-			
 			parse(param.getLowerBound(), lexer.getStatement(param.getLowerBound()), fout);
 			if (param.getInitialEstimate() != null) {
 				fout.write(",");
@@ -399,6 +399,7 @@ public class Parser extends BaseParser {
 			// Just use the initial value defined in the ParameterModel block
 			parse(simpleParam, lexer.getStatement(simpleParam), fout);
 		}
+		fout.write(") ");
 		if(param.isFixed()){
 			fout.write(ParametersHelper.FIX+" ");
 		}
