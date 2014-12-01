@@ -73,7 +73,7 @@ public class ParametersHelper {
 		//need to set omegas before setting theta params
 		omegaBlockStatement.createOmegaBlocks();
 		setOmegaParameters();
-		setThetaParameters();
+		setThetaParameters(); 
 		
 	}
 	
