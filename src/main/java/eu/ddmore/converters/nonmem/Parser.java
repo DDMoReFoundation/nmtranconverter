@@ -322,7 +322,7 @@ public class Parser extends BaseParser {
 		}
 		
 		parameters = new ParametersHelper(lexer.getScriptDefinition());
-		etasOrder = parameters.setEtaToOmegaOrder();
+		etasOrder = parameters.createOrderedEtasMap();
 		parameters.getParameters(lexer.getModelParameters());
 		
 		Map<String, SimpleParameterType> simpleParameters= parameters.getSimpleParams();
@@ -338,26 +338,26 @@ public class Parser extends BaseParser {
 		setThetaAssigments();
 		buildPredStatement(fout);
 
-		if (! thetas.isEmpty()) {
+		if (!thetas.isEmpty()) {
 			fout.write(Formatter.endline("\n$"+THETA));
 			for (String thetaVar : thetas.keySet()) {
 				writeParameter(thetas.get(thetaVar), simpleParameters.get(thetaVar), fout);
 			}
 		}
-
-		if (! omegas.isEmpty()) {
-			fout.write(Formatter.endline("\n$OMEGA"));
-			for (final String omegaVar : omegas.keySet()) {
-				writeParameter(omegas.get(omegaVar), simpleParameters.get(omegaVar), fout);
-			}
-		}
 		
 		if(!omegaBlocks.isEmpty()){
 			fout.write(Formatter.endline(omegaBlockStatement.getOmegaBlockTitle()));
-			for(String eta : omegaBlockStatement.getOrderedEtasMap().values()){
+			for(String eta : omegaBlockStatement.getOrderedEtasToOmegaMap().values()){
 				for(OmegaStatement omegaStatement : omegaBlocks.get(eta)){
 					writeParameter(omegaStatement, simpleParameters.get(omegaStatement.getSymbId()),fout);
 				}
+			}
+		}
+		
+		if (!omegas.isEmpty()) {
+			fout.write(Formatter.endline("\n$OMEGA"));
+			for (final String omegaVar : omegas.keySet()) {
+				writeParameter(omegas.get(omegaVar), simpleParameters.get(omegaVar), fout);
 			}
 		}
 
