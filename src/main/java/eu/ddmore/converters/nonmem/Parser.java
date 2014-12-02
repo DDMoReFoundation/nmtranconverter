@@ -54,6 +54,7 @@ import eu.ddmore.converters.nonmem.utils.ParametersHelper;
 import eu.ddmore.libpharmml.dom.IndependentVariableType;
 import eu.ddmore.libpharmml.dom.commontypes.FunctionDefinitionType;
 import eu.ddmore.libpharmml.dom.commontypes.PharmMLRootType;
+import eu.ddmore.libpharmml.dom.commontypes.ScalarRhs;
 import eu.ddmore.libpharmml.dom.commontypes.SymbolRefType;
 import eu.ddmore.libpharmml.dom.maths.Condition;
 import eu.ddmore.libpharmml.dom.maths.ConstantType;
@@ -69,7 +70,6 @@ import eu.ddmore.libpharmml.dom.modeldefn.IndividualParameterType.GaussianModel.
 import eu.ddmore.libpharmml.dom.modeldefn.LhsTransformationType;
 import eu.ddmore.libpharmml.dom.modeldefn.ParameterRandomEffectType;
 import eu.ddmore.libpharmml.dom.modeldefn.ParameterRandomVariableType;
-import eu.ddmore.libpharmml.dom.modeldefn.SimpleParameterType;
 import eu.ddmore.libpharmml.dom.trialdesign.ActivityType;
 
 public class Parser extends BaseParser {
@@ -327,13 +327,10 @@ public class Parser extends BaseParser {
 		etasOrder = parameters.createOrderedEtasMap();
 		parameters.getParameters(lexer.getModelParameters());
 		
-		Map<String, SimpleParameterType> simpleParameters= parameters.getSimpleParams();
 		Map<String, ThetaStatement> thetas = parameters.getThetaParams();
 		Map<String, OmegaStatement> omegas = parameters.getOmegaParams();
-		
 		OmegaBlockStatement omegaBlockStatement = parameters.getOmegaBlockStatement();
 		Map<String, List<OmegaStatement>> omegaBlocks = omegaBlockStatement.getOmegaBlocks();
-
 		SigmaStatement sigmaStatement = new SigmaStatement(parameters);
 		List<String> sigmaParams = sigmaStatement.getSigmaStatement();
 		
@@ -343,26 +340,24 @@ public class Parser extends BaseParser {
 		if (!thetas.isEmpty()) {
 			fout.write(Formatter.endline("\n$"+THETA));
 			for (String thetaVar : thetas.keySet()) {
-				writeParameter(thetas.get(thetaVar), simpleParameters.get(thetaVar), fout);
+				writeParameter(thetas.get(thetaVar), fout);
 			}
 		}
 
 		if(!omegaBlocks.isEmpty()){
 			fout.write(Formatter.endline(omegaBlockStatement.getOmegaBlockTitle()));
 			for(String eta : omegaBlockStatement.getOrderedEtasToOmegaMap().values()){
-				for(OmegaStatement omegaStatement : omegaBlocks.get(eta)){
-					writeParameter(omegaStatement, simpleParameters.get(omegaStatement.getSymbId()),fout);
+				for(OmegaStatement omega : omegaBlocks.get(eta)){					
+					writeParameter(omega, fout);
 				}
 			}
 		}
-		
 		if (!omegas.isEmpty()) {
 			fout.write(Formatter.endline("\n$OMEGA"));
 			for (final String omegaVar : omegas.keySet()) {
-				writeParameter(omegas.get(omegaVar), simpleParameters.get(omegaVar), fout);
+				writeParameter(omegas.get(omegaVar), fout);
 			}
 		}
-
 		if(!sigmaParams.isEmpty()){
 			fout.write(Formatter.endline("\n$SIGMA"));
 			for (final String sigmaVar: sigmaParams) {
@@ -373,40 +368,98 @@ public class Parser extends BaseParser {
 
 	/**
 	 * Write Theta and omega parameters according to the initial estimates, lower and upper bounds provided.
-	 * TODO: Fixed parameter handling needs to be confirmed with @ Henrik.
 	 * 
 	 * @param param
 	 * @param simpleParam
 	 * @param fout
 	 */
-	private void writeParameter(Parameter param, SimpleParameterType simpleParam, PrintWriter fout) {
-		String description = readDescription((PharmMLRootType) simpleParam);
-		if(description.isEmpty()){
-			description = param.getSymbId();
-		}
+	private void writeParameter(Parameter param, PrintWriter fout) {
+		String description = param.getSymbId();
+		
+		ScalarRhs lowerBound = param.getLowerBound();
+		ScalarRhs upperBound= param.getUpperBound(); 
+		ScalarRhs initEstimate= param.getInitialEstimate();
 		fout.write("(");
-		if (param.getLowerBound() != null && param.getUpperBound() != null) {
-			parse(param.getLowerBound(), lexer.getStatement(param.getLowerBound()), fout);
-			if (param.getInitialEstimate() != null) {
-				fout.write(",");
-				parse(param.getInitialEstimate(), lexer.getStatement(param.getInitialEstimate()), fout);
-			}
-			fout.write(",");
-			parse(param.getUpperBound(), lexer.getStatement(param.getUpperBound()), fout);
-		} else if (param.getInitialEstimate() != null) {
-			parse(param.getInitialEstimate(), lexer.getStatement(param.getInitialEstimate()), fout);
-		}else {
-			// Just use the initial value defined in the ParameterModel block
-			parse(simpleParam, lexer.getStatement(simpleParam), fout);
-		}
-		fout.write(") ");
+		writeParameterStatements(fout, description, lowerBound, upperBound,initEstimate);
+		
 		if(param.isFixed()){
-			fout.write(ParametersHelper.FIX+" ");
+			fout.write(" "+ParametersHelper.FIX+" ");
 		}
 		if(param.isStdDev()){
 			fout.write(ParametersHelper.SD+" ");
 		}
-		fout.write(Formatter.endline(Formatter.indent(" ;" + description)));
+		fout.write(Formatter.endline(")"+Formatter.indent(";"+description)));
+	}
+
+	/**
+	 *  Writes parameter statement as described in following table
+	 *  
+	 *  LB 	IN 	UB 	Action expected
+	 *	X 	X 	X 	FAIL
+	 *	X 	X 	Y 	FAIL
+	 *	X 	Y 	X 	(IN)
+	 *	Y 	X 	X 	FAIL
+	 *	X 	Y 	Y 	(-INF,IN,UB)
+	 *	Y 	Y 	X 	(LB,IN)
+	 *	Y 	X 	Y 	(LB, ,UB)
+	 *	Y 	Y 	Y 	(LB,IN,UB) 
+	 * @param fout
+	 * @param description
+	 * @param lowerBound
+	 * @param upperBound
+	 * @param initEstimate
+	 */
+	private void writeParameterStatements(PrintWriter fout, String description,
+			ScalarRhs lowerBound, ScalarRhs upperBound, ScalarRhs initEstimate) {
+		
+		if(lowerBound!=null){
+			if(initEstimate!=null){
+				if(upperBound!=null){
+					writeStatement(lowerBound,initEstimate,upperBound,fout);
+				}else{
+					writeStatement(lowerBound,initEstimate,null,fout);
+				}
+			}else{
+				if(upperBound!=null){
+					writeStatement(lowerBound,null,upperBound,fout);
+				}else{
+					throw new IllegalStateException("Only lower bound value present for parameter : "+description);
+				}
+			}
+		}else if(initEstimate!=null){
+			if(upperBound!=null){
+				fout.write("-INF,");
+				writeStatement(null,initEstimate,upperBound,fout);
+			}else{
+				writeStatement(null,initEstimate,null,fout);
+			}
+		}else {
+			throw new IllegalStateException("Only upper bound or no values present for parameter : "+description);
+		}
+	}
+	
+	/**
+	 * Writes bound values of a parameter statement in expected format.
+	 *  
+	 * @param lowerBound
+	 * @param init
+	 * @param upperBound
+	 * @param fout
+	 */
+	private void writeStatement(ScalarRhs lowerBound,ScalarRhs init,ScalarRhs upperBound, PrintWriter fout){
+		if(lowerBound!=null){
+			parse(lowerBound, lexer.getStatement(lowerBound), fout);
+			fout.write(",");
+		}
+		if(init!=null){
+			parse(init, lexer.getStatement(init), fout);
+		}else{
+			fout.write(", ,");
+		}
+		if(upperBound!=null){
+			fout.write(",");
+			parse(upperBound, lexer.getStatement(upperBound), fout);
+		}
 	}
 
 	

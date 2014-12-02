@@ -59,13 +59,13 @@ public class OmegaBlockStatement {
 					if(omegas.get(row)==null){
 						omegas.remove(row);
 						String symbId = paramHelper.getNameFromParamRandomVariable(correlation.rnd2);
-						omegas.add(row, paramHelper.getOmegaFromRandomVariable(symbId));
+						omegas.add(row, paramHelper.getOmegaFromRandomVarName(symbId));
 					}
 					
 					if(omegas.get(column)==null){
 						String symbId = correlation.correlationCoefficient.getSymbRef().getSymbIdRef();
 						omegas.remove(column);
-						omegas.add(column, paramHelper.getOmegaFromRandomVariable(symbId));	
+						omegas.add(column, paramHelper.getOmegaFromRandomVarName(symbId));	
 					}
 				}
 			}
@@ -126,7 +126,7 @@ public class OmegaBlockStatement {
 		if(etaToOmagaMap.get(randomVar1.getSymbId())== 1 && eta.equals(randomVar1.getSymbId())){
 			List<OmegaStatement> matrixRow = new ArrayList<OmegaStatement>();
 			String symbId = paramHelper.getNameFromParamRandomVariable(randomVar1);
-			matrixRow.add(paramHelper.getOmegaFromRandomVariable(symbId));
+			matrixRow.add(paramHelper.getOmegaFromRandomVarName(symbId));
 			OmegaBlocks.put(randomVar1.getSymbId(), matrixRow);
 		}
 	}

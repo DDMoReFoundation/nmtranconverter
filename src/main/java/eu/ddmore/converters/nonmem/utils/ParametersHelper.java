@@ -161,11 +161,11 @@ public class ParametersHelper {
 	 * @param randomVar
 	 * @return
 	 */
-	public OmegaStatement getOmegaFromRandomVariable(String omegaSymbId) {
+	public OmegaStatement getOmegaFromRandomVarName(String omegaSymbId) {
 		OmegaStatement omegaStatement = null;
 		if(omegaSymbId!= null){
 			omegaStatement = new OmegaStatement(omegaSymbId);
-			omegaStatement.setParameterBounds(initialEstimates.get(omegaSymbId),lowerBounds.get(omegaSymbId),upperBounds.get(omegaSymbId));
+			omegaStatement.setInitialEstimate(initialEstimates.get(omegaSymbId));
 		}
 		return omegaStatement;
 	}
@@ -177,7 +177,7 @@ public class ParametersHelper {
 	private void setOmegaParameters(){
 		for (ParameterRandomVariableType rv : getRandomVarsFromParameterBlock()) {
 			String symbId = getNameFromParamRandomVariable(rv);
-			OmegaStatement omegaStatement = getOmegaFromRandomVariable(symbId);
+			OmegaStatement omegaStatement = getOmegaFromRandomVarName(symbId);
 			if(omegaStatement!=null){
 				for(Iterator<FixedParameter> it= fixedParameters.iterator();it.hasNext();){
 					String paramName = it.next().p.getSymbRef().getSymbIdRef();
@@ -392,6 +392,12 @@ public class ParametersHelper {
 		}
 	}
 
+	/**
+	 * This method gets population parameter symbol id from linear covariate of a gaussian model.
+	 * 
+	 * @param gaussianModel
+	 * @return
+	 */
 	public String getPopSymbol(final GaussianModel gaussianModel) {
 		LinearCovariate lcov =  gaussianModel.getLinearCovariate();
 		if(lcov!=null && lcov.getPopulationParameter()!=null){
@@ -465,10 +471,6 @@ public class ParametersHelper {
 
 	public ScriptDefinition getScriptDefinition() {
 		return scriptDefinition;
-	}
-
-	public void setScriptDefinition(ScriptDefinition scriptDefinition) {
-		this.scriptDefinition = scriptDefinition;
 	}
 
 	public List<SimpleParameterType> getSimpleParameterTypes() {

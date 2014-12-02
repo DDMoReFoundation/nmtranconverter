@@ -42,7 +42,7 @@ public class TableStatement {
 		if(!inputStatement.getCatCovTableColumns().isEmpty()){
 			allTables.append(createTableStatement(getCatCovTableStatement(), CAT_COV_TABLE_FILE));
 		}
-		if(!inputStatement.getCatCovTableColumns().isEmpty()){
+		if(!inputStatement.getContCovTableColumns().isEmpty()){
 			allTables.append(createTableStatement(getContCovTableStatement(), CONT_COV_TABLE_FILE));
 		}
 		
