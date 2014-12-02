@@ -9,6 +9,14 @@ import eu.ddmore.libpharmml.dom.modeldefn.IndividualParameterType;
 
 public class TableStatement {
 	
+	private static final String WRES = "WRES";
+
+	private static final String RES = "RES";
+
+	private static final String PRED = "PRED";
+
+	private static final String NOPRINT = "NOPRINT";
+
 	private static final String DV = "DV";
 
 	ScriptDefinition scriptDefinition;
@@ -55,9 +63,9 @@ public class TableStatement {
 		
 		tableStatement.append(ID+" "+TIME);
 		tableStatement.append(columns+" "+NOAPPEND);
+		tableStatement.append(columns+" "+NOPRINT);
 		tableStatement.append(Formatter.endline(" FILE="+tableType));
 		return tableStatement;
-		
 	}
 	
 	/**
@@ -78,8 +86,8 @@ public class TableStatement {
 				stdTable.append(" "+inputHeader);
 			}
 		}
-		stdTable.append(" "+ErrorStatement.IPRED+" "+ErrorStatement.IRES+" "+ErrorStatement.IWRES+" "+ErrorStatement.Y);
-		stdTable.append(" "+DV);
+		stdTable.append(" "+PRED+" "+ErrorStatement.IPRED+" "+RES+" "+ErrorStatement.IRES+" "+WRES+" "+ErrorStatement.IWRES+" ");
+		stdTable.append(ErrorStatement.Y+" "+DV);
 		return stdTable;
 	}
 	
