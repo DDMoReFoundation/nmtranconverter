@@ -3,7 +3,7 @@ package eu.ddmore.converters.nonmem.statements;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -31,11 +31,13 @@ import eu.ddmore.libpharmml.dom.modeldefn.GaussianObsError.ErrorModel;
  */
 public class PredStatement {
 	
+	final String DES_VAR_SUFFIX = "_DES";
 	ScriptDefinition scriptDefinition;
 	List<DerivativeVariableType> derivativeVarList = new ArrayList<DerivativeVariableType>();
 	Map<String, String> derivativeVariableMap = new HashMap<String, String>();
 	//it will hold definition types and its parsed equations which we will need to add in Error statement.
 	Map<String, String> definitionsParsingMap = new HashMap<String, String>();
+	List<ErrorStatement> errorStatements = new ArrayList<ErrorStatement>();
 	Parser parser;
 
 
@@ -99,6 +101,7 @@ public class PredStatement {
 		DerivativePredblock.append(getModelStatement());
 		//TODO : getAbbreviatedStatement();
 		DerivativePredblock.append(getPKStatement());
+		errorStatements = prepareAllErrorStatements();
 		DerivativePredblock.append(getDifferentialEquationsStatement());
 		getAESStatement();
 		DerivativePredblock.append(getErrorStatement());
@@ -121,26 +124,65 @@ public class PredStatement {
 		}
 		diffEqStatementBlock.append(Formatter.endline());
 		for(StructuralBlock block : scriptDefinition.getStructuralBlocks()){
-			for (VariableDefinitionType definitionType: block.getLocalVariables()){
-				String parsedDefType = parser.parse(definitionType);
-				String variable = Formatter.addPrefix(definitionType.getSymbId());
-				
-				diffEqStatementBlock.append(parsedDefType);
-				definitionsParsingMap.put(variable, parsedDefType.replaceFirst(variable+" =",""));
-			}
-			for(DerivativeVariableType variableType: block.getStateVariables()){
-				String parsedDADT = parser.parse(variableType);
-				String variable = Formatter.addPrefix(variableType.getSymbId());
-				if(derivativeVariableMap.keySet().contains(variable)){
-					String index = derivativeVariableMap.get(variable);
-					//TODO: String formatting can go as part of formatter class. 
-					parsedDADT = parsedDADT.replaceFirst(variable+" =", "DADT("+index+") =");
-				}
-				diffEqStatementBlock.append(parsedDADT);
-			}
+			diffEqStatementBlock.append(addVarDefinitionTypesToDES(block));
+			diffEqStatementBlock.append(addDerivativeVarToDES(block));
 		}
 		return diffEqStatementBlock;
 
+	}
+
+	private StringBuilder addDerivativeVarToDES(StructuralBlock block) {
+		StringBuilder derivativeVarBlock = new StringBuilder();
+		for(DerivativeVariableType variableType: block.getStateVariables()){
+			String parsedDADT = parser.parse(variableType);
+			String variable = Formatter.addPrefix(variableType.getSymbId());
+			if(derivativeVariableMap.keySet().contains(variable)){
+				String index = derivativeVariableMap.get(variable);
+				parsedDADT = parsedDADT.replaceFirst(variable+" =", "DADT("+index+") =");
+			}
+			derivativeVarBlock.append(parsedDADT);
+		}
+		return derivativeVarBlock;
+	}
+
+	private StringBuilder addVarDefinitionTypesToDES(StructuralBlock block) {
+		StringBuilder varDefinitionsBlock = new StringBuilder();
+		for (VariableDefinitionType definitionType: block.getLocalVariables()){
+			String variable = Formatter.addPrefix(definitionType.getSymbId());
+			String rhs = parser.parse(definitionType).replaceFirst(variable+" =","");
+			if(isVarFromErrorFunction(variable)){
+				definitionsParsingMap.put(variable, rhs);
+				variable = renameFunctionVariableForDES(variable);
+			}
+			varDefinitionsBlock.append(variable+" = "+rhs);
+		}
+		return varDefinitionsBlock;
+	}
+
+	/**
+	 * Determines if variable is function variable from error model.
+	 * 
+	 * @param variable
+	 * @return
+	 */
+	private Boolean isVarFromErrorFunction(String variable){
+		for(ErrorStatement errorStatement : errorStatements){
+			if(errorStatement.getFunction().equals(variable)){
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * This method will rename variable which is defined as Function variable in error model block.
+	 * This will be used in DES statement.
+	 * @param variable
+	 * @return
+	 */
+	private String renameFunctionVariableForDES(String variable) {
+		variable = variable+DES_VAR_SUFFIX;
+		return variable; 
 	}
 	
 	/**
@@ -152,18 +194,30 @@ public class PredStatement {
 	private String getErrorStatement() {
 		StringBuilder errorBlock = new StringBuilder();
 		errorBlock.append("\n$ERROR\n");
+
+		for(ErrorStatement errorStatement: errorStatements){
+			errorBlock.append(errorStatement.getErrorStatementDetails(definitionsParsingMap,derivativeVariableMap));
+		}
+		return errorBlock.toString();
+	}
+	
+	/**
+	 * This method will list prepare all the error statements and returns the list.
+	 * We need to prepare this list separately as we need to use it in DES block before writing out to ERROR block.
+	 * @return
+	 */
+	private List<ErrorStatement> prepareAllErrorStatements(){
 		
-		List<ObservationBlock> observationBlocks= scriptDefinition.getObservationBlocks();
-		for(ObservationBlock block : observationBlocks){
+		List<ErrorStatement> errorStatements = new ArrayList<ErrorStatement>();
+		for(ObservationBlock block : scriptDefinition.getObservationBlocks()){
 			GaussianObsError error = (GaussianObsError) block.getObservationError();
 			ErrorModel errorModel = error.getErrorModel();
 			FunctionCallType functionCall = errorModel.getAssign().getEquation().getFunctionCall();
 			
 			ErrorStatement errorStatement = new ErrorStatement(functionCall);
-			errorBlock.append(errorStatement.getErrorStatementDetails(definitionsParsingMap,derivativeVariableMap));
-
+			errorStatements.add(errorStatement);
 		}
-		return errorBlock.toString();
+		return errorStatements;
 	}
 
 	/**
@@ -213,7 +267,7 @@ public class PredStatement {
 	 * @return
 	 */
 	private Set<DerivativeVariableType> getAllStateVariables() {
-		Set<DerivativeVariableType> stateVariables = new HashSet<DerivativeVariableType>();
+		Set<DerivativeVariableType> stateVariables = new LinkedHashSet<DerivativeVariableType>();
 		for(StructuralBlock structuralBlock : scriptDefinition.getStructuralBlocks() ){
 			stateVariables.addAll(structuralBlock.getStateVariables());
 		}

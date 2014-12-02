@@ -66,14 +66,12 @@ public class ErrorStatement {
 	 *  
 	 * @return
 	 */
-	public StringBuilder getErrorStatementDetails(Map<String,String> defParsingMap, Map<String,String> derivativeVarMap){
+	public StringBuilder getErrorStatementDetails(Map<String,String> functionDefEqMap, Map<String,String> derivativeVarMap){
 		StringBuilder errorBlock = new StringBuilder();
-		if(defParsingMap.containsKey(function)){
-			functionEquation= getEquationForFunctionName(defParsingMap, derivativeVarMap);
-			function = renameFunctionNameDefinedInDES(defParsingMap);
-			errorBlock.append(Formatter.endline("\n"+function+" = "+functionEquation));
+		if(functionDefEqMap.containsKey(function)){
+			functionEquation= getEquationForFunctionName(functionDefEqMap, derivativeVarMap);
+			errorBlock.append("\n"+function+" = "+functionEquation);
 		}
-		
 		errorBlock.append(Formatter.endline(IPRED+" = "+function));
 		
 		// Simplified as we have details of two error types at this moment. 
@@ -90,11 +88,16 @@ public class ErrorStatement {
 		return errorBlock;	
 	}
 	
-	public String getEquationForFunctionName(Map<String,String> defParsingMap, Map<String,String> derivativeVarMap){
-		
-		if(defParsingMap.containsKey(function)){
-			String parsedEquation = defParsingMap.get(function);
-			
+	/**
+	 * This will return equation for the function name.
+	 * 
+	 * @param functionDefEqMap
+	 * @param derivativeVarMap
+	 * @return
+	 */
+	public String getEquationForFunctionName(Map<String,String> functionDefEqMap, Map<String,String> derivativeVarMap){
+		if(functionDefEqMap.containsKey(function)){
+			String parsedEquation = functionDefEqMap.get(function);
 			for(String variable: derivativeVarMap.keySet()){
 				if(parsedEquation.contains(variable)){
 					parsedEquation = parsedEquation.replaceAll(variable, "A("+derivativeVarMap.get(variable)+")");
@@ -103,13 +106,6 @@ public class ErrorStatement {
 			return parsedEquation;
 		}
 			return new String();
-	}
-	
-	public String renameFunctionNameDefinedInDES(Map<String,String> defParsingMap){
-		if(defParsingMap.containsKey(function)){			
-			return function+ERROR_VAR_SUFFIX;
-		}
-		return function;
 	}
 	
 	public String getFunction() {
