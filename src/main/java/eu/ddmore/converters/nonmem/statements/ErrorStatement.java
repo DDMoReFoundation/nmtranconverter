@@ -25,7 +25,6 @@ public class ErrorStatement {
 	final String ADDITIVE = "additive";
 	final String PROP = "proportional";
 	final String FUNC = "f";
-	final String ERROR_VAR_SUFFIX = "_ERR";
 	
 	ErrorStatement(FunctionCallType functionCallType){
 		if(functionCallType!=null){
@@ -81,7 +80,7 @@ public class ErrorStatement {
 		}else if(errorType.equals(COMBINED_ERROR_2)){
 			errorBlock.append(Formatter.endline("W = SQRT(("+additive+"*"+additive+")"+"+ ("+proportional+"*"+proportional+"*"+IPRED+"*"+IPRED+"))"));
 		}
-		errorBlock.append(Formatter.endline(Y+" = "+function+"+W*EPS(1)"));
+		errorBlock.append(Formatter.endline(Y+" = "+IPRED+"+W*EPS(1)"));
 		errorBlock.append(Formatter.endline(IRES+" = DV - "+IPRED));
 		errorBlock.append(Formatter.endline(IWRES+" = "+IRES+"/ W"));
 		

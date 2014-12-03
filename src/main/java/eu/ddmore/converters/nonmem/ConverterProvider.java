@@ -36,7 +36,9 @@ public class ConverterProvider extends Lexer {
 		source = new LanguageVersionImpl("PharmML", source_version);
 		
 		VersionImpl target_version = new VersionImpl(7, 2, 0);
-		target = new LanguageVersionImpl("NMTRAN", target_version);
+		target = new LanguageVersionImpl("NmTran ", target_version);
+		
+		converterVersion = new VersionImpl(1, 0, 0);
 	}
 	
 	@Override
@@ -76,17 +78,15 @@ public class ConverterProvider extends Lexer {
 		String output_filename = getScriptFilename(outputDirectory.getAbsolutePath(),model_filename);
 		PrintWriter fout = new PrintWriter(output_filename);
 		
+		parser.writeScriptHeader(fout,model_filename);
 		createPKPDScript(fout, outputDirectory);
 		
 		parser.writeEOF(fout);
 		fout.close();
 		fout = null;
 		parser.cleanUp();
-		
 		File f = new File(output_filename);
-		
 		return f;
-		
 	}
 	
 	public String getScriptFilename(String output_dir, String modelFileName) {
@@ -98,7 +98,7 @@ public class ConverterProvider extends Lexer {
 		if (fout == null || output_dir == null) return;
 		
 		ScriptDefinition scriptDefinition = getScriptDefinition();
-
+		
 		ProblemStatement problemStatement = new ProblemStatement(getModelName());
 		problemStatement.write(fout);
 		writeNewLine(fout);
@@ -134,7 +134,7 @@ public class ConverterProvider extends Lexer {
 		TableStatement tableStatement = new TableStatement(scriptDefinition,inputStatement);
 		fout.write(tableStatement.getStatements().toString());
 	}
-	
+
 	private String getSimulationStatement(){
 		SimulationStatement simulationStatement =new SimulationStatement(getSimulationStep());
 		if(simulationStatement.getSimulationStep()!=null){
