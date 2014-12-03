@@ -25,7 +25,6 @@ public class ErrorStatement {
 	final String ADDITIVE = "additive";
 	final String PROP = "proportional";
 	final String FUNC = "f";
-	final String ERROR_VAR_SUFFIX = "_ERR";
 	
 	ErrorStatement(FunctionCallType functionCallType){
 		if(functionCallType!=null){
