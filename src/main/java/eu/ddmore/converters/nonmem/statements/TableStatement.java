@@ -62,8 +62,7 @@ public class TableStatement {
 		tableStatement.append(TABLE);
 		
 		tableStatement.append(ID+" "+TIME);
-		tableStatement.append(columns+" "+NOAPPEND);
-		tableStatement.append(columns+" "+NOPRINT);
+		tableStatement.append(columns+" "+NOAPPEND+" "+NOPRINT);
 		tableStatement.append(Formatter.endline(" FILE="+tableType));
 		return tableStatement;
 	}
