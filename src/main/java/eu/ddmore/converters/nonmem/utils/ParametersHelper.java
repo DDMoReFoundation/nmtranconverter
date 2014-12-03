@@ -17,6 +17,7 @@ import crx.converter.engine.parts.Part;
 import eu.ddmore.converters.nonmem.statements.OmegaBlockStatement;
 import eu.ddmore.converters.nonmem.statements.OmegaStatement;
 import eu.ddmore.converters.nonmem.statements.ThetaStatement;
+import eu.ddmore.libpharmml.dom.commontypes.Rhs;
 import eu.ddmore.libpharmml.dom.commontypes.ScalarRhs;
 import eu.ddmore.libpharmml.dom.modeldefn.IndividualParameterType;
 import eu.ddmore.libpharmml.dom.modeldefn.IndividualParameterType.GaussianModel;
@@ -401,9 +402,13 @@ public class ParametersHelper {
 	public String getPopSymbol(final GaussianModel gaussianModel) {
 		LinearCovariate lcov =  gaussianModel.getLinearCovariate();
 		if(lcov!=null && lcov.getPopulationParameter()!=null){
-				return lcov.getPopulationParameter().getAssign().getEquation().getSymbRef().getSymbIdRef();		
+			Rhs assign = lcov.getPopulationParameter().getAssign();
+			if(assign.getSymbRef()!=null)
+				return assign.getSymbRef().getSymbIdRef();
+			else
+				return assign.getEquation().getSymbRef().getSymbIdRef();		
 		}else{
-			return new String();
+			throw new IllegalArgumentException("Pop symbol missing.The population parameter is not well formed.");
 		}
 	}
 	
