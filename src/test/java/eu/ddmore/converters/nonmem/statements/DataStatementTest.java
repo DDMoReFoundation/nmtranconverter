@@ -3,6 +3,7 @@ package eu.ddmore.converters.nonmem.statements;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -21,14 +22,16 @@ public class DataStatementTest {
 	private static final String DATA_FILE_NAME = "warfarin_conc_pca.csv";
 	private static final String IGNORE_STRING = "IGNORE";
 	private static final String IGNORE_CHAR = "@";
-
+	File srcFile = null;
 
 	@Test
 	public void shouldCreateValidDataStatementNONMEMdataSet() {
 
 		ModellingStepsType modellingSteps = createModellingSteps(createDataSet());
 		
-		DataStatement dataStatement = new DataStatement(modellingSteps.getNONMEMdataSet());
+		srcFile = new File(DATA_FILE_NAME);
+		
+		DataStatement dataStatement = new DataStatement(modellingSteps.getNONMEMdataSet(),srcFile);
 
 		assertNotNull("DataStatement should not be null.", dataStatement);
 		assertEquals("dataFileName should be correct.", DATA_FILE_NAME, dataStatement.getDataFileName());

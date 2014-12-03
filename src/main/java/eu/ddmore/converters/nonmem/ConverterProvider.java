@@ -36,7 +36,7 @@ public class ConverterProvider extends Lexer {
 		source = new LanguageVersionImpl("PharmML", source_version);
 		
 		VersionImpl target_version = new VersionImpl(7, 2, 0);
-		target = new LanguageVersionImpl("NmTran ", target_version);
+		target = new LanguageVersionImpl("NMTRAN", target_version);
 		
 		converterVersion = new VersionImpl(1, 0, 0);
 	}
@@ -79,7 +79,7 @@ public class ConverterProvider extends Lexer {
 		PrintWriter fout = new PrintWriter(output_filename);
 		
 		parser.writeScriptHeader(fout,model_filename);
-		createPKPDScript(fout, outputDirectory);
+		createPKPDScript(fout,src, outputDirectory);
 		
 		parser.writeEOF(fout);
 		fout.close();
@@ -94,7 +94,7 @@ public class ConverterProvider extends Lexer {
 		return String.format(format, output_dir, modelFileName, SCRIPT_FILE_SUFFIX);
 	}
 	
-	private void createPKPDScript(PrintWriter fout, File output_dir) throws IOException {
+	private void createPKPDScript(PrintWriter fout, File src, File output_dir) throws IOException {
 		if (fout == null || output_dir == null) return;
 		
 		ScriptDefinition scriptDefinition = getScriptDefinition();
@@ -109,10 +109,10 @@ public class ConverterProvider extends Lexer {
 		
 		if (getDataFiles().getNonmemDataSets().isEmpty()) {
 			inputStatement = new InputStatement(scriptDefinition);
-			dataStatement = new DataStatement(scriptDefinition, model_filename);
+			dataStatement = new DataStatement(scriptDefinition, src);
 		} else {
 			inputStatement = new InputStatement(getDataFiles().getNonmemDataSets());
-			dataStatement = new DataStatement(getDataFiles().getNonmemDataSets());
+			dataStatement = new DataStatement(getDataFiles().getNonmemDataSets(),src);
 		}
 
 		writeNewLine(fout);

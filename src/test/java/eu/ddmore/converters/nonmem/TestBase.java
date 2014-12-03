@@ -17,6 +17,7 @@ public abstract class TestBase {
 	protected ConverterProvider c = null;
 	protected boolean fixedRunId = true, useCrxReportDetail = true;
 	protected String inputXMLFile = null;
+	protected String inputDataFile = null;
 	protected File dir = null, f = null;
 	
 	final static String TEST_DATA_DIR = "/eu/ddmore/testdata/models/PharmML/";

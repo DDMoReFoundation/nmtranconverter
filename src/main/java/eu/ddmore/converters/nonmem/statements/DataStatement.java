@@ -14,14 +14,23 @@ import eu.ddmore.libpharmml.dom.modellingsteps.NONMEMdataSetType;
 
 public class DataStatement{
 	
-	String dataFileName = "";
 	String statement;
+	String dataFileName = "";
+	File dataFile = null;
+	
+	public File getDataFile() {
+		return dataFile;
+	}
+
+	public void setDataFile(File dataFile) {
+		this.dataFile = dataFile;
+	}
 
 	public String getDataFileName() {
 		return dataFileName;
 	}
 
-	public DataStatement(ScriptDefinition scriptDefinition, String modelName) {
+	public DataStatement(ScriptDefinition scriptDefinition, File srcFile) {
 
 		TabularDataset td = getObjectiveDatasetMap(ParametersHelper.getEstimationStep(scriptDefinition));
 
@@ -29,16 +38,16 @@ public class DataStatement{
 			throw new IllegalStateException("TabularDataset cannot be null");
 		}
 
-		dataFileName = generateDataFileName(modelName);
+		dataFileName = generateDataFileName(srcFile.getAbsolutePath());
 	}
 
 		
-	public DataStatement(List<NONMEMdataSetType> dataFiles) {
+	public DataStatement(List<NONMEMdataSetType> dataFiles, File srcFile) {
 		
 		if (null == dataFiles) {
 			throw new IllegalStateException("NONMEM data set(s) cannot be null");
 		}
-
+		
 		// TODO: Handle multiple data sets
 		Iterator<NONMEMdataSetType> dsIterator = dataFiles.iterator();
 
@@ -50,7 +59,14 @@ public class DataStatement{
 			NONMEMdataSetType nonmemDataSet = dsIterator.next();
 			// TODO: adding null check for time being as no examples for 0.3.1 or above are available right now.
 			if (nonmemDataSet.getDataSet().getImportData().getPath() != null) {
+				String dataLocation = srcFile.getParent();
 				dataFileName = nonmemDataSet.getDataSet().getImportData().getPath();
+				File data = new File(dataLocation+File.separator+dataFileName);
+				if(data.exists()){
+					setDataFile(data);
+				}else{
+					throw new IllegalStateException("NONMEM data file doesnt exist"); 
+				}
 			}
 		}
 	}

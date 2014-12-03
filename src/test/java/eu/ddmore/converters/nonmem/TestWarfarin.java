@@ -23,9 +23,12 @@ import eu.ddmore.convertertoolbox.api.response.ConversionReport.ConversionCode;
 public class TestWarfarin extends TestBase {
 	@Before
 	public void setUp() throws Exception {
-		inputXMLFile = "warfarin_PK_ODE/Warfarin-ODE-latest.xml"; 
+		inputXMLFile = "warfarin_PK_ODE/Warfarin-ODE-latest.xml";
+		inputDataFile = "warfarin_PK_ODE/warfarin_conc.csv";
 		// Warfarin-ODE-latest_Natallia.xml Warfarin-ODE-latest.xml warfarin_PK_ODE_0.3.1.xml
+		init(inputDataFile, V_0_3_1_SUBDIR);
 		init(inputXMLFile, V_0_3_1_SUBDIR);
+
 	}
 
 	@Test
