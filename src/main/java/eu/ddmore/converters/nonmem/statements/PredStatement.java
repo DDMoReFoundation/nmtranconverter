@@ -56,20 +56,23 @@ public class PredStatement {
 			fout.write(getDerivativePredStatement().toString());
 		}else{
 			fout.write(statementName);
-			getNonDerivativePredStatement();
+			fout.write(getNonDerivativePredStatement().toString());
 		}
 	}
 
 	/**
 	 * Returns non derivative pred statement.
+	 * @return 
 	 * 
 	 */
-	private void getNonDerivativePredStatement() {
+	private StringBuilder getNonDerivativePredStatement() {
         StringBuilder sb = new StringBuilder();
         //NM_D is for DOSE
         sb.append("\nIF (AMT.GT.0) NM_D=AMT\n");
         sb.append(getPredCoreStatement());
         sb.append(getErrorStatement());
+        
+        return sb;
 	}	
 	
 	/**
@@ -83,6 +86,18 @@ public class PredStatement {
     	}
     	return thetaAssignmentBlock;
 	}
+	
+	/**
+	 * This method will build eta assignment statements to be displayed after theta assignments.
+	 * @return
+	 */
+	public StringBuilder buildEtaAssignments() {
+		StringBuilder etaAssignment = new StringBuilder();  
+    	for(String eta : parser.getEtasOrder().keySet()){
+    		etaAssignment.append(Formatter.endline(eta+ " = ETA("+parser.getEtasOrder().get(eta)+")"));
+    	}
+    	return etaAssignment;
+	}
 
 	/**
 	 * gets pred core statement for nonmem file.
@@ -91,7 +106,7 @@ public class PredStatement {
 		StringBuilder predCoreBlock = new StringBuilder();
 		List<ParameterBlock> blocks = scriptDefinition.getParameterBlocks();
 		predCoreBlock.append(Formatter.endline(buildThetaAssignments().toString()));
-		
+		predCoreBlock.append(Formatter.endline(buildEtaAssignments().toString()));
 		predCoreBlock.append(getAllIndividualParamAssignments(blocks));
 		return predCoreBlock;
 	}
