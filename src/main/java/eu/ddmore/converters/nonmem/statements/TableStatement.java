@@ -60,8 +60,7 @@ public class TableStatement {
 	private StringBuilder createTableStatement(StringBuilder columns, String tableType){
 		StringBuilder tableStatement = new StringBuilder();
 		tableStatement.append(TABLE);
-		
-		tableStatement.append(ID+" "+TIME);
+		tableStatement.append(ID);
 		tableStatement.append(columns+" "+NOAPPEND+" "+NOPRINT);
 		tableStatement.append(Formatter.endline(" FILE="+tableType));
 		return tableStatement;
@@ -75,7 +74,7 @@ public class TableStatement {
 	 */
 	private StringBuilder getStdTableStatement(){
 		StringBuilder stdTable = new StringBuilder();
-
+		stdTable.append(" "+TIME);
 		if(!inputStatement.getInputHeaders().isEmpty()){
 			for(String inputHeader : inputStatement.getInputHeaders()){
 				// Adding ID TIME at start and DV at the end hence skipping here.
@@ -101,9 +100,12 @@ public class TableStatement {
 
 		for(ParameterBlock block : blocks){
 			List<IndividualParameterType> indivParamTypes = block.getIndividualParameters();
+			StringBuilder etas = new StringBuilder(); 
 			for(IndividualParameterType parameterType: indivParamTypes){
 				paramTable.append(" "+parameterType.getSymbId());
+				etas.append(" ETA_"+parameterType.getSymbId());
 			}
+				paramTable.append(etas);
 		}
 		return paramTable;
 	}
