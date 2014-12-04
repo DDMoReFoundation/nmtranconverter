@@ -83,6 +83,11 @@ public class DataStatement{
 		if (null == statement) {
 			StringBuilder stringBuilder = new StringBuilder("$DATA");
 			stringBuilder.append(" " + getDataFileName());
+			//get data file, read its first character
+			//(if there is word then first char of the word)
+			//If this character is non-alphanumeric then IGNORE=@ 
+			//else IGNORE="Char"
+			
 			stringBuilder.append(" " + "IGNORE=@");
 
 			statement = stringBuilder.toString();
