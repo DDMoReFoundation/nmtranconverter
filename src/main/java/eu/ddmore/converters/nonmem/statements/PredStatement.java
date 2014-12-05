@@ -48,11 +48,11 @@ public class PredStatement {
 	}
 	
 	public void getPredStatement(PrintWriter fout){
-		String statementName = "\n$PRED\n";
+		String statementName = Formatter.endline()+Formatter.endline("$PRED");
 		if(!derivativeVarList.isEmpty()){
 			//TODO: Add $SUB block. need to have details around it.
-			statementName = "\n$SUB\n";
-			fout.write("\n$SUBS ADVAN13 TOL=9\n");
+			statementName = Formatter.endline()+Formatter.endline("$SUB");
+			fout.write(Formatter.endline()+Formatter.endline("$SUBS ADVAN13 TOL=9"));
 			fout.write(getDerivativePredStatement().toString());
 		}else{
 			fout.write(statementName);
@@ -68,7 +68,8 @@ public class PredStatement {
 	private StringBuilder getNonDerivativePredStatement() {
         StringBuilder sb = new StringBuilder();
         //NM_D is for DOSE
-        sb.append("\nIF (AMT.GT.0) NM_D=AMT\n");
+        sb.append(Formatter.endline());
+        sb.append(Formatter.endline("IF (AMT.GT.0) NM_D=AMT"));
         sb.append(getPredCoreStatement());
         sb.append(getErrorStatement());
         
@@ -130,7 +131,7 @@ public class PredStatement {
 	 */
 	private StringBuilder getDifferentialEquationsStatement() {
 		StringBuilder diffEqStatementBlock = new StringBuilder();
-		diffEqStatementBlock.append("\n$DES\n");
+		diffEqStatementBlock.append(Formatter.endline("$DES"));
 		int i=1;
 		for (DerivativeVariableType variableType : derivativeVarList){
 			String variable = Formatter.addPrefix(variableType.getSymbId());
@@ -208,7 +209,8 @@ public class PredStatement {
 	 */
 	private String getErrorStatement() {
 		StringBuilder errorBlock = new StringBuilder();
-		errorBlock.append("\n$ERROR\n");
+		errorBlock.append(Formatter.endline());
+		errorBlock.append(Formatter.endline("$ERROR"));
 
 		for(ErrorStatement errorStatement: errorStatements){
 			errorBlock.append(errorStatement.getErrorStatementDetails(definitionsParsingMap,derivativeVariableMap));
@@ -248,7 +250,8 @@ public class PredStatement {
 	 */
 	private StringBuilder getPKStatement() {
 		StringBuilder pkStatementBlock = new StringBuilder();
-		pkStatementBlock.append(Formatter.endline("\n$PK\n"));
+		pkStatementBlock.append(Formatter.endline());
+		pkStatementBlock.append(Formatter.endline("$PK"));
 		pkStatementBlock.append(getPredCoreStatement());
 		pkStatementBlock.append(getDifferentialInitialConditions());
 		return pkStatementBlock;
@@ -268,10 +271,10 @@ public class PredStatement {
 	 */
 	private StringBuilder getModelStatement() {
 		StringBuilder modelBlock = new StringBuilder();
-		
-		modelBlock.append("\n$MODEL\n");
+		modelBlock.append(Formatter.endline());
+		modelBlock.append(Formatter.endline("$MODEL"));
 		for(DerivativeVariableType stateVariable :getAllStateVariables()){
-			modelBlock.append("COMP "+"("+Formatter.addPrefix(stateVariable.getSymbId())+")\n");
+			modelBlock.append(Formatter.endline("COMP "+"("+Formatter.addPrefix(stateVariable.getSymbId())+")"));
 		}
 		return modelBlock;
 	}
@@ -307,11 +310,11 @@ public class PredStatement {
 					if(initialValueType!=null){
 						if(initialValueType.getAssign().getSymbRef()!=null){
 							initialCondition = initialValueType.getAssign().getSymbRef().getSymbIdRef();
-							builder.append("A_0("+i+") = "+Formatter.addPrefix(initialCondition.toUpperCase())+"\n"); 
+							builder.append(Formatter.endline("A_0("+i+") = "+Formatter.addPrefix(initialCondition.toUpperCase()))); 
 						}else if(initialValueType.getAssign().getScalar()!=null){
 							RealValueType test = (RealValueType) initialValueType.getAssign().getScalar().getValue();
 							initialCondition = Double.toString(test.getValue());
-							builder.append("A_0("+i+") = "+initialCondition+"\n");
+							builder.append(Formatter.endline("A_0("+i+") = "+initialCondition));
 						}
 					}
 				}

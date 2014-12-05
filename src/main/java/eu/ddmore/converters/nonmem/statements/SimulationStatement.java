@@ -1,6 +1,7 @@
 package eu.ddmore.converters.nonmem.statements;
 
 import crx.converter.engine.parts.SimulationStep;
+import eu.ddmore.converters.nonmem.utils.Formatter;
 
 /**
  * Creates and adds estimation statement to nonmem file from script definition.
@@ -30,7 +31,8 @@ public class SimulationStatement {
 		StringBuilder stringBuilder = new StringBuilder();
 		
 		if(getSimulationStep()!=null){
-			stringBuilder.append("\n$SIM ");
+			stringBuilder.append(Formatter.endline());
+			stringBuilder.append("$SIM");
 			//234251 is just random number
 			stringBuilder.append("(234251)");
 		}

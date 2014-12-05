@@ -11,6 +11,7 @@ import java.util.Map.Entry;
 
 import crx.converter.engine.parts.ParameterBlock;
 import crx.converter.engine.parts.BaseRandomVariableBlock.Correlation;
+import eu.ddmore.converters.nonmem.utils.Formatter;
 import eu.ddmore.converters.nonmem.utils.ParametersHelper;
 import eu.ddmore.libpharmml.dom.modeldefn.ParameterRandomVariableType;
 
@@ -86,7 +87,7 @@ public class OmegaBlockStatement {
 		//This will change in case of 0.4 as it will need to deal with matrix types as well.
 		description.append((!correlations.isEmpty())?ParametersHelper.CORRELATION:" ");
 		description.append((isOmegaBlockFromStdDev)?" "+ParametersHelper.SD:"");
-		String title = "\n$OMEGA BLOCK("+blocksCount+") "+description;
+		String title = Formatter.endline()+"$OMEGA BLOCK("+blocksCount+") "+description;
 		return title;
 	}
 

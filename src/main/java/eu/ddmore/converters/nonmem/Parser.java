@@ -180,7 +180,7 @@ public class Parser extends BaseParser {
 			} else if (isCorrelation(context)) {
 				current_value = (String) leaf.data;
 			} else if (isObservationModel(context)) {
-				current_value = ((String) leaf.data).trim() + "\n\n";
+				current_value = Formatter.endline(((String) leaf.data).trim()) + Formatter.endline();
 			} else if (isParameterEstimate(context) || context instanceof FixedParameter || context instanceof ObjectiveFunctionParameter) 
 			{
 				current_value = (String) leaf.data;
@@ -284,29 +284,30 @@ public class Parser extends BaseParser {
 		}
 			
 		int block_assignment = 0;
-		StringBuilder block = new StringBuilder(" 0.0;\n");
+		StringBuilder block = new StringBuilder(Formatter.endline(" 0.0;"));
 		for (int i = 0; i < pieces.size(); i++) {
 			PieceType piece = pieces.get(i);
 			if (piece == null) continue;
 			else if (piece.equals(else_block)) continue;
 			
 			if (!(conditional_stmts[i] != null && assignment_stmts[i] != null)) continue;	
-				String operator = "IF", format = "%s (%s) THEN\n %s = %s \n";
-				if (block_assignment > 0) {
-				operator = " ELSE IF ";
-				format = " %s (%s) \n %s = %s \n";
-			}
-			String conditionStatement = conditional_stmts[i].replaceAll("\\s+","");
-			block.append(String.format(format, operator, conditionStatement, field_tag, assignment_stmts[i]));
-			block_assignment++;
+			String operator = "IF";
+			String format = Formatter.endline("%s (%s) THEN")+Formatter.endline(Formatter.indent("%s = %s"));
+			if (block_assignment > 0) {
+			operator = "ELSE IF ";
+			format = Formatter.endline(" %s (%s)")+Formatter.endline(Formatter.indent("%s = %s"));
 		}
-		
-		if (else_block != null && else_index >= 0) {
-			block.append(" ELSE \n");
-			String format = " %s = %s\n";
-			block.append(String.format(format, field_tag, assignment_stmts[else_index]));
-		}
-		block.append("ENDIF");
+		String conditionStatement = conditional_stmts[i].replaceAll("\\s+","");
+		block.append(String.format(format, operator, conditionStatement, field_tag, assignment_stmts[i]));
+		block_assignment++;
+	}
+	
+	if (else_block != null && else_index >= 0) {
+		block.append(Formatter.endline("ELSE"));
+		String format = Formatter.endline(Formatter.indent("%s = %s"));
+		block.append(String.format(format, field_tag, assignment_stmts[else_index]));
+	}
+	block.append("ENDIF");
 		if (assignment_count == 0) throw new IllegalStateException("Piecewise statement assigned no conditional blocks.");
 		symbol = block.toString();
 			
@@ -317,13 +318,10 @@ public class Parser extends BaseParser {
 
 	@Override
 	public void writeParameters(PrintWriter fout) {
-		
 		if (fout == null) return;
-		
 		if (lexer.getModelParameters().isEmpty()) {
 			return;
 		}
-		
 		parameters = new ParametersHelper(lexer.getScriptDefinition());
 		setEtasOrder(parameters.createOrderedEtasMap());
 		parameters.getParameters(lexer.getModelParameters());
@@ -339,7 +337,8 @@ public class Parser extends BaseParser {
 		buildPredStatement(fout);
 
 		if (!thetas.isEmpty()) {
-			fout.write(Formatter.endline("\n$"+THETA));
+			fout.write(Formatter.endline());
+			fout.write(Formatter.endline("$"+THETA));
 			for (String thetaVar : thetas.keySet()) {
 				writeParameter(thetas.get(thetaVar), fout);
 			}
@@ -354,13 +353,15 @@ public class Parser extends BaseParser {
 			}
 		}
 		if (!omegas.isEmpty()) {
-			fout.write(Formatter.endline("\n$OMEGA"));
+			fout.write(Formatter.endline());
+			fout.write(Formatter.endline("$OMEGA"));
 			for (final String omegaVar : omegas.keySet()) {
 				writeParameter(omegas.get(omegaVar), fout);
 			}
 		}
 		if(!sigmaParams.isEmpty()){
-			fout.write(Formatter.endline("\n$SIGMA"));
+			fout.write(Formatter.endline());
+			fout.write(Formatter.endline("$SIGMA"));
 			for (final String sigmaVar: sigmaParams) {
 				fout.write(sigmaVar);
 			}
@@ -393,7 +394,7 @@ public class Parser extends BaseParser {
 	}
 
 	/**
-	 *  Writes parameter statement as described in following table
+	 *  Writes parameter statement as described in following table,
 	 *  
 	 *  LB 	IN 	UB 	Action expected
 	 *	X 	X 	X 	FAIL
@@ -557,10 +558,10 @@ public class Parser extends BaseParser {
     		
     		StringBuilder etas = addEtasStatementsToIndivParamDef(gaussianModel.getRandomEffects());
 			if (logType.equals(LOG)) {
-				String format = "%s = EXP(%s %s);\n";
+				String format = Formatter.endline("%s = EXP(%s %s);");
 				statement.append(String.format(format, Formatter.addPrefix(ip.getSymbId()), variableSymbol,etas));
 			} else if (logType.equals(LOGIT)) {
-				String format = "%s = 1./(1 + exp(-%s));\n";
+				String format = Formatter.endline("%s = 1./(1 + exp(-%s));");
 				statement.append(String.format(format, Formatter.addPrefix(ip.getSymbId()), variableSymbol));
 			}
     	}
@@ -615,7 +616,8 @@ public class Parser extends BaseParser {
 	private StringBuilder getIndivDefinitionForAssign(IndividualParameterType ip) {
 		StringBuilder statement = new StringBuilder();
 		if (ip.getAssign() != null) {
-			statement.append(String.format("\n%s = ", ip.getSymbId()));
+			statement.append(Formatter.endline());
+			statement.append(String.format("%s = ", ip.getSymbId()));
 			String assignment = parse(new Object(), lexer.getStatement(ip.getAssign()));
 			statement.append(Formatter.endline(assignment+";"));
 		}
@@ -656,7 +658,7 @@ public class Parser extends BaseParser {
 		fout.write(Formatter.endline(String.format(format, comment_char, lexer.getTarget())));
 		format = "%s Model "+Formatter.indent(": %s");
 		fout.write(Formatter.endline(String.format(format, comment_char, model_file)));
-		format = "%s Dated "+Formatter.indent(": %s\n");
+		format = "%s Dated "+Formatter.indent(Formatter.endline(": %s"));
 		fout.write(Formatter.endline(String.format(format, comment_char, new Date())));
 	}
 	

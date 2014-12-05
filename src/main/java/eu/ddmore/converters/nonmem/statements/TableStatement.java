@@ -21,7 +21,7 @@ public class TableStatement {
 
 	ScriptDefinition scriptDefinition;
 	
-	public static final String TABLE = "\n$TABLE ";
+	public static final String TABLE = "$TABLE ";
 	public static final String ID = "ID";
 	public static final String TIME = "TIME";
 	public static final String NOAPPEND = "NOAPPEND";
@@ -59,6 +59,7 @@ public class TableStatement {
 	
 	private StringBuilder createTableStatement(StringBuilder columns, String tableType){
 		StringBuilder tableStatement = new StringBuilder();
+		tableStatement.append(Formatter.endline());
 		tableStatement.append(TABLE);
 		tableStatement.append(ID);
 		tableStatement.append(columns+" "+NOAPPEND+" "+NOPRINT);

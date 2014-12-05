@@ -69,7 +69,7 @@ public class ErrorStatement {
 		StringBuilder errorBlock = new StringBuilder();
 		if(functionDefEqMap.containsKey(function)){
 			functionEquation= getEquationForFunctionName(functionDefEqMap, derivativeVarMap);
-			errorBlock.append("\n"+function+" = "+functionEquation);
+			errorBlock.append(Formatter.endline(function+" = "+functionEquation));
 		}
 		errorBlock.append(Formatter.endline(IPRED+" = "+function));
 		

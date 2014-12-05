@@ -116,7 +116,7 @@ public class SigmaStatement {
 				}else{
 					sigmastatement.append(value.getValue());
 					parameters.addAttributeForStdDev(sigmastatement,isStdDev);
-					sigmastatement.append(" ;"+ symbId+"\n");
+					sigmastatement.append(Formatter.endline(" ;"+ symbId));
 				}
 			}
 		}
