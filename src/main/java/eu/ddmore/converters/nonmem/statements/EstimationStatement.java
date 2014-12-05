@@ -51,8 +51,8 @@ public class EstimationStatement {
             if (definition.equals("FOCEI")) {
             	sb.append("COND INTER MAXEVALS=9999 PRINT=10 NOABORT");
             }else if (definition.equals("SAEM")) {
-            	sb.append("SAEM INTER CTYPE=3 NITER=1000 NBURN=4000 ISAMPEND=10 NOPRIOR=1 CITER=10"
-            				+"\n  CINTERVAL=0 CALPHA=0.05 IACCEPT=0.4 ISCALE_MIN=1.0E-06 ISCALE_MAX=1.0E+06"
+            	sb.append("SAEM INTER CTYPE=3 NITER=1000 NBURN=4000 NOPRIOR=1 CITER=10"
+            				+"\n  CALPHA=0.05 IACCEPT=0.4 ISCALE_MIN=1.0E-06 ISCALE_MAX=1.0E+06"
             				+"\n  ISAMPLE_M1=2 ISAMPLE_M1A=0 ISAMPLE_M2=2 ISAMPLE_M3=2"
             				+"\n  CONSTRAIN=1 EONLY=0 ISAMPLE=2 PRINT=50");
             } else {
