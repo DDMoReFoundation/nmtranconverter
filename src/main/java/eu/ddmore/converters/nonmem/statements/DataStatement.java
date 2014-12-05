@@ -69,7 +69,7 @@ public class DataStatement{
 			NONMEMdataSetType nonmemDataSet = dsIterator.next();
 			// TODO: adding null check for time being as no examples for 0.3.1 or above are available right now.
 			if (nonmemDataSet.getDataSet().getImportData().getPath() != null) {
-				String dataLocation = srcFile.getParent();
+				String dataLocation = srcFile.getAbsoluteFile().getParent();
 				dataFileName = nonmemDataSet.getDataSet().getImportData().getPath();
 				File data = new File(dataLocation+File.separator+dataFileName);
 				if(data.exists()){
