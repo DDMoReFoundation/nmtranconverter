@@ -3,7 +3,6 @@ package eu.ddmore.converters.nonmem;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.io.Writer;
 
 import crx.converter.engine.Lexer;
 import crx.converter.engine.ScriptDefinition;
@@ -14,6 +13,7 @@ import eu.ddmore.converters.nonmem.statements.InputStatement;
 import eu.ddmore.converters.nonmem.statements.ProblemStatement;
 import eu.ddmore.converters.nonmem.statements.SimulationStatement;
 import eu.ddmore.converters.nonmem.statements.TableStatement;
+import eu.ddmore.converters.nonmem.utils.Formatter;
 import eu.ddmore.convertertoolbox.api.response.ConversionReport;
 import eu.ddmore.convertertoolbox.domain.LanguageVersionImpl;
 import eu.ddmore.convertertoolbox.domain.VersionImpl;
@@ -21,7 +21,6 @@ import eu.ddmore.convertertoolbox.domain.VersionImpl;
 
 public class ConverterProvider extends Lexer {
 	String model_filename = new String();
-	private static final String NEW_LINE = System.getProperty("line.separator");
 	private static final String SCRIPT_FILE_SUFFIX = "ctl";
 
 	public ConverterProvider() throws IOException, NullPointerException {
@@ -49,19 +48,16 @@ public class ConverterProvider extends Lexer {
 		} catch (Exception e) {
 			return getExceptionReport(e);
 		}
-
 		try {
 			setOutputDirectory(outputDirectory);
 		} catch (Exception e) {
 			return getExceptionReport(e);
 		}
-
 		try {
 			loadPharmML(src);
 		} catch (Exception e) {
 			return getExceptionReport(e);
 		}
-		
 		// Parse each of the available structural blocks.
 		try {
 			createBlocks(outputDirectory);
@@ -98,10 +94,9 @@ public class ConverterProvider extends Lexer {
 		if (fout == null || output_dir == null) return;
 		
 		ScriptDefinition scriptDefinition = getScriptDefinition();
-		
 		ProblemStatement problemStatement = new ProblemStatement(getModelName());
 		problemStatement.write(fout);
-		writeNewLine(fout);
+		fout.write(Formatter.endline());
 
 		//Initialise data statement before generating input statement and data statement
 		InputStatement inputStatement;
@@ -114,23 +109,19 @@ public class ConverterProvider extends Lexer {
 			inputStatement = new InputStatement(getDataFiles().getNonmemDataSets());
 			dataStatement = new DataStatement(getDataFiles().getNonmemDataSets(),src);
 		}
-
-		writeNewLine(fout);
+		fout.write(Formatter.endline());
 		fout.write(inputStatement.getStatement());
-		writeNewLine(fout);
+		fout.write(Formatter.endline());
 		fout.write(dataStatement.getStatement());
-		
 		fout.write(getSimulationStatement());
 
 		parser.writeParameters(fout);
 		
 		EstimationStatement estStatement = new EstimationStatement(scriptDefinition);
-		
 		if(!estStatement.getEstimationSteps().isEmpty()){
 			fout.write(estStatement.getEstimationStatement().toString());
 			fout.write(estStatement.getCovStatement());	
 		}
-		
 		TableStatement tableStatement = new TableStatement(scriptDefinition,inputStatement);
 		fout.write(tableStatement.getStatements().toString());
 	}
@@ -142,11 +133,7 @@ public class ConverterProvider extends Lexer {
 		}
 		return new String();
 	}
-
-	private void writeNewLine(Writer writer) throws IOException {
-		writer.write(NEW_LINE);
-	}
-
+	
 	@Override
 	protected void initialise() {
 		EstimationStep.setUseDefaultParameterEstimate(true);
