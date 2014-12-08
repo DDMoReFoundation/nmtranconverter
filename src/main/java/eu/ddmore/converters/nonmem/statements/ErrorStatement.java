@@ -8,6 +8,8 @@ import eu.ddmore.libpharmml.dom.maths.FunctionCallType.FunctionArgument;
 
 public class ErrorStatement {
 
+	private static final String DV = "DV";
+
 	public static final String IWRES = "IWRES";
 
 	public static final String IRES = "IRES";
@@ -19,9 +21,10 @@ public class ErrorStatement {
 	String errorType, additive, proportional, function, functionEquation;
 
 	FunctionCallType functionCall = null;
-	
 	static final String COMBINED_ERROR_1 = "combinedError1";
 	static final String COMBINED_ERROR_2 = "combinedError2";
+	static final String ADDITIVE_ERROR = "additiveError";
+	static final String PROPORTIONAL_ERROR = "proportionalError";
 	final String ADDITIVE = "additive";
 	final String PROP = "proportional";
 	final String FUNC = "f";
@@ -72,19 +75,30 @@ public class ErrorStatement {
 			errorBlock.append(Formatter.endline(function+" = "+functionEquation));
 		}
 		errorBlock.append(Formatter.endline(IPRED+" = "+function));
-		
-		// Simplified as we have details of two error types at this moment. 
-		// This might need updates depending upon further error types details.
-		if(errorType.equals(COMBINED_ERROR_1)){
-			errorBlock.append(Formatter.endline("W = "+additive+"+"+proportional+"*"+IPRED));
-		}else if(errorType.equals(COMBINED_ERROR_2)){
-			errorBlock.append(Formatter.endline("W = SQRT(("+additive+"*"+additive+")"+"+ ("+proportional+"*"+proportional+"*"+IPRED+"*"+IPRED+"))"));
-		}
-		errorBlock.append(Formatter.endline(Y+" = "+function+"+W*EPS(1)"));
-		errorBlock.append(Formatter.endline(IRES+" = DV - "+IPRED));
+		errorBlock.append(getWeightFunctionStatement());
+		errorBlock.append(Formatter.endline(Y+" = "+IPRED+"+W*EPS(1)"));
+		errorBlock.append(Formatter.endline(IRES+" = "+DV+" - "+IPRED));
 		errorBlock.append(Formatter.endline(IWRES+" = "+IRES+"/ W"));
-		
 		return errorBlock;	
+	}
+
+	/**
+	 * Adds weight function statement depending upon error type specified.
+	 * @return
+	 */
+	private String getWeightFunctionStatement() {
+		if(errorType.equals(COMBINED_ERROR_1)){
+			return Formatter.endline("W = "+additive+"+"+proportional+"*"+IPRED);
+		}else if(errorType.equals(COMBINED_ERROR_2)){
+			return Formatter.endline("W = SQRT(("+additive+"*"+additive+")"+
+					"+ ("+proportional+"*"+proportional+"*"+IPRED+"*"+IPRED+"))");	
+		}else if(errorType.equals(ADDITIVE_ERROR)){
+			return Formatter.endline("W = "+additive+"+"+IPRED);
+		}else if(errorType.equals(PROPORTIONAL_ERROR)){
+			return Formatter.endline("W = "+additive+"*"+IPRED);
+		}else {
+			throw new IllegalStateException("The specified error type"+errorType+" is not supported yet");
+		}
 	}
 	
 	/**

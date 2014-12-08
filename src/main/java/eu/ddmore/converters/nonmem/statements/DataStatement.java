@@ -24,13 +24,6 @@ public class DataStatement{
 	String dataFileName = "";
 	File dataFile = null;
 	String delimSybol;
-	enum delim {
-		COMMA (",");
-		String symbol;
-		delim(String symbol){
-			this.symbol = symbol;
-		}
-	}; 
 	
 	public File getDataFile() {
 		return dataFile;
