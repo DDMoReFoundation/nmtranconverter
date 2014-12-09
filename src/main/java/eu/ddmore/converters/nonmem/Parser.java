@@ -76,6 +76,7 @@ import eu.ddmore.libpharmml.dom.trialdesign.ActivityType;
 
 public class Parser extends BaseParser {
 
+	private static final String ENDLINE_CHAR = ";";
 	private final String THETA = "THETA";
 	ParametersHelper parameters;
 	ArrayList<String> thetaSet = new ArrayList<String>();
@@ -86,7 +87,7 @@ public class Parser extends BaseParser {
 	}
 
 	public Parser() throws IOException {
-		comment_char = ";";
+		comment_char = ENDLINE_CHAR;
 		script_file_suffix = "ctl";
 		objective_dataset_file_suffix = "csv";
 		output_file_suffix = "csv";
@@ -114,22 +115,7 @@ public class Parser extends BaseParser {
 			symbol = doIndependentVariable((IndependentVariableType) element);
 		else
 			symbol = Formatter.addPrefix(symbol);
-		
-		//TODO: need to verify NM_ appending to parameters.
-//		else if (lexer.isModelParameter(symbol)) {
-//			Integer idx = lexer.getModelParameterIndex(symbol);
-//			String format = "%s_%s";
-//			symbol = String.format(format, "NM", symbol.toUpperCase());
-//		}
-//		else if (lexer.isStateVariable(symbol)) {
-////			Integer idx = lexer.getStateVariableIndex(symbol);
-//			String format = "%s_%s";
-//			symbol = String.format(format, "NM", symbol.toUpperCase());
-//		} else if (lexer.isIndividualParameter(symbol)) {
-//			Integer idx = lexer.getIndividualParameterIndex(symbol);
-//			String format = "%s_%s";
-//			symbol = String.format(format, "NM", symbol.toUpperCase());
-//		}
+
 		return symbol;
 	}
 	
@@ -555,7 +541,7 @@ public class Parser extends BaseParser {
     			String assignment = parse(generalCov, lexer.getStatement(generalCov));
     			statement.append(assignment);
     		}
-    		statement.append(Formatter.endline(";"));
+    		statement.append(Formatter.endline(ENDLINE_CHAR));
     		
     		StringBuilder etas = addEtasStatementsToIndivParamDef(gaussianModel.getRandomEffects());
 			if (logType.equals(Constant.LOG.toString())) {
@@ -620,7 +606,7 @@ public class Parser extends BaseParser {
 			statement.append(Formatter.endline());
 			statement.append(String.format("%s = ", ip.getSymbId()));
 			String assignment = parse(new Object(), lexer.getStatement(ip.getAssign()));
-			statement.append(Formatter.endline(assignment+";"));
+			statement.append(Formatter.endline(assignment+ENDLINE_CHAR));
 		}
 		return statement;
 	}
