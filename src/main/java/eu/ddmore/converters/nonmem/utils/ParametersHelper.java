@@ -17,6 +17,7 @@ import crx.converter.engine.parts.Part;
 import eu.ddmore.converters.nonmem.statements.OmegaBlockStatement;
 import eu.ddmore.converters.nonmem.statements.OmegaStatement;
 import eu.ddmore.converters.nonmem.statements.ThetaStatement;
+import eu.ddmore.converters.nonmem.utils.Formatter.Constant;
 import eu.ddmore.libpharmml.dom.commontypes.Rhs;
 import eu.ddmore.libpharmml.dom.commontypes.ScalarRhs;
 import eu.ddmore.libpharmml.dom.modeldefn.IndividualParameterType;
@@ -32,13 +33,7 @@ import eu.ddmore.libpharmml.dom.uncertml.NormalDistribution;
 import eu.ddmore.libpharmml.dom.uncertml.PositiveRealValueType;
 
 public class ParametersHelper {
-	
-	private static final String LOG = "LOG";
 	private static final String MU = "MU_";
-	public static final String CORRELATION = "CORRELATION";
-	public static final String FIX = "FIX";
-	public static final String SD = "SD";
-	
 	ScriptDefinition scriptDefinition;
 	List<SimpleParameterType> simpleParameterTypes = new ArrayList<SimpleParameterType>();
 	final LinkedHashMap<String, ThetaStatement> thetaStatements = new LinkedHashMap<String, ThetaStatement>();
@@ -139,7 +134,7 @@ public class ParametersHelper {
 	public StringBuilder addMUStatements(){
 		StringBuilder muStatement = new StringBuilder();
 		for(Integer thetaOrder : thetasToEtaOrder.keySet()){
-			muStatement.append(Formatter.endline(MU+thetaOrder+" = "+LOG+"("+thetasToEtaOrder.get(thetaOrder)+")" ));
+			muStatement.append(Formatter.endline(MU+thetaOrder+" = "+Constant.LOG+"("+thetasToEtaOrder.get(thetaOrder)+")" ));
 		}
 		
 		return muStatement;
@@ -202,7 +197,7 @@ public class ParametersHelper {
 	 */
 	public void addAttributeForStdDev(StringBuilder statement, Boolean isStdDev) {
 		if(isStdDev){
-			statement.append(Formatter.endline(" "+SD));
+			statement.append(Formatter.endline(" "+Constant.SD));
 		}
 	}
 

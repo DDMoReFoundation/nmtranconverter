@@ -51,6 +51,7 @@ import eu.ddmore.converters.nonmem.statements.PredStatement;
 import eu.ddmore.converters.nonmem.statements.SigmaStatement;
 import eu.ddmore.converters.nonmem.statements.ThetaStatement;
 import eu.ddmore.converters.nonmem.utils.Formatter;
+import eu.ddmore.converters.nonmem.utils.Formatter.Constant;
 import eu.ddmore.converters.nonmem.utils.ParametersHelper;
 import eu.ddmore.libpharmml.dom.IndependentVariableType;
 import eu.ddmore.libpharmml.dom.commontypes.FunctionDefinitionType;
@@ -74,11 +75,11 @@ import eu.ddmore.libpharmml.dom.modeldefn.ParameterRandomVariableType;
 import eu.ddmore.libpharmml.dom.trialdesign.ActivityType;
 
 public class Parser extends BaseParser {
-	private static final String LOGIT = "LOGIT";
-	private static final String LOG = "LOG";
+
+	private final String THETA = "THETA";
 	ParametersHelper parameters;
 	ArrayList<String> thetaSet = new ArrayList<String>();
-	private final String THETA = "THETA";
+	
 	
 	public ParametersHelper getParameters() {
 		return parameters;
@@ -385,10 +386,10 @@ public class Parser extends BaseParser {
 		writeParameterStatements(fout, description, lowerBound, upperBound,initEstimate);
 		
 		if(param.isFixed()){
-			fout.write(" "+ParametersHelper.FIX+" ");
+			fout.write(" "+Constant.FIX+" ");
 		}
 		if(param.isStdDev()){
-			fout.write(ParametersHelper.SD+" ");
+			fout.write(Constant.SD+" ");
 		}
 		fout.write(Formatter.endline(")"+Formatter.indent(comment_char+description)));
 	}
@@ -557,10 +558,10 @@ public class Parser extends BaseParser {
     		statement.append(Formatter.endline(";"));
     		
     		StringBuilder etas = addEtasStatementsToIndivParamDef(gaussianModel.getRandomEffects());
-			if (logType.equals(LOG)) {
+			if (logType.equals(Constant.LOG.toString())) {
 				String format = Formatter.endline("%s = EXP(%s %s);");
 				statement.append(String.format(format, Formatter.addPrefix(ip.getSymbId()), variableSymbol,etas));
-			} else if (logType.equals(LOGIT)) {
+			} else if (logType.equals(Constant.LOGIT.toString())) {
 				String format = Formatter.endline("%s = 1./(1 + exp(-%s));");
 				statement.append(String.format(format, Formatter.addPrefix(ip.getSymbId()), variableSymbol));
 			}
@@ -633,9 +634,9 @@ public class Parser extends BaseParser {
 	 */
 	private String getLogType(LhsTransformationType transform) {
 		if (transform == LhsTransformationType.LOG){
-			return LOG;
+			return Constant.LOG.toString();
 		}else if (transform == LhsTransformationType.LOGIT){
-			return LOGIT;
+			return Constant.LOGIT.toString();
 		}else{
 			throw new  UnsupportedOperationException("Tranformation type "+transform.name()+" not yet supported");
 		}

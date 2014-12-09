@@ -13,6 +13,7 @@ import crx.converter.engine.parts.ParameterBlock;
 import crx.converter.engine.parts.BaseRandomVariableBlock.Correlation;
 import eu.ddmore.converters.nonmem.utils.Formatter;
 import eu.ddmore.converters.nonmem.utils.ParametersHelper;
+import eu.ddmore.converters.nonmem.utils.Formatter.Constant;
 import eu.ddmore.libpharmml.dom.modeldefn.ParameterRandomVariableType;
 
 public class OmegaBlockStatement {
@@ -85,8 +86,8 @@ public class OmegaBlockStatement {
 		Integer blocksCount = etaToOmagaMap.size();
 		StringBuilder description = new StringBuilder();
 		//This will change in case of 0.4 as it will need to deal with matrix types as well.
-		description.append((!correlations.isEmpty())?ParametersHelper.CORRELATION:" ");
-		description.append((isOmegaBlockFromStdDev)?" "+ParametersHelper.SD:"");
+		description.append((!correlations.isEmpty())?Constant.CORRELATION:" ");
+		description.append((isOmegaBlockFromStdDev)?" "+Constant.SD:"");
 		String title = Formatter.endline()+"$OMEGA BLOCK("+blocksCount+") "+description;
 		return title;
 	}
