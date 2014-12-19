@@ -6,15 +6,13 @@ import crx.converter.engine.ScriptDefinition;
 import crx.converter.engine.parts.ParameterBlock;
 import eu.ddmore.converters.nonmem.statements.ErrorStatement.ErrorConstant;
 import eu.ddmore.converters.nonmem.utils.Formatter;
+import eu.ddmore.converters.nonmem.utils.Formatter.ColumnConstant;
+import eu.ddmore.converters.nonmem.utils.Formatter.TableConstant;
 import eu.ddmore.libpharmml.dom.modeldefn.IndividualParameterType;
 
 public class TableStatement {
 	
 	private static final String SPACE = " ";
-
-	enum TableConstant{
-		TABLE, ID, TIME, WRES, RES, PRED, NOPRINT, DV, NOAPPEND;
-	}
 	
 	enum TableFile{
 		STD_TABLE("sdtab"),
@@ -64,7 +62,7 @@ public class TableStatement {
 		StringBuilder tableStatement = new StringBuilder();
 		tableStatement.append(Formatter.endline());
 		tableStatement.append("$"+TableConstant.TABLE);
-		tableStatement.append(SPACE+TableConstant.ID);
+		tableStatement.append(SPACE+ColumnConstant.ID);
 		tableStatement.append(columns+SPACE+TableConstant.NOAPPEND+SPACE+TableConstant.NOPRINT);
 		tableStatement.append(Formatter.endline(" FILE="+tableType));
 		return tableStatement;
@@ -78,12 +76,12 @@ public class TableStatement {
 	 */
 	private StringBuilder getStdTableStatement(){
 		StringBuilder stdTable = new StringBuilder();
-		stdTable.append(SPACE+TableConstant.TIME);
+		stdTable.append(SPACE+ColumnConstant.TIME);
 		if(!inputStatement.getInputHeaders().isEmpty()){
 			for(String inputHeader : inputStatement.getInputHeaders()){
 				// Adding ID TIME at start and DV at the end hence skipping here.
-				if(inputHeader.equals(TableConstant.ID.toString()) || 
-						inputHeader.equals(TableConstant.TIME.toString()) || inputHeader.equals(TableConstant.DV.toString())){
+				if(inputHeader.equals(ColumnConstant.ID.toString()) || 
+						inputHeader.equals(ColumnConstant.TIME.toString()) || inputHeader.equals(TableConstant.DV.toString())){
 					continue;
 				}
 				stdTable.append(SPACE+inputHeader);
