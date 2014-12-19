@@ -16,6 +16,7 @@ import eu.ddmore.converters.nonmem.Parser;
 import eu.ddmore.converters.nonmem.utils.Formatter;
 import eu.ddmore.libpharmml.dom.commontypes.DerivativeVariableType;
 import eu.ddmore.libpharmml.dom.commontypes.InitialValueType;
+import eu.ddmore.libpharmml.dom.commontypes.IntValueType;
 import eu.ddmore.libpharmml.dom.commontypes.RealValueType;
 import eu.ddmore.libpharmml.dom.commontypes.VariableDefinitionType;
 import eu.ddmore.libpharmml.dom.maths.FunctionCallType;
@@ -314,8 +315,14 @@ public class PredStatement {
 							initialCondition = initialValueType.getAssign().getSymbRef().getSymbIdRef();
 							builder.append(Formatter.endline("A_0("+i+") = "+Formatter.addPrefix(initialCondition.toUpperCase()))); 
 						}else if(initialValueType.getAssign().getScalar()!=null){
-							RealValueType test = (RealValueType) initialValueType.getAssign().getScalar().getValue();
-							initialCondition = Double.toString(test.getValue());
+							Object value =  initialValueType.getAssign().getScalar().getValue();
+							
+							if(value instanceof RealValueType){
+								initialCondition = Double.toString(((RealValueType)value).getValue());
+							} else if(value instanceof IntValueType){
+								initialCondition = ((IntValueType)value).getValue().toString();
+							}
+							
 							builder.append(Formatter.endline("A_0("+i+") = "+initialCondition));
 						}
 					}

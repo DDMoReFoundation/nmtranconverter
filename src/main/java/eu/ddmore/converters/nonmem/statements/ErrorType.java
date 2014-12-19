@@ -28,7 +28,7 @@ public enum ErrorType {
 	PROPORTIONAL_ERROR("proportionalError"){
 		@Override
 		String getStatement() {
-			return Formatter.endline("W = "+ErrorStatement.additive+"*"+ErrorConstant.IPRED);
+			return Formatter.endline("W = "+ErrorStatement.proportional+"*"+ErrorConstant.IPRED);
 		};
 	};
 	
