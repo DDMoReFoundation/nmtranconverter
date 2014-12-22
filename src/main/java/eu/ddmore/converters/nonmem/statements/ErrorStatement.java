@@ -7,27 +7,30 @@ import eu.ddmore.libpharmml.dom.maths.FunctionCallType;
 import eu.ddmore.libpharmml.dom.maths.FunctionCallType.FunctionArgument;
 
 public class ErrorStatement {
-
-	private static final String DV = "DV";
-
-	public static final String IWRES = "IWRES";
-
-	public static final String IRES = "IRES";
-
-	public static final String IPRED = "IPRED";
 	
-	public static final String Y = "Y";
+	enum ErrorConstant{
+		DV,	IWRES, IRES, IPRED, Y;
+	}
+	enum FunctionArg{
+		ADDITIVE ("additive"),
+		PROP ("proportional"),
+		FUNC ("f");
+		
+		String description;
+		FunctionArg(String description){
+			this.description = description;	
+		}
+		public String getDescription() {
+			return this.description;
+		}
+	}
 
-	String errorType, additive, proportional, function, functionEquation;
-
+	static String additive = new String();
+	static String proportional = new String();
 	FunctionCallType functionCall = null;
-	static final String COMBINED_ERROR_1 = "combinedError1";
-	static final String COMBINED_ERROR_2 = "combinedError2";
-	static final String ADDITIVE_ERROR = "additiveError";
-	static final String PROPORTIONAL_ERROR = "proportionalError";
-	final String ADDITIVE = "additive";
-	final String PROP = "proportional";
-	final String FUNC = "f";
+	String function;
+	String functionEquation;
+	String errorType;
 	
 	ErrorStatement(FunctionCallType functionCallType){
 		if(functionCallType!=null){
@@ -44,11 +47,11 @@ public class ErrorStatement {
 		for(FunctionArgument arg : functionCall.getFunctionArgument()){
 			String param = arg.getSymbRef().getSymbIdRef();
 			if(arg.getSymbId()!=null && param!=null){
-				if(arg.getSymbId().equals(ADDITIVE)){
+				if(arg.getSymbId().equals(FunctionArg.ADDITIVE.getDescription())){
 					additive = Formatter.addPrefix(param);					
-				}else if(arg.getSymbId().equals(PROP)){
+				}else if(arg.getSymbId().equals(FunctionArg.PROP.getDescription())){
 					proportional = Formatter.addPrefix(param);
-				}else if(arg.getSymbId().equals(FUNC)){
+				}else if(arg.getSymbId().equals(FunctionArg.FUNC.getDescription())){
 					function = Formatter.addPrefix(param);
 				}
 			}
@@ -61,7 +64,7 @@ public class ErrorStatement {
 	 * if error type is CombinedError1 then,
 	 * 		IPRED = <f>  	 
 	 *  	W = THETA(x)+THETA(y)*IPRED 
-	 *  	Y = <f>+W*EPS(z) 
+	 *  	Y = IPRED+W*EPS(z) 
 	 *  	IRES = DV - IPRED 
 	 *  	IWRES = IRES / W
 	 *  	where Additive is THETA(x), proportional is THETA(y) and f is <f>
@@ -74,30 +77,32 @@ public class ErrorStatement {
 			functionEquation= getEquationForFunctionName(functionDefEqMap, derivativeVarMap);
 			errorBlock.append(Formatter.endline(function+" = "+functionEquation));
 		}
-		errorBlock.append(Formatter.endline(IPRED+" = "+function));
+		errorBlock.append(Formatter.endline(ErrorConstant.IPRED+" = "+function));
 		errorBlock.append(getWeightFunctionStatement());
-		errorBlock.append(Formatter.endline(Y+" = "+IPRED+"+W*EPS(1)"));
-		errorBlock.append(Formatter.endline(IRES+" = "+DV+" - "+IPRED));
-		errorBlock.append(Formatter.endline(IWRES+" = "+IRES+"/ W"));
+		errorBlock.append(Formatter.endline(ErrorConstant.Y+" = "+ErrorConstant.IPRED+"+W*EPS(1)"));
+		errorBlock.append(Formatter.endline(ErrorConstant.IRES+" = "+ErrorConstant.DV+" - "+ErrorConstant.IPRED));
+		errorBlock.append(Formatter.endline(ErrorConstant.IWRES+" = "+ErrorConstant.IRES+"/ W"));
 		return errorBlock;	
 	}
 
 	/**
 	 * Adds weight function statement depending upon error type specified.
+	 * Currently there are only weight function statements which are specific to error type.
+	 * 
 	 * @return
 	 */
 	private String getWeightFunctionStatement() {
-		if(errorType.equals(COMBINED_ERROR_1)){
-			return Formatter.endline("W = "+additive+"+"+proportional+"*"+IPRED);
-		}else if(errorType.equals(COMBINED_ERROR_2)){
-			return Formatter.endline("W = SQRT(("+additive+"*"+additive+")"+
-					"+ ("+proportional+"*"+proportional+"*"+IPRED+"*"+IPRED+"))");	
-		}else if(errorType.equals(ADDITIVE_ERROR)){
-			return Formatter.endline("W = "+additive+"+"+IPRED);
-		}else if(errorType.equals(PROPORTIONAL_ERROR)){
-			return Formatter.endline("W = "+additive+"*"+IPRED);
-		}else {
-			throw new IllegalStateException("The specified error type"+errorType+" is not supported yet");
+		String errorTypeSpecificStatement = new String();
+		for(ErrorType error : ErrorType.values()){
+			if(errorType.equals(error.getErrorType())){
+				errorTypeSpecificStatement = error.getStatement();
+				break;
+			}
+		}
+		if(errorTypeSpecificStatement.isEmpty()){
+			throw new IllegalArgumentException("The specified error type '"+errorType+"' is not supported yet");
+		}else{
+			return errorTypeSpecificStatement;
 		}
 	}
 	

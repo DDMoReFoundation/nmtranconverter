@@ -11,6 +11,7 @@ import java.util.List;
 import org.junit.Test;
 
 import eu.ddmore.converters.nonmem.statements.InputStatement;
+import eu.ddmore.converters.nonmem.utils.Formatter.ColumnConstant;
 import eu.ddmore.libpharmml.dom.commontypes.SymbolTypeType;
 import eu.ddmore.libpharmml.dom.dataset.ColumnDefnType;
 import eu.ddmore.libpharmml.dom.dataset.ColumnTypeType;
@@ -25,12 +26,12 @@ public class InputStatementTest {
 	private static final String STATEMENT_BLOCK_NAME = "$INPUT";
 	private static final String DATA_FILE_NAME = "warfarin_conc_pca.csv";
 	
-	private static final String COL_ID_1 = "ID";
+	private static final String COL_ID_1 = ColumnConstant.ID.toString();
 	private static final ColumnTypeType COL_TYPE_1 = ColumnTypeType.ID;
 	private static final SymbolTypeType COL_VALUE_1 = SymbolTypeType.ID;
 	private static final String COL_NUM_1 = "1";
 
-	private static final String COL_ID_2 = "TIME";
+	private static final String COL_ID_2 = ColumnConstant.TIME.toString();
 	private static final ColumnTypeType COL_TYPE_2 = ColumnTypeType.IDV;
 	private static final SymbolTypeType COL_VALUE_2 = SymbolTypeType.ID;
 	private static final String COL_NUM_2 = "2";

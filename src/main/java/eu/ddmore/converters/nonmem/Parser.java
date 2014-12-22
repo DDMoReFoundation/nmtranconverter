@@ -51,6 +51,8 @@ import eu.ddmore.converters.nonmem.statements.PredStatement;
 import eu.ddmore.converters.nonmem.statements.SigmaStatement;
 import eu.ddmore.converters.nonmem.statements.ThetaStatement;
 import eu.ddmore.converters.nonmem.utils.Formatter;
+import eu.ddmore.converters.nonmem.utils.Formatter.ColumnConstant;
+import eu.ddmore.converters.nonmem.utils.Formatter.Constant;
 import eu.ddmore.converters.nonmem.utils.ParametersHelper;
 import eu.ddmore.libpharmml.dom.IndependentVariableType;
 import eu.ddmore.libpharmml.dom.commontypes.FunctionDefinitionType;
@@ -74,18 +76,14 @@ import eu.ddmore.libpharmml.dom.modeldefn.ParameterRandomVariableType;
 import eu.ddmore.libpharmml.dom.trialdesign.ActivityType;
 
 public class Parser extends BaseParser {
-	private static final String LOGIT = "LOGIT";
-	private static final String LOG = "LOG";
+
+	private static final String ENDLINE_CHAR = ";";
+	private final String THETA = "THETA";
 	ParametersHelper parameters;
 	ArrayList<String> thetaSet = new ArrayList<String>();
-	private final String THETA = "THETA";
 	
-	public ParametersHelper getParameters() {
-		return parameters;
-	}
-
 	public Parser() throws IOException {
-		comment_char = ";";
+		comment_char = ENDLINE_CHAR;
 		script_file_suffix = "ctl";
 		objective_dataset_file_suffix = "csv";
 		output_file_suffix = "csv";
@@ -113,22 +111,7 @@ public class Parser extends BaseParser {
 			symbol = doIndependentVariable((IndependentVariableType) element);
 		else
 			symbol = Formatter.addPrefix(symbol);
-		
-		//TODO: need to verify NM_ appending to parameters.
-//		else if (lexer.isModelParameter(symbol)) {
-//			Integer idx = lexer.getModelParameterIndex(symbol);
-//			String format = "%s_%s";
-//			symbol = String.format(format, "NM", symbol.toUpperCase());
-//		}
-//		else if (lexer.isStateVariable(symbol)) {
-////			Integer idx = lexer.getStateVariableIndex(symbol);
-//			String format = "%s_%s";
-//			symbol = String.format(format, "NM", symbol.toUpperCase());
-//		} else if (lexer.isIndividualParameter(symbol)) {
-//			Integer idx = lexer.getIndividualParameterIndex(symbol);
-//			String format = "%s_%s";
-//			symbol = String.format(format, "NM", symbol.toUpperCase());
-//		}
+
 		return symbol;
 	}
 	
@@ -201,8 +184,10 @@ public class Parser extends BaseParser {
 	
 	@Override
 	protected String doIndependentVariable(IndependentVariableType v) {
-		String symbol = v.getSymbId();
-		if (symbol.equals("t") || symbol.equals("time")) symbol = "T";
+		String symbol = v.getSymbId().toUpperCase();
+		if (symbol.equals(Constant.T.toString()) || symbol.equals(ColumnConstant.TIME.toString())){
+			symbol = (PredStatement.isDES)?Constant.T.toString():ColumnConstant.TIME.toString();
+		}
 		return symbol;
 	}
 	
@@ -294,20 +279,20 @@ public class Parser extends BaseParser {
 			String operator = "IF";
 			String format = Formatter.endline("%s (%s) THEN")+Formatter.endline(Formatter.indent("%s = %s"));
 			if (block_assignment > 0) {
-			operator = "ELSE IF ";
-			format = Formatter.endline(" %s (%s)")+Formatter.endline(Formatter.indent("%s = %s"));
+				operator = "ELSE IF ";
+				format = Formatter.endline(" %s (%s)")+Formatter.endline(Formatter.indent("%s = %s"));
+			}
+			String conditionStatement = conditional_stmts[i].replaceAll("\\s+","");
+			block.append(String.format(format, operator, conditionStatement, field_tag, assignment_stmts[i]));
+			block_assignment++;
 		}
-		String conditionStatement = conditional_stmts[i].replaceAll("\\s+","");
-		block.append(String.format(format, operator, conditionStatement, field_tag, assignment_stmts[i]));
-		block_assignment++;
-	}
 	
-	if (else_block != null && else_index >= 0) {
-		block.append(Formatter.endline("ELSE"));
-		String format = Formatter.endline(Formatter.indent("%s = %s"));
-		block.append(String.format(format, field_tag, assignment_stmts[else_index]));
-	}
-	block.append("ENDIF");
+		if (else_block != null && else_index >= 0) {
+			block.append(Formatter.endline("ELSE"));
+			String format = Formatter.endline(Formatter.indent("%s = %s"));
+			block.append(String.format(format, field_tag, assignment_stmts[else_index]));
+		}
+		block.append("ENDIF");
 		if (assignment_count == 0) throw new IllegalStateException("Piecewise statement assigned no conditional blocks.");
 		symbol = block.toString();
 			
@@ -385,10 +370,10 @@ public class Parser extends BaseParser {
 		writeParameterStatements(fout, description, lowerBound, upperBound,initEstimate);
 		
 		if(param.isFixed()){
-			fout.write(" "+ParametersHelper.FIX+" ");
+			fout.write(" "+Constant.FIX+" ");
 		}
 		if(param.isStdDev()){
-			fout.write(ParametersHelper.SD+" ");
+			fout.write(Constant.SD+" ");
 		}
 		fout.write(Formatter.endline(")"+Formatter.indent(comment_char+description)));
 	}
@@ -530,22 +515,8 @@ public class Parser extends BaseParser {
     			if (covariates != null) {
     				for (CovariateRelationType covariate : covariates) {
     					if (covariate == null) continue;
-    					
-    					CovariateDefinitionType covariateDef = (CovariateDefinitionType) lexer.getAccessor().fetchElement(covariate.getSymbRef());
-    					if (covariateDef != null) {
-    						if (covariateDef.getContinuous() != null) {
-    							String covStatement = "";
-    							ContinuousCovariateType continuous = covariateDef.getContinuous();
-    							if (continuous.getTransformation() != null) covStatement = getSymbol(continuous.getTransformation());
-    							else covStatement = covariateDef.getSymbId();
-    							
-    							covStatement = addFixedEffectsStatementToIndivParamDef(covariate, covStatement);
-    							if(!covStatement.isEmpty())
-    								statement.append("+"+covStatement);
-    						} else if (covariateDef.getCategorical() != null) {
-    							throw new UnsupportedOperationException("No categorical yet");
-    						}
-    					}
+    					PharmMLRootType type = lexer.getAccessor().fetchElement(covariate.getSymbRef());
+    					statement.append(getCovariateForIndividualDefinition(covariate, type));
     				}
     			}
     		}
@@ -554,13 +525,13 @@ public class Parser extends BaseParser {
     			String assignment = parse(generalCov, lexer.getStatement(generalCov));
     			statement.append(assignment);
     		}
-    		statement.append(Formatter.endline(";"));
+    		statement.append(Formatter.endline(ENDLINE_CHAR));
     		
     		StringBuilder etas = addEtasStatementsToIndivParamDef(gaussianModel.getRandomEffects());
-			if (logType.equals(LOG)) {
+			if (logType.equals(Constant.LOG.toString())) {
 				String format = Formatter.endline("%s = EXP(%s %s);");
 				statement.append(String.format(format, Formatter.addPrefix(ip.getSymbId()), variableSymbol,etas));
-			} else if (logType.equals(LOGIT)) {
+			} else if (logType.equals(Constant.LOGIT.toString())) {
 				String format = Formatter.endline("%s = 1./(1 + exp(-%s));");
 				statement.append(String.format(format, Formatter.addPrefix(ip.getSymbId()), variableSymbol));
 			}
@@ -569,22 +540,39 @@ public class Parser extends BaseParser {
 		
 		return statement.toString();
 	}
-
+	
 	/**
-	 * This method adds etas from random effects to individual parameter definitions.
-	 * @param random_effects
+	 * This method will retrieve details of parameter type passed depending upon 
+	 * whether it is IDV or Covariate Definition.
+	 * 
+	 * @param covariate
+	 * @param type
 	 * @return
 	 */
-	private StringBuilder addEtasStatementsToIndivParamDef(List<ParameterRandomEffectType> random_effects) {
-		StringBuilder etas = new StringBuilder();
-		if (random_effects != null && !random_effects.isEmpty()) {
-			for (ParameterRandomEffectType random_effect : random_effects) {
-				if (random_effect == null) continue;
-				etas.append("+ ");
-				etas.append("ETA("+etasOrder.get(random_effect.getSymbRef().get(0).getSymbIdRef())+")");
+	private StringBuilder getCovariateForIndividualDefinition(CovariateRelationType covariate, PharmMLRootType type) {
+		StringBuilder statement = new StringBuilder();
+		if(type instanceof IndependentVariableType){
+			String idvName = doIndependentVariable((IndependentVariableType)type);
+			statement.append("+"+idvName);
+		}
+		else if(type instanceof CovariateDefinitionType){
+			CovariateDefinitionType covariateDef = (CovariateDefinitionType) type;
+			if (covariateDef != null) {
+				if (covariateDef.getContinuous() != null) {
+					String covStatement = "";
+					ContinuousCovariateType continuous = covariateDef.getContinuous();
+					if (continuous.getTransformation() != null) covStatement = getSymbol(continuous.getTransformation());
+					else covStatement = covariateDef.getSymbId();
+					
+					covStatement = addFixedEffectsStatementToIndivParamDef(covariate, covStatement);
+					if(!covStatement.isEmpty())
+						statement.append("+"+covStatement);
+				} else if (covariateDef.getCategorical() != null) {
+					throw new UnsupportedOperationException("No categorical yet");
+				}
 			}
 		}
-		return etas;
+		return statement;
 	}
 
 	/**
@@ -600,7 +588,7 @@ public class Parser extends BaseParser {
 				if (fixed_effect == null) continue;
 				String  fixedEffectStatement = Formatter.addPrefix(fixed_effect.getSymbRef().getSymbIdRef());
 				if(fixedEffectStatement.isEmpty())
-					fixedEffectStatement = parse(fixed_effect, lexer.getStatement(fixed_effect));
+					fixedEffectStatement = parse(fixed_effect);
 				covStatement = fixedEffectStatement + " * " + covStatement;
 				break;
 			}
@@ -619,7 +607,7 @@ public class Parser extends BaseParser {
 			statement.append(Formatter.endline());
 			statement.append(String.format("%s = ", ip.getSymbId()));
 			String assignment = parse(new Object(), lexer.getStatement(ip.getAssign()));
-			statement.append(Formatter.endline(assignment+";"));
+			statement.append(Formatter.endline(assignment+ENDLINE_CHAR));
 		}
 		return statement;
 	}
@@ -633,12 +621,29 @@ public class Parser extends BaseParser {
 	 */
 	private String getLogType(LhsTransformationType transform) {
 		if (transform == LhsTransformationType.LOG){
-			return LOG;
+			return Constant.LOG.toString();
 		}else if (transform == LhsTransformationType.LOGIT){
-			return LOGIT;
+			return Constant.LOGIT.toString();
 		}else{
 			throw new  UnsupportedOperationException("Tranformation type "+transform.name()+" not yet supported");
 		}
+	}
+	
+	/**
+	 * This method adds etas from random effects to individual parameter definitions.
+	 * @param random_effects
+	 * @return
+	 */
+	private StringBuilder addEtasStatementsToIndivParamDef(List<ParameterRandomEffectType> random_effects) {
+		StringBuilder etas = new StringBuilder();
+		if (random_effects != null && !random_effects.isEmpty()) {
+			for (ParameterRandomEffectType random_effect : random_effects) {
+				if (random_effect == null) continue;
+				etas.append("+ ");
+				etas.append("ETA("+etasOrder.get(random_effect.getSymbRef().get(0).getSymbIdRef())+")");
+			}
+		}
+		return etas;
 	}
 
 	@Override
@@ -679,6 +684,9 @@ public class Parser extends BaseParser {
 		this.etasOrder = etasOrder;
 	}
 	
+	public ParametersHelper getParameters() {
+		return parameters;
+	}
 	
 	@Override
 	public void writeInterpreterPath(PrintWriter fout) throws IOException {

@@ -4,32 +4,33 @@ import java.util.List;
 
 import crx.converter.engine.ScriptDefinition;
 import crx.converter.engine.parts.ParameterBlock;
+import eu.ddmore.converters.nonmem.statements.ErrorStatement.ErrorConstant;
 import eu.ddmore.converters.nonmem.utils.Formatter;
+import eu.ddmore.converters.nonmem.utils.Formatter.ColumnConstant;
+import eu.ddmore.converters.nonmem.utils.Formatter.TableConstant;
 import eu.ddmore.libpharmml.dom.modeldefn.IndividualParameterType;
 
 public class TableStatement {
 	
-	private static final String WRES = "WRES";
-
-	private static final String RES = "RES";
-
-	private static final String PRED = "PRED";
-
-	private static final String NOPRINT = "NOPRINT";
-
-	private static final String DV = "DV";
-
+	private static final String SPACE = " ";
+	
+	enum TableFile{
+		STD_TABLE("sdtab"),
+		PARAM_TABLE("patab"),
+		CAT_COV_TABLE("catab"),
+		CONT_COV_TABLE("cotab");
+		
+		private String fileName;
+		
+		private TableFile(String fileName) {
+			this.fileName = fileName;
+		}
+		
+		public String getFileName() {
+			return this.fileName;
+		}
+	}
 	ScriptDefinition scriptDefinition;
-	
-	public static final String TABLE = "$TABLE ";
-	public static final String ID = "ID";
-	public static final String TIME = "TIME";
-	public static final String NOAPPEND = "NOAPPEND";
-	public static final String STD_TABLE_FILE = "sdtab";
-	public static final String PARAM_TABLE_FILE = "patab";
-	public static final String CAT_COV_TABLE_FILE = "catab";
-	public static final String CONT_COV_TABLE_FILE = "cotab";
-	
 	InputStatement inputStatement = null;
 	
 
@@ -45,13 +46,13 @@ public class TableStatement {
 	
 	public StringBuilder getStatements(){
 		StringBuilder allTables = new StringBuilder();
-		allTables.append(createTableStatement(getStdTableStatement(), STD_TABLE_FILE));
-		allTables.append(createTableStatement(getParamTableStatement(), PARAM_TABLE_FILE));
+		allTables.append(createTableStatement(getStdTableStatement(),TableFile.STD_TABLE.getFileName()));
+		allTables.append(createTableStatement(getParamTableStatement(),TableFile.PARAM_TABLE.getFileName()));
 		if(!inputStatement.getCatCovTableColumns().isEmpty()){
-			allTables.append(createTableStatement(getCatCovTableStatement(), CAT_COV_TABLE_FILE));
+			allTables.append(createTableStatement(getCatCovTableStatement(),TableFile.CAT_COV_TABLE.getFileName()));
 		}
 		if(!inputStatement.getContCovTableColumns().isEmpty()){
-			allTables.append(createTableStatement(getContCovTableStatement(), CONT_COV_TABLE_FILE));
+			allTables.append(createTableStatement(getContCovTableStatement(),TableFile.CONT_COV_TABLE.getFileName()));
 		}
 		
 		return allTables;
@@ -60,9 +61,9 @@ public class TableStatement {
 	private StringBuilder createTableStatement(StringBuilder columns, String tableType){
 		StringBuilder tableStatement = new StringBuilder();
 		tableStatement.append(Formatter.endline());
-		tableStatement.append(TABLE);
-		tableStatement.append(ID);
-		tableStatement.append(columns+" "+NOAPPEND+" "+NOPRINT);
+		tableStatement.append("$"+TableConstant.TABLE);
+		tableStatement.append(SPACE+ColumnConstant.ID);
+		tableStatement.append(columns+SPACE+TableConstant.NOAPPEND+SPACE+TableConstant.NOPRINT);
 		tableStatement.append(Formatter.endline(" FILE="+tableType));
 		return tableStatement;
 	}
@@ -75,18 +76,21 @@ public class TableStatement {
 	 */
 	private StringBuilder getStdTableStatement(){
 		StringBuilder stdTable = new StringBuilder();
-		stdTable.append(" "+TIME);
+		stdTable.append(SPACE+ColumnConstant.TIME);
 		if(!inputStatement.getInputHeaders().isEmpty()){
 			for(String inputHeader : inputStatement.getInputHeaders()){
 				// Adding ID TIME at start and DV at the end hence skipping here.
-				if(inputHeader.equals(ID) || inputHeader.equals(TIME) || inputHeader.equals(DV)){
+				if(inputHeader.equals(ColumnConstant.ID.toString()) || 
+						inputHeader.equals(ColumnConstant.TIME.toString()) || inputHeader.equals(TableConstant.DV.toString())){
 					continue;
 				}
-				stdTable.append(" "+inputHeader);
+				stdTable.append(SPACE+inputHeader);
 			}
 		}
-		stdTable.append(" "+PRED+" "+ErrorStatement.IPRED+" "+RES+" "+ErrorStatement.IRES+" "+WRES+" "+ErrorStatement.IWRES+" ");
-		stdTable.append(ErrorStatement.Y+" "+DV);
+		stdTable.append(SPACE + TableConstant.PRED + SPACE + ErrorConstant.IPRED + SPACE +
+				TableConstant.RES + SPACE + ErrorConstant.IRES + SPACE + TableConstant.WRES + 
+				SPACE + ErrorConstant.IWRES + SPACE);
+		stdTable.append(ErrorConstant.Y + SPACE + TableConstant.DV);
 		return stdTable;
 	}
 	
@@ -103,7 +107,7 @@ public class TableStatement {
 			List<IndividualParameterType> indivParamTypes = block.getIndividualParameters();
 			StringBuilder etas = new StringBuilder(); 
 			for(IndividualParameterType parameterType: indivParamTypes){
-				paramTable.append(" "+parameterType.getSymbId());
+				paramTable.append(SPACE+parameterType.getSymbId());
 				etas.append(" ETA_"+parameterType.getSymbId());
 			}
 				paramTable.append(etas);
@@ -122,7 +126,7 @@ public class TableStatement {
 		StringBuilder catCovTable = new StringBuilder();
 		
 		for(String column : inputStatement.getCatCovTableColumns()){
-			catCovTable.append(" "+column);	
+			catCovTable.append(SPACE+column);	
 		}
 		return catCovTable;
 	}
@@ -138,7 +142,7 @@ public class TableStatement {
 		StringBuilder contCovTable = new StringBuilder();
 		
 		for(String column : inputStatement.getContCovTableColumns()){
-			contCovTable.append(" "+column);	
+			contCovTable.append(SPACE+column);	
 		}
 		return contCovTable;
 	}

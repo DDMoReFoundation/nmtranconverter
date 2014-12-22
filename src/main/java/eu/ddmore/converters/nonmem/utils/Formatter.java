@@ -2,6 +2,18 @@ package eu.ddmore.converters.nonmem.utils;
 
 public class Formatter {
 	
+	public enum Constant{
+		LOG, LOGIT, CORRELATION, FIX, SD, T;
+	}
+	
+	public enum ColumnConstant{
+		ID, TIME;
+	}
+	
+	public enum TableConstant{
+		TABLE, WRES, RES, PRED, NOPRINT, DV, NOAPPEND;
+	}
+	
 	private static final String PREFIX = "";//"NM_";
 	private static final String NEW_LINE = System.getProperty("line.separator");
 	

@@ -8,6 +8,7 @@ import java.util.Set;
 import crx.converter.engine.parts.ObservationBlock;
 import eu.ddmore.converters.nonmem.utils.Formatter;
 import eu.ddmore.converters.nonmem.utils.ParametersHelper;
+import eu.ddmore.converters.nonmem.utils.Formatter.Constant;
 import eu.ddmore.libpharmml.dom.commontypes.RealValueType;
 import eu.ddmore.libpharmml.dom.modeldefn.ParameterRandomVariableType;
 import eu.ddmore.libpharmml.dom.modellingsteps.ParameterEstimateType;
@@ -81,7 +82,7 @@ public class SigmaStatement {
 
 			StringBuilder sigmaStatements = new StringBuilder();
 			if(isNumeric(sigmaRepresentation)){
-				sigmaStatements.append(Double.parseDouble(sigmaRepresentation) +" "+ParametersHelper.FIX);
+				sigmaStatements.append(Double.parseDouble(sigmaRepresentation) +" "+Constant.FIX);
 			}else {
 				String sigmastatement = getSigmaFromInitialEstimate(sigmaRepresentation, isStdDev);
 				sigmaStatements.append(sigmastatement);
@@ -110,7 +111,7 @@ public class SigmaStatement {
 				RealValueType value = (RealValueType) params.getInitialEstimate().getScalar().getValue();
 				sigmastatement.append(value.getValue());
 				if(params.getInitialEstimate().isFixed()){
-					sigmastatement.append(ParametersHelper.FIX);
+					sigmastatement.append(Constant.FIX);
 					parameters.addAttributeForStdDev(sigmastatement,isStdDev);
 					sigmastatement.append(Formatter.endline());
 				}else{

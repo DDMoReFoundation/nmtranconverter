@@ -16,12 +16,13 @@ import eu.ddmore.converters.nonmem.Parser;
 import eu.ddmore.converters.nonmem.utils.Formatter;
 import eu.ddmore.libpharmml.dom.commontypes.DerivativeVariableType;
 import eu.ddmore.libpharmml.dom.commontypes.InitialValueType;
+import eu.ddmore.libpharmml.dom.commontypes.IntValueType;
 import eu.ddmore.libpharmml.dom.commontypes.RealValueType;
 import eu.ddmore.libpharmml.dom.commontypes.VariableDefinitionType;
 import eu.ddmore.libpharmml.dom.maths.FunctionCallType;
 import eu.ddmore.libpharmml.dom.modeldefn.GaussianObsError;
-import eu.ddmore.libpharmml.dom.modeldefn.IndividualParameterType;
 import eu.ddmore.libpharmml.dom.modeldefn.GaussianObsError.ErrorModel;
+import eu.ddmore.libpharmml.dom.modeldefn.IndividualParameterType;
 
 /**
  * Creates and adds estimation statement to nonmem file from script definition.
@@ -38,6 +39,7 @@ public class PredStatement {
 	//it will hold definition types and its parsed equations which we will need to add in Error statement.
 	Map<String, String> definitionsParsingMap = new HashMap<String, String>();
 	List<ErrorStatement> errorStatements = new ArrayList<ErrorStatement>();
+	public static Boolean isDES = false;
 	Parser parser;
 
 
@@ -118,7 +120,9 @@ public class PredStatement {
 		//TODO : getAbbreviatedStatement();
 		DerivativePredblock.append(getPKStatement());
 		errorStatements = prepareAllErrorStatements();
+		isDES= true;
 		DerivativePredblock.append(getDifferentialEquationsStatement());
+		isDES = false;
 		getAESStatement();
 		DerivativePredblock.append(getErrorStatement());
         
@@ -144,7 +148,6 @@ public class PredStatement {
 			diffEqStatementBlock.append(addDerivativeVarToDES(block));
 		}
 		return diffEqStatementBlock;
-
 	}
 
 	private StringBuilder addDerivativeVarToDES(StructuralBlock block) {
@@ -165,7 +168,7 @@ public class PredStatement {
 		StringBuilder varDefinitionsBlock = new StringBuilder();
 		for (VariableDefinitionType definitionType: block.getLocalVariables()){
 			String variable = Formatter.addPrefix(definitionType.getSymbId());
-			String rhs = parser.parse(definitionType).replaceFirst(variable+" =","");
+			String rhs = parser.parse(definitionType).replaceFirst(variable+" =","");			
 			if(isVarFromErrorFunction(variable)){
 				definitionsParsingMap.put(variable, rhs);
 				variable = renameFunctionVariableForDES(variable);
@@ -312,8 +315,14 @@ public class PredStatement {
 							initialCondition = initialValueType.getAssign().getSymbRef().getSymbIdRef();
 							builder.append(Formatter.endline("A_0("+i+") = "+Formatter.addPrefix(initialCondition.toUpperCase()))); 
 						}else if(initialValueType.getAssign().getScalar()!=null){
-							RealValueType test = (RealValueType) initialValueType.getAssign().getScalar().getValue();
-							initialCondition = Double.toString(test.getValue());
+							Object value =  initialValueType.getAssign().getScalar().getValue();
+							
+							if(value instanceof RealValueType){
+								initialCondition = Double.toString(((RealValueType)value).getValue());
+							} else if(value instanceof IntValueType){
+								initialCondition = ((IntValueType)value).getValue().toString();
+							}
+							
 							builder.append(Formatter.endline("A_0("+i+") = "+initialCondition));
 						}
 					}
