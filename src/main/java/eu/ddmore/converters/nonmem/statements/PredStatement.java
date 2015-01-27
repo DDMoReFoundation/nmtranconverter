@@ -22,7 +22,9 @@ import eu.ddmore.libpharmml.dom.commontypes.VariableDefinitionType;
 import eu.ddmore.libpharmml.dom.maths.FunctionCallType;
 import eu.ddmore.libpharmml.dom.modeldefn.GaussianObsError;
 import eu.ddmore.libpharmml.dom.modeldefn.GaussianObsError.ErrorModel;
+import eu.ddmore.libpharmml.dom.modeldefn.GeneralObsError;
 import eu.ddmore.libpharmml.dom.modeldefn.IndividualParameterType;
+import eu.ddmore.libpharmml.dom.modeldefn.ObservationErrorType;
 
 /**
  * Creates and adds estimation statement to nonmem file from script definition.
@@ -227,25 +229,33 @@ public class PredStatement {
 	 * @return
 	 */
 	private List<ErrorStatement> prepareAllErrorStatements(){
-		
 		List<ErrorStatement> errorStatements = new ArrayList<ErrorStatement>();
+
 		for(ObservationBlock block : scriptDefinition.getObservationBlocks()){
-			GaussianObsError error = (GaussianObsError) block.getObservationError();
-			ErrorModel errorModel = error.getErrorModel();
-			FunctionCallType functionCall = errorModel.getAssign().getEquation().getFunctionCall();
-			
-			ErrorStatement errorStatement = new ErrorStatement(functionCall);
-			errorStatements.add(errorStatement);
+			ObservationErrorType errorType = block.getObservationError();
+			if(errorType instanceof GaussianObsError){
+				GaussianObsError error = (GaussianObsError) errorType;
+				ErrorModel errorModel = error.getErrorModel();
+				String output = error.getOutput().getSymbRef().getSymbIdRef();
+				FunctionCallType functionCall = errorModel.getAssign().getEquation().getFunctionCall();
+				
+				ErrorStatement errorStatement = new ErrorStatement(functionCall, output);
+				errorStatements.add(errorStatement);
+			}else if(errorType instanceof GeneralObsError){
+//				GeneralObsError genError = (GeneralObsError) errorType;
+//				TODO : DDMORE-1013 : add support for general observation error type once details are available 
+			}else{
+//				TODO : Check if there are any other types to encounter
+			}
 		}
 		return errorStatements;
 	}
 
 	/**
-	 * 
+	 * gets AES block for pred statement of nonmem file. 
 	 */
 	private void getAESStatement() {
 		// TODO Auto-generated method stub
-		
 	}
 	
 	/**

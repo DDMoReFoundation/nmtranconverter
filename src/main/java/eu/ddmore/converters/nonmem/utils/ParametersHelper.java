@@ -34,19 +34,19 @@ import eu.ddmore.libpharmml.dom.uncertml.PositiveRealValueType;
 
 public class ParametersHelper {
 	private static final String MU = "MU_";
-	ScriptDefinition scriptDefinition;
-	List<SimpleParameterType> simpleParameterTypes = new ArrayList<SimpleParameterType>();
 	final LinkedHashMap<String, ThetaStatement> thetaStatements = new LinkedHashMap<String, ThetaStatement>();
 	final LinkedHashMap<String, OmegaStatement> OmegaStatements = new LinkedHashMap<String, OmegaStatement>();
 	final TreeMap<Integer, String> thetasToEtaOrder = new TreeMap<Integer, String>();
+	ScriptDefinition scriptDefinition;
+	List<SimpleParameterType> simpleParameterTypes = new ArrayList<SimpleParameterType>();
 	
 	// These are keyed by symbol ID
 	final Map<String, SimpleParameterType> simpleParams = new HashMap<String, SimpleParameterType>();
-	List<ParameterEstimateType> parametersToEstimate = new ArrayList<ParameterEstimateType>();
-	List<FixedParameter> fixedParameters = new ArrayList<FixedParameter>();
 	final Map<String, InitialEstimateType> initialEstimates = new HashMap<String, InitialEstimateType>();
 	final Map<String, ScalarRhs> lowerBounds = new HashMap<String, ScalarRhs>();
 	final Map<String, ScalarRhs> upperBounds = new HashMap<String, ScalarRhs>();
+	List<ParameterEstimateType> parametersToEstimate = new ArrayList<ParameterEstimateType>();
+	List<FixedParameter> fixedParameters = new ArrayList<FixedParameter>();
 	OmegaBlockStatement omegaBlockStatement = new OmegaBlockStatement(this);
 
 	public void getParameters(List<SimpleParameterType> simpleParameterTypes){
@@ -302,7 +302,7 @@ public class ParametersHelper {
 	public LinkedHashMap<String, Integer> createOrderedEtasMap(){
 		LinkedHashMap<String, Integer> etasOrderMap = new LinkedHashMap<String, Integer>();
 		//We need to have this as list as this will retains order of etas
-		List<String> etasOrder = getAllEtasList();
+		List<String> etasOrder = getAllEtasList(scriptDefinition);
 		
 		if(!etasOrder.isEmpty()){
 			Integer etaCount = 0;
@@ -331,7 +331,7 @@ public class ParametersHelper {
 	 * This is helper method to create ordered Etas map which gets all etas list from individual parameters. 
 	 * @return
 	 */
-	private List<String> getAllEtasList() {
+	public static List<String> getAllEtasList(ScriptDefinition scriptDefinition) {
 		List<String> etasOrder = new ArrayList<String>();
 		List<ParameterBlock> blocks = scriptDefinition.getParameterBlocks();
 		
@@ -342,7 +342,9 @@ public class ParametersHelper {
 					for (ParameterRandomEffectType randomEffect : randomEffects) {
 						if (randomEffect == null) continue;
 						String eta = randomEffect.getSymbRef().get(0).getSymbIdRef();
-						etasOrder.add(eta);
+						if(!etasOrder.contains(eta)){
+							etasOrder.add(eta);
+						}
 					}
 				}
 			}

@@ -6,6 +6,7 @@ import crx.converter.engine.ScriptDefinition;
 import crx.converter.engine.parts.ParameterBlock;
 import eu.ddmore.converters.nonmem.statements.ErrorStatement.ErrorConstant;
 import eu.ddmore.converters.nonmem.utils.Formatter;
+import eu.ddmore.converters.nonmem.utils.ParametersHelper;
 import eu.ddmore.converters.nonmem.utils.Formatter.ColumnConstant;
 import eu.ddmore.converters.nonmem.utils.Formatter.TableConstant;
 import eu.ddmore.libpharmml.dom.modeldefn.IndividualParameterType;
@@ -105,12 +106,12 @@ public class TableStatement {
 
 		for(ParameterBlock block : blocks){
 			List<IndividualParameterType> indivParamTypes = block.getIndividualParameters();
-			StringBuilder etas = new StringBuilder(); 
 			for(IndividualParameterType parameterType: indivParamTypes){
 				paramTable.append(SPACE+parameterType.getSymbId());
-				etas.append(" ETA_"+parameterType.getSymbId());
 			}
-				paramTable.append(etas);
+		}
+		for(String eta : ParametersHelper.getAllEtasList(scriptDefinition)){
+			paramTable.append(SPACE+eta.toUpperCase());
 		}
 		return paramTable;
 	}
