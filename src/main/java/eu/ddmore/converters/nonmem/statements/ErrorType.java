@@ -22,7 +22,7 @@ public enum ErrorType {
 	ADDITIVE_ERROR("additiveError"){
 		@Override
 		String getStatement() {
-			return Formatter.endline("W = "+ErrorStatement.additive+"+"+ErrorConstant.IPRED);
+			return Formatter.endline("W = "+ErrorStatement.additive);
 		};
 	},
 	PROPORTIONAL_ERROR("proportionalError"){

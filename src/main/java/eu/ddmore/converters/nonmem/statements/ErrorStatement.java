@@ -28,14 +28,17 @@ public class ErrorStatement {
 	static String additive = new String();
 	static String proportional = new String();
 	FunctionCallType functionCall = null;
-	String function;
-	String functionEquation;
-	String errorType;
+	String function = new String();
+	String functionEquation = new String();
+	String errorType = new String();
 	
-	ErrorStatement(FunctionCallType functionCallType){
+	ErrorStatement(FunctionCallType functionCallType, String output){
 		if(functionCallType!=null){
 			functionCall = functionCallType;
 			setParamsFunctionCall();
+			if(function.isEmpty()){
+				function = Formatter.addPrefix(output);
+			}
 		}
 	}
 	
@@ -51,7 +54,7 @@ public class ErrorStatement {
 					additive = Formatter.addPrefix(param);					
 				}else if(arg.getSymbId().equals(FunctionArg.PROP.getDescription())){
 					proportional = Formatter.addPrefix(param);
-				}else if(arg.getSymbId().equals(FunctionArg.FUNC.getDescription())){
+				}else if(arg.getSymbId().equals(FunctionArg.FUNC.getDescription())){					
 					function = Formatter.addPrefix(param);
 				}
 			}
