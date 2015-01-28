@@ -20,12 +20,12 @@ import eu.ddmore.libpharmml.dom.uncertml.PositiveRealValueType;
  * @author sdeshmukh
  *
  */
-public class SigmaStatement {
+public class SigmaStatementBuilder {
 	
 	private ParametersHelper parameters;
 	List<String> sigmaParams = new ArrayList<String>();
 
-	public SigmaStatement(ParametersHelper parametersHelper){
+	public SigmaStatementBuilder(ParametersHelper parametersHelper){
 		parameters = parametersHelper;
 	}
 	
@@ -54,7 +54,7 @@ public class SigmaStatement {
 	 * @param List<String> list of sigma statements
 	 */
 
-	public List<String> getSigmaStatement() {
+	public List<String> getSigmaStatements() {
 		
 		String sigmaRepresentation = new String();
 		
@@ -96,7 +96,7 @@ public class SigmaStatement {
 	}
 
 	/**
-	 * If sigma varId is not a numeric value, it will be variable from intial estimate parameters list.
+	 * If sigma varId is not a numeric value, it will be variable from initial estimate parameters list.
 	 * We need to look for value of this variable and return value of the same. 
 	 * 
 	 * @param varId
@@ -105,20 +105,22 @@ public class SigmaStatement {
 	 */
 	private String getSigmaFromInitialEstimate(String varId, Boolean isStdDev) {
 		StringBuilder sigmastatement = new StringBuilder();
-		for(ParameterEstimateType params : parameters.getParametersToEstimate()){
+		
+		for(ParameterEstimateType params : parameters.getAllEstimationParams()){
 			String symbId = params.getSymbRef().getSymbIdRef();
 			if(symbId.equals(varId)){
 				RealValueType value = (RealValueType) params.getInitialEstimate().getScalar().getValue();
 				sigmastatement.append(value.getValue());
 				if(params.getInitialEstimate().isFixed()){
-					sigmastatement.append(Constant.FIX);
+					sigmastatement.append(" " + Constant.FIX);
 					parameters.addAttributeForStdDev(sigmastatement,isStdDev);
 					sigmastatement.append(Formatter.endline());
 				}else{
 					sigmastatement.append(value.getValue());
 					parameters.addAttributeForStdDev(sigmastatement,isStdDev);
-					sigmastatement.append(Formatter.endline(" ;"+ symbId));
+					sigmastatement.append(Formatter.endline(" ; "+ symbId));
 				}
+				parameters.addToSigmaList(symbId);
 			}
 		}
 		return sigmastatement.toString();

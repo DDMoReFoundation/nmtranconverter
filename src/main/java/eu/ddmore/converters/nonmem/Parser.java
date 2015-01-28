@@ -48,7 +48,7 @@ import eu.ddmore.converters.nonmem.statements.OmegaBlockStatement;
 import eu.ddmore.converters.nonmem.statements.OmegaStatement;
 import eu.ddmore.converters.nonmem.statements.Parameter;
 import eu.ddmore.converters.nonmem.statements.PredStatement;
-import eu.ddmore.converters.nonmem.statements.SigmaStatement;
+import eu.ddmore.converters.nonmem.statements.SigmaStatementBuilder;
 import eu.ddmore.converters.nonmem.statements.ThetaStatement;
 import eu.ddmore.converters.nonmem.utils.Formatter;
 import eu.ddmore.converters.nonmem.utils.Formatter.ColumnConstant;
@@ -315,8 +315,8 @@ public class Parser extends BaseParser {
 		Map<String, OmegaStatement> omegas = parameters.getOmegaParams();
 		OmegaBlockStatement omegaBlockStatement = parameters.getOmegaBlockStatement();
 		Map<String, List<OmegaStatement>> omegaBlocks = omegaBlockStatement.getOmegaBlocks();
-		SigmaStatement sigmaStatement = new SigmaStatement(parameters);
-		List<String> sigmaParams = sigmaStatement.getSigmaStatement();
+		
+		List<String> sigmaParams = parameters.getSigmaStatements();
 		
 		setThetaAssigments();
 		buildPredStatement(fout);

@@ -16,6 +16,7 @@ import crx.converter.engine.parts.ParameterBlock;
 import crx.converter.engine.parts.Part;
 import eu.ddmore.converters.nonmem.statements.OmegaBlockStatement;
 import eu.ddmore.converters.nonmem.statements.OmegaStatement;
+import eu.ddmore.converters.nonmem.statements.SigmaStatementBuilder;
 import eu.ddmore.converters.nonmem.statements.ThetaStatement;
 import eu.ddmore.converters.nonmem.utils.Formatter.Constant;
 import eu.ddmore.libpharmml.dom.commontypes.Rhs;
@@ -36,6 +37,8 @@ public class ParametersHelper {
 	private static final String MU = "MU_";
 	final LinkedHashMap<String, ThetaStatement> thetaStatements = new LinkedHashMap<String, ThetaStatement>();
 	final LinkedHashMap<String, OmegaStatement> OmegaStatements = new LinkedHashMap<String, OmegaStatement>();
+	List<String> SigmaStatements = new ArrayList<String>();
+
 	final TreeMap<Integer, String> thetasToEtaOrder = new TreeMap<Integer, String>();
 	ScriptDefinition scriptDefinition;
 	List<SimpleParameterType> simpleParameterTypes = new ArrayList<SimpleParameterType>();
@@ -48,6 +51,7 @@ public class ParametersHelper {
 	List<ParameterEstimateType> parametersToEstimate = new ArrayList<ParameterEstimateType>();
 	List<FixedParameter> fixedParameters = new ArrayList<FixedParameter>();
 	OmegaBlockStatement omegaBlockStatement = new OmegaBlockStatement(this);
+	List<String> sigmasList = new ArrayList<String>();
 
 	public void getParameters(List<SimpleParameterType> simpleParameterTypes){
 				
@@ -67,11 +71,12 @@ public class ParametersHelper {
 		omegaBlockStatement.setEtaToOmagaMap(createOrderedEtasMap());
 		createOrderedThetasToEtaMap();
 		
-		//need to set omegas before setting theta params
+		//need to set omegas and sigma before setting theta params
 		omegaBlockStatement.createOmegaBlocks();
-		setOmegaParameters();
-		setThetaParameters();
 		
+		setOmegaParameters();
+		setSigmaParameters();
+		setThetaParameters();
 	}
 	
 	/**
@@ -122,12 +127,12 @@ public class ParametersHelper {
 	 */
 	private boolean validateParamName(String paramName) {
 		return !(paramName== null ||  OmegaStatements.containsKey(paramName) || 
-				omegaBlockStatement.getEtasToOmegasInCorrelation().values().contains(paramName) || 
-				paramName.startsWith("sigma") || thetaStatements.containsKey(paramName));
+				omegaBlockStatement.getEtasToOmegasInCorrelation().values().contains(paramName) ||
+				sigmasList.contains(paramName) || thetaStatements.containsKey(paramName));
 	}
 	
 	/**
-	 * This method will add MU statements as per ordered thets map.
+	 * This method will add MU statements as per ordered theta map.
 	 * It will be added after individual parameter definitions.
 	 * @return
 	 */
@@ -164,6 +169,11 @@ public class ParametersHelper {
 			omegaStatement.setInitialEstimate(initialEstimates.get(omegaSymbId));
 		}
 		return omegaStatement;
+	}
+	
+	private void setSigmaParameters(){
+		SigmaStatementBuilder sigmaStatementBuilder = new SigmaStatementBuilder(this);
+		SigmaStatements = sigmaStatementBuilder.getSigmaStatements();
 	}
 	
 	/**
@@ -292,6 +302,21 @@ public class ParametersHelper {
 			if (nextStep instanceof EstimationStep) step = (EstimationStep) nextStep; 
 		}
 		return step;
+	}
+	
+	/**
+	 * We will need all the estimation parameters to identify sigma params  and at other place, 
+	 * irrespective of whether they are fixed or not.
+	 * 
+	 * @return
+	 */
+	public List<ParameterEstimateType> getAllEstimationParams(){
+		List<ParameterEstimateType> allParams = new ArrayList<ParameterEstimateType>();
+		allParams.addAll(getParametersToEstimate());
+		for(FixedParameter fixedParam : fixedParameters){
+			allParams.add(fixedParam.p);
+		}
+		return allParams;
 	}
 	
 	/**
@@ -468,6 +493,11 @@ public class ParametersHelper {
 	        rev.put(entry.getValue(), entry.getKey());
 	    return rev;
 	}
+	
+	public void addToSigmaList(String sigmaVar){
+		if(!sigmasList.contains(sigmaVar))
+			sigmasList.add(sigmaVar);
+	}
 
 	//Getters and setters
 
@@ -505,5 +535,9 @@ public class ParametersHelper {
 
 	public ParametersHelper(ScriptDefinition scriptDefinition){
 		this.scriptDefinition = scriptDefinition;		
+	}
+	
+	public List<String> getSigmaStatements() {
+		return SigmaStatements;
 	}
 }
