@@ -48,7 +48,6 @@ import eu.ddmore.converters.nonmem.statements.OmegaBlockStatement;
 import eu.ddmore.converters.nonmem.statements.OmegaStatement;
 import eu.ddmore.converters.nonmem.statements.Parameter;
 import eu.ddmore.converters.nonmem.statements.PredStatement;
-import eu.ddmore.converters.nonmem.statements.SigmaStatementBuilder;
 import eu.ddmore.converters.nonmem.statements.ThetaStatement;
 import eu.ddmore.converters.nonmem.utils.Formatter;
 import eu.ddmore.converters.nonmem.utils.Formatter.ColumnConstant;
