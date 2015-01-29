@@ -14,6 +14,7 @@ public class Formatter {
 		TABLE, WRES, RES, PRED, NOPRINT, DV, NOAPPEND;
 	}
 	
+	public static final String COMMENT_CHAR = ";";
 	private static final String PREFIX = "";//"NM_";
 	private static final String NEW_LINE = System.getProperty("line.separator");
 	

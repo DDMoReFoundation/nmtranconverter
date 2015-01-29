@@ -43,7 +43,8 @@ public class SigmaStatementBuilder {
 	 * b. if stddev <var varId="sigma"> (sigma is example variable it can be anything)
 	 * 		there will be given intial estimate for this variable
 	 * 		check if attribute is fixed
-	 * 		if attribute is 'fixed=true' then "1 FIX"
+	 * 		if attribute is 'fixed=true' 
+	 * 			"1 FIX ;sigma"
 	 * 		else "1 ;sigma"
 	 * c. if stddev <prVal>2</prVal>
 	 * 		We need to square this value as "4 FIX"
@@ -114,12 +115,11 @@ public class SigmaStatementBuilder {
 				if(params.getInitialEstimate().isFixed()){
 					sigmastatement.append(" " + Constant.FIX);
 					parameters.addAttributeForStdDev(sigmastatement,isStdDev);
-					sigmastatement.append(Formatter.endline());
 				}else{
 					sigmastatement.append(value.getValue());
 					parameters.addAttributeForStdDev(sigmastatement,isStdDev);
-					sigmastatement.append(Formatter.endline(" ; "+ symbId));
 				}
+				sigmastatement.append(Formatter.endline(Formatter.indent(Formatter.COMMENT_CHAR+ symbId)));
 				parameters.addToSigmaList(symbId);
 			}
 		}

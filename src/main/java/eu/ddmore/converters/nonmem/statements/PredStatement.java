@@ -141,8 +141,13 @@ public class PredStatement {
 		int i=1;
 		for (DerivativeVariableType variableType : derivativeVarList){
 			String variable = Formatter.addPrefix(variableType.getSymbId());
-			diffEqStatementBlock.append(Formatter.endline(variable+" = A("+i+")"));
 			derivativeVariableMap.put(variable, Integer.toString(i++));
+			
+			String varAmount = getVarAmountFromCompartment(variable, derivativeVariableMap);
+			if(!varAmount.isEmpty())
+				diffEqStatementBlock.append(Formatter.endline(variable+" = "+varAmount));
+			if(isVarFromErrorFunction(variable))
+				definitionsParsingMap.put(variable, varAmount);
 		}
 		diffEqStatementBlock.append(Formatter.endline());
 		for(StructuralBlock block : scriptDefinition.getStructuralBlocks()){
@@ -150,6 +155,21 @@ public class PredStatement {
 			diffEqStatementBlock.append(addDerivativeVarToDES(block));
 		}
 		return diffEqStatementBlock;
+	}
+
+	/**
+	 * This method gets variable amount from compartment and returns it.
+	 * 
+	 * @param variable
+	 * @return
+	 */
+	public static String getVarAmountFromCompartment(String variable, Map<String,String> derivativeVariableMap) {
+		String varAmount = new String(); 
+		varAmount = derivativeVariableMap.get(variable);
+		if(!varAmount.isEmpty()){
+			varAmount = "A("+varAmount+")";
+		}
+		return varAmount;
 	}
 
 	private StringBuilder addDerivativeVarToDES(StructuralBlock block) {
@@ -216,7 +236,7 @@ public class PredStatement {
 		StringBuilder errorBlock = new StringBuilder();
 		errorBlock.append(Formatter.endline());
 		errorBlock.append(Formatter.endline("$ERROR"));
-
+		//definitionsParsingMap and derivativeVariableMap are set up as part of DES before this step.
 		for(ErrorStatement errorStatement: errorStatements){
 			errorBlock.append(errorStatement.getErrorStatementDetails(definitionsParsingMap,derivativeVariableMap));
 		}
