@@ -18,6 +18,9 @@ import eu.ddmore.libpharmml.dom.modellingsteps.EstimationOperationType;
  *
  */
 public class EstimationStatement {
+	enum Method{
+		FO, FOCE, FOCEI, SAEM
+	}
 	
 	List<String> inputHeaders = new ArrayList<String>();
 	String dataFileName = new String();
@@ -48,16 +51,24 @@ public class EstimationStatement {
         StringBuilder sb = new StringBuilder();
         sb.append("METHOD=");
         if (algorithm!=null) {
-        	String definition =algorithm.getDefinition(); 
-            if (definition.equals("FOCEI")) {
+        	String methodDefinition =algorithm.getDefinition();
+        	if (methodDefinition.equals(Method.FO.toString())) {
+        		sb.append("ZERO MAXEVALS=9999 PRINT=10 NOABORT");
+        	}
+        	else if(methodDefinition.equals(Method.FOCE.toString())) {
+        		sb.append("COND MAXEVALS=9999 PRINT=10 NOABORT");
+        	}
+        	else if (methodDefinition.equals(Method.FOCEI.toString())) {
             	sb.append("COND INTER MAXEVALS=9999 PRINT=10 NOABORT");
-            }else if (definition.equals("SAEM")) {
+            }
+        	else if (methodDefinition.equals(Method.SAEM.toString())) {
             	sb.append("SAEM INTER CTYPE=3 NITER=1000 NBURN=4000 NOPRIOR=1 CITER=10"+Formatter.endline()
             				+"  CALPHA=0.05 IACCEPT=0.4 ISCALE_MIN=1.0E-06 ISCALE_MAX=1.0E+06"+Formatter.endline()
             				+"  ISAMPLE_M1=2 ISAMPLE_M1A=0 ISAMPLE_M2=2 ISAMPLE_M3=2"+Formatter.endline()
             				+"  CONSTRAIN=1 EONLY=0 ISAMPLE=2 PRINT=50");
-            } else {
-            	sb.append(definition);
+            }
+        	else {
+            	sb.append(methodDefinition);
             }
         } else {
             sb.append("COND");
