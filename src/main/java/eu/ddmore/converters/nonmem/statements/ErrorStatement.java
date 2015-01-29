@@ -29,7 +29,6 @@ public class ErrorStatement {
 	static String proportional = new String();
 	FunctionCallType functionCall = null;
 	String function = new String();
-	String functionEquation = new String();
 	String errorType = new String();
 	
 	ErrorStatement(FunctionCallType functionCallType, String output){
@@ -77,8 +76,14 @@ public class ErrorStatement {
 	public StringBuilder getErrorStatementDetails(Map<String,String> functionDefEqMap, Map<String,String> derivativeVarMap){
 		StringBuilder errorBlock = new StringBuilder();
 		if(functionDefEqMap.containsKey(function)){
-			functionEquation= getEquationForFunctionName(functionDefEqMap, derivativeVarMap);
-			errorBlock.append(Formatter.endline(function+" = "+functionEquation));
+			if(derivativeVarMap.containsKey(function)){
+				String varAmount = PredStatement.getVarAmountFromCompartment(function, derivativeVarMap);
+				if(!varAmount.isEmpty())
+					function = varAmount;
+			}else{
+				String functionEquation= getEquationForFunctionName(functionDefEqMap, derivativeVarMap);
+				errorBlock.append(Formatter.endline(function+" = "+functionEquation));
+			}
 		}
 		errorBlock.append(Formatter.endline(ErrorConstant.IPRED+" = "+function));
 		errorBlock.append(getWeightFunctionStatement());
@@ -121,7 +126,9 @@ public class ErrorStatement {
 			String parsedEquation = functionDefEqMap.get(function);
 			for(String variable: derivativeVarMap.keySet()){
 				if(parsedEquation.contains(variable)){
-					parsedEquation = parsedEquation.replaceAll(variable, "A("+derivativeVarMap.get(variable)+")");
+					String varAmount = PredStatement.getVarAmountFromCompartment(variable, derivativeVarMap);
+					if(!varAmount.isEmpty())
+						parsedEquation = parsedEquation.replaceAll(variable, varAmount);
 				}
 			}
 			return parsedEquation;
