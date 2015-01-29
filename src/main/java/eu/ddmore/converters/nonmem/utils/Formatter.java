@@ -2,6 +2,10 @@ package eu.ddmore.converters.nonmem.utils;
 
 public class Formatter {
 	
+	public enum Param{
+		THETA, OMEGA, SIGMA, BLOCK
+	}
+	
 	public enum Constant{
 		LOG, LOGIT, CORRELATION, FIX, SD, T;
 	}

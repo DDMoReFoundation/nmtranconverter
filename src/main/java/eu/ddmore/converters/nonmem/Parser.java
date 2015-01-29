@@ -52,6 +52,7 @@ import eu.ddmore.converters.nonmem.statements.ThetaStatement;
 import eu.ddmore.converters.nonmem.utils.Formatter;
 import eu.ddmore.converters.nonmem.utils.Formatter.ColumnConstant;
 import eu.ddmore.converters.nonmem.utils.Formatter.Constant;
+import eu.ddmore.converters.nonmem.utils.Formatter.Param;
 import eu.ddmore.converters.nonmem.utils.ParametersHelper;
 import eu.ddmore.libpharmml.dom.IndependentVariableType;
 import eu.ddmore.libpharmml.dom.commontypes.FunctionDefinitionType;
@@ -77,10 +78,6 @@ import eu.ddmore.libpharmml.dom.trialdesign.ActivityType;
 public class Parser extends BaseParser {
 
 	private static final String ENDLINE_CHAR = ";";
-//	private final String THETA = "THETA";
-	enum Paramter{
-		THETA, OMEGA, SIGMA, BLOCK
-	}
 	ParametersHelper parameters;
 	ArrayList<String> thetaSet = new ArrayList<String>();
 	
@@ -349,7 +346,7 @@ public class Parser extends BaseParser {
 
 		if (!thetas.isEmpty()) {
 			fout.write(Formatter.endline());
-			fout.write(Formatter.endline("$"+Paramter.THETA));
+			fout.write(Formatter.endline("$"+Param.THETA));
 			for (String thetaVar : thetas.keySet()) {
 				writeParameter(thetas.get(thetaVar), fout);
 			}
@@ -365,7 +362,7 @@ public class Parser extends BaseParser {
 		}
 		if (!omegas.isEmpty()) {
 			fout.write(Formatter.endline());
-			fout.write(Formatter.endline("$"+Paramter.OMEGA));
+			fout.write(Formatter.endline("$"+Param.OMEGA));
 			for (final String omegaVar : omegas.keySet()) {
 				writeParameter(omegas.get(omegaVar), fout);
 			}
@@ -374,10 +371,10 @@ public class Parser extends BaseParser {
 			//adding default Omega if omega block is absent but sigma is present 
 			if(omegas.isEmpty()){
 				fout.write(Formatter.endline());
-				fout.write(Formatter.endline("$"+Paramter.OMEGA+" 0 "+Constant.FIX));
+				fout.write(Formatter.endline("$"+Param.OMEGA+" 0 "+Constant.FIX));
 			}
 			fout.write(Formatter.endline());
-			fout.write(Formatter.endline("$"+Paramter.SIGMA));
+			fout.write(Formatter.endline("$"+Param.SIGMA));
 			for (final String sigmaVar: sigmaParams) {
 				fout.write(sigmaVar);
 			}
@@ -508,7 +505,7 @@ public class Parser extends BaseParser {
 			setThetaAssigments();
 		}
 		if(thetaSet.contains(symbol)){
-			symbol = String.format(Paramter.THETA+"(%s)",thetaSet.indexOf(symbol)+1);
+			symbol = String.format(Param.THETA+"(%s)",thetaSet.indexOf(symbol)+1);
 		}
 		return symbol;
 	}

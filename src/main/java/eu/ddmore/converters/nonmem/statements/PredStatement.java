@@ -7,6 +7,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 import crx.converter.engine.ScriptDefinition;
 import crx.converter.engine.parts.ObservationBlock;
@@ -171,21 +172,14 @@ public class PredStatement {
 		}
 		return varAmount;
 	}
-
-	private StringBuilder addDerivativeVarToDES(StructuralBlock block) {
-		StringBuilder derivativeVarBlock = new StringBuilder();
-		for(DerivativeVariableType variableType: block.getStateVariables()){
-			String parsedDADT = parser.parse(variableType);
-			String variable = Formatter.addPrefix(variableType.getSymbId());
-			if(derivativeVariableMap.keySet().contains(variable)){
-				String index = derivativeVariableMap.get(variable);
-				parsedDADT = parsedDADT.replaceFirst(variable+" =", "DADT("+index+") =");
-			}
-			derivativeVarBlock.append(parsedDADT);
-		}
-		return derivativeVarBlock;
-	}
-
+	
+	/**
+	 * This method gets variable definitions for the variables and adds them to DES
+	 * As workaround to issues with variables used in Error model, we rename those variables in DES block
+	 *   
+	 * @param block
+	 * @return
+	 */
 	private StringBuilder addVarDefinitionTypesToDES(StructuralBlock block) {
 		StringBuilder varDefinitionsBlock = new StringBuilder();
 		for (VariableDefinitionType definitionType: block.getLocalVariables()){
@@ -198,6 +192,32 @@ public class PredStatement {
 			varDefinitionsBlock.append(variable+" = "+rhs);
 		}
 		return varDefinitionsBlock;
+	}
+
+	/**
+	 * This method will parse DADT variables from derivative variable type definitions 
+	 * and adds it to DES block.
+	 * 
+	 * @param block
+	 * @return
+	 */
+	private StringBuilder addDerivativeVarToDES(StructuralBlock block) {
+		StringBuilder derivativeVarBlock = new StringBuilder();
+		for(DerivativeVariableType variableType: block.getStateVariables()){
+			String parsedDADT = parser.parse(variableType);
+			String variable = Formatter.addPrefix(variableType.getSymbId());
+			
+			if(derivativeVariableMap.containsKey(variable)){
+				String index = derivativeVariableMap.get(variable);
+				parsedDADT = parsedDADT.replaceFirst(variable+" =", "DADT("+index+") =");
+			}
+			for(String derivativeVar : definitionsParsingMap.keySet()){
+				String varToReplace = new String("\\b"+Pattern.quote(derivativeVar)+"\\b");
+				parsedDADT = parsedDADT.replaceAll(varToReplace, renameFunctionVariableForDES(derivativeVar));
+			}
+			derivativeVarBlock.append(parsedDADT);
+		}
+		return derivativeVarBlock;
 	}
 
 	/**
