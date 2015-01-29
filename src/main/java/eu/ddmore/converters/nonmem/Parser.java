@@ -77,12 +77,15 @@ import eu.ddmore.libpharmml.dom.trialdesign.ActivityType;
 public class Parser extends BaseParser {
 
 	private static final String ENDLINE_CHAR = ";";
-	private final String THETA = "THETA";
+//	private final String THETA = "THETA";
+	enum Paramter{
+		THETA, OMEGA, SIGMA, BLOCK
+	}
 	ParametersHelper parameters;
 	ArrayList<String> thetaSet = new ArrayList<String>();
 	
 	public Parser() throws IOException {
-		comment_char = ENDLINE_CHAR;
+		comment_char = Formatter.COMMENT_CHAR;
 		script_file_suffix = "ctl";
 		objective_dataset_file_suffix = "csv";
 		output_file_suffix = "csv";
@@ -112,6 +115,30 @@ public class Parser extends BaseParser {
 			symbol = Formatter.addPrefix(symbol);
 
 		return symbol;
+	}
+	
+	/**
+	 * Overrides base parser method to identify binary operator for nmTran conversion.
+	 * 
+	 * @param symbol the binary operator symbol from pharmML
+	 * @return operator the nmtran specific binary operator symbol
+	 */
+	@Override
+	protected String getScriptBinaryOperator(String symbol) {
+		
+		Properties binopProperties = new Properties();
+		try {
+			binopProperties.load(Parser.class.getResourceAsStream("binary_operator.properties"));
+		} catch (IOException e) {
+			//As overridden method, we are handling exception in common converter way. Need to do it better. 
+			e.printStackTrace();
+		}
+		
+		if(binopProperties.stringPropertyNames().contains(symbol)){
+			return binopProperties.getProperty(symbol);
+		}else{
+			throw new IllegalStateException("Binary Operation not recognised : "+ symbol);
+		}
 	}
 	
 	@Override
@@ -322,7 +349,7 @@ public class Parser extends BaseParser {
 
 		if (!thetas.isEmpty()) {
 			fout.write(Formatter.endline());
-			fout.write(Formatter.endline("$"+THETA));
+			fout.write(Formatter.endline("$"+Paramter.THETA));
 			for (String thetaVar : thetas.keySet()) {
 				writeParameter(thetas.get(thetaVar), fout);
 			}
@@ -338,14 +365,19 @@ public class Parser extends BaseParser {
 		}
 		if (!omegas.isEmpty()) {
 			fout.write(Formatter.endline());
-			fout.write(Formatter.endline("$OMEGA"));
+			fout.write(Formatter.endline("$"+Paramter.OMEGA));
 			for (final String omegaVar : omegas.keySet()) {
 				writeParameter(omegas.get(omegaVar), fout);
 			}
 		}
 		if(!sigmaParams.isEmpty()){
+			//adding default Omega if omega block is absent but sigma is present 
+			if(omegas.isEmpty()){
+				fout.write(Formatter.endline());
+				fout.write(Formatter.endline("$"+Paramter.OMEGA+" 0 "+Constant.FIX));
+			}
 			fout.write(Formatter.endline());
-			fout.write(Formatter.endline("$SIGMA"));
+			fout.write(Formatter.endline("$"+Paramter.SIGMA));
 			for (final String sigmaVar: sigmaParams) {
 				fout.write(sigmaVar);
 			}
@@ -374,7 +406,7 @@ public class Parser extends BaseParser {
 		if(param.isStdDev()){
 			fout.write(Constant.SD+" ");
 		}
-		fout.write(Formatter.endline(")"+Formatter.indent(comment_char+description)));
+		fout.write(Formatter.endline(")"+Formatter.indent(Formatter.COMMENT_CHAR+description)));
 	}
 
 	/**
@@ -476,7 +508,7 @@ public class Parser extends BaseParser {
 			setThetaAssigments();
 		}
 		if(thetaSet.contains(symbol)){
-			symbol = String.format(THETA+"(%s)",thetaSet.indexOf(symbol)+1);
+			symbol = String.format(Paramter.THETA+"(%s)",thetaSet.indexOf(symbol)+1);
 		}
 		return symbol;
 	}
