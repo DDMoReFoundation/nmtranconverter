@@ -16,9 +16,6 @@ import crx.converter.engine.parts.StructuralBlock;
 import eu.ddmore.converters.nonmem.Parser;
 import eu.ddmore.converters.nonmem.utils.Formatter;
 import eu.ddmore.libpharmml.dom.commontypes.DerivativeVariableType;
-import eu.ddmore.libpharmml.dom.commontypes.InitialValueType;
-import eu.ddmore.libpharmml.dom.commontypes.IntValueType;
-import eu.ddmore.libpharmml.dom.commontypes.RealValueType;
 import eu.ddmore.libpharmml.dom.commontypes.VariableDefinitionType;
 import eu.ddmore.libpharmml.dom.maths.FunctionCallType;
 import eu.ddmore.libpharmml.dom.modeldefn.GaussianObsError;
@@ -256,7 +253,7 @@ public class PredStatement {
 		StringBuilder errorBlock = new StringBuilder();
 		errorBlock.append(Formatter.endline());
 		errorBlock.append(Formatter.endline("$ERROR"));
-		//definitionsParsingMap and derivativeVariableMap are set up as part of DES before this step.
+		//errorStatements, definitionsParsingMap and derivativeVariableMap are set up as part of DES before this step.
 		for(ErrorStatement errorStatement: errorStatements){
 			errorBlock.append(errorStatement.getErrorStatementDetails(definitionsParsingMap,derivativeVariableMap));
 		}
@@ -273,6 +270,10 @@ public class PredStatement {
 
 		for(ObservationBlock block : scriptDefinition.getObservationBlocks()){
 			ObservationErrorType errorType = block.getObservationError();
+			if(errorType instanceof GeneralObsError){
+//				GeneralObsError genError = (GeneralObsError) errorType;
+//				TODO : DDMORE-1013 : add support for general observation error type once details are available
+			}
 			if(errorType instanceof GaussianObsError){
 				GaussianObsError error = (GaussianObsError) errorType;
 				ErrorModel errorModel = error.getErrorModel();
@@ -281,9 +282,6 @@ public class PredStatement {
 				
 				ErrorStatement errorStatement = new ErrorStatement(functionCall, output);
 				errorStatements.add(errorStatement);
-			}else if(errorType instanceof GeneralObsError){
-//				GeneralObsError genError = (GeneralObsError) errorType;
-//				TODO : DDMORE-1013 : add support for general observation error type once details are available 
 			}else{
 //				TODO : Check if there are any other types to encounter
 			}
@@ -351,35 +349,9 @@ public class PredStatement {
 	 * @return
 	 */
 	public StringBuilder getDifferentialInitialConditions(){
-		
 		StringBuilder builder = new StringBuilder();
-		
-		for(StructuralBlock structBlock : scriptDefinition.getStructuralBlocks()){
-			int i = 1;
-			for(DerivativeVariableType variableType : structBlock.getStateVariables()){
-				String initialCondition = new String();
-				if(variableType.getInitialCondition()!=null){
-					InitialValueType initialValueType = variableType.getInitialCondition().getInitialValue();
-					if(initialValueType!=null){
-						if(initialValueType.getAssign().getSymbRef()!=null){
-							initialCondition = initialValueType.getAssign().getSymbRef().getSymbIdRef();
-							builder.append(Formatter.endline("A_0("+i+") = "+Formatter.addPrefix(initialCondition.toUpperCase()))); 
-						}else if(initialValueType.getAssign().getScalar()!=null){
-							Object value =  initialValueType.getAssign().getScalar().getValue();
-							
-							if(value instanceof RealValueType){
-								initialCondition = Double.toString(((RealValueType)value).getValue());
-							} else if(value instanceof IntValueType){
-								initialCondition = ((IntValueType)value).getValue().toString();
-							}
-							
-							builder.append(Formatter.endline("A_0("+i+") = "+initialCondition));
-						}
-					}
-				}
-				i++;
-			}
-		}
+		if(!scriptDefinition.getStructuralBlocks().isEmpty())
+			builder = InitConditionBuilder.getDifferentialInitialConditions(scriptDefinition.getStructuralBlocks());	
 		return builder;
 	}
 	
