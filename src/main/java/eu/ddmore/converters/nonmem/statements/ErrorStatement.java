@@ -9,7 +9,7 @@ import eu.ddmore.libpharmml.dom.maths.FunctionCallType.FunctionArgument;
 public class ErrorStatement {
 	
 	enum ErrorConstant{
-		DV,	IWRES, IRES, IPRED, Y;
+		DV,	IWRES, IRES, IPRED, Y, W;
 	}
 	enum FunctionArg{
 		ADDITIVE ("additive"),
@@ -27,6 +27,8 @@ public class ErrorStatement {
 
 	static String additive = new String();
 	static String proportional = new String();
+	static String functionRep = new String();
+	
 	FunctionCallType functionCall = null;
 	String function = new String();
 	String errorType = new String();
@@ -38,6 +40,7 @@ public class ErrorStatement {
 			if(function.isEmpty()){
 				function = Formatter.addPrefix(output);
 			}
+			functionRep = function;
 		}
 	}
 	
@@ -79,39 +82,21 @@ public class ErrorStatement {
 			if(derivativeVarMap.containsKey(function)){
 				String varAmount = PredStatement.getVarAmountFromCompartment(function, derivativeVarMap);
 				if(!varAmount.isEmpty())
-					function = varAmount;
+					functionRep = varAmount;
 			}else{
 				String functionEquation= getEquationForFunctionName(functionDefEqMap, derivativeVarMap);
 				errorBlock.append(Formatter.endline(function+" = "+functionEquation));
 			}
 		}
-		errorBlock.append(Formatter.endline(ErrorConstant.IPRED+" = "+function));
-		errorBlock.append(getWeightFunctionStatement());
-		errorBlock.append(Formatter.endline(ErrorConstant.Y+" = "+ErrorConstant.IPRED+"+W*EPS(1)"));
-		errorBlock.append(Formatter.endline(ErrorConstant.IRES+" = "+ErrorConstant.DV+" - "+ErrorConstant.IPRED));
-		errorBlock.append(Formatter.endline(ErrorConstant.IWRES+" = "+ErrorConstant.IRES+"/ W"));
-		return errorBlock;	
-	}
-
-	/**
-	 * Adds weight function statement depending upon error type specified.
-	 * Currently there are only weight function statements which are specific to error type.
-	 * 
-	 * @return
-	 */
-	private String getWeightFunctionStatement() {
-		String errorTypeSpecificStatement = new String();
+		
 		for(ErrorType error : ErrorType.values()){
 			if(errorType.equals(error.getErrorType())){
-				errorTypeSpecificStatement = error.getStatement();
+				errorBlock.append(error.getErrorStatement());
 				break;
 			}
 		}
-		if(errorTypeSpecificStatement.isEmpty()){
-			throw new IllegalArgumentException("The specified error type '"+errorType+"' is not supported yet");
-		}else{
-			return errorTypeSpecificStatement;
-		}
+
+		return errorBlock;	
 	}
 	
 	/**
@@ -139,9 +124,4 @@ public class ErrorStatement {
 	public String getFunction() {
 		return function;
 	}
-	
-	public void setFunction(String function) {
-		this.function = function;
-	}
-
 }
