@@ -101,9 +101,8 @@ public class ErrorStatement {
 		if(functionDefEqMap!=null){
 			if(functionDefEqMap.containsKey(function)){
 				if(derivativeVarMap.containsKey(function)){
-					String varAmount = DEStatementRenderer.getVarAmountFromCompartment(function, derivativeVarMap);
-					if(!varAmount.isEmpty())
-						functionRep = varAmount;
+					String varAmount = DiffEquationStatementBuilder.getVarAmountFromCompartment(function, derivativeVarMap);
+					functionRep = (varAmount.isEmpty())?function:varAmount;
 				}else{
 					String functionEquation= getEquationForFunctionName(functionDefEqMap, derivativeVarMap);
 					errorBlock.append(Formatter.endline(function+" = "+functionEquation));
@@ -125,7 +124,7 @@ public class ErrorStatement {
 			String parsedEquation = functionDefEqMap.get(function);
 			for(String variable: derivativeVarMap.keySet()){
 				if(parsedEquation.contains(variable)){
-					String varAmount = DEStatementRenderer.getVarAmountFromCompartment(variable, derivativeVarMap);
+					String varAmount = DiffEquationStatementBuilder.getVarAmountFromCompartment(variable, derivativeVarMap);
 					if(!varAmount.isEmpty())
 						parsedEquation = parsedEquation.replaceAll(variable, varAmount);
 				}

@@ -26,8 +26,8 @@ public enum ErrorType {
 		@Override
 		StringBuilder getErrorStatement() {
 			String iPred = "LOG("+ErrorStatement.functionRep+")";
-			String weight = "SQRT("+ErrorStatement.additive+"**2"+
-					" + ("+ErrorStatement.proportional+"/"+ErrorStatement.functionRep+")**2)";
+			String weight = "SQRT("+ErrorStatement.proportional+"**2"+
+					" + ("+ErrorStatement.additive+"/"+ErrorStatement.functionRep+")**2)";
 			return createErrorStatement(iPred, weight, null, null, null);
 		};
 	},
@@ -49,7 +49,7 @@ public enum ErrorType {
 	
 	String error;
 	
-	private static final String DEFAULT_IPRED = ErrorStatement.functionRep;
+	private static String DEFAULT_IPRED = ErrorStatement.functionRep;
 	private static final String DEFAULT_Y = ErrorConstant.IPRED+"+"+ErrorConstant.W+"*EPS(1)";
 	private static final String DEFAULT_WEIGHT = " "+ErrorConstant.W;
 	private static final String DEFAULT_IRES = ErrorConstant.DV+" - "+ErrorConstant.IPRED;
@@ -102,6 +102,7 @@ public enum ErrorType {
 			String yStatement, String iRes, String iWRes){
 		StringBuilder errorModel = new StringBuilder();
 
+		DEFAULT_IPRED = ErrorStatement.functionRep;
 		errorModel.append(ErrorConstant.IPRED	+" = "+ addStatement(iPred,DEFAULT_IPRED));
 		errorModel.append(ErrorConstant.W		+" = "+ addStatement(weight,DEFAULT_WEIGHT));
 		errorModel.append(ErrorConstant.Y		+" = "+ addStatement(yStatement,DEFAULT_Y));

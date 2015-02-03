@@ -29,7 +29,6 @@ import eu.ddmore.libpharmml.dom.modeldefn.ObservationErrorType;
  */
 public class PredStatement {
 	
-	final String DES_VAR_SUFFIX = "_DES";
 	ScriptDefinition scriptDefinition;
 	List<DerivativeVariableType> derivativeVarList = new ArrayList<DerivativeVariableType>();
 	List<ErrorStatement> errorStatements = new ArrayList<ErrorStatement>();
@@ -116,11 +115,11 @@ public class PredStatement {
 		DerivativePredblock.append(getPKStatement());
 		errorStatements = prepareAllErrorStatements();
 		isDES= true;
-		DEStatementRenderer desRenderer = new DEStatementRenderer(scriptDefinition, errorStatements, parser);
-		DerivativePredblock.append(desRenderer.getDifferentialEquationsStatement(derivativeVarList));
+		DiffEquationStatementBuilder desBuilder = new DiffEquationStatementBuilder(scriptDefinition, errorStatements, parser);
+		DerivativePredblock.append(desBuilder.getDifferentialEquationsStatement(derivativeVarList));
 		isDES = false;
 		getAESStatement();
-		DerivativePredblock.append(getErrorStatement(desRenderer.getDefinitionsParsingMap(), desRenderer.getDerivativeVariableMap()));
+		DerivativePredblock.append(getErrorStatement(desBuilder.getDefinitionsParsingMap(), desBuilder.getDerivativeVariableMap()));
         
         return DerivativePredblock;
 	}

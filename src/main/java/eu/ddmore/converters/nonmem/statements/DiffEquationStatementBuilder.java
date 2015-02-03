@@ -12,9 +12,9 @@ import eu.ddmore.converters.nonmem.utils.Formatter;
 import eu.ddmore.libpharmml.dom.commontypes.DerivativeVariableType;
 import eu.ddmore.libpharmml.dom.commontypes.VariableDefinitionType;
 
-public class DEStatementRenderer {
-	private static final String DES = "$DES";
-	public String DES_VAR_SUFFIX;
+public class DiffEquationStatementBuilder {
+	private static final String DES = "DES";
+	final String DES_VAR_SUFFIX = "_"+DES;
 	ScriptDefinition scriptDefinition;
 	public Map<String, String> derivativeVariableMap = new HashMap<String, String>();
 	//it will hold definition types and its parsed equations which we will need to add in Error statement as well.
@@ -22,7 +22,7 @@ public class DEStatementRenderer {
 	List<ErrorStatement> errorStatements;
 	Parser parser;
 
-	public DEStatementRenderer(ScriptDefinition scriptDefinition, List<ErrorStatement> errorStatements, Parser parser) {
+	public DiffEquationStatementBuilder(ScriptDefinition scriptDefinition, List<ErrorStatement> errorStatements, Parser parser) {
 		this.scriptDefinition = scriptDefinition;
 		this.errorStatements = errorStatements;
 		this.parser = parser;
@@ -34,7 +34,7 @@ public class DEStatementRenderer {
 	 */
 	public StringBuilder getDifferentialEquationsStatement(List<DerivativeVariableType> derivativeVarList) {
 		StringBuilder diffEqStatementBlock = new StringBuilder();
-		diffEqStatementBlock.append(Formatter.endline(DES));
+		diffEqStatementBlock.append(Formatter.endline("$"+DES));
 		int i=1;
 		for (DerivativeVariableType variableType : derivativeVarList){
 			String variable = Formatter.addPrefix(variableType.getSymbId());
