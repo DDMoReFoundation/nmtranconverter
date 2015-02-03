@@ -63,6 +63,17 @@ public class ErrorStatement {
 		}		
 	}
 	
+	public StringBuilder getErrorStatementDetails(){
+		StringBuilder errorBlock = new StringBuilder();
+		for(ErrorType error : ErrorType.values()){
+			if(errorType.equals(error.getErrorType())){
+				errorBlock.append(error.getErrorStatement());
+				break;
+			}
+		}
+		return errorBlock;
+	}
+	
 	/**
 	 * Creates error statement details depending upon error type specified,
 	 * e.g. : 
@@ -76,27 +87,30 @@ public class ErrorStatement {
 	 *  
 	 * @return
 	 */
-	public StringBuilder getErrorStatementDetails(Map<String,String> functionDefEqMap, Map<String,String> derivativeVarMap){
+	public StringBuilder getErrorStatementDetailsForDES(Map<String,String> functionDefEqMap, Map<String,String> derivativeVarMap){
 		StringBuilder errorBlock = new StringBuilder();
-		if(functionDefEqMap.containsKey(function)){
-			if(derivativeVarMap.containsKey(function)){
-				String varAmount = PredStatement.getVarAmountFromCompartment(function, derivativeVarMap);
-				if(!varAmount.isEmpty())
-					functionRep = varAmount;
-			}else{
-				String functionEquation= getEquationForFunctionName(functionDefEqMap, derivativeVarMap);
-				errorBlock.append(Formatter.endline(function+" = "+functionEquation));
-			}
-		}
-		
-		for(ErrorType error : ErrorType.values()){
-			if(errorType.equals(error.getErrorType())){
-				errorBlock.append(error.getErrorStatement());
-				break;
-			}
-		}
+		//This could be null or empty in case of non-derivative
+		errorBlock.append(getDerivativeVarDetails(functionDefEqMap, derivativeVarMap));
+		errorBlock.append(getErrorStatementDetails());
 
 		return errorBlock;	
+	}
+
+	private StringBuilder getDerivativeVarDetails(Map<String, String> functionDefEqMap, Map<String, String> derivativeVarMap) {
+		StringBuilder errorBlock = new StringBuilder();
+		if(functionDefEqMap!=null){
+			if(functionDefEqMap.containsKey(function)){
+				if(derivativeVarMap.containsKey(function)){
+					String varAmount = DEStatementRenderer.getVarAmountFromCompartment(function, derivativeVarMap);
+					if(!varAmount.isEmpty())
+						functionRep = varAmount;
+				}else{
+					String functionEquation= getEquationForFunctionName(functionDefEqMap, derivativeVarMap);
+					errorBlock.append(Formatter.endline(function+" = "+functionEquation));
+				}
+			}
+		}
+		return errorBlock;
 	}
 	
 	/**
@@ -111,7 +125,7 @@ public class ErrorStatement {
 			String parsedEquation = functionDefEqMap.get(function);
 			for(String variable: derivativeVarMap.keySet()){
 				if(parsedEquation.contains(variable)){
-					String varAmount = PredStatement.getVarAmountFromCompartment(variable, derivativeVarMap);
+					String varAmount = DEStatementRenderer.getVarAmountFromCompartment(variable, derivativeVarMap);
 					if(!varAmount.isEmpty())
 						parsedEquation = parsedEquation.replaceAll(variable, varAmount);
 				}

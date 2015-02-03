@@ -2,12 +2,10 @@ package eu.ddmore.converters.nonmem.statements;
 
 import java.io.PrintWriter;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.regex.Pattern;
 
 import crx.converter.engine.ScriptDefinition;
 import crx.converter.engine.parts.ObservationBlock;
@@ -16,7 +14,6 @@ import crx.converter.engine.parts.StructuralBlock;
 import eu.ddmore.converters.nonmem.Parser;
 import eu.ddmore.converters.nonmem.utils.Formatter;
 import eu.ddmore.libpharmml.dom.commontypes.DerivativeVariableType;
-import eu.ddmore.libpharmml.dom.commontypes.VariableDefinitionType;
 import eu.ddmore.libpharmml.dom.maths.FunctionCallType;
 import eu.ddmore.libpharmml.dom.modeldefn.GaussianObsError;
 import eu.ddmore.libpharmml.dom.modeldefn.GaussianObsError.ErrorModel;
@@ -35,9 +32,6 @@ public class PredStatement {
 	final String DES_VAR_SUFFIX = "_DES";
 	ScriptDefinition scriptDefinition;
 	List<DerivativeVariableType> derivativeVarList = new ArrayList<DerivativeVariableType>();
-	Map<String, String> derivativeVariableMap = new HashMap<String, String>();
-	//it will hold definition types and its parsed equations which we will need to add in Error statement.
-	Map<String, String> definitionsParsingMap = new HashMap<String, String>();
 	List<ErrorStatement> errorStatements = new ArrayList<ErrorStatement>();
 	public static Boolean isDES = false;
 	Parser parser;
@@ -73,7 +67,8 @@ public class PredStatement {
         sb.append(Formatter.endline());
         sb.append(Formatter.endline("IF (AMT.GT.0) NM_D=AMT"));
         sb.append(getPredCoreStatement());
-        sb.append(getErrorStatement());
+        errorStatements = prepareAllErrorStatements();
+        sb.append(getErrorStatement(null, null));
         
         return sb;
 	}	
@@ -121,126 +116,13 @@ public class PredStatement {
 		DerivativePredblock.append(getPKStatement());
 		errorStatements = prepareAllErrorStatements();
 		isDES= true;
-		DerivativePredblock.append(getDifferentialEquationsStatement());
+		DEStatementRenderer desRenderer = new DEStatementRenderer(scriptDefinition, errorStatements, parser);
+		DerivativePredblock.append(desRenderer.getDifferentialEquationsStatement(derivativeVarList));
 		isDES = false;
 		getAESStatement();
-		DerivativePredblock.append(getErrorStatement());
+		DerivativePredblock.append(getErrorStatement(desRenderer.getDefinitionsParsingMap(), desRenderer.getDerivativeVariableMap()));
         
         return DerivativePredblock;
-	}
-
-	/**
-	 * gets DES block for pred statement
-	 * 
-	 */
-	private StringBuilder getDifferentialEquationsStatement() {
-		StringBuilder diffEqStatementBlock = new StringBuilder();
-		diffEqStatementBlock.append(Formatter.endline("$DES"));
-		int i=1;
-		for (DerivativeVariableType variableType : derivativeVarList){
-			String variable = Formatter.addPrefix(variableType.getSymbId());
-			derivativeVariableMap.put(variable, Integer.toString(i++));
-			
-			String varAmount = getVarAmountFromCompartment(variable, derivativeVariableMap);
-			if(!varAmount.isEmpty())
-				diffEqStatementBlock.append(Formatter.endline(variable+" = "+varAmount));
-			if(isVarFromErrorFunction(variable))
-				definitionsParsingMap.put(variable, varAmount);
-		}
-		diffEqStatementBlock.append(Formatter.endline());
-		for(StructuralBlock block : scriptDefinition.getStructuralBlocks()){
-			diffEqStatementBlock.append(addVarDefinitionTypesToDES(block));
-			diffEqStatementBlock.append(addDerivativeVarToDES(block));
-		}
-		return diffEqStatementBlock;
-	}
-
-	/**
-	 * This method gets variable amount from compartment and returns it.
-	 * 
-	 * @param variable
-	 * @return
-	 */
-	public static String getVarAmountFromCompartment(String variable, Map<String,String> derivativeVariableMap) {
-		String varAmount = new String(); 
-		varAmount = derivativeVariableMap.get(variable);
-		if(!varAmount.isEmpty()){
-			varAmount = "A("+varAmount+")";
-		}
-		return varAmount;
-	}
-	
-	/**
-	 * This method gets variable definitions for the variables and adds them to DES
-	 * As workaround to issues with variables used in Error model, we rename those variables in DES block
-	 *   
-	 * @param block
-	 * @return
-	 */
-	private StringBuilder addVarDefinitionTypesToDES(StructuralBlock block) {
-		StringBuilder varDefinitionsBlock = new StringBuilder();
-		for (VariableDefinitionType definitionType: block.getLocalVariables()){
-			String variable = Formatter.addPrefix(definitionType.getSymbId());
-			String rhs = parser.parse(definitionType).replaceFirst(variable+" =","");			
-			if(isVarFromErrorFunction(variable)){
-				definitionsParsingMap.put(variable, rhs);
-				variable = renameFunctionVariableForDES(variable);
-			}
-			varDefinitionsBlock.append(variable+" = "+rhs);
-		}
-		return varDefinitionsBlock;
-	}
-
-	/**
-	 * This method will parse DADT variables from derivative variable type definitions 
-	 * and adds it to DES block.
-	 * 
-	 * @param block
-	 * @return
-	 */
-	private StringBuilder addDerivativeVarToDES(StructuralBlock block) {
-		StringBuilder derivativeVarBlock = new StringBuilder();
-		for(DerivativeVariableType variableType: block.getStateVariables()){
-			String parsedDADT = parser.parse(variableType);
-			String variable = Formatter.addPrefix(variableType.getSymbId());
-			
-			if(derivativeVariableMap.containsKey(variable)){
-				String index = derivativeVariableMap.get(variable);
-				parsedDADT = parsedDADT.replaceFirst(variable+" =", "DADT("+index+") =");
-			}
-			for(String derivativeVar : definitionsParsingMap.keySet()){
-				String varToReplace = new String("\\b"+Pattern.quote(derivativeVar)+"\\b");
-				parsedDADT = parsedDADT.replaceAll(varToReplace, renameFunctionVariableForDES(derivativeVar));
-			}
-			derivativeVarBlock.append(parsedDADT);
-		}
-		return derivativeVarBlock;
-	}
-
-	/**
-	 * Determines if variable is function variable from error model.
-	 * 
-	 * @param variable
-	 * @return
-	 */
-	private Boolean isVarFromErrorFunction(String variable){
-		for(ErrorStatement errorStatement : errorStatements){
-			if(errorStatement.getFunction().equals(variable)){
-				return true;
-			}
-		}
-		return false;
-	}
-
-	/**
-	 * This method will rename variable which is defined as Function variable in error model block.
-	 * This will be used in DES statement.
-	 * @param variable
-	 * @return
-	 */
-	private String renameFunctionVariableForDES(String variable) {
-		variable = variable+DES_VAR_SUFFIX;
-		return variable; 
 	}
 	
 	/**
@@ -249,13 +131,16 @@ public class PredStatement {
 	 * @return 
 	 * 
 	 */
-	private String getErrorStatement() {
+	private String getErrorStatement(Map<String, String> definitionsParsingMap, Map<String, String> derivativeVariableMap) {
 		StringBuilder errorBlock = new StringBuilder();
 		errorBlock.append(Formatter.endline());
 		errorBlock.append(Formatter.endline("$ERROR"));
-		//errorStatements, definitionsParsingMap and derivativeVariableMap are set up as part of DES before this step.
 		for(ErrorStatement errorStatement: errorStatements){
-			errorBlock.append(errorStatement.getErrorStatementDetails(definitionsParsingMap,derivativeVariableMap));
+			if(definitionsParsingMap != null){
+				errorBlock.append(errorStatement.getErrorStatementDetailsForDES(definitionsParsingMap,derivativeVariableMap));
+			}else{
+				errorBlock.append(errorStatement.getErrorStatementDetails());
+			}
 		}
 		return errorBlock.toString();
 	}
