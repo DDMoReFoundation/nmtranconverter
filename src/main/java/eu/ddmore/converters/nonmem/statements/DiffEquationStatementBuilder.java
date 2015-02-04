@@ -103,20 +103,23 @@ public class DiffEquationStatementBuilder {
 		for(DerivativeVariableType variableType: block.getStateVariables()){
 			String parsedDADT = parser.parse(variableType);
 			String variable = Formatter.addPrefix(variableType.getSymbId());
-			Boolean isDerivativeVarWithAmount = derivativeVariableMap.containsKey(variable); 
-			if(isDerivativeVarWithAmount){
+			if(isDerivativeVariableHasAmount(variable)){
 				String index = derivativeVariableMap.get(variable);
 				parsedDADT = parsedDADT.replaceFirst(variable+" =", "DADT("+index+") =");
 			}
 			for(String derivativeVar : definitionsParsingMap.keySet()){
 				String varToReplace = new String("\\b"+Pattern.quote(derivativeVar)+"\\b");
-				if(!isDerivativeVarWithAmount){
+				if(!isDerivativeVariableHasAmount(derivativeVar)){
 					parsedDADT = parsedDADT.replaceAll(varToReplace, renameFunctionVariableForDES(derivativeVar));
 				}
 			}
 			derivativeVarBlock.append(parsedDADT);
 		}
 		return derivativeVarBlock;
+	}
+
+	private boolean isDerivativeVariableHasAmount(String variable) {
+		return derivativeVariableMap.containsKey(variable);
 	}
 
 	/**
