@@ -1,7 +1,6 @@
 /*******************************************************************************
- * Copyright (C) 2014 Cyprotex Discovery Ltd - All rights reserved.
+ * Copyright (C) 2015 Mango Solutions Ltd - All rights reserved.
  ******************************************************************************/
-
 package eu.ddmore.converters.nonmem;
 
 import java.io.File;

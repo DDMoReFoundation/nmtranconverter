@@ -1,3 +1,6 @@
+/*******************************************************************************
+ * Copyright (C) 2015 Mango Solutions Ltd - All rights reserved.
+ ******************************************************************************/
 package eu.ddmore.converters.nonmem.statements;
 
 import eu.ddmore.converters.nonmem.statements.ErrorStatement.ErrorConstant;
@@ -25,11 +28,19 @@ public enum ErrorType {
 	COMBINED_ERROR_3("combinedError3"){
 		@Override
 		StringBuilder getErrorStatement() {
+			return COMBINED_ERROR_2_LOG.getErrorStatement();
+		}
+	},
+	COMBINED_ERROR_2_LOG("combinedError2log"){
+
+		@Override
+		StringBuilder getErrorStatement() {
 			String iPred = "LOG("+ErrorStatement.functionRep+")";
 			String weight = "SQRT("+ErrorStatement.proportional+"**2"+
 					" + ("+ErrorStatement.additive+"/"+ErrorStatement.functionRep+")**2)";
 			return createErrorStatement(iPred, weight, null, null, null);
 		};
+		
 	},
 	ADDITIVE_ERROR("additiveError"){
 		@Override

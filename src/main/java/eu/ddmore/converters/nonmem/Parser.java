@@ -1,4 +1,6 @@
-
+/*******************************************************************************
+ * Copyright (C) 2015 Mango Solutions Ltd - All rights reserved.
+ ******************************************************************************/
 package eu.ddmore.converters.nonmem;
 
 import static crx.converter.engine.PharmMLTypeChecker.isActivity;
