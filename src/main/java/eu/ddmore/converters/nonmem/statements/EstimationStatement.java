@@ -7,9 +7,13 @@ import crx.converter.engine.ScriptDefinition;
 import crx.converter.engine.parts.EstimationStep;
 import crx.converter.engine.parts.Part;
 import eu.ddmore.converters.nonmem.utils.Formatter;
+import eu.ddmore.libpharmml.dom.commontypes.BooleanType;
+import eu.ddmore.libpharmml.dom.commontypes.TrueBooleanType;
+import eu.ddmore.libpharmml.dom.maths.Equation;
 import eu.ddmore.libpharmml.dom.modellingsteps.AlgorithmType;
 import eu.ddmore.libpharmml.dom.modellingsteps.EstimationOpTypeType;
 import eu.ddmore.libpharmml.dom.modellingsteps.EstimationOperationType;
+import eu.ddmore.libpharmml.dom.modellingsteps.OperationPropertyType;
 
 /**
  * Creates and adds estimation statement to nonmem file from script definition.
@@ -25,7 +29,7 @@ public class EstimationStatement {
 	List<String> inputHeaders = new ArrayList<String>();
 	String dataFileName = new String();
 	List<EstimationStep> estimationSteps = new ArrayList<EstimationStep>();
-	Boolean estFIMFound = false;
+	static Boolean covFound = false;
 	
 	public List<EstimationStep> getEstimationSteps() {
 		return estimationSteps;
@@ -35,8 +39,8 @@ public class EstimationStatement {
 		this.estimationSteps = estimationSteps;
 	}
 
-	public Boolean isEstFIMFound() {
-		return estFIMFound;
+	public Boolean isCovFound() {
+		return covFound;
 	}
 
 	public EstimationStatement(ScriptDefinition scriptDefinition){
@@ -90,7 +94,7 @@ public class EstimationStatement {
 		}
 		return estSteps;
 	}
-	
+
 	/**
 	 * this method will create estimation statement for nonmem file from estimation steps collected from steps map.
 	 * 
@@ -105,15 +109,14 @@ public class EstimationStatement {
 	
 				for(EstimationOperationType operationType :estStep.getOperations()){
 					EstimationOpTypeType optType = operationType.getOpType();
-					if(EstimationOpTypeType.EST_FIM.equals(optType)){
-						estFIMFound = true;
-					}else if(EstimationOpTypeType.EST_POP.equals(optType)){
+					covFound = checkForCovariateStatement(operationType);
+					
+					if(EstimationOpTypeType.EST_POP.equals(optType)){
 						estStatement.append(computeMethod(operationType.getAlgorithm()));
 					}else if(EstimationOpTypeType.EST_INDIV.equals(optType)){
 						break;
 					}
 				}
-	
 			}
 		}
 		
@@ -126,7 +129,50 @@ public class EstimationStatement {
 	 * @param fout
 	 */
 	public String getCovStatement(){
-		String covStatement = (isEstFIMFound()) ? Formatter.endline("$COV"): "";
+		String covStatement = (isCovFound()) ? Formatter.endline("$COV"): "";
 		return Formatter.endline()+covStatement;
+	}
+	
+	/**
+	 * Checks if covariate statement exists for estimation operation type and return boolean result.
+	 * 
+	 * @param operationType
+	 * @return
+	 */
+	private Boolean checkForCovariateStatement(EstimationOperationType operationType){
+		//If covariate is found in any other operations or properties already then return
+		if(covFound==true){
+			return covFound;
+		}
+		EstimationOpTypeType optType = operationType.getOpType();
+		if(EstimationOpTypeType.EST_FIM.equals(optType)){
+			return true;
+		}else if(EstimationOpTypeType.EST_POP.equals(optType)){
+			for(OperationPropertyType property : operationType.getProperty()){
+				if(property.getName().equals("cov") && property.getAssign()!=null){
+					if(property.getAssign().getScalar()!=null){
+						return isCovPropertyForEstOperation(property.getAssign().getScalar().getValue());	
+					}else if(property.getAssign().getEquation()!=null){
+						Equation equation = property.getAssign().getEquation();
+						return isCovPropertyForEstOperation(equation.getScalar().getValue());
+					}
+				}
+			}
+		}
+		return false;
+	}
+	
+	/**
+	 * This method determines if covariate values will exist, depending upon value specified in equation
+	 *  
+	 * @param equation
+	 * @return
+	 */
+	private Boolean isCovPropertyForEstOperation(Object value) {
+		if(value instanceof BooleanType){
+			BooleanType val = (BooleanType) value;
+			return (val instanceof TrueBooleanType);
+		}
+		return false;
 	}
 }
