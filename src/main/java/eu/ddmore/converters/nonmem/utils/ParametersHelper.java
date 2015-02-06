@@ -79,10 +79,8 @@ public class ParametersHelper {
         }
 
         final EstimationStep estimationStep = getEstimationStep(scriptDefinition);
-        parametersToEstimate = (estimationStep.hasParametersToEstimate())? 
-            estimationStep.getParametersToEstimate(): new ArrayList<ParameterEstimateType>();
-        fixedParameters = (estimationStep.hasFixedParameters())? 
-            estimationStep.getFixedParameters(): new ArrayList<FixedParameter>();
+        parametersToEstimate = (estimationStep.hasParametersToEstimate())?estimationStep.getParametersToEstimate(): new ArrayList<ParameterEstimateType>();
+        fixedParameters = (estimationStep.hasFixedParameters())?estimationStep.getFixedParameters(): new ArrayList<FixedParameter>();
         // Find any bounds and initial estimates
         setAllParameterBounds(parametersToEstimate);
 
@@ -259,7 +257,7 @@ public class ParametersHelper {
      */
     public Boolean isParamFromStdDev(ParameterRandomVariableType rv) {
         if (getDistributionTypeStdDev(rv) != null) {
-            return true;					
+            return true;
         } else if (getDistributionTypeVariance(rv) != null) {
             return false;
         }else{
