@@ -113,7 +113,7 @@ public class TableStatement {
 				paramTable.append(SPACE+parameterType.getSymbId());
 			}
 		}
-		for(String eta : ParametersHelper.getAllEtasList(scriptDefinition)){
+		for(String eta : ParametersHelper.getAllEtas(scriptDefinition)){
 			paramTable.append(SPACE+eta.toUpperCase());
 		}
 		return paramTable;

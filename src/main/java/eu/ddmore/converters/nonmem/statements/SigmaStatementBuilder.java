@@ -24,158 +24,167 @@ import eu.ddmore.libpharmml.dom.uncertml.PositiveRealValueType;
  *
  */
 public class SigmaStatementBuilder {
-	
-	private ParametersHelper parameters;
-	List<String> sigmaParams = new ArrayList<String>();
 
-	public SigmaStatementBuilder(ParametersHelper parametersHelper){
-		parameters = parametersHelper;
-	}
-	
-	/**
-	 * This method will get sigma statement as per following algorithm.
-	 * 
-	 * Get random variables from observation model blocks.
-	 * look for symbIdref = 'residual'
-	 * if it exists, it will (should) have 'distribution' defined and it has 'stddev' or 'variance'
-	 * 
-	 * 1.if stddev - 
-	 * a. if stddev <var varId="1">
-	 * 		$SIGMA
-	 * 			1 FIX
-	 * b. if stddev <var varId="sigma"> (sigma is example variable it can be anything)
-	 * 		there will be given intial estimate for this variable
-	 * 		check if attribute is fixed
-	 * 		if attribute is 'fixed=true' 
-	 * 			"1 FIX ;sigma"
-	 * 		else "1 ;sigma"
-	 * c. if stddev <prVal>2</prVal>
-	 * 		We need to square this value as "4 FIX"
-	 * 
-	 * 4. if variance -
-	 * 		same as above without squaring the value.
-	 *  
-	 * @param List<String> list of sigma statements
-	 */
+    private ParametersHelper parameters;
+    List<String> sigmaParams = new ArrayList<String>();
 
-	public List<String> getSigmaStatements() {
-		
-		String sigmaRepresentation = new String();
-		
-		Set<ParameterRandomVariableType> randomVariableTypes = new HashSet<ParameterRandomVariableType>();
-		
-		for(ObservationBlock observationBlock: parameters.getScriptDefinition().getObservationBlocks()){
-			randomVariableTypes.addAll(observationBlock.getRandomVariables());
-		}
-		
-		for (ParameterRandomVariableType rv : randomVariableTypes) {
-			
-			Boolean isStdDev = false;
-			
-			PositiveRealValueType stddevDistribution = parameters.getDistributionTypeStdDev(rv);
-			if(stddevDistribution!=null){
-				sigmaRepresentation = getSigmaFromStddevDistribution(stddevDistribution);
-			}
+    public SigmaStatementBuilder(ParametersHelper parametersHelper){
+        parameters = parametersHelper;
+    }
 
-			PositiveRealValueType varianceDistribution = parameters.getDistributionTypeVariance(rv);
-			if(varianceDistribution!=null){
-				sigmaRepresentation = getSigmaFromVarianceDistribution(varianceDistribution);
-			}
-			
-			isStdDev = parameters.isParamFromStdDev(rv);
+    /**
+     * This method will get sigma statement as per following algorithm.
+     * 
+     * Get random variables from observation model blocks.
+     * look for symbIdref = 'residual'
+     * if it exists, it will (should) have 'distribution' defined and it has 'stddev' or 'variance'
+     * 
+     * 1.if stddev - 
+     * a. if stddev <var varId="1">
+     * 		$SIGMA
+     * 			1 FIX
+     * b. if stddev <var varId="sigma"> (sigma is example variable it can be anything)
+     * 		there will be given intial estimate for this variable
+     * 		check if attribute is fixed
+     * 		if attribute is 'fixed=true' 
+     * 			"1 FIX ;sigma"
+     * 		else "1 ;sigma"
+     * c. if stddev <prVal>2</prVal>
+     * 		We need to square this value as "4 FIX"
+     * 
+     * 4. if variance -
+     * 		same as above without squaring the value.
+     *  
+     * @param List<String> list of sigma statements
+     */
 
-			StringBuilder sigmaStatements = new StringBuilder();
-			if(isNumeric(sigmaRepresentation)){
-				sigmaStatements.append(Double.parseDouble(sigmaRepresentation) +" "+Constant.FIX);
-			}else {
-				String sigmastatement = getSigmaFromInitialEstimate(sigmaRepresentation, isStdDev);
-				sigmaStatements.append(sigmastatement);
-			}
-			parameters.addAttributeForStdDev(sigmaStatements,isStdDev);
-			sigmaStatements.append(Formatter.endline());
-			
-			sigmaParams.add(sigmaStatements.toString());
-		}
-		return sigmaParams;
-	}
+    public List<String> getSigmaStatements() {
 
-	/**
-	 * If sigma varId is not a numeric value, it will be variable from initial estimate parameters list.
-	 * We need to look for value of this variable and return value of the same. 
-	 * 
-	 * @param varId
-	 * @param isStdDev 
-	 * @return
-	 */
-	private String getSigmaFromInitialEstimate(String varId, Boolean isStdDev) {
-		StringBuilder sigmastatement = new StringBuilder();
-		
-		for(ParameterEstimateType params : parameters.getAllEstimationParams()){
-			String symbId = params.getSymbRef().getSymbIdRef();
-			if(symbId.equals(varId)){
-				RealValueType value = (RealValueType) params.getInitialEstimate().getScalar().getValue();
-				sigmastatement.append(value.getValue());
-				if(params.getInitialEstimate().isFixed()){
-					sigmastatement.append(" " + Constant.FIX);
-					parameters.addAttributeForStdDev(sigmastatement,isStdDev);
-				}else{
-					sigmastatement.append(value.getValue());
-					parameters.addAttributeForStdDev(sigmastatement,isStdDev);
-				}
-				sigmastatement.append(Formatter.endline(Formatter.indent(Formatter.COMMENT_CHAR+ symbId)));
-				parameters.addToSigmaList(symbId);
-			}
-		}
-		return sigmastatement.toString();
-	}
+        String sigmaRepresentation = new String();
 
-	/**
-	 * gets sigma value in case of stddev distribution.
-	 * 
-	 * @param stddevDistribution
-	 * @return
-	 */
-	private String getSigmaFromStddevDistribution(PositiveRealValueType stddevDistribution) {
-		String sigmaRepresentation = new String();
-		
-		if(stddevDistribution!=null){
-			if (stddevDistribution.getVar()!=null) {
-	        	sigmaRepresentation = stddevDistribution.getVar().getVarId();
-	        } else if(stddevDistribution.getPrVal()!=null){
-	            Double idVal = (stddevDistribution.getPrVal()*stddevDistribution.getPrVal());
-	            sigmaRepresentation = idVal.toString();	            
-	        }
-		}
-		return sigmaRepresentation;
-	}
+        Set<ParameterRandomVariableType> randomVariableTypes = new HashSet<ParameterRandomVariableType>();
 
-	/**
-	 * gets sigma value in case of variance distribution.
-	 * 
-	 * @param varianceDistribution
-	 * @return
-	 */
-	private String getSigmaFromVarianceDistribution(PositiveRealValueType varianceDistribution) {
-		String sigmaRepresentation = new String();
-		if(varianceDistribution!=null){
-			if (varianceDistribution.getVar()!=null) {
-	        	sigmaRepresentation = varianceDistribution.getVar().getVarId();
-	        } else if(varianceDistribution.getPrVal()!=null){
-	            Double idVal = (varianceDistribution.getPrVal());
-	            sigmaRepresentation = idVal.toString();	            
-	        }
-		}
-		return sigmaRepresentation;
-	}
+        for(ObservationBlock observationBlock: parameters.getScriptDefinition().getObservationBlocks()){
+            randomVariableTypes.addAll(observationBlock.getRandomVariables());
+        }
 
-	/**
-	 * Checks if sigma varId is numeric value or not. if it is then it will be displayed appropriately, 
-	 * if its not then it is a variable which needs to be looked into params to estimate list and value can be rendered from there.
-	 * 
-	 * @param sigmaRepresentation
-	 * @return
-	 */
-	private boolean isNumeric(String sigmaRepresentation) {
+        for (ParameterRandomVariableType rv : randomVariableTypes) {
+
+            Boolean isStdDev = false;
+
+            PositiveRealValueType stddevDistribution = parameters.getDistributionTypeStdDev(rv);
+            if(stddevDistribution!=null){
+                sigmaRepresentation = getSigmaFromStddevDistribution(stddevDistribution);
+            }
+
+            PositiveRealValueType varianceDistribution = parameters.getDistributionTypeVariance(rv);
+            if(varianceDistribution!=null){
+                sigmaRepresentation = getSigmaFromVarianceDistribution(varianceDistribution);
+            }
+
+            isStdDev = parameters.isParamFromStdDev(rv);
+
+            StringBuilder sigmaStatements = new StringBuilder();
+            if(isNumeric(sigmaRepresentation)){
+                sigmaStatements.append(Double.parseDouble(sigmaRepresentation) +" "+Constant.FIX);
+            }else {
+                String sigmastatement = getSigmaFromInitialEstimate(sigmaRepresentation, isStdDev);
+                sigmaStatements.append(sigmastatement);
+            }
+            addAttributeForStdDev(sigmaStatements,isStdDev);
+            sigmaStatements.append(Formatter.endline());
+            sigmaParams.add(sigmaStatements.toString());
+        }
+        return sigmaParams;
+    }
+
+    /**
+     * If sigma varId is not a numeric value, it will be variable from initial estimate parameters list.
+     * We need to look for value of this variable and return value of the same. 
+     * 
+     * @param varId
+     * @param isStdDev 
+     * @return
+     */
+    private String getSigmaFromInitialEstimate(String varId, Boolean isStdDev) {
+        StringBuilder sigmastatement = new StringBuilder();
+
+        for(ParameterEstimateType params : parameters.getAllEstimationParams()){
+            String symbId = params.getSymbRef().getSymbIdRef();
+            if(symbId.equals(varId)){
+                RealValueType value = (RealValueType) params.getInitialEstimate().getScalar().getValue();
+                sigmastatement.append(value.getValue());
+                if(params.getInitialEstimate().isFixed()){
+                    sigmastatement.append(" " + Constant.FIX);
+                }else{
+                    sigmastatement.append(value.getValue());
+                }
+                addAttributeForStdDev(sigmastatement,isStdDev);
+                sigmastatement.append(Formatter.endline(Formatter.indent(Formatter.COMMENT_CHAR+ symbId)));
+                parameters.addToSigmaList(symbId);
+            }
+        }
+        return sigmastatement.toString();
+    }
+    
+    /**
+     * Add SD attribute to sigma statement if value is obtained from standard deviation.
+     * @param statement
+     * @param isStdDev
+     */
+    public void addAttributeForStdDev(StringBuilder statement, Boolean isStdDev) {
+        if(isStdDev){
+            statement.append(Formatter.endline(" "+Constant.SD));
+        }
+    }
+
+    /**
+     * gets sigma value in case of stddev distribution.
+     * 
+     * @param stddevDistribution
+     * @return
+     */
+    private String getSigmaFromStddevDistribution(PositiveRealValueType stddevDistribution) {
+        String sigmaRepresentation = new String();
+
+        if(stddevDistribution!=null){
+            if (stddevDistribution.getVar()!=null) {
+                sigmaRepresentation = stddevDistribution.getVar().getVarId();
+            } else if(stddevDistribution.getPrVal()!=null){
+                Double idVal = (stddevDistribution.getPrVal()*stddevDistribution.getPrVal());
+                sigmaRepresentation = idVal.toString();	            
+            }
+        }
+        return sigmaRepresentation;
+    }
+
+    /**
+     * gets sigma value in case of variance distribution.
+     * 
+     * @param varianceDistribution
+     * @return
+     */
+    private String getSigmaFromVarianceDistribution(PositiveRealValueType varianceDistribution) {
+        String sigmaRepresentation = new String();
+        if(varianceDistribution!=null){
+            if (varianceDistribution.getVar()!=null) {
+                sigmaRepresentation = varianceDistribution.getVar().getVarId();
+            } else if(varianceDistribution.getPrVal()!=null){
+                Double idVal = (varianceDistribution.getPrVal());
+                sigmaRepresentation = idVal.toString();	            
+            }
+        }
+        return sigmaRepresentation;
+    }
+
+    /**
+     * Checks if sigma varId is numeric value or not. if it is then it will be displayed appropriately, 
+     * if its not then it is a variable which needs to be looked into params to estimate list and value can be rendered from there.
+     * 
+     * @param sigmaRepresentation
+     * @return
+     */
+    private boolean isNumeric(String sigmaRepresentation) {
         try {
             Double.parseDouble(sigmaRepresentation);
         } catch (NumberFormatException e) {

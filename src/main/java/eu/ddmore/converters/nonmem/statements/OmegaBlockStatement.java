@@ -48,7 +48,7 @@ public class OmegaBlockStatement {
 		
 		if(!correlations.isEmpty()){
 			initialiseOmegaBlocks(correlations);
-			orderedEtasToOmegaMap = paramHelper.reverseMap(etaToOmagaMap);
+			orderedEtasToOmegaMap = reverseMap(etaToOmagaMap);
 			omegaBlockTitle = createOmegaBlockTitle(correlations);
 
 			for(String eta : orderedEtasToOmegaMap.values()){
@@ -163,6 +163,19 @@ public class OmegaBlockStatement {
 			OmegaBlocks.put(eta, statements);
 		}
 	}
+	
+    /**
+     * This method will reverse the map and return a tree map (ordered in natural order of keys).
+     * 
+     * @param map
+     * @return
+     */
+    private<K,V> TreeMap<V,K> reverseMap(Map<K,V> map) {
+        TreeMap<V,K> rev = new TreeMap<V, K>();
+        for(Map.Entry<K,V> entry : map.entrySet())
+            rev.put(entry.getValue(), entry.getKey());
+        return rev;
+    }
 
 	private void setStdDevAttributeForOmegaBlock(Correlation correlation) {
 		if(!isOmegaBlockFromStdDev){

@@ -26,7 +26,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -324,7 +324,7 @@ public class Parser extends BaseParser {
 		return symbol;
 	}
 	
-	Map<String, Integer> etasOrder = new HashMap<String, Integer>();
+	Map<String, Integer> etasOrder = new LinkedHashMap<String, Integer>();
 
 	@Override
 	public void writeParameters(PrintWriter fout) {
@@ -334,7 +334,7 @@ public class Parser extends BaseParser {
 		}
 		parameters = new ParametersHelper(lexer.getScriptDefinition());
 		setEtasOrder(parameters.createOrderedEtasMap());
-		parameters.getParameters(lexer.getModelParameters());
+		parameters.initialiseSimpleParams(lexer.getModelParameters());
 		
 		Map<String, ThetaStatement> thetas = parameters.getThetaParams();
 		Map<String, OmegaStatement> omegas = parameters.getOmegaParams();
