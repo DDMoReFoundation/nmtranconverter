@@ -109,11 +109,11 @@ public class ParametersHelper {
         final Map<String, ThetaStatement> unOrderedThetas = new HashMap<String, ThetaStatement>();
         for(ParameterEstimateType parameter : parametersToEstimate){
             String paramName = parameter.getSymbRef().getSymbIdRef();
-            createThetaForValidParam(unOrderedThetas, paramName);
+            createThetaForValidParam(unOrderedThetas, paramName, false);
         }
         for(FixedParameter fixedParameter : fixedParameters){
             String paramName = fixedParameter.p.getSymbRef().getSymbIdRef();
-            createThetaForValidParam(unOrderedThetas, paramName);
+            createThetaForValidParam(unOrderedThetas, paramName, true);
         }
         thetaStatements.putAll(unOrderedThetas);
     }
@@ -124,13 +124,13 @@ public class ParametersHelper {
      * @param unOrderedThetas
      * @param paramName
      */
-    private void createThetaForValidParam(final Map<String, ThetaStatement> unOrderedThetas, String paramName) {
+    private void createThetaForValidParam(final Map<String, ThetaStatement> unOrderedThetas, String paramName, Boolean isFixed) {
         if(validateParamName(paramName)){
             ThetaStatement thetaStatement = new ThetaStatement(paramName);
             if(!thetasToEtaOrder.containsValue(paramName)){
-                addThetaToMap(unOrderedThetas, thetaStatement,false);
+                addThetaToMap(unOrderedThetas, thetaStatement,isFixed);
             }
-            addThetaToMap(thetaStatements, thetaStatement,false);
+            addThetaToMap(thetaStatements, thetaStatement,isFixed);
         }
     }
 
