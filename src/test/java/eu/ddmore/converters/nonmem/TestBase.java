@@ -24,7 +24,6 @@ public abstract class TestBase {
     final static String V_0_3_SUBDIR = "0.3.0/";
     final static String V_0_3_1_SUBDIR = "0.3.1/";
     final static String V_0_4_SUBDIR = "0.4.0/";
-    final static String V_0_6_SUBDIR_TEMP = "6.0.7/";
 	
 	
 	public TestBase() {

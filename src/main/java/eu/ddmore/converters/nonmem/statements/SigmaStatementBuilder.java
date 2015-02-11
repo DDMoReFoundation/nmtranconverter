@@ -25,13 +25,6 @@ import eu.ddmore.libpharmml.dom.uncertml.PositiveRealValueType;
  */
 public class SigmaStatementBuilder {
 
-    private ParametersHelper parameters;
-    List<String> sigmaParams = new ArrayList<String>();
-
-    public SigmaStatementBuilder(ParametersHelper parametersHelper){
-        parameters = parametersHelper;
-    }
-
     /**
      * This method will get sigma statement as per following algorithm.
      * 
@@ -55,10 +48,13 @@ public class SigmaStatementBuilder {
      * 4. if variance -
      * 		same as above without squaring the value.
      *  
-     * @param List<String> list of sigma statements
+     * @param ParametersHelper
+     * @return List<String> list of sigma statements
      */
 
-    public List<String> getSigmaStatements() {
+    public List<String> getSigmaStatements(ParametersHelper parameters) {
+        
+        List<String> sigmaParams = new ArrayList<String>();
 
         String sigmaRepresentation = new String();
 
@@ -88,7 +84,7 @@ public class SigmaStatementBuilder {
             if(isNumeric(sigmaRepresentation)){
                 sigmaStatements.append(Double.parseDouble(sigmaRepresentation) +" "+Constant.FIX);
             }else {
-                String sigmastatement = getSigmaFromInitialEstimate(sigmaRepresentation, isStdDev);
+                String sigmastatement = getSigmaFromInitialEstimate(sigmaRepresentation, isStdDev, parameters);
                 sigmaStatements.append(sigmastatement);
             }
             addAttributeForStdDev(sigmaStatements,isStdDev);
@@ -106,7 +102,7 @@ public class SigmaStatementBuilder {
      * @param isStdDev 
      * @return
      */
-    private String getSigmaFromInitialEstimate(String varId, Boolean isStdDev) {
+    private String getSigmaFromInitialEstimate(String varId, Boolean isStdDev, ParametersHelper parameters) {
         StringBuilder sigmastatement = new StringBuilder();
 
         for(ParameterEstimateType params : parameters.getAllEstimationParams()){

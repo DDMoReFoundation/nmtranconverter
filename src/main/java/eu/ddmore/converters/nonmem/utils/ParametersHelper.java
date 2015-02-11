@@ -205,8 +205,8 @@ public class ParametersHelper {
     }
 
     private void setSigmaParameters(){
-        SigmaStatementBuilder sigmaStatementBuilder = new SigmaStatementBuilder(this);
-        SigmaStatements = sigmaStatementBuilder.getSigmaStatements();
+        SigmaStatementBuilder sigmaStatementBuilder = new SigmaStatementBuilder();
+        SigmaStatements = sigmaStatementBuilder.getSigmaStatements(this);
     }
 
     /**
