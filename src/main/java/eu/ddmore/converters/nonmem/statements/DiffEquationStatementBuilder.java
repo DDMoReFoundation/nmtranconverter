@@ -17,13 +17,14 @@ import eu.ddmore.libpharmml.dom.commontypes.VariableDefinitionType;
 
 public class DiffEquationStatementBuilder {
 	private static final String DES = "DES";
-	final String DES_VAR_SUFFIX = "_"+DES;
-	ScriptDefinition scriptDefinition;
-	public Map<String, String> derivativeVariableMap = new HashMap<String, String>();
+	private final String DES_VAR_SUFFIX = "_"+DES;
+	private ScriptDefinition scriptDefinition;
+	private List<ErrorStatement> errorStatements;
+    private Parser parser;
+	private Map<String, String> derivativeVariableMap = new HashMap<String, String>();
 	//it will hold definition types and its parsed equations which we will need to add in Error statement as well.
-	public Map<String, String> definitionsParsingMap = new HashMap<String, String>();
-	List<ErrorStatement> errorStatements;
-	Parser parser;
+	private Map<String, String> definitionsParsingMap = new HashMap<String, String>();
+	
 
 	public DiffEquationStatementBuilder(ScriptDefinition scriptDefinition, List<ErrorStatement> errorStatements, Parser parser) {
 		this.scriptDefinition = scriptDefinition;

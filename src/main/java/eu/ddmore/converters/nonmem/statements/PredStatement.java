@@ -32,12 +32,11 @@ import eu.ddmore.libpharmml.dom.modeldefn.ObservationErrorType;
  */
 public class PredStatement {
 	
-	ScriptDefinition scriptDefinition;
-	List<DerivativeVariableType> derivativeVarList = new ArrayList<DerivativeVariableType>();
-	List<ErrorStatement> errorStatements = new ArrayList<ErrorStatement>();
+    private ScriptDefinition scriptDefinition;
+    private List<DerivativeVariableType> derivativeVarList = new ArrayList<DerivativeVariableType>();
+    private List<ErrorStatement> errorStatements = new ArrayList<ErrorStatement>();
+	private Parser parser;
 	public static Boolean isDES = false;
-	Parser parser;
-
 
 	public PredStatement(ScriptDefinition scriptDefinition, Parser parser){
 		this.parser = parser;

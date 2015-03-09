@@ -8,19 +8,17 @@ import eu.ddmore.libpharmml.dom.modellingsteps.InitialEstimateType;
 
 /**
  * Creates and adds parameter details.
- * 
- * @author sdeshmukh
  *
  */
 public class Parameter {
 	
-	String symbId;
-	InitialEstimateType initialEstimate;
-	ScalarRhs lowerBound;
-	ScalarRhs upperBound;	
-	Integer index;
-	boolean fixed = false;
-	boolean isStdDev = false;
+	private final String symbId;
+	private InitialEstimateType initialEstimate;
+	private ScalarRhs lowerBound;
+	private ScalarRhs upperBound;	
+	private Integer index;
+	private boolean fixed = false;
+	private boolean isStdDev = false;
 
 	public Parameter(String symbId){
 		this.symbId = symbId;
@@ -45,45 +43,33 @@ public class Parameter {
 		return symbId;
 	}
 
-	public void setSymbId(String symbId) {
-		this.symbId = symbId;
-	}
-
-
 	public InitialEstimateType getInitialEstimate() {
 		return initialEstimate;
 	}
-
 
 	public void setInitialEstimate(InitialEstimateType initialEstimate) {
 		this.initialEstimate = initialEstimate;
 	}
 
-
 	public ScalarRhs getLowerBound() {
 		return lowerBound;
 	}
-
 
 	public void setLowerBound(ScalarRhs lowerBound) {
 		this.lowerBound = lowerBound;
 	}
 
-
 	public ScalarRhs getUpperBound() {
 		return upperBound;
 	}
-
 
 	public void setUpperBound(ScalarRhs upperBound) {
 		this.upperBound = upperBound;
 	}
 
-
 	public Integer getIndex() {
 		return index;
 	}
-
 
 	public void setIndex(Integer index) {
 		this.index = index;

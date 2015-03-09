@@ -14,8 +14,7 @@ import eu.ddmore.converters.nonmem.utils.Formatter;
  */
 public class SimulationStatement {
 	
-	String dataFileName = new String();
-	SimulationStep simulationStep;
+    private SimulationStep simulationStep;
 
 
 	public SimulationStep getSimulationStep() {

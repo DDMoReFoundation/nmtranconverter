@@ -58,7 +58,7 @@ public enum ErrorType {
 	};
 	
 	
-	String error;
+	private String error;
 	
 	private static String DEFAULT_IPRED = ErrorStatement.functionRep;
 	private static final String DEFAULT_Y = ErrorConstant.IPRED+"+"+ErrorConstant.W+"*EPS(1)";

@@ -19,7 +19,7 @@ import eu.ddmore.libpharmml.dom.maths.Equation;
 
 public class InitConditionBuilder {
 	
-	static Integer derivativeVarCount = 0;
+	private static Integer derivativeVarCount = 0;
 
 	/**
 	 * Creates DES statement block from differential initial conditions.

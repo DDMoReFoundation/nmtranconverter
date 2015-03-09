@@ -22,14 +22,14 @@ import eu.ddmore.libpharmml.dom.modeldefn.ParameterRandomVariableType;
 
 public class OmegaBlockStatement {
 	
-	final Map<String, List<OmegaStatement>> OmegaBlocks = new HashMap<String, List<OmegaStatement>>();
-	LinkedHashMap<String, String> etasToOmegasInCorrelation = new LinkedHashMap<String, String>();
+    private final Map<String, List<OmegaStatement>> OmegaBlocks = new HashMap<String, List<OmegaStatement>>();
+    private LinkedHashMap<String, String> etasToOmegasInCorrelation = new LinkedHashMap<String, String>();
 	
-	String omegaBlockTitle;
-	Boolean isOmegaBlockFromStdDev = false;
-	Map<String, Integer> etaToOmagaMap = new HashMap<String, Integer>();
-	Map<Integer, String> orderedEtasToOmegaMap = new TreeMap<Integer, String>();
-	ParametersHelper paramHelper;
+    private String omegaBlockTitle;
+    private Boolean isOmegaBlockFromStdDev = false;
+    private Map<String, Integer> etaToOmagaMap = new HashMap<String, Integer>();
+    private Map<Integer, String> orderedEtasToOmegaMap = new TreeMap<Integer, String>();
+    private ParametersHelper paramHelper;
 	
 	public OmegaBlockStatement(ParametersHelper parameters) {
 		paramHelper = parameters;

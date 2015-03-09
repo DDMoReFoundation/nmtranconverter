@@ -20,8 +20,6 @@ import eu.ddmore.libpharmml.dom.uncertml.PositiveRealValueType;
 /**
  * Creates and adds estimation statement to nonmem file from script definition.
  * 
- * @author sdeshmukh
- *
  */
 public class SigmaStatementBuilder {
 

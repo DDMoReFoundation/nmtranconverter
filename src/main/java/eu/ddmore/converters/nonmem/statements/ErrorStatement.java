@@ -32,9 +32,9 @@ public class ErrorStatement {
 	static String proportional = new String();
 	static String functionRep = new String();
 	
-	FunctionCallType functionCall = null;
-	String function = new String();
-	String errorType = new String();
+	private FunctionCallType functionCall = null;
+	private String function = new String();
+	private String errorType = new String();
 	
 	ErrorStatement(FunctionCallType functionCallType, String output){
 		if(functionCallType!=null){

@@ -21,10 +21,10 @@ import eu.ddmore.libpharmml.dom.modellingsteps.NONMEMdataSetType;
 
 public class InputStatement {
 	
-	final List<String> catCovTableColumns = new ArrayList<String>();
-	final List<String> contCovTableColumns = new ArrayList<String>();
-	List<String> inputHeaders = new ArrayList<String>();
-	String statement;
+	private final List<String> catCovTableColumns = new ArrayList<String>();
+	private final List<String> contCovTableColumns = new ArrayList<String>();
+	private List<String> inputHeaders = new ArrayList<String>();
+	private String statement;
 	
 	public List<String> getInputHeaders() {
 		return inputHeaders;

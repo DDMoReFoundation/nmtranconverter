@@ -8,8 +8,8 @@ import java.io.Writer;
 
 public class ProblemStatement implements Writeable {
 	
-	String problemDescription;
-	String statement;
+    private String problemDescription;
+    private String statement;
 	
 	public String getProblemDescription() {
 		return problemDescription;

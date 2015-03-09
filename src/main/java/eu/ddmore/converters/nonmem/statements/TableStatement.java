@@ -34,8 +34,8 @@ public class TableStatement {
 			return this.fileName;
 		}
 	}
-	ScriptDefinition scriptDefinition;
-	InputStatement inputStatement = null;
+	private ScriptDefinition scriptDefinition;
+	private InputStatement inputStatement = null;
 	
 
 	public TableStatement(ScriptDefinition scriptDefinition, InputStatement inputStatement){
