@@ -29,7 +29,7 @@ public class EstimationStatement {
 
     private List<EstimationStep> estimationSteps = new ArrayList<EstimationStep>();
     
-    static Boolean covFound = false;
+    private static Boolean covFound = false;
 
     public List<EstimationStep> getEstimationSteps() {
         return estimationSteps;
