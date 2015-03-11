@@ -12,6 +12,7 @@ import crx.converter.engine.parts.ObservationBlock;
 import eu.ddmore.converters.nonmem.utils.Formatter;
 import eu.ddmore.converters.nonmem.utils.ParametersHelper;
 import eu.ddmore.converters.nonmem.utils.Formatter.Constant;
+import eu.ddmore.converters.nonmem.utils.Formatter.Symbol;
 import eu.ddmore.libpharmml.dom.commontypes.RealValueType;
 import eu.ddmore.libpharmml.dom.modeldefn.ParameterRandomVariableType;
 import eu.ddmore.libpharmml.dom.modellingsteps.ParameterEstimateType;
@@ -114,7 +115,7 @@ public class SigmaStatementBuilder {
                     sigmastatement.append(value.getValue());
                 }
                 addAttributeForStdDev(sigmastatement,isStdDev);
-                sigmastatement.append(Formatter.endline(Formatter.indent(Formatter.COMMENT_CHAR+ symbId)));
+                sigmastatement.append(Formatter.endline(Formatter.indent(Symbol.COMMENT+ symbId)));
                 parameters.addToSigmaList(symbId);
             }
         }

@@ -10,10 +10,10 @@ import static org.junit.Assert.assertNull;
 import org.junit.Test;
 
 import eu.ddmore.converters.nonmem.statements.ProblemStatement;
+import eu.ddmore.converters.nonmem.utils.Formatter;
 
 public class ProblemStatementTest {
 
-	private static final String STATEMENT_BLOCK_NAME = "$PROBLEM";
 	private static final String PROBLEM_DESCRIPTION = "Test Problem Description";
 
 
@@ -25,7 +25,7 @@ public class ProblemStatementTest {
 		assertNotNull("ProblemStatement should not be null.", statement);
 		assertEquals("problemDescription should be correct.", PROBLEM_DESCRIPTION, statement.getProblemDescription());
 		assertEquals("ProblemStatement should be correct.",
-				STATEMENT_BLOCK_NAME + " " + PROBLEM_DESCRIPTION, statement.getStatement());
+		    Formatter.problem() + " " + PROBLEM_DESCRIPTION, statement.getStatement());
 	}
 	
 	@Test
@@ -35,6 +35,6 @@ public class ProblemStatementTest {
 
 		assertNull("problemDescription should be null.", statement.getProblemDescription());
 		assertEquals("ProblemStatement should be correct.",
-				STATEMENT_BLOCK_NAME, statement.getStatement());
+		    Formatter.problem(), statement.getStatement());
 	}
 }

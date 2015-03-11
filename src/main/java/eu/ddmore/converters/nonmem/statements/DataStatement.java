@@ -15,6 +15,7 @@ import java.util.List;
 import crx.converter.engine.ScriptDefinition;
 import crx.converter.engine.parts.EstimationStep;
 import crx.converter.engine.parts.TabularDataset;
+import eu.ddmore.converters.nonmem.utils.Formatter;
 import eu.ddmore.converters.nonmem.utils.ParametersHelper;
 import eu.ddmore.libpharmml.dom.modellingsteps.DatasetMappingType;
 import eu.ddmore.libpharmml.dom.modellingsteps.EstimationStepType;
@@ -91,7 +92,7 @@ public class DataStatement{
 	 */
 	public String getStatement() throws IOException {
 		if (null == statement) {
-			StringBuilder stringBuilder = new StringBuilder("$DATA");
+			StringBuilder stringBuilder = new StringBuilder(Formatter.data());
 			stringBuilder.append(" " + getDataFileName());
 			stringBuilder.append(" IGNORE="+getIgnoreCharacter());
 			statement = stringBuilder.toString();

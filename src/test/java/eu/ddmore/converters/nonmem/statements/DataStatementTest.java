@@ -21,7 +21,6 @@ import eu.ddmore.libpharmml.dom.modellingsteps.NONMEMdataSetType;
 
 public class DataStatementTest {
 
-	private static final String STATEMENT_BLOCK_NAME = "$DATA";
 	private static final String DATA_FILE_NAME = "warfarin_conc_pca.csv";
 	private static final String IGNORE_STRING = "IGNORE";
 	private static final String IGNORE_CHAR = "@";

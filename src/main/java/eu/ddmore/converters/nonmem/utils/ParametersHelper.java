@@ -465,7 +465,7 @@ public class ParametersHelper {
         return etaTocorrelationsMap;
     }
 
-    public void addCorrelationToMap(LinkedHashMap<String, String> etaTocorrelationsMap, Correlation correlation) {
+    public void addCorrelationToMap(Map<String, String> etaTocorrelationsMap, Correlation correlation) {
         String firstVar = correlation.rnd1.getSymbId();			
         String secondVar = correlation.rnd2.getSymbId();
         String coefficient = correlation.correlationCoefficient.getSymbRef().getSymbIdRef();

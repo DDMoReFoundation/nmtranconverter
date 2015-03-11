@@ -34,7 +34,7 @@ public class SimulationStatement {
 		
 		if(getSimulationStep()!=null){
 			stringBuilder.append(Formatter.endline());
-			stringBuilder.append("$SIM");
+			stringBuilder.append(Formatter.sim());
 			//234251 is just random number
 			stringBuilder.append("(234251)");
 		}

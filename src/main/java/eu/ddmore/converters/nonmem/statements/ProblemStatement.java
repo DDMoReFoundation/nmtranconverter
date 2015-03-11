@@ -6,6 +6,8 @@ package eu.ddmore.converters.nonmem.statements;
 import java.io.IOException;
 import java.io.Writer;
 
+import eu.ddmore.converters.nonmem.utils.Formatter;
+
 public class ProblemStatement implements Writeable {
 	
     private String problemDescription;
@@ -25,7 +27,7 @@ public class ProblemStatement implements Writeable {
 	public String getStatement() {
 
 		if (null == statement) {
-			StringBuilder stringBuilder = new StringBuilder("$PROBLEM");
+			StringBuilder stringBuilder = new StringBuilder(Formatter.problem());
 
 			if (problemDescription != null) {
 				stringBuilder.append(" " + problemDescription);

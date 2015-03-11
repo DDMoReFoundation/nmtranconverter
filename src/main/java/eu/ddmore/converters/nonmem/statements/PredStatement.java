@@ -45,11 +45,11 @@ public class PredStatement {
 	}
 	
 	public void getPredStatement(PrintWriter fout){
-		String statementName = Formatter.endline()+Formatter.endline("$PRED");
+		String statementName = Formatter.endline()+Formatter.pred();
 		if(!derivativeVarList.isEmpty()){
 			//TODO: Add $SUB block. need to have details around it.
-			statementName = Formatter.endline()+Formatter.endline("$SUB");
-			fout.write(Formatter.endline()+Formatter.endline("$SUBS ADVAN13 TOL=9"));
+			statementName = Formatter.endline()+Formatter.sub();
+			fout.write(Formatter.endline()+Formatter.endline(Formatter.subs()+" ADVAN13 TOL=9"));
 			fout.write(getDerivativePredStatement().toString());
 		}else{
 			fout.write(statementName);
@@ -69,10 +69,10 @@ public class PredStatement {
         sb.append(Formatter.endline("IF (AMT.GT.0) NM_D=AMT"));
         sb.append(getPredCoreStatement());
         errorStatements = prepareAllErrorStatements();
-        sb.append(getErrorStatement(null, null));
+        sb.append(getErrorStatement());
         
         return sb;
-	}	
+	}
 	
 	/**
 	 * This method will build theta assignment statements
@@ -120,11 +120,20 @@ public class PredStatement {
 		DiffEquationStatementBuilder desBuilder = new DiffEquationStatementBuilder(scriptDefinition, errorStatements, parser);
 		DerivativePredblock.append(desBuilder.getDifferentialEquationsStatement(derivativeVarList));
 		isDES = false;
-		getAESStatement();
+		//TODO: getAESStatement();
 		DerivativePredblock.append(getErrorStatement(desBuilder.getDefinitionsParsingMap(), desBuilder.getDerivativeVariableMap()));
         
         return DerivativePredblock;
 	}
+	
+    /**
+     * get Error statement for nonmem pred block
+     * 
+     * @return
+     */
+    private String getErrorStatement() {
+        return getErrorStatement(null, null);
+    }
 	
 	/**
 	 * get Error statement for nonmem pred block
@@ -135,10 +144,10 @@ public class PredStatement {
 	private String getErrorStatement(Map<String, String> definitionsParsingMap, Map<String, String> derivativeVariableMap) {
 		StringBuilder errorBlock = new StringBuilder();
 		errorBlock.append(Formatter.endline());
-		errorBlock.append(Formatter.endline("$ERROR"));
+		errorBlock.append(Formatter.error());
 		for(ErrorStatement errorStatement: errorStatements){
 			if(definitionsParsingMap != null){
-				errorBlock.append(errorStatement.getErrorStatementDetailsForDES(definitionsParsingMap,derivativeVariableMap));
+				errorBlock.append(errorStatement.getDetailsForDES(definitionsParsingMap,derivativeVariableMap));
 			}else{
 				errorBlock.append(errorStatement.getErrorStatementDetails());
 			}
@@ -159,6 +168,7 @@ public class PredStatement {
 			if(errorType instanceof GeneralObsError){
 //				GeneralObsError genError = (GeneralObsError) errorType;
 //				TODO : DDMORE-1013 : add support for general observation error type once details are available
+//			    throw new IllegalArgumentException("general observation error type is not yet supported.");
 			}
 			if(errorType instanceof GaussianObsError){
 				GaussianObsError error = (GaussianObsError) errorType;
@@ -176,31 +186,16 @@ public class PredStatement {
 	}
 
 	/**
-	 * gets AES block for pred statement of nonmem file. 
-	 */
-	private void getAESStatement() {
-		// TODO Auto-generated method stub
-	}
-	
-	/**
 	 * gets pk block for pred statement
 	 */
 	private StringBuilder getPKStatement() {
 		StringBuilder pkStatementBlock = new StringBuilder();
 		pkStatementBlock.append(Formatter.endline());
-		pkStatementBlock.append(Formatter.endline("$PK"));
+		pkStatementBlock.append(Formatter.pk());
 		pkStatementBlock.append(getPredCoreStatement());
 		pkStatementBlock.append(getDifferentialInitialConditions());
 		return pkStatementBlock;
 	}
-
-	/**
-	 * gets ABBR block for pred statement of nonmem file.
-	 * TODO Currently ABBR block is not in scope.
-	 */
-//	private StringBuilder getAbbreviatedStatement() {
-//		return null;
-//	}
 
 	/**
 	 * get model statement block for pred statement of nonmem file.
@@ -209,7 +204,7 @@ public class PredStatement {
 	private StringBuilder getModelStatement() {
 		StringBuilder modelBlock = new StringBuilder();
 		modelBlock.append(Formatter.endline());
-		modelBlock.append(Formatter.endline("$MODEL"));
+		modelBlock.append(Formatter.model());
 		for(DerivativeVariableType stateVariable :getAllStateVariables()){
 			modelBlock.append(Formatter.endline("COMP "+"("+Formatter.addPrefix(stateVariable.getSymbId())+")"));
 		}

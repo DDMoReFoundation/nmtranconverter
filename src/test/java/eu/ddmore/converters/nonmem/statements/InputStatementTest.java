@@ -14,6 +14,7 @@ import java.util.List;
 import org.junit.Test;
 
 import eu.ddmore.converters.nonmem.statements.InputStatement;
+import eu.ddmore.converters.nonmem.utils.Formatter;
 import eu.ddmore.converters.nonmem.utils.Formatter.ColumnConstant;
 import eu.ddmore.libpharmml.dom.commontypes.SymbolTypeType;
 import eu.ddmore.libpharmml.dom.dataset.ColumnDefnType;
@@ -26,7 +27,6 @@ import eu.ddmore.libpharmml.dom.modellingsteps.NONMEMdataSetType;
 
 public class InputStatementTest {
 
-	private static final String STATEMENT_BLOCK_NAME = "$INPUT";
 	private static final String DATA_FILE_NAME = "warfarin_conc_pca.csv";
 	
 	private static final String COL_ID_1 = ColumnConstant.ID.toString();
@@ -66,7 +66,7 @@ public class InputStatementTest {
 		assertNotNull("InputStatement should not be null.", statement);
 		assertEquals("inputHeaders should be correct.", COLUMN_HEADERS, statement.getInputHeaders());
 		assertEquals("InputStatement should be correct.",
-				STATEMENT_BLOCK_NAME + getFormattedColumnHeaders(), statement.getStatement());
+		    Formatter.input() + getFormattedColumnHeaders(), statement.getStatement());
 	}
 
 	@Test

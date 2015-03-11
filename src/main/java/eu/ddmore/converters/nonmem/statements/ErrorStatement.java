@@ -90,7 +90,7 @@ public class ErrorStatement {
 	 *  
 	 * @return
 	 */
-	public StringBuilder getErrorStatementDetailsForDES(Map<String,String> functionDefEqMap, Map<String,String> derivativeVarMap){
+	public StringBuilder getDetailsForDES(Map<String,String> functionDefEqMap, Map<String,String> derivativeVarMap){
 		StringBuilder errorBlock = new StringBuilder();
 		//This could be null or empty in case of non-derivative
 		errorBlock.append(getDerivativeVarDetails(functionDefEqMap, derivativeVarMap));

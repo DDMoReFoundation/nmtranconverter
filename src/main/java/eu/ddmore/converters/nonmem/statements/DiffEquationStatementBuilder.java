@@ -38,7 +38,7 @@ public class DiffEquationStatementBuilder {
 	 */
 	public StringBuilder getDifferentialEquationsStatement(List<DerivativeVariableType> derivativeVarList) {
 		StringBuilder diffEqStatementBlock = new StringBuilder();
-		diffEqStatementBlock.append(Formatter.endline("$"+DES));
+		diffEqStatementBlock.append(Formatter.des());
 		int i=1;
 		for (DerivativeVariableType variableType : derivativeVarList){
 			String variable = Formatter.addPrefix(variableType.getSymbId());

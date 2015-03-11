@@ -15,15 +15,14 @@ import java.util.Map.Entry;
 import crx.converter.engine.parts.ParameterBlock;
 import crx.converter.engine.parts.BaseRandomVariableBlock.Correlation;
 import eu.ddmore.converters.nonmem.utils.Formatter;
-import eu.ddmore.converters.nonmem.utils.Formatter.Param;
 import eu.ddmore.converters.nonmem.utils.ParametersHelper;
 import eu.ddmore.converters.nonmem.utils.Formatter.Constant;
 import eu.ddmore.libpharmml.dom.modeldefn.ParameterRandomVariableType;
 
 public class OmegaBlockStatement {
 	
-    private final Map<String, List<OmegaStatement>> OmegaBlocks = new HashMap<String, List<OmegaStatement>>();
-    private LinkedHashMap<String, String> etasToOmegasInCorrelation = new LinkedHashMap<String, String>();
+    private final Map<String, List<OmegaStatement>> omegaBlocks = new HashMap<String, List<OmegaStatement>>();
+    private Map<String, String> etasToOmegasInCorrelation = new LinkedHashMap<String, String>();
 	
     private String omegaBlockTitle;
     private Boolean isOmegaBlockFromStdDev = false;
@@ -61,7 +60,7 @@ public class OmegaBlockStatement {
 
 					createFirstMatrixRow(eta, correlation.rnd1);
 						
-					List<OmegaStatement> omegas = OmegaBlocks.get(secondRandomVar);
+					List<OmegaStatement> omegas = omegaBlocks.get(secondRandomVar);
 					if(omegas.get(row)==null){
 						omegas.remove(row);
 						String symbId = paramHelper.getNameFromParamRandomVariable(correlation.rnd2);
@@ -92,7 +91,7 @@ public class OmegaBlockStatement {
 		//This will change in case of 0.4 as it will need to deal with matrix types as well.
 		description.append((!correlations.isEmpty())?Constant.CORRELATION:" ");
 		description.append((isOmegaBlockFromStdDev)?" "+Constant.SD:"");
-		String title = Formatter.endline()+"$"+Param.OMEGA+" "+Param.BLOCK+"("+blocksCount+") "+description;
+		String title = String.format(Formatter.endline()+"%s %s", Formatter.omegaBlock(blocksCount),description);
 		return title;
 	}
 
@@ -133,7 +132,7 @@ public class OmegaBlockStatement {
 			List<OmegaStatement> matrixRow = new ArrayList<OmegaStatement>();
 			String symbId = paramHelper.getNameFromParamRandomVariable(randomVar1);
 			matrixRow.add(paramHelper.getOmegaFromRandomVarName(symbId));
-			OmegaBlocks.put(randomVar1.getSymbId(), matrixRow);
+			omegaBlocks.put(randomVar1.getSymbId(), matrixRow);
 		}
 	}
 	
@@ -143,7 +142,7 @@ public class OmegaBlockStatement {
 	 * @param correlations
 	 */
 	private void initialiseOmegaBlocks(List<Correlation> correlations){
-		OmegaBlocks.clear();
+		omegaBlocks.clear();
 
 		for(Correlation correlation : correlations){
 			//Need to set SD attribute for whole block if even a single value is from std dev
@@ -160,7 +159,7 @@ public class OmegaBlockStatement {
 		for(String eta : etaToOmagaMap.keySet()){
 			ArrayList<OmegaStatement> statements = new ArrayList<OmegaStatement>();
 			for(int i=0;i<etaToOmagaMap.keySet().size();i++) statements.add(null);
-			OmegaBlocks.put(eta, statements);
+			omegaBlocks.put(eta, statements);
 		}
 	}
 	
@@ -183,7 +182,6 @@ public class OmegaBlockStatement {
 		}
 	}
 	
-	//Getters and Setters
 	public Map<String, Integer> getEtaToOmagaMap() {
 		return etaToOmagaMap;
 	}
@@ -193,7 +191,7 @@ public class OmegaBlockStatement {
 	}
 
 	public Map<String, List<OmegaStatement>> getOmegaBlocks() {
-		return OmegaBlocks;
+		return omegaBlocks;
 	}
 
 	public Map<String, String> getEtasToOmegasInCorrelation() {

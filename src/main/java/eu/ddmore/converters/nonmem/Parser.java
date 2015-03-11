@@ -50,9 +50,10 @@ import eu.ddmore.converters.nonmem.statements.Parameter;
 import eu.ddmore.converters.nonmem.statements.PredStatement;
 import eu.ddmore.converters.nonmem.statements.ThetaStatement;
 import eu.ddmore.converters.nonmem.utils.Formatter;
+import eu.ddmore.converters.nonmem.utils.Formatter.Block;
 import eu.ddmore.converters.nonmem.utils.Formatter.ColumnConstant;
 import eu.ddmore.converters.nonmem.utils.Formatter.Constant;
-import eu.ddmore.converters.nonmem.utils.Formatter.Param;
+import eu.ddmore.converters.nonmem.utils.Formatter.Symbol;
 import eu.ddmore.converters.nonmem.utils.ParametersHelper;
 import eu.ddmore.libpharmml.dom.IndependentVariableType;
 import eu.ddmore.libpharmml.dom.commontypes.FunctionDefinitionType;
@@ -77,12 +78,12 @@ import eu.ddmore.libpharmml.dom.trialdesign.ActivityType;
 
 public class Parser extends BaseParser {
 
-    private static final String ENDLINE_CHAR = ";";
-    ParametersHelper parameters;
-    ArrayList<String> thetaSet = new ArrayList<String>();
+    private ParametersHelper parameters;
+    private Properties binopProperties;
+    private ArrayList<String> thetas = new ArrayList<String>();
 
     public Parser() throws IOException {
-        comment_char = Formatter.COMMENT_CHAR;
+        comment_char = Symbol.COMMENT.toString();
         script_file_suffix = "ctl";
         objective_dataset_file_suffix = "csv";
         output_file_suffix = "csv";
@@ -93,15 +94,17 @@ public class Parser extends BaseParser {
         Properties props = new Properties();
         props.load(getClass().getResourceAsStream("Parser.properties"));
 
-        interpreterEXE = props.getProperty("interpreterEXE");
-        if (props.containsKey("interpreterParams")) interpreterParams = props.getProperty("interpreterParams");
+        binopProperties = loadBinopProperties();
     }
 
+    /*
+     * (non-Javadoc)
+     * @see crx.converter.engine.BaseParser#doSymbolRef(eu.ddmore.libpharmml.dom.commontypes.SymbolRefType)
+     */
     @Override
     protected String doSymbolRef(SymbolRefType symbRefType) {
-        String symbol = unassigned_symbol;
 
-        symbol = getFormattedSymbol(symbRefType.getSymbIdRef());
+        String symbol = getFormattedSymbol(symbRefType.getSymbIdRef());
 
         return symbol;
     }
@@ -130,21 +133,31 @@ public class Parser extends BaseParser {
     @Override
     protected String getScriptBinaryOperator(String symbol) {
 
-        Properties binopProperties = new Properties();
-        try {
-            binopProperties.load(Parser.class.getResourceAsStream("binary_operator.properties"));
-        } catch (IOException e) {
-            //As overridden method, we are handling exception in common converter way. Need to do it better. 
-            e.printStackTrace();
-        }
-
-        if(binopProperties.stringPropertyNames().contains(symbol)){
+        if(binopProperties!=null && binopProperties.stringPropertyNames().contains(symbol)){
             return binopProperties.getProperty(symbol);
         }else{
             throw new IllegalStateException("Binary Operation not recognised : "+ symbol);
         }
     }
 
+    /**
+     * Loads binary operator properties from properties file. 
+     * @return
+     */
+    private Properties loadBinopProperties() {
+        Properties binopProperties = new Properties();
+        try {
+            binopProperties.load(Parser.class.getResourceAsStream("binary_operator.properties"));
+        } catch (IOException e) {
+            throw new IllegalStateException("Binary Operation not recognised : "+ e);
+        }
+        return binopProperties;
+    }
+
+    /*
+     * (non-Javadoc)
+     * @see crx.converter.engine.BaseParser#rootLeafHandler(java.lang.Object, crx.converter.tree.Node, java.io.PrintWriter)
+     */
     @Override
     protected void rootLeafHandler(Object context, Node leaf, PrintWriter fout) {
         if (leaf == null) throw new NullPointerException("Tree leaf is NULL.");
@@ -212,6 +225,10 @@ public class Parser extends BaseParser {
             throw new IllegalStateException("Should be a statement string bound to the root.data element.");
     }
 
+    /*
+     * (non-Javadoc)
+     * @see crx.converter.engine.BaseParser#doIndependentVariable(eu.ddmore.libpharmml.dom.IndependentVariableType)
+     */
     @Override
     protected String doIndependentVariable(IndependentVariableType v) {
         String symbol = v.getSymbId().toUpperCase();
@@ -361,7 +378,7 @@ public class Parser extends BaseParser {
 
         if (!thetas.isEmpty()) {
             fout.write(Formatter.endline());
-            fout.write(Formatter.endline("$"+Param.THETA));
+            fout.write(Formatter.theta());
             for (String thetaVar : thetas.keySet()) {
                 writeParameter(thetas.get(thetaVar), fout);
             }
@@ -377,7 +394,7 @@ public class Parser extends BaseParser {
         }
         if (!omegas.isEmpty()) {
             fout.write(Formatter.endline());
-            fout.write(Formatter.endline("$"+Param.OMEGA));
+            fout.write(Formatter.endline(Formatter.omega()));
             for (final String omegaVar : omegas.keySet()) {
                 writeParameter(omegas.get(omegaVar), fout);
             }
@@ -386,10 +403,10 @@ public class Parser extends BaseParser {
             //adding default Omega if omega block is absent but sigma is present 
             if(omegas.isEmpty()){
                 fout.write(Formatter.endline());
-                fout.write(Formatter.endline("$"+Param.OMEGA+" 0 "+Constant.FIX));
+                fout.write(Formatter.endline(Formatter.omega()+" 0 "+Constant.FIX));
             }
             fout.write(Formatter.endline());
-            fout.write(Formatter.endline("$"+Param.SIGMA));
+            fout.write(Formatter.sigma());
             for (final String sigmaVar: sigmaParams) {
                 fout.write(sigmaVar);
             }
@@ -418,7 +435,7 @@ public class Parser extends BaseParser {
         if(param.isStdDev()){
             fout.write(Constant.SD+" ");
         }
-        fout.write(Formatter.endline(")"+Formatter.indent(Formatter.COMMENT_CHAR+description)));
+        fout.write(Formatter.endline(")"+Formatter.indent(Symbol.COMMENT+description)));
     }
 
     /**
@@ -507,7 +524,7 @@ public class Parser extends BaseParser {
      * Set theta assignements from theta parameters generated.
      */
     private void setThetaAssigments(){
-        thetaSet.addAll(parameters.getThetaParams().keySet());
+        thetas.addAll(parameters.getThetaParams().keySet());
     }
 
     /**
@@ -516,11 +533,11 @@ public class Parser extends BaseParser {
      * @return
      */
     public String getThetaForSymbol(String symbol){
-        if(thetaSet.isEmpty()){
+        if(thetas.isEmpty()){
             setThetaAssigments();
         }
-        if(thetaSet.contains(symbol)){
-            symbol = String.format(Param.THETA+"(%s)",thetaSet.indexOf(symbol)+1);
+        if(thetas.contains(symbol)){
+            symbol = String.format(Block.THETA+"(%s)",thetas.indexOf(symbol)+1);
         }
         return symbol;
     }
@@ -533,7 +550,6 @@ public class Parser extends BaseParser {
      * @return
      */
     public String createIndividualDefinition(IndividualParameterType ip){
-
         StringBuilder statement = new StringBuilder();
 
         String variableSymbol = ip.getSymbId();    	
@@ -568,7 +584,7 @@ public class Parser extends BaseParser {
                 String assignment = parse(generalCov, lexer.getStatement(generalCov));
                 statement.append(assignment);
             }
-            statement.append(Formatter.endline(ENDLINE_CHAR));
+            statement.append(Formatter.endline(comment_char));
 
             StringBuilder etas = addEtasStatementsToIndivParamDef(gaussianModel.getRandomEffects());
             if (logType.equals(Constant.LOG.toString())) {
@@ -650,7 +666,7 @@ public class Parser extends BaseParser {
             statement.append(Formatter.endline());
             statement.append(String.format("%s = ", ip.getSymbId()));
             String assignment = parse(new Object(), lexer.getStatement(ip.getAssign()));
-            statement.append(Formatter.endline(assignment+ENDLINE_CHAR));
+            statement.append(Formatter.endline(assignment+Symbol.COMMENT));
         }
         return statement;
     }

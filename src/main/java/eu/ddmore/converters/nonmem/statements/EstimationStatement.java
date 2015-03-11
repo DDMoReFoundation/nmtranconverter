@@ -103,7 +103,7 @@ public class EstimationStatement {
     public StringBuilder getEstimationStatement() {
         StringBuilder estStatement = new StringBuilder();
         estStatement.append(Formatter.endline());
-        estStatement.append("$EST ");
+        estStatement.append(Formatter.est());
         if(estimationSteps!=null){
             for(EstimationStep estStep : estimationSteps){
 
@@ -129,7 +129,7 @@ public class EstimationStatement {
      * @param fout
      */
     public String getCovStatement(){
-        String covStatement = (isCovFound()) ? Formatter.endline("$COV"): "";
+        String covStatement = (isCovFound()) ? Formatter.cov(): "";
         return Formatter.endline()+covStatement;
     }
 

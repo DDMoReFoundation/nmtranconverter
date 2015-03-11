@@ -11,6 +11,7 @@ import crx.converter.engine.ScriptDefinition;
 import crx.converter.engine.parts.EstimationStep;
 import crx.converter.engine.parts.TabularDataset;
 import crx.converter.engine.parts.TrialDesignBlock;
+import eu.ddmore.converters.nonmem.utils.Formatter;
 import eu.ddmore.converters.nonmem.utils.ParametersHelper;
 import eu.ddmore.libpharmml.dom.commontypes.SymbolTypeType;
 import eu.ddmore.libpharmml.dom.dataset.ColumnDefnType;
@@ -125,7 +126,7 @@ public class InputStatement {
 	public String getStatement() {
 
 		if (null == statement) {
-			StringBuilder stringBuilder = new StringBuilder("$INPUT");
+			StringBuilder stringBuilder = new StringBuilder(Formatter.input());
 
 			for (String nextColumn : getInputHeaders()) {
 				stringBuilder.append(" " + nextColumn);

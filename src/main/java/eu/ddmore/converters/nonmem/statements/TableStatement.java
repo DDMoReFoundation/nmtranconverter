@@ -65,7 +65,7 @@ public class TableStatement {
 	private StringBuilder createTableStatement(StringBuilder columns, String tableType){
 		StringBuilder tableStatement = new StringBuilder();
 		tableStatement.append(Formatter.endline());
-		tableStatement.append("$"+TableConstant.TABLE);
+		tableStatement.append(Formatter.table());
 		tableStatement.append(SPACE+ColumnConstant.ID);
 		tableStatement.append(columns+SPACE+TableConstant.NOAPPEND+SPACE+TableConstant.NOPRINT);
 		tableStatement.append(Formatter.endline(" FILE="+tableType));
