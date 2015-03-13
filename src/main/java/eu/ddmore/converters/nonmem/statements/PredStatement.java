@@ -49,7 +49,7 @@ public class PredStatement {
 		if(!derivativeVarList.isEmpty()){
 			//TODO: Add $SUB block. need to have details around it.
 			statementName = Formatter.endline()+Formatter.sub();
-			fout.write(Formatter.endline()+Formatter.endline(Formatter.subs()+" ADVAN13 TOL=9"));
+			fout.write(Formatter.endline()+Formatter.endline(Formatter.subs()+"ADVAN13 TOL=9"));
 			fout.write(getDerivativePredStatement().toString());
 		}else{
 			fout.write(statementName);
