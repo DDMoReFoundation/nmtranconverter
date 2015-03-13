@@ -36,6 +36,10 @@ import eu.ddmore.libpharmml.dom.uncertml.AbstractContinuousUnivariateDistributio
 import eu.ddmore.libpharmml.dom.uncertml.NormalDistribution;
 import eu.ddmore.libpharmml.dom.uncertml.PositiveRealValueType;
 
+/**
+ * This is helper class for parser to parse parameter related functionality for NmTran conversion.
+ * 
+ */
 public class ParametersHelper {
     private static final String MU = "MU_";
     private final LinkedHashMap<String, ThetaStatement> thetaStatements = new LinkedHashMap<String, ThetaStatement>();
@@ -503,7 +507,7 @@ public class ParametersHelper {
         }
     }
 
-    public void addToSigmaList(String sigmaVar){
+    public void addToSigmaListIfNotExists(String sigmaVar){
         if(!sigmas.contains(sigmaVar))
             sigmas.add(sigmaVar);
     }

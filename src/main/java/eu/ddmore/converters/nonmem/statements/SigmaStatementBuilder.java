@@ -52,7 +52,7 @@ public class SigmaStatementBuilder {
      */
 
     public List<String> getSigmaStatements(ParametersHelper parameters) {
-        
+
         List<String> sigmaParams = new ArrayList<String>();
 
         String sigmaRepresentation = new String();
@@ -97,9 +97,9 @@ public class SigmaStatementBuilder {
      * If sigma varId is not a numeric value, it will be variable from initial estimate parameters list.
      * We need to look for value of this variable and return value of the same. 
      * 
-     * @param varId
-     * @param isStdDev 
-     * @return
+     * @param varId - sigma var id
+     * @param isStdDev - std dev flag
+     * @return sigma - statement string
      */
     private String getSigmaFromInitialEstimate(String varId, Boolean isStdDev, ParametersHelper parameters) {
         StringBuilder sigmastatement = new StringBuilder();
@@ -116,29 +116,18 @@ public class SigmaStatementBuilder {
                 }
                 addAttributeForStdDev(sigmastatement,isStdDev);
                 sigmastatement.append(Formatter.endline(Formatter.indent(Symbol.COMMENT+ symbId)));
-                parameters.addToSigmaList(symbId);
+                parameters.addToSigmaListIfNotExists(symbId);
             }
         }
         return sigmastatement.toString();
     }
-    
-    /**
-     * Add SD attribute to sigma statement if value is obtained from standard deviation.
-     * @param statement
-     * @param isStdDev
-     */
+
     public void addAttributeForStdDev(StringBuilder statement, Boolean isStdDev) {
         if(isStdDev){
             statement.append(Formatter.endline(" "+Constant.SD));
         }
     }
 
-    /**
-     * gets sigma value in case of stddev distribution.
-     * 
-     * @param stddevDistribution
-     * @return
-     */
     private String getSigmaFromStddevDistribution(PositiveRealValueType stddevDistribution) {
         String sigmaRepresentation = new String();
 
@@ -153,12 +142,6 @@ public class SigmaStatementBuilder {
         return sigmaRepresentation;
     }
 
-    /**
-     * gets sigma value in case of variance distribution.
-     * 
-     * @param varianceDistribution
-     * @return
-     */
     private String getSigmaFromVarianceDistribution(PositiveRealValueType varianceDistribution) {
         String sigmaRepresentation = new String();
         if(varianceDistribution!=null){
@@ -173,15 +156,14 @@ public class SigmaStatementBuilder {
     }
 
     /**
-     * Checks if sigma varId is numeric value or not. if it is then it will be displayed appropriately, 
-     * if its not then it is a variable which needs to be looked into params to estimate list and value can be rendered from there.
+     * Checks if sigma varId is numeric value or not. if it is then it will be displayed appropriately. 
      * 
-     * @param sigmaRepresentation
+     * @param representation
      * @return
      */
-    private boolean isNumeric(String sigmaRepresentation) {
+    private boolean isNumeric(String representation) {
         try {
-            Double.parseDouble(sigmaRepresentation);
+            Double.parseDouble(representation);
         } catch (NumberFormatException e) {
             return false;
         }
