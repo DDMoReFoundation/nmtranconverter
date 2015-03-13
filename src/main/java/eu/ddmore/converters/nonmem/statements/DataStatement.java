@@ -93,7 +93,7 @@ public class DataStatement{
 	public String getStatement() throws IOException {
 		if (null == statement) {
 			StringBuilder stringBuilder = new StringBuilder(Formatter.data());
-			stringBuilder.append(" " + getDataFileName());
+			stringBuilder.append(getDataFileName());
 			stringBuilder.append(" IGNORE="+getIgnoreCharacter());
 			statement = stringBuilder.toString();
 		}

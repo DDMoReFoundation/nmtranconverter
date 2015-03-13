@@ -30,7 +30,7 @@ public class ProblemStatement implements Writeable {
 			StringBuilder stringBuilder = new StringBuilder(Formatter.problem());
 
 			if (problemDescription != null) {
-				stringBuilder.append(" " + problemDescription);
+				stringBuilder.append(problemDescription);
 			}
 
 			statement = stringBuilder.toString();

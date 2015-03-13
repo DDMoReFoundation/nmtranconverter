@@ -25,7 +25,7 @@ public class ProblemStatementTest {
 		assertNotNull("ProblemStatement should not be null.", statement);
 		assertEquals("problemDescription should be correct.", PROBLEM_DESCRIPTION, statement.getProblemDescription());
 		assertEquals("ProblemStatement should be correct.",
-		    Formatter.problem() + " " + PROBLEM_DESCRIPTION, statement.getStatement());
+		    Formatter.problem() + PROBLEM_DESCRIPTION, statement.getStatement());
 	}
 	
 	@Test
