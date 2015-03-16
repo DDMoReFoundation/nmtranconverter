@@ -403,14 +403,14 @@ public class Parser extends BaseParser {
             //adding default Omega if omega block is absent but sigma is present 
             if(omegas.isEmpty()){
                 fout.write(Formatter.endline());
-                fout.write(Formatter.endline(Formatter.omega()+" 0 "+Constant.FIX));
+                fout.write(Formatter.endline(Formatter.omega()+"0 "+Constant.FIX));
             }
             fout.write(Formatter.endline());
             fout.write(Formatter.sigma());
             for (final String sigmaVar: sigmaParams) {
                 fout.write(sigmaVar);
             }
-        }		
+        }
     }
 
     /**
