@@ -4,6 +4,7 @@
 package eu.ddmore.converters.nonmem.statements;
 
 import java.util.Map;
+import java.util.regex.Pattern;
 
 import eu.ddmore.converters.nonmem.utils.Formatter;
 import eu.ddmore.libpharmml.dom.maths.FunctionCallType;
@@ -128,8 +129,10 @@ public class ErrorStatement {
 			for(String variable: derivativeVarMap.keySet()){
 				if(parsedEquation.contains(variable)){
 					String varAmount = DiffEquationStatementBuilder.getVarAmountFromCompartment(variable, derivativeVarMap);
-					if(!varAmount.isEmpty())
-						parsedEquation = parsedEquation.replaceAll(variable, varAmount);
+					if(!varAmount.isEmpty()){
+					    String varToReplace = "\\b"+Pattern.quote(variable)+"\\b";
+						parsedEquation = parsedEquation.replaceAll(varToReplace, varAmount);
+					}
 				}
 			}
 			return parsedEquation;
