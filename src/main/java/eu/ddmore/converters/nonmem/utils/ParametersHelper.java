@@ -19,18 +19,21 @@ import crx.converter.engine.parts.ParameterBlock;
 import crx.converter.engine.parts.Part;
 import eu.ddmore.converters.nonmem.statements.OmegaBlockStatement;
 import eu.ddmore.converters.nonmem.statements.OmegaStatement;
+import eu.ddmore.converters.nonmem.statements.Parameter;
 import eu.ddmore.converters.nonmem.statements.SigmaStatementBuilder;
 import eu.ddmore.converters.nonmem.statements.ThetaStatement;
 import eu.ddmore.converters.nonmem.utils.Formatter.Constant;
+import eu.ddmore.converters.nonmem.utils.Formatter.Symbol;
+import eu.ddmore.libpharmml.dom.commontypes.RealValueType;
 import eu.ddmore.libpharmml.dom.commontypes.Rhs;
 import eu.ddmore.libpharmml.dom.commontypes.ScalarRhs;
+import eu.ddmore.libpharmml.dom.commontypes.SymbolRefType;
 import eu.ddmore.libpharmml.dom.modeldefn.IndividualParameterType;
 import eu.ddmore.libpharmml.dom.modeldefn.IndividualParameterType.GaussianModel;
 import eu.ddmore.libpharmml.dom.modeldefn.IndividualParameterType.GaussianModel.LinearCovariate;
 import eu.ddmore.libpharmml.dom.modeldefn.ParameterRandomEffectType;
 import eu.ddmore.libpharmml.dom.modeldefn.ParameterRandomVariableType;
 import eu.ddmore.libpharmml.dom.modeldefn.SimpleParameterType;
-import eu.ddmore.libpharmml.dom.modellingsteps.InitialEstimateType;
 import eu.ddmore.libpharmml.dom.modellingsteps.ParameterEstimateType;
 import eu.ddmore.libpharmml.dom.uncertml.AbstractContinuousUnivariateDistributionType;
 import eu.ddmore.libpharmml.dom.uncertml.NormalDistribution;
@@ -52,7 +55,7 @@ public class ParametersHelper {
 
     // These are keyed by symbol ID
     private final Map<String, SimpleParameterType> simpleParams = new HashMap<String, SimpleParameterType>();
-    private final Map<String, InitialEstimateType> initialEstimates = new HashMap<String, InitialEstimateType>();
+    private final Map<String, ScalarRhs> initialEstimates = new HashMap<String, ScalarRhs>();
     private final Map<String, ScalarRhs> lowerBounds = new HashMap<String, ScalarRhs>();
     private final Map<String, ScalarRhs> upperBounds = new HashMap<String, ScalarRhs>();
     private List<ParameterEstimateType> parametersToEstimate = new ArrayList<ParameterEstimateType>();
@@ -80,6 +83,9 @@ public class ParametersHelper {
             return;
         }else {
             setSimpleParameterTypes(simpleParameterTypes);
+            for (SimpleParameterType simpleParam : simpleParameterTypes) {
+                simpleParams.put(simpleParam.getSymbId(), simpleParam);
+            }
         }
 
         final EstimationStep estimationStep = getEstimationStep(scriptDefinition);
@@ -106,18 +112,23 @@ public class ParametersHelper {
      * 
      */
     private void setThetaParameters(){
-        for (SimpleParameterType simpleParam : getSimpleParameterTypes()) {
-            simpleParams.put(simpleParam.getSymbId(), simpleParam);
-        }
-
         final Map<String, ThetaStatement> unOrderedThetas = new HashMap<String, ThetaStatement>();
         for(ParameterEstimateType parameter : parametersToEstimate){
             String paramName = parameter.getSymbRef().getSymbIdRef();
             createThetaForValidParam(unOrderedThetas, paramName, false);
+            simpleParams.remove(paramName);
         }
         for(FixedParameter fixedParameter : fixedParameters){
             String paramName = fixedParameter.p.getSymbRef().getSymbIdRef();
             createThetaForValidParam(unOrderedThetas, paramName, true);
+            simpleParams.remove(paramName);
+        }
+        for(String paramName : simpleParams.keySet()){
+            ScalarRhs scalar = getScalarRhsForSymbol(paramName);
+            if(scalar !=null){
+                initialEstimates.put(paramName, scalar);
+                createThetaForValidParam(unOrderedThetas, paramName, true);    
+            }
         }
         thetaStatements.putAll(unOrderedThetas);
     }
@@ -146,7 +157,11 @@ public class ParametersHelper {
      */
     private void addThetaToMap(final Map<String, ThetaStatement> unOrderedThetas, ThetaStatement thetaStatement, Boolean isFixed) {
         String paramName = thetaStatement.getSymbId();
-        thetaStatement.setParameterBounds(initialEstimates.get(paramName),lowerBounds.get(paramName),upperBounds.get(paramName));
+        if(initialEstimates.get(paramName)==null && lowerBounds.get(paramName)==null && upperBounds.get(paramName)==null ){
+            return;
+        }else{
+            thetaStatement.setParameterBounds(initialEstimates.get(paramName),lowerBounds.get(paramName),upperBounds.get(paramName));
+        }
         if(isFixed!=null) thetaStatement.setFixed(isFixed);
         unOrderedThetas.put(paramName, thetaStatement);
     }
@@ -204,8 +219,35 @@ public class ParametersHelper {
         if(omegaSymbId!= null){
             omegaStatement = new OmegaStatement(omegaSymbId);
             omegaStatement.setInitialEstimate(initialEstimates.get(omegaSymbId));
+            
+            if(initialEstimates.get(omegaSymbId) == null){
+                ScalarRhs scalar = getScalarRhsForSymbol(omegaSymbId);
+                if(scalar!=null){
+                    omegaStatement.setInitialEstimate(scalar);
+                    omegaStatement.setFixed(true);
+                }
+                simpleParams.remove(omegaSymbId);
+            }
         }
         return omegaStatement;
+    }
+
+    /**
+     * 
+     * @param omegaSymbId
+     * @return
+     */
+    private ScalarRhs getScalarRhsForSymbol(String omegaSymbId) {
+        SimpleParameterType param = simpleParams.get(omegaSymbId);
+        ScalarRhs scalar = null;
+        if(param.getAssign().getScalar()!=null){
+            scalar = new ScalarRhs();
+            scalar.setScalar(param.getAssign().getScalar());
+            SymbolRefType symbRef = new SymbolRefType();
+            symbRef.setId(omegaSymbId);
+            scalar.setSymbRef(symbRef);    
+        }        
+        return scalar;
     }
 
     private void setSigmaParameters(){
@@ -303,9 +345,11 @@ public class ParametersHelper {
     private void setAllParameterBounds(List<ParameterEstimateType> parametersToEstimate) {
         for (ParameterEstimateType paramEstimate : parametersToEstimate) {
             setParameterBounds(paramEstimate);
+            simpleParams.remove(paramEstimate.getSymbRef().getSymbIdRef());
         }
         for (FixedParameter fixedParameter : fixedParameters){
             setParameterBounds(fixedParameter.p);
+            simpleParams.remove(fixedParameter.p.getSymbRef().getSymbIdRef());
         }
     }
 
@@ -512,7 +556,162 @@ public class ParametersHelper {
             sigmas.add(sigmaVar);
     }
 
-    //Getters and setters
+    public StringBuilder getSigmaStatementBlock() {
+        StringBuilder sigmaStatement = new StringBuilder();
+        if(!SigmaStatements.isEmpty()){
+            //adding default Omega if omega block is absent but sigma is present 
+            if(omegaStatements.isEmpty()){
+                sigmaStatement.append(Formatter.endline());
+                sigmaStatement.append(Formatter.endline(Formatter.omega()+"0 "+Constant.FIX));
+            }
+            sigmaStatement.append(Formatter.endline()+Formatter.sigma());
+            for (final String sigmaVar: SigmaStatements) {
+                sigmaStatement.append(sigmaVar);
+            }
+        }
+        return sigmaStatement;
+    }
+    
+    public StringBuilder getThetaStatementBlock(){
+        StringBuilder thetaStatement = new StringBuilder();
+        if (!thetaStatements.isEmpty()) {
+            thetaStatement.append(Formatter.endline()+Formatter.theta());
+            for (String thetaVar : thetaStatements.keySet()) {
+                thetaStatement.append(writeParameter(thetaStatements.get(thetaVar)));
+            }
+        }
+        return thetaStatement;
+    }
+    
+    public StringBuilder getOmegaStatementBlock() {
+        StringBuilder omegaStatement = new StringBuilder();
+        Map<String, List<OmegaStatement>> omegaBlocks = omegaBlockStatement.getOmegaBlocks();
+        
+        if(!omegaBlocks.isEmpty()){
+            omegaStatement.append(Formatter.endline(omegaBlockStatement.getOmegaBlockTitle()));
+            for(String eta : omegaBlockStatement.getOrderedEtasToOmegaMap().values()){
+                for(OmegaStatement omega : omegaBlocks.get(eta)){                   
+                    omegaStatement.append(writeParameter(omega));
+                }
+            }
+        }
+        
+        if (!omegaStatements.isEmpty()) {
+            omegaStatement.append(Formatter.endline());
+            omegaStatement.append(Formatter.endline(Formatter.omega()));
+            for (final String omegaVar : omegaStatements.keySet()) {
+                omegaStatement.append(writeParameter(omegaStatements.get(omegaVar)));
+            }
+        }
+        return omegaStatement;
+    }
+    
+    /**
+     * Write Theta and omega parameters according to the initial estimates, lower and upper bounds provided.
+     * 
+     * @param param
+     * @param simpleParam
+     * @param fout
+     */
+    public StringBuilder writeParameter(Parameter param) {
+        StringBuilder statement = new StringBuilder();
+        String description = param.getSymbId();
+
+        ScalarRhs lowerBound = param.getLowerBound();
+        ScalarRhs upperBound= param.getUpperBound(); 
+        ScalarRhs initEstimate= param.getInitialEstimate();
+        statement.append("(");
+        statement.append(writeParameterStatements(description, lowerBound, upperBound,initEstimate));
+
+        if(param.isFixed()){
+            statement.append(" "+Constant.FIX+" ");
+        }
+        if(param.isStdDev()){
+            statement.append(Constant.SD+" ");
+        }
+        statement.append(Formatter.endline(")"+Formatter.indent(Symbol.COMMENT+description)));
+        
+        return statement;
+    }
+
+    /**
+     *  Writes parameter statement as described in following table,
+     *  
+     *  LB  IN  UB  Action expected
+     *  X   X   X   FAIL
+     *  X   X   Y   FAIL
+     *  X   Y   X   (IN)
+     *  Y   X   X   FAIL
+     *  X   Y   Y   (-INF,IN,UB)
+     *  Y   Y   X   (LB,IN)
+     *  Y   X   Y   (LB, ,UB)
+     *  Y   Y   Y   (LB,IN,UB) 
+     * @param fout
+     * @param description
+     * @param lowerBound
+     * @param upperBound
+     * @param initEstimate
+     */
+    private StringBuilder writeParameterStatements(String description,
+            ScalarRhs lowerBound, ScalarRhs upperBound, ScalarRhs initEstimate) {
+
+        StringBuilder statement = new StringBuilder(); 
+        if(lowerBound!=null){
+            if(initEstimate!=null){
+                if(upperBound!=null){
+                    statement.append(writeStatement(lowerBound,initEstimate,upperBound));
+                }else{
+                    statement.append(writeStatement(lowerBound,initEstimate,null));
+                }
+            }else{
+                if(upperBound!=null){
+                    statement.append(writeStatement(lowerBound,null,upperBound));
+                }else{
+                    throw new IllegalStateException("Only lower bound value present for parameter : "+description);
+                }
+            }
+        }else if(initEstimate!=null){
+            if(upperBound!=null){
+                statement.append("-INF,");
+                statement.append(writeStatement(null,initEstimate,upperBound));
+            }else{
+                statement.append(writeStatement(null,initEstimate,null));
+            }
+        }else {
+            throw new IllegalStateException("Only upper bound or no values present for parameter : "+description);
+        }
+        
+        return statement;
+    }
+
+    /**
+     * Writes bound values of a parameter statement in expected format.
+     *  
+     * @param lowerBound
+     * @param init
+     * @param upperBound
+     * @param fout
+     */
+    private StringBuilder writeStatement(ScalarRhs lowerBound,ScalarRhs init,ScalarRhs upperBound){
+        StringBuilder statement = new StringBuilder();
+        RealValueType value;
+        if(lowerBound!=null){
+            value = (RealValueType) lowerBound.getScalar().getValue();
+            statement.append(value.getValue()+" ,");
+        }
+        if(init!=null){
+            value = (RealValueType) init.getScalar().getValue();
+            statement.append(value.getValue()+" ");
+        }else{
+            statement.append(", ,");
+        }
+        if(upperBound!=null){
+            statement.append(",");
+            value = (RealValueType) upperBound.getScalar().getValue();
+            statement.append(value.getValue()+" ");
+        }
+        return statement;
+    }
 
     public ScriptDefinition getScriptDefinition() {
         return scriptDefinition;

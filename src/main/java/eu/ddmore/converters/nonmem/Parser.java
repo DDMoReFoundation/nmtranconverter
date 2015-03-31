@@ -44,11 +44,7 @@ import crx.converter.engine.parts.StructuralBlock;
 import crx.converter.engine.parts.TrialDesignBlock.ArmIndividual;
 import crx.converter.tree.BinaryTree;
 import crx.converter.tree.Node;
-import eu.ddmore.converters.nonmem.statements.OmegaBlockStatement;
-import eu.ddmore.converters.nonmem.statements.OmegaStatement;
-import eu.ddmore.converters.nonmem.statements.Parameter;
 import eu.ddmore.converters.nonmem.statements.PredStatement;
-import eu.ddmore.converters.nonmem.statements.ThetaStatement;
 import eu.ddmore.converters.nonmem.utils.Formatter;
 import eu.ddmore.converters.nonmem.utils.Formatter.Block;
 import eu.ddmore.converters.nonmem.utils.Formatter.ColumnConstant;
@@ -58,7 +54,6 @@ import eu.ddmore.converters.nonmem.utils.ParametersHelper;
 import eu.ddmore.libpharmml.dom.IndependentVariableType;
 import eu.ddmore.libpharmml.dom.commontypes.FunctionDefinitionType;
 import eu.ddmore.libpharmml.dom.commontypes.PharmMLRootType;
-import eu.ddmore.libpharmml.dom.commontypes.ScalarRhs;
 import eu.ddmore.libpharmml.dom.commontypes.SymbolRefType;
 import eu.ddmore.libpharmml.dom.maths.Condition;
 import eu.ddmore.libpharmml.dom.maths.ConstantType;
@@ -366,150 +361,20 @@ public class Parser extends BaseParser {
         setEtasOrder(parameters.createOrderedEtasMap());
         parameters.initialiseSimpleParams(lexer.getModelParameters());
 
-        Map<String, ThetaStatement> thetas = parameters.getThetaParams();
-        Map<String, OmegaStatement> omegas = parameters.getOmegaParams();
-        OmegaBlockStatement omegaBlockStatement = parameters.getOmegaBlockStatement();
-        Map<String, List<OmegaStatement>> omegaBlocks = omegaBlockStatement.getOmegaBlocks();
-
-        List<String> sigmaParams = parameters.getSigmaStatements();
-
         setThetaAssigments();
         buildPredStatement(fout);
 
-        if (!thetas.isEmpty()) {
-            fout.write(Formatter.endline());
-            fout.write(Formatter.theta());
-            for (String thetaVar : thetas.keySet()) {
-                writeParameter(thetas.get(thetaVar), fout);
-            }
-        }
-
-        if(!omegaBlocks.isEmpty()){
-            fout.write(Formatter.endline(omegaBlockStatement.getOmegaBlockTitle()));
-            for(String eta : omegaBlockStatement.getOrderedEtasToOmegaMap().values()){
-                for(OmegaStatement omega : omegaBlocks.get(eta)){					
-                    writeParameter(omega, fout);
-                }
-            }
-        }
-        if (!omegas.isEmpty()) {
-            fout.write(Formatter.endline());
-            fout.write(Formatter.endline(Formatter.omega()));
-            for (final String omegaVar : omegas.keySet()) {
-                writeParameter(omegas.get(omegaVar), fout);
-            }
-        }
-        if(!sigmaParams.isEmpty()){
-            //adding default Omega if omega block is absent but sigma is present 
-            if(omegas.isEmpty()){
-                fout.write(Formatter.endline());
-                fout.write(Formatter.endline(Formatter.omega()+"0 "+Constant.FIX));
-            }
-            fout.write(Formatter.endline());
-            fout.write(Formatter.sigma());
-            for (final String sigmaVar: sigmaParams) {
-                fout.write(sigmaVar);
-            }
-        }
+        StringBuilder thetaStatement = parameters.getThetaStatementBlock();
+        fout.write(thetaStatement.toString());
+        
+        StringBuilder omegaStatement = parameters.getOmegaStatementBlock();
+        fout.write(omegaStatement.toString());
+        
+        StringBuilder sigmaStatement = parameters.getSigmaStatementBlock();
+        fout.write(sigmaStatement.toString());
+        
     }
-
-    /**
-     * Write Theta and omega parameters according to the initial estimates, lower and upper bounds provided.
-     * 
-     * @param param
-     * @param simpleParam
-     * @param fout
-     */
-    private void writeParameter(Parameter param, PrintWriter fout) {
-        String description = param.getSymbId();
-
-        ScalarRhs lowerBound = param.getLowerBound();
-        ScalarRhs upperBound= param.getUpperBound(); 
-        ScalarRhs initEstimate= param.getInitialEstimate();
-        fout.write("(");
-        writeParameterStatements(fout, description, lowerBound, upperBound,initEstimate);
-
-        if(param.isFixed()){
-            fout.write(" "+Constant.FIX+" ");
-        }
-        if(param.isStdDev()){
-            fout.write(Constant.SD+" ");
-        }
-        fout.write(Formatter.endline(")"+Formatter.indent(Symbol.COMMENT+description)));
-    }
-
-    /**
-     *  Writes parameter statement as described in following table,
-     *  
-     *  LB 	IN 	UB 	Action expected
-     *	X 	X 	X 	FAIL
-     *	X 	X 	Y 	FAIL
-     *	X 	Y 	X 	(IN)
-     *	Y 	X 	X 	FAIL
-     *	X 	Y 	Y 	(-INF,IN,UB)
-     *	Y 	Y 	X 	(LB,IN)
-     *	Y 	X 	Y 	(LB, ,UB)
-     *	Y 	Y 	Y 	(LB,IN,UB) 
-     * @param fout
-     * @param description
-     * @param lowerBound
-     * @param upperBound
-     * @param initEstimate
-     */
-    private void writeParameterStatements(PrintWriter fout, String description,
-            ScalarRhs lowerBound, ScalarRhs upperBound, ScalarRhs initEstimate) {
-
-        if(lowerBound!=null){
-            if(initEstimate!=null){
-                if(upperBound!=null){
-                    writeStatement(lowerBound,initEstimate,upperBound,fout);
-                }else{
-                    writeStatement(lowerBound,initEstimate,null,fout);
-                }
-            }else{
-                if(upperBound!=null){
-                    writeStatement(lowerBound,null,upperBound,fout);
-                }else{
-                    throw new IllegalStateException("Only lower bound value present for parameter : "+description);
-                }
-            }
-        }else if(initEstimate!=null){
-            if(upperBound!=null){
-                fout.write("-INF,");
-                writeStatement(null,initEstimate,upperBound,fout);
-            }else{
-                writeStatement(null,initEstimate,null,fout);
-            }
-        }else {
-            throw new IllegalStateException("Only upper bound or no values present for parameter : "+description);
-        }
-    }
-
-    /**
-     * Writes bound values of a parameter statement in expected format.
-     *  
-     * @param lowerBound
-     * @param init
-     * @param upperBound
-     * @param fout
-     */
-    private void writeStatement(ScalarRhs lowerBound,ScalarRhs init,ScalarRhs upperBound, PrintWriter fout){
-        if(lowerBound!=null){
-            parse(lowerBound, lexer.getStatement(lowerBound), fout);
-            fout.write(",");
-        }
-        if(init!=null){
-            parse(init, lexer.getStatement(init), fout);
-        }else{
-            fout.write(", ,");
-        }
-        if(upperBound!=null){
-            fout.write(",");
-            parse(upperBound, lexer.getStatement(upperBound), fout);
-        }
-    }
-
-
+    
     /**
      * Builds and writes pred statement block to file.
      *  

@@ -122,7 +122,7 @@ public class SigmaStatementBuilder {
         return sigmastatement.toString();
     }
 
-    public void addAttributeForStdDev(StringBuilder statement, Boolean isStdDev) {
+    private void addAttributeForStdDev(StringBuilder statement, Boolean isStdDev) {
         if(isStdDev){
             statement.append(Formatter.endline(" "+Constant.SD));
         }

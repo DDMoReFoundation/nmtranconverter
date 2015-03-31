@@ -4,7 +4,6 @@
 package eu.ddmore.converters.nonmem.statements;
 
 import eu.ddmore.libpharmml.dom.commontypes.ScalarRhs;
-import eu.ddmore.libpharmml.dom.modellingsteps.InitialEstimateType;
 
 /**
  * Creates and adds parameter details.
@@ -13,7 +12,7 @@ import eu.ddmore.libpharmml.dom.modellingsteps.InitialEstimateType;
 public class Parameter {
 	
 	private final String symbId;
-	private InitialEstimateType initialEstimate;
+	private ScalarRhs initialEstimate;
 	private ScalarRhs lowerBound;
 	private ScalarRhs upperBound;	
 	private Integer index;
@@ -24,7 +23,7 @@ public class Parameter {
 		this.symbId = symbId;
 	}
 	
-	public void setParameterBounds(InitialEstimateType initialEstimate,ScalarRhs lowerBound, ScalarRhs upperBound){
+	public void setParameterBounds(ScalarRhs initialEstimate,ScalarRhs lowerBound, ScalarRhs upperBound){
 		this.initialEstimate = initialEstimate;
 		this.lowerBound = lowerBound;
 		this.upperBound = upperBound;
@@ -43,11 +42,11 @@ public class Parameter {
 		return symbId;
 	}
 
-	public InitialEstimateType getInitialEstimate() {
+	public ScalarRhs getInitialEstimate() {
 		return initialEstimate;
 	}
 
-	public void setInitialEstimate(InitialEstimateType initialEstimate) {
+	public void setInitialEstimate(ScalarRhs initialEstimate) {
 		this.initialEstimate = initialEstimate;
 	}
 
