@@ -697,18 +697,15 @@ public class ParametersHelper {
         RealValueType value;
         if(lowerBound!=null){
             value = (RealValueType) lowerBound.getScalar().getValue();
-            statement.append(value.getValue()+" ,");
+            statement.append(value.getValue()+" , ");
         }
         if(init!=null){
             value = (RealValueType) init.getScalar().getValue();
-            statement.append(value.getValue()+" ");
-        }else{
-            statement.append(", ,");
+            statement.append(value.getValue());
         }
         if(upperBound!=null){
-            statement.append(",");
             value = (RealValueType) upperBound.getScalar().getValue();
-            statement.append(value.getValue()+" ");
+            statement.append(" , "+value.getValue()+" ");
         }
         return statement;
     }
