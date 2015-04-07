@@ -366,15 +366,15 @@ public class Parser extends BaseParser {
 
         StringBuilder thetaStatement = parameters.getThetaStatementBlock();
         fout.write(thetaStatement.toString());
-        
+
         StringBuilder omegaStatement = parameters.getOmegaStatementBlock();
         fout.write(omegaStatement.toString());
-        
+
         StringBuilder sigmaStatement = parameters.getSigmaStatementBlock();
         fout.write(sigmaStatement.toString());
-        
+
     }
-    
+
     /**
      * Builds and writes pred statement block to file.
      *  
