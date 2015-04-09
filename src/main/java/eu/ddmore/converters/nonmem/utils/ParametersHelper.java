@@ -701,11 +701,11 @@ public class ParametersHelper {
         }
         if(init!=null){
             value = (RealValueType) init.getScalar().getValue();
-            statement.append(value.getValue());
+            statement.append(value.getValue()+" ");
         }
         if(upperBound!=null){
             value = (RealValueType) upperBound.getScalar().getValue();
-            statement.append(" , "+value.getValue()+" ");
+            statement.append(", "+value.getValue()+" ");
         }
         return statement;
     }
