@@ -4,6 +4,8 @@
 package eu.ddmore.converters.nonmem;
 
 import static crx.converter.engine.PharmMLTypeChecker.isActivity;
+import static crx.converter.engine.PharmMLTypeChecker.isContinuousCovariate;
+import static crx.converter.engine.PharmMLTypeChecker.isCorrelation;
 import static crx.converter.engine.PharmMLTypeChecker.isCovariate;
 import static crx.converter.engine.PharmMLTypeChecker.isDerivative;
 import static crx.converter.engine.PharmMLTypeChecker.isFunction;
@@ -21,6 +23,7 @@ import static crx.converter.engine.PharmMLTypeChecker.isScalar;
 import static crx.converter.engine.PharmMLTypeChecker.isSequence;
 import static crx.converter.engine.PharmMLTypeChecker.isVector;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
@@ -33,43 +36,34 @@ import java.util.Properties;
 import javax.xml.bind.JAXBElement;
 
 import crx.converter.engine.BaseParser;
-import crx.converter.engine.parts.Artifact;
-import crx.converter.engine.parts.EstimationStep;
 import crx.converter.engine.parts.EstimationStep.FixedParameter;
-import crx.converter.engine.parts.EstimationStep.ObjectiveFunctionParameter;
-import crx.converter.engine.parts.ObservationBlock;
 import crx.converter.engine.parts.ObservationBlock.ObservationParameter;
-import crx.converter.engine.parts.SimulationStep;
-import crx.converter.engine.parts.StructuralBlock;
-import crx.converter.engine.parts.TrialDesignBlock.ArmIndividual;
 import crx.converter.tree.BinaryTree;
 import crx.converter.tree.Node;
 import eu.ddmore.converters.nonmem.statements.PredStatement;
 import eu.ddmore.converters.nonmem.utils.Formatter;
 import eu.ddmore.converters.nonmem.utils.Formatter.Block;
 import eu.ddmore.converters.nonmem.utils.Formatter.ColumnConstant;
-import eu.ddmore.converters.nonmem.utils.Formatter.Constant;
+import eu.ddmore.converters.nonmem.utils.Formatter.NmConstant;
 import eu.ddmore.converters.nonmem.utils.Formatter.Symbol;
 import eu.ddmore.converters.nonmem.utils.ParametersHelper;
-import eu.ddmore.libpharmml.dom.IndependentVariableType;
-import eu.ddmore.libpharmml.dom.commontypes.FunctionDefinitionType;
+import eu.ddmore.libpharmml.dom.IndependentVariable;
 import eu.ddmore.libpharmml.dom.commontypes.PharmMLRootType;
-import eu.ddmore.libpharmml.dom.commontypes.SymbolRefType;
+import eu.ddmore.libpharmml.dom.commontypes.SymbolRef;
 import eu.ddmore.libpharmml.dom.maths.Condition;
-import eu.ddmore.libpharmml.dom.maths.ConstantType;
-import eu.ddmore.libpharmml.dom.maths.PieceType;
-import eu.ddmore.libpharmml.dom.maths.PiecewiseType;
-import eu.ddmore.libpharmml.dom.modeldefn.ContinuousCovariateType;
-import eu.ddmore.libpharmml.dom.modeldefn.CovariateDefinitionType;
-import eu.ddmore.libpharmml.dom.modeldefn.CovariateRelationType;
-import eu.ddmore.libpharmml.dom.modeldefn.FixedEffectRelationType;
-import eu.ddmore.libpharmml.dom.modeldefn.IndividualParameterType;
-import eu.ddmore.libpharmml.dom.modeldefn.IndividualParameterType.GaussianModel;
-import eu.ddmore.libpharmml.dom.modeldefn.IndividualParameterType.GaussianModel.GeneralCovariate;
-import eu.ddmore.libpharmml.dom.modeldefn.LhsTransformationType;
-import eu.ddmore.libpharmml.dom.modeldefn.ParameterRandomEffectType;
-import eu.ddmore.libpharmml.dom.modeldefn.ParameterRandomVariableType;
-import eu.ddmore.libpharmml.dom.trialdesign.ActivityType;
+import eu.ddmore.libpharmml.dom.maths.Piece;
+import eu.ddmore.libpharmml.dom.maths.Piecewise;
+import eu.ddmore.libpharmml.dom.modeldefn.ContinuousCovariate;
+import eu.ddmore.libpharmml.dom.modeldefn.CovariateDefinition;
+import eu.ddmore.libpharmml.dom.modeldefn.CovariateRelation;
+import eu.ddmore.libpharmml.dom.modeldefn.FixedEffectRelation;
+import eu.ddmore.libpharmml.dom.modeldefn.IndividualParameter;
+import eu.ddmore.libpharmml.dom.modeldefn.IndividualParameter.GaussianModel;
+import eu.ddmore.libpharmml.dom.modeldefn.IndividualParameter.GaussianModel.GeneralCovariate;
+import eu.ddmore.libpharmml.dom.modeldefn.LhsTransformation;
+import eu.ddmore.libpharmml.dom.modeldefn.ParameterRandomEffect;
+import eu.ddmore.libpharmml.dom.modeldefn.ParameterRandomVariable;
+import eu.ddmore.libpharmml.dom.trialdesign.Activity;
 
 public class Parser extends BaseParser {
 
@@ -94,10 +88,10 @@ public class Parser extends BaseParser {
 
     /*
      * (non-Javadoc)
-     * @see crx.converter.engine.BaseParser#doSymbolRef(eu.ddmore.libpharmml.dom.commontypes.SymbolRefType)
+     * @see crx.converter.engine.BaseParser#doSymbolRef(eu.ddmore.libpharmml.dom.commontypes.SymbolRef)
      */
     @Override
-    protected String doSymbolRef(SymbolRefType symbRefType) {
+    protected String doSymbolRef(SymbolRef symbRefType) {
 
         String symbol = getFormattedSymbol(symbRefType.getSymbIdRef());
 
@@ -112,7 +106,7 @@ public class Parser extends BaseParser {
      */
     private String getFormattedSymbol(String symbol) {
         if (isTimeSymbol(symbol)){
-            symbol = (PredStatement.isDES)?Constant.T.toString():ColumnConstant.TIME.toString();
+            symbol = (PredStatement.isDES)?NmConstant.T.toString():ColumnConstant.TIME.toString();
         } else{
             symbol = Formatter.addPrefix(symbol);
         }
@@ -127,7 +121,7 @@ public class Parser extends BaseParser {
      */
     @Override
     protected String getScriptBinaryOperator(String symbol) {
-
+        symbol = symbol.toLowerCase();
         if(binopProperties!=null && binopProperties.stringPropertyNames().contains(symbol)){
             return binopProperties.getProperty(symbol);
         }else{
@@ -178,23 +172,23 @@ public class Parser extends BaseParser {
             } else if (isPiece(context)) { 
                 String format = "%s ";
                 current_value = String.format(format, (String) leaf.data);
-            } else if (isContinuous(context)) {
+            } else if (isContinuousCovariate(context)) {
                 current_symbol = Formatter.addPrefix(getSymbol(context));
                 String format = "%s = %s;";
                 current_value = Formatter.endline(String.format(format, current_symbol, leaf.data));
             } else if (isActivity(context)) { 
-                current_value = getSymbol(new ActivityDoseAmountBlock((ActivityType) context, (String) leaf.data));
+                current_value = getSymbol(new ActivityDoseAmountBlock((Activity) context, (String) leaf.data));
             } else if (isIndividualParameter(context)) { 
                 current_value = (String) leaf.data;
             } else if (isRandomVariable(context)) {
-                ParameterRandomVariableType rv = (ParameterRandomVariableType) context;
+                ParameterRandomVariable rv = (ParameterRandomVariable) context;
                 String format = "%s = %s;";
                 current_value = Formatter.endline(String.format(format, rv.getSymbId(), (String) leaf.data));
             } else if (isCovariate(context)) { 
-                CovariateDefinitionType cov = (CovariateDefinitionType) context;
+                CovariateDefinition cov = (CovariateDefinition) context;
                 String format = "%s = %s;";
                 current_value = Formatter.endline(String.format(format, cov.getSymbId(), (String) leaf.data));
-            } else if (isObservationParameter(context)) {
+            } else if (isObservationModel(context)) {
                 ObservationParameter op = (ObservationParameter) context;
                 String format = "%s = %s;";
                 current_value = Formatter.endline(String.format(format, op.getName(), (String) leaf.data));
@@ -202,7 +196,7 @@ public class Parser extends BaseParser {
                 current_value = (String) leaf.data;
             } else if (isObservationModel(context)) {
                 current_value = Formatter.endline(((String) leaf.data).trim()) + Formatter.endline();
-            } else if (isParameterEstimate(context) || context instanceof FixedParameter || context instanceof ObjectiveFunctionParameter) 
+            } else if (isParameterEstimate(context) || context instanceof FixedParameter) 
             {
                 current_value = (String) leaf.data;
             } else {
@@ -222,10 +216,10 @@ public class Parser extends BaseParser {
 
     /*
      * (non-Javadoc)
-     * @see crx.converter.engine.BaseParser#doIndependentVariable(eu.ddmore.libpharmml.dom.IndependentVariableType)
+     * @see crx.converter.engine.BaseParser#doIndependentVariable(eu.ddmore.libpharmml.dom.IndependentVariable)
      */
     @Override
-    protected String doIndependentVariable(IndependentVariableType v) {
+    protected String doIndependentVariable(IndependentVariable v) {
         String symbol = v.getSymbId().toUpperCase();
         symbol = getFormattedSymbol(symbol);
         return symbol;
@@ -238,11 +232,11 @@ public class Parser extends BaseParser {
      * @return boolean - whether symbol is symbol for time
      */
     private boolean isTimeSymbol(String symbol) {
-        return symbol.equals(ColumnConstant.TIME.toString()) || symbol.equals(Constant.T.toString());
+        return symbol.equals(ColumnConstant.TIME.toString()) || symbol.equals(NmConstant.T.toString());
     }
 
     @Override
-    protected String doConstant(ConstantType c) {
+    protected String doConstant(eu.ddmore.libpharmml.dom.maths.Constant c) {
         String symbol = unassigned_symbol;
 
         String op = c.getOp();
@@ -254,11 +248,11 @@ public class Parser extends BaseParser {
         return symbol;
     }
 
-    public String doPiecewise(PiecewiseType pw) {
+    public String doPiecewise(Piecewise pw) {
         String symbol = unassigned_symbol;
 
-        List<PieceType> pieces = pw.getPiece();
-        PieceType else_block = null;
+        List<Piece> pieces = pw.getPiece();
+        Piece else_block = null;
         BinaryTree [] assignment_trees = new BinaryTree[pieces.size()]; 
         BinaryTree [] conditional_trees = new BinaryTree[pieces.size()];
         String [] conditional_stmts = new String [pieces.size()];
@@ -266,7 +260,7 @@ public class Parser extends BaseParser {
 
         int assignment_count = 0, else_index = -1;
         for(int i = 0; i < pieces.size(); i++) {
-            PieceType piece = pieces.get(i);
+            Piece piece = pieces.get(i);
             if (piece != null) {
                 // Logical blocks
                 Condition cond = piece.getCondition();
@@ -307,7 +301,7 @@ public class Parser extends BaseParser {
 
 
         for (int i = 0; i < pieces.size(); i++) {
-            PieceType piece = pieces.get(i);
+            Piece piece = pieces.get(i);
 
             if (conditional_trees[i] != null && assignment_trees[i] != null) {			
                 // Logical condition
@@ -321,7 +315,7 @@ public class Parser extends BaseParser {
         int block_assignment = 0;
         StringBuilder block = new StringBuilder(Formatter.endline(" 0.0;"));
         for (int i = 0; i < pieces.size(); i++) {
-            PieceType piece = pieces.get(i);
+            Piece piece = pieces.get(i);
             if (piece == null) continue;
             else if (piece.equals(else_block)) continue;
 
@@ -352,7 +346,7 @@ public class Parser extends BaseParser {
     Map<String, Integer> etasOrder = new LinkedHashMap<String, Integer>();
 
     @Override
-    public void writeParameters(PrintWriter fout) {
+    public void writeParameterStatement(PrintWriter fout) {
         if (fout == null) return;
         if (lexer.getModelParameters().isEmpty()) {
             return;
@@ -414,7 +408,7 @@ public class Parser extends BaseParser {
      * @param ip
      * @return
      */
-    public String createIndividualDefinition(IndividualParameterType ip){
+    public String createIndividualDefinition(IndividualParameter ip){
         StringBuilder statement = new StringBuilder();
 
         String variableSymbol = ip.getSymbId();    	
@@ -435,9 +429,9 @@ public class Parser extends BaseParser {
                     statement.append(String.format(logType+"(%s)", Formatter.addPrefix(pop_param_symbol)));
                 }
 
-                List<CovariateRelationType> covariates = gaussianModel.getLinearCovariate().getCovariate();
+                List<CovariateRelation> covariates = gaussianModel.getLinearCovariate().getCovariate();
                 if (covariates != null) {
-                    for (CovariateRelationType covariate : covariates) {
+                    for (CovariateRelation covariate : covariates) {
                         if (covariate == null) continue;
                         PharmMLRootType type = lexer.getAccessor().fetchElement(covariate.getSymbRef());
                         statement.append(getCovariateForIndividualDefinition(covariate, type));
@@ -452,10 +446,10 @@ public class Parser extends BaseParser {
             statement.append(Formatter.endline(comment_char));
 
             StringBuilder etas = addEtasStatementsToIndivParamDef(gaussianModel.getRandomEffects());
-            if (logType.equals(Constant.LOG.toString())) {
+            if (logType.equals(NmConstant.LOG.toString())) {
                 String format = Formatter.endline("%s = EXP(%s %s);");
                 statement.append(String.format(format, Formatter.addPrefix(ip.getSymbId()), variableSymbol,etas));
-            } else if (logType.equals(Constant.LOGIT.toString())) {
+            } else if (logType.equals(NmConstant.LOGIT.toString())) {
                 String format = Formatter.endline("%s = 1./(1 + exp(-%s));");
                 statement.append(String.format(format, Formatter.addPrefix(ip.getSymbId()), variableSymbol));
             }
@@ -473,19 +467,21 @@ public class Parser extends BaseParser {
      * @param type
      * @return
      */
-    private StringBuilder getCovariateForIndividualDefinition(CovariateRelationType covariate, PharmMLRootType type) {
+    private StringBuilder getCovariateForIndividualDefinition(CovariateRelation covariate, PharmMLRootType type) {
         StringBuilder statement = new StringBuilder();
-        if(type instanceof IndependentVariableType){
-            String idvName = doIndependentVariable((IndependentVariableType)type);
+        if(type instanceof IndependentVariable){
+            String idvName = doIndependentVariable((IndependentVariable)type);
             statement.append("+"+idvName);
         }
-        else if(type instanceof CovariateDefinitionType){
-            CovariateDefinitionType covariateDef = (CovariateDefinitionType) type;
+        else if(type instanceof CovariateDefinition){
+            CovariateDefinition covariateDef = (CovariateDefinition) type;
             if (covariateDef != null) {
                 if (covariateDef.getContinuous() != null) {
                     String covStatement = "";
-                    ContinuousCovariateType continuous = covariateDef.getContinuous();
-                    if (continuous.getTransformation() != null) covStatement = getSymbol(continuous.getTransformation());
+                    ContinuousCovariate continuous = covariateDef.getContinuous();
+                    if (continuous.getListOfTransformation() != null){
+                        covStatement = getSymbol(continuous.getListOfTransformation().get(0));
+                    }
                     else covStatement = covariateDef.getSymbId();
 
                     covStatement = addFixedEffectsStatementToIndivParamDef(covariate, covStatement);
@@ -505,17 +501,13 @@ public class Parser extends BaseParser {
      * @param covStatement
      * @return
      */
-    private String addFixedEffectsStatementToIndivParamDef(CovariateRelationType covariate, String covStatement) {
-        List<FixedEffectRelationType> fixedEffects = covariate.getFixedEffect();
-        if (fixedEffects != null) {
-            for (FixedEffectRelationType fixed_effect : fixedEffects) {
-                if (fixed_effect == null) continue;
-                String  fixedEffectStatement = Formatter.addPrefix(fixed_effect.getSymbRef().getSymbIdRef());
-                if(fixedEffectStatement.isEmpty())
-                    fixedEffectStatement = parse(fixed_effect);
-                covStatement = fixedEffectStatement + " * " + covStatement;
-                break;
-            }
+    private String addFixedEffectsStatementToIndivParamDef(CovariateRelation covariate, String covStatement) {
+        FixedEffectRelation fixedEffect = covariate.getFixedEffect();
+        if (fixedEffect != null) {
+            String  fixedEffectStatement = Formatter.addPrefix(fixedEffect.getSymbRef().getSymbIdRef());
+            if(fixedEffectStatement.isEmpty())
+                fixedEffectStatement = parse(fixedEffect);
+            covStatement = fixedEffectStatement + " * " + covStatement;
         }
         return covStatement;
     }
@@ -525,7 +517,7 @@ public class Parser extends BaseParser {
      * @param ip
      * @return
      */
-    private StringBuilder getIndivDefinitionForAssign(IndividualParameterType ip) {
+    private StringBuilder getIndivDefinitionForAssign(IndividualParameter ip) {
         StringBuilder statement = new StringBuilder();
         if (ip.getAssign() != null) {
             statement.append(Formatter.endline());
@@ -543,11 +535,11 @@ public class Parser extends BaseParser {
      * @param transform
      * @return
      */
-    private String getLogType(LhsTransformationType transform) {
-        if (transform == LhsTransformationType.LOG){
-            return Constant.LOG.toString();
-        }else if (transform == LhsTransformationType.LOGIT){
-            return Constant.LOGIT.toString();
+    private String getLogType(LhsTransformation transform) {
+        if (transform == LhsTransformation.LOG){
+            return NmConstant.LOG.toString();
+        }else if (transform == LhsTransformation.LOGIT){
+            return NmConstant.LOGIT.toString();
         }else{
             throw new  UnsupportedOperationException("Tranformation type "+transform.name()+" not yet supported");
         }
@@ -558,10 +550,10 @@ public class Parser extends BaseParser {
      * @param random_effects
      * @return
      */
-    private StringBuilder addEtasStatementsToIndivParamDef(List<ParameterRandomEffectType> random_effects) {
+    private StringBuilder addEtasStatementsToIndivParamDef(List<ParameterRandomEffect> random_effects) {
         StringBuilder etas = new StringBuilder();
         if (random_effects != null && !random_effects.isEmpty()) {
-            for (ParameterRandomEffectType random_effect : random_effects) {
+            for (ParameterRandomEffect random_effect : random_effects) {
                 if (random_effect == null) continue;
                 etas.append("+ ");
                 etas.append("ETA("+etasOrder.get(random_effect.getSymbRef().get(0).getSymbIdRef())+")");
@@ -575,8 +567,13 @@ public class Parser extends BaseParser {
         String format = "%s/%s.%s";
         return String.format(format, output_dir, run_id, script_file_suffix);
     }
-
+    
     @Override
+    public void writePreMainBlockElements(PrintWriter fout, File src) throws IOException{
+        String model_filename = src.getName().replace(".xml", "");
+        writeScriptHeader(fout, model_filename);
+    }
+
     public void writeScriptHeader(PrintWriter fout, String model_file) throws IOException {
         if (fout == null) return;
         String format = "%s Script generated by the pharmML2Nmtran Converter v."+lexer.getConverterVersion();
@@ -610,135 +607,5 @@ public class Parser extends BaseParser {
 
     public ParametersHelper getParameters() {
         return parameters;
-    }
-
-    @Override
-    public void writeInterpreterPath(PrintWriter fout) throws IOException {
-        // TODO Auto-generated method stub
-
-    }
-
-    @Override
-    public void writeFunctions(PrintWriter fout,
-            List<FunctionDefinitionType> functions) throws IOException {
-        // TODO Auto-generated method stub
-
-    }
-
-    @Override
-    public void writeModelFunction(PrintWriter fout, StructuralBlock sb)
-            throws IOException {
-        // TODO Auto-generated method stub
-
-    }
-
-    @Override
-    public void writeFunction(FunctionDefinitionType func, String output_dir)
-            throws IOException {
-        // TODO Auto-generated method stub
-
-    }
-
-    @Override
-    public void writeEstimationPKPD(PrintWriter fout, EstimationStep block,
-            String output_dir) throws IOException {
-        // TODO Auto-generated method stub
-
-    }
-
-    @Override
-    public void writeScriptLibraryReferences(PrintWriter fout)
-            throws IOException {
-        // TODO Auto-generated method stub
-
-    }
-
-    @Override
-    public void writeTimeSpan(PrintWriter fout, SimulationStep step)
-            throws IOException {
-        // TODO Auto-generated method stub
-
-    }
-
-    @Override
-    public void writeInitialConditions(PrintWriter fout, StructuralBlock block)
-            throws IOException {
-        // TODO Auto-generated method stub
-
-    }
-
-    @Override
-    public void writeSimulation(PrintWriter fout, StructuralBlock sb)
-            throws IOException {
-        // TODO Auto-generated method stub
-
-    }
-
-    @Override
-    public void writeSimulationOptions(PrintWriter fout) throws IOException {
-        // TODO Auto-generated method stub
-
-    }
-
-    @Override
-    public List<Artifact> writeContinuous(PrintWriter fout, SimulationStep step) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public String writeSaveCommand(PrintWriter fout, List<Artifact> refs,
-            String output_dir, String id1, String id2) throws IOException {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public void writeArmLoop(PrintWriter fout, List<ArmIndividual> list)
-            throws IOException {
-        // TODO Auto-generated method stub
-
-    }
-
-    @Override
-    public void writeInitObservationBlockParameters(PrintWriter fout,
-            List<ObservationBlock> obs) throws IOException {
-        // TODO Auto-generated method stub
-
-    }
-
-    @Override
-    public void writeVariableAssignments(PrintWriter fout, SimulationStep step)
-            throws IOException {
-        // TODO Auto-generated method stub
-
-    }
-
-    @Override
-    public void writeErrorModel(PrintWriter fout, List<ObservationBlock> ems)
-            throws IOException {
-        // TODO Auto-generated method stub
-
-    }
-
-    @Override
-    public void writePlottingBlockPkPdSimulation(PrintWriter fout,
-            List<Artifact> refs) throws IOException {
-        // TODO Auto-generated method stub
-
-    }
-
-    @Override
-    public void writePlottingBlockPkPdSimulationWithDosing(PrintWriter fout)
-            throws IOException {
-        // TODO Auto-generated method stub
-
-    }
-
-    @Override
-    public void writeExternallyReferencedElement(PrintWriter fout,
-            StructuralBlock sb) throws IOException {
-        // TODO Auto-generated method stub
-
     }
 }

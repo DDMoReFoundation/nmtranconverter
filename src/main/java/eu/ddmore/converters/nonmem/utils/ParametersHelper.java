@@ -13,7 +13,7 @@ import java.util.TreeMap;
 
 import crx.converter.engine.ScriptDefinition;
 import crx.converter.engine.parts.EstimationStep;
-import crx.converter.engine.parts.BaseRandomVariableBlock.Correlation;
+import crx.converter.engine.parts.BaseRandomVariableBlock.CorrelationRef;
 import crx.converter.engine.parts.EstimationStep.FixedParameter;
 import crx.converter.engine.parts.ParameterBlock;
 import crx.converter.engine.parts.Part;
@@ -22,19 +22,19 @@ import eu.ddmore.converters.nonmem.statements.OmegaStatement;
 import eu.ddmore.converters.nonmem.statements.Parameter;
 import eu.ddmore.converters.nonmem.statements.SigmaStatementBuilder;
 import eu.ddmore.converters.nonmem.statements.ThetaStatement;
-import eu.ddmore.converters.nonmem.utils.Formatter.Constant;
+import eu.ddmore.converters.nonmem.utils.Formatter.NmConstant;
 import eu.ddmore.converters.nonmem.utils.Formatter.Symbol;
-import eu.ddmore.libpharmml.dom.commontypes.RealValueType;
+import eu.ddmore.libpharmml.dom.commontypes.RealValue;
 import eu.ddmore.libpharmml.dom.commontypes.Rhs;
 import eu.ddmore.libpharmml.dom.commontypes.ScalarRhs;
-import eu.ddmore.libpharmml.dom.commontypes.SymbolRefType;
-import eu.ddmore.libpharmml.dom.modeldefn.IndividualParameterType;
-import eu.ddmore.libpharmml.dom.modeldefn.IndividualParameterType.GaussianModel;
-import eu.ddmore.libpharmml.dom.modeldefn.IndividualParameterType.GaussianModel.LinearCovariate;
-import eu.ddmore.libpharmml.dom.modeldefn.ParameterRandomEffectType;
-import eu.ddmore.libpharmml.dom.modeldefn.ParameterRandomVariableType;
-import eu.ddmore.libpharmml.dom.modeldefn.SimpleParameterType;
-import eu.ddmore.libpharmml.dom.modellingsteps.ParameterEstimateType;
+import eu.ddmore.libpharmml.dom.commontypes.SymbolRef;
+import eu.ddmore.libpharmml.dom.modeldefn.IndividualParameter;
+import eu.ddmore.libpharmml.dom.modeldefn.IndividualParameter.GaussianModel;
+import eu.ddmore.libpharmml.dom.modeldefn.IndividualParameter.GaussianModel.LinearCovariate;
+import eu.ddmore.libpharmml.dom.modeldefn.ParameterRandomEffect;
+import eu.ddmore.libpharmml.dom.modeldefn.ParameterRandomVariable;
+import eu.ddmore.libpharmml.dom.modeldefn.SimpleParameter;
+import eu.ddmore.libpharmml.dom.modellingsteps.ParameterEstimate;
 import eu.ddmore.libpharmml.dom.uncertml.AbstractContinuousUnivariateDistributionType;
 import eu.ddmore.libpharmml.dom.uncertml.NormalDistribution;
 import eu.ddmore.libpharmml.dom.uncertml.PositiveRealValueType;
@@ -51,14 +51,14 @@ public class ParametersHelper {
 
     private final TreeMap<Integer, String> thetasToEtaOrder = new TreeMap<Integer, String>();
     private ScriptDefinition scriptDefinition;
-    private List<SimpleParameterType> simpleParameterTypes = new ArrayList<SimpleParameterType>();
+    private List<SimpleParameter> SimpleParameters = new ArrayList<SimpleParameter>();
 
     // These are keyed by symbol ID
-    private final Map<String, SimpleParameterType> simpleParams = new HashMap<String, SimpleParameterType>();
+    private final Map<String, SimpleParameter> simpleParams = new HashMap<String, SimpleParameter>();
     private final Map<String, ScalarRhs> initialEstimates = new HashMap<String, ScalarRhs>();
     private final Map<String, ScalarRhs> lowerBounds = new HashMap<String, ScalarRhs>();
     private final Map<String, ScalarRhs> upperBounds = new HashMap<String, ScalarRhs>();
-    private List<ParameterEstimateType> parametersToEstimate = new ArrayList<ParameterEstimateType>();
+    private List<ParameterEstimate> parametersToEstimate = new ArrayList<ParameterEstimate>();
     private List<FixedParameter> fixedParameters = new ArrayList<FixedParameter>();
     private OmegaBlockStatement omegaBlockStatement = new OmegaBlockStatement(this);
     private List<String> sigmas = new ArrayList<String>();
@@ -75,21 +75,21 @@ public class ParametersHelper {
     /**
      * This method initialises all the Sigma, Omega and Theta parameter maps from simple parameters and their properties.
      * 
-     * @param simpleParameterTypes
+     * @param SimpleParameters
      */
-    public void initialiseSimpleParams(List<SimpleParameterType> simpleParameterTypes){
+    public void initialiseSimpleParams(List<SimpleParameter> SimpleParameters){
 
-        if (simpleParameterTypes==null || simpleParameterTypes.isEmpty()) {
+        if (SimpleParameters==null || SimpleParameters.isEmpty()) {
             return;
         }else {
-            setSimpleParameterTypes(simpleParameterTypes);
-            for (SimpleParameterType simpleParam : simpleParameterTypes) {
+            setSimpleParameters(SimpleParameters);
+            for (SimpleParameter simpleParam : SimpleParameters) {
                 simpleParams.put(simpleParam.getSymbId(), simpleParam);
             }
         }
 
         final EstimationStep estimationStep = getEstimationStep(scriptDefinition);
-        parametersToEstimate = (estimationStep.hasParametersToEstimate())?estimationStep.getParametersToEstimate(): new ArrayList<ParameterEstimateType>();
+        parametersToEstimate = (estimationStep.hasParametersToEstimate())?estimationStep.getParametersToEstimate(): new ArrayList<ParameterEstimate>();
         fixedParameters = (estimationStep.hasFixedParameters())?estimationStep.getFixedParameters(): new ArrayList<FixedParameter>();
         // Find any bounds and initial estimates
         setAllParameterBounds(parametersToEstimate);
@@ -113,13 +113,13 @@ public class ParametersHelper {
      */
     private void setThetaParameters(){
         final Map<String, ThetaStatement> unOrderedThetas = new HashMap<String, ThetaStatement>();
-        for(ParameterEstimateType parameter : parametersToEstimate){
+        for(ParameterEstimate parameter : parametersToEstimate){
             String paramName = parameter.getSymbRef().getSymbIdRef();
             createThetaForValidParam(unOrderedThetas, paramName, false);
             simpleParams.remove(paramName);
         }
         for(FixedParameter fixedParameter : fixedParameters){
-            String paramName = fixedParameter.p.getSymbRef().getSymbIdRef();
+            String paramName = fixedParameter.pe.getSymbRef().getSymbIdRef();
             createThetaForValidParam(unOrderedThetas, paramName, true);
             simpleParams.remove(paramName);
         }
@@ -186,7 +186,7 @@ public class ParametersHelper {
     public StringBuilder addMUStatements(){
         StringBuilder muStatement = new StringBuilder();
         for(Integer thetaOrder : thetasToEtaOrder.keySet()){
-            muStatement.append(Formatter.endline(MU+thetaOrder+" = "+Constant.LOG+"("+thetasToEtaOrder.get(thetaOrder)+")" ));
+            muStatement.append(Formatter.endline(MU+thetaOrder+" = "+NmConstant.LOG+"("+thetasToEtaOrder.get(thetaOrder)+")" ));
         }
 
         return muStatement;
@@ -238,12 +238,12 @@ public class ParametersHelper {
      * @return
      */
     private ScalarRhs getScalarRhsForSymbol(String omegaSymbId) {
-        SimpleParameterType param = simpleParams.get(omegaSymbId);
+        SimpleParameter param = simpleParams.get(omegaSymbId);
         ScalarRhs scalar = null;
         if(param.getAssign().getScalar()!=null){
             scalar = new ScalarRhs();
             scalar.setScalar(param.getAssign().getScalar());
-            SymbolRefType symbRef = new SymbolRefType();
+            SymbolRef symbRef = new SymbolRef();
             symbRef.setId(omegaSymbId);
             scalar.setSymbRef(symbRef);    
         }        
@@ -260,12 +260,12 @@ public class ParametersHelper {
      * 
      */
     private void setOmegaParameters(){
-        for (ParameterRandomVariableType rv : getRandomVarsFromParameterBlock()) {
+        for (ParameterRandomVariable rv : getRandomVarsFromParameterBlock()) {
             String symbId = getNameFromParamRandomVariable(rv);
             OmegaStatement omegaStatement = getOmegaFromRandomVarName(symbId);
             if(omegaStatement!=null){
                 for(Iterator<FixedParameter> it= fixedParameters.iterator();it.hasNext();){
-                    String paramName = it.next().p.getSymbRef().getSymbIdRef();
+                    String paramName = it.next().pe.getSymbRef().getSymbIdRef();
                     if(paramName.equals(symbId)){
                         omegaStatement.setFixed(true);
                         it.remove();
@@ -285,7 +285,7 @@ public class ParametersHelper {
      * @param rv
      * @return
      */
-    public String getNameFromParamRandomVariable(ParameterRandomVariableType rv) {
+    public String getNameFromParamRandomVariable(ParameterRandomVariable rv) {
         String symbId = null;
         if (getDistributionTypeStdDev(rv) != null) {
             symbId = getDistributionTypeStdDev(rv).getVar().getVarId();					
@@ -301,7 +301,7 @@ public class ParametersHelper {
      * @param rv
      * @return
      */
-    public Boolean isParamFromStdDev(ParameterRandomVariableType rv) {
+    public Boolean isParamFromStdDev(ParameterRandomVariable rv) {
         if (getDistributionTypeStdDev(rv) != null) {
             return true;
         } else if (getDistributionTypeVariance(rv) != null) {
@@ -316,7 +316,7 @@ public class ParametersHelper {
      * @param rv
      * @return
      */
-    public PositiveRealValueType getDistributionTypeStdDev(ParameterRandomVariableType rv){
+    public PositiveRealValueType getDistributionTypeStdDev(ParameterRandomVariable rv){
         final AbstractContinuousUnivariateDistributionType distributionType = rv.getAbstractContinuousUnivariateDistribution().getValue();
         if (distributionType instanceof NormalDistribution) {
             return ((NormalDistribution) distributionType).getStddev();
@@ -329,7 +329,7 @@ public class ParametersHelper {
      * @param rv
      * @return
      */
-    public PositiveRealValueType getDistributionTypeVariance(ParameterRandomVariableType rv){
+    public PositiveRealValueType getDistributionTypeVariance(ParameterRandomVariable rv){
         final AbstractContinuousUnivariateDistributionType distributionType = rv.getAbstractContinuousUnivariateDistribution().getValue();
         if (distributionType instanceof NormalDistribution) {
             return ((NormalDistribution) distributionType).getVariance();
@@ -342,18 +342,18 @@ public class ParametersHelper {
      *  
      * @param parametersToEstimate
      */
-    private void setAllParameterBounds(List<ParameterEstimateType> parametersToEstimate) {
-        for (ParameterEstimateType paramEstimate : parametersToEstimate) {
+    private void setAllParameterBounds(List<ParameterEstimate> parametersToEstimate) {
+        for (ParameterEstimate paramEstimate : parametersToEstimate) {
             setParameterBounds(paramEstimate);
             simpleParams.remove(paramEstimate.getSymbRef().getSymbIdRef());
         }
         for (FixedParameter fixedParameter : fixedParameters){
-            setParameterBounds(fixedParameter.p);
-            simpleParams.remove(fixedParameter.p.getSymbRef().getSymbIdRef());
+            setParameterBounds(fixedParameter.pe);
+            simpleParams.remove(fixedParameter.pe.getSymbRef().getSymbIdRef());
         }
     }
 
-    private void setParameterBounds(ParameterEstimateType paramEstimate){
+    private void setParameterBounds(ParameterEstimate paramEstimate){
         String symbolId = paramEstimate.getSymbRef().getSymbIdRef();
         initialEstimates.put(symbolId, paramEstimate.getInitialEstimate());
         lowerBounds.put(symbolId, paramEstimate.getLowerBound());
@@ -380,11 +380,11 @@ public class ParametersHelper {
      * 
      * @return
      */
-    public List<ParameterEstimateType> getAllEstimationParams(){
-        List<ParameterEstimateType> allParams = new ArrayList<ParameterEstimateType>();
+    public List<ParameterEstimate> getAllEstimationParams(){
+        List<ParameterEstimate> allParams = new ArrayList<ParameterEstimate>();
         allParams.addAll(getParametersToEstimate());
         for(FixedParameter fixedParam : fixedParameters){
-            allParams.add(fixedParam.p);
+            allParams.add(fixedParam.pe);
         }
         return allParams;
     }
@@ -431,10 +431,10 @@ public class ParametersHelper {
         List<ParameterBlock> blocks = scriptDefinition.getParameterBlocks();
 
         for(ParameterBlock block : blocks ){
-            for(IndividualParameterType parameterType: block.getIndividualParameters()){
+            for(IndividualParameter parameterType: block.getIndividualParameters()){
                 if (parameterType.getGaussianModel() != null) {
-                    List<ParameterRandomEffectType> randomEffects = parameterType.getGaussianModel().getRandomEffects();
-                    for (ParameterRandomEffectType randomEffect : randomEffects) {
+                    List<ParameterRandomEffect> randomEffects = parameterType.getGaussianModel().getRandomEffects();
+                    for (ParameterRandomEffect randomEffect : randomEffects) {
                         if (randomEffect == null) continue;
                         String eta = randomEffect.getSymbRef().get(0).getSymbIdRef();
                         if(!etasOrder.contains(eta)){
@@ -467,12 +467,12 @@ public class ParametersHelper {
      */
     private void addToThetasOrderMap(Map<String, Integer> etasOrderMap, Integer nextEtaOrder) {
         for(ParameterBlock block : scriptDefinition.getParameterBlocks()){
-            for(IndividualParameterType parameterType: block.getIndividualParameters()){
+            for(IndividualParameter parameterType: block.getIndividualParameters()){
                 final GaussianModel gaussianModel = parameterType.getGaussianModel();
                 if (gaussianModel != null) {
                     String popSymbol = getPopSymbol(gaussianModel);
-                    List<ParameterRandomEffectType> randomEffects = gaussianModel.getRandomEffects();
-                    for (ParameterRandomEffectType randomEffect : randomEffects) {
+                    List<ParameterRandomEffect> randomEffects = gaussianModel.getRandomEffects();
+                    for (ParameterRandomEffect randomEffect : randomEffects) {
                         if (randomEffect == null) continue;
                         String eta = randomEffect.getSymbRef().get(0).getSymbIdRef();
                         if(etasOrderMap.get(eta).equals(nextEtaOrder)){
@@ -504,16 +504,16 @@ public class ParametersHelper {
         }
     }
 
-    public LinkedHashMap<String, String> addCorrelationValuesToMap(List<Correlation> correlations) {
+    public LinkedHashMap<String, String> addCorrelationValuesToMap(List<CorrelationRef> correlations) {
         //We need to have it as linked hash map so that order in which correlations are added to map will be retained.
         LinkedHashMap<String, String> etaTocorrelationsMap = new LinkedHashMap<String, String>();
-        for(Correlation correlation : correlations){
+        for(CorrelationRef correlation : correlations){
             addCorrelationToMap(etaTocorrelationsMap,correlation);	
         }
         return etaTocorrelationsMap;
     }
 
-    public void addCorrelationToMap(Map<String, String> etaTocorrelationsMap, Correlation correlation) {
+    public void addCorrelationToMap(Map<String, String> etaTocorrelationsMap, CorrelationRef correlation) {
         String firstVar = correlation.rnd1.getSymbId();			
         String secondVar = correlation.rnd2.getSymbId();
         String coefficient = correlation.correlationCoefficient.getSymbRef().getSymbIdRef();
@@ -528,8 +528,8 @@ public class ParametersHelper {
      * 
      * @return
      */
-    public List<Correlation> getAllCorrelations() {
-        List<Correlation> correlations = new ArrayList<Correlation>();
+    public List<CorrelationRef> getAllCorrelations() {
+        List<CorrelationRef> correlations = new ArrayList<CorrelationRef>();
         List<ParameterBlock> parameterBlocks = getScriptDefinition().getParameterBlocks();
         if(!parameterBlocks.isEmpty()){
             for(ParameterBlock block : parameterBlocks){
@@ -539,7 +539,7 @@ public class ParametersHelper {
         return correlations;
     }
 
-    private List<ParameterRandomVariableType> getRandomVarsFromParameterBlock() {
+    private List<ParameterRandomVariable> getRandomVarsFromParameterBlock() {
         List<ParameterBlock> parameterBlocks = getScriptDefinition().getParameterBlocks();
 
         //Unless parameterBlocks is empty, getting first parameter Block.
@@ -562,7 +562,7 @@ public class ParametersHelper {
             //adding default Omega if omega block is absent but sigma is present 
             if(omegaStatements.isEmpty()){
                 sigmaStatement.append(Formatter.endline());
-                sigmaStatement.append(Formatter.endline(Formatter.omega()+"0 "+Constant.FIX));
+                sigmaStatement.append(Formatter.endline(Formatter.omega()+"0 "+NmConstant.FIX));
             }
             sigmaStatement.append(Formatter.endline()+Formatter.sigma());
             for (final String sigmaVar: SigmaStatements) {
@@ -624,10 +624,10 @@ public class ParametersHelper {
         statement.append(writeParameterStatements(description, lowerBound, upperBound,initEstimate));
 
         if(param.isFixed()){
-            statement.append(" "+Constant.FIX+" ");
+            statement.append(" "+NmConstant.FIX+" ");
         }
         if(param.isStdDev()){
-            statement.append(Constant.SD+" ");
+            statement.append(NmConstant.SD+" ");
         }
         statement.append(Formatter.endline(")"+Formatter.indent(Symbol.COMMENT+description)));
         
@@ -694,18 +694,18 @@ public class ParametersHelper {
      */
     private StringBuilder writeStatement(ScalarRhs lowerBound,ScalarRhs init,ScalarRhs upperBound){
         StringBuilder statement = new StringBuilder();
-        RealValueType value;
+        RealValue value;
         if(lowerBound!=null){
-            value = (RealValueType) lowerBound.getScalar().getValue();
+            value = (RealValue) lowerBound.getScalar().getValue();
             statement.append(value.getValue()+" , ");
         }
         if(init!=null){
-            value = (RealValueType) init.getScalar().getValue();
-            statement.append(value.getValue());
+            value = (RealValue) init.getScalar().getValue();
+            statement.append(value.getValue()+" ");
         }
         if(upperBound!=null){
-            value = (RealValueType) upperBound.getScalar().getValue();
-            statement.append(" , "+value.getValue()+" ");
+            value = (RealValue) upperBound.getScalar().getValue();
+            statement.append(", "+value.getValue()+" ");
         }
         return statement;
     }
@@ -714,15 +714,15 @@ public class ParametersHelper {
         return scriptDefinition;
     }
 
-    public List<SimpleParameterType> getSimpleParameterTypes() {
-        return simpleParameterTypes;
+    public List<SimpleParameter> getSimpleParameters() {
+        return SimpleParameters;
     }
 
-    public void setSimpleParameterTypes(List<SimpleParameterType> simpleParameterTypes) {
-        this.simpleParameterTypes = simpleParameterTypes;
+    public void setSimpleParameters(List<SimpleParameter> SimpleParameters) {
+        this.SimpleParameters = SimpleParameters;
     }
 
-    public List<ParameterEstimateType> getParametersToEstimate() {
+    public List<ParameterEstimate> getParametersToEstimate() {
         return parametersToEstimate;
     }
 
@@ -734,7 +734,7 @@ public class ParametersHelper {
         return omegaStatements;
     }
 
-    public Map<String, SimpleParameterType> getSimpleParams() {
+    public Map<String, SimpleParameter> getSimpleParams() {
         return simpleParams;
     }
 

@@ -13,12 +13,12 @@ import crx.converter.engine.parts.TabularDataset;
 import crx.converter.engine.parts.TrialDesignBlock;
 import eu.ddmore.converters.nonmem.utils.Formatter;
 import eu.ddmore.converters.nonmem.utils.ParametersHelper;
-import eu.ddmore.libpharmml.dom.commontypes.SymbolTypeType;
-import eu.ddmore.libpharmml.dom.dataset.ColumnDefnType;
-import eu.ddmore.libpharmml.dom.dataset.ColumnTypeType;
-import eu.ddmore.libpharmml.dom.modellingsteps.DatasetMappingType;
-import eu.ddmore.libpharmml.dom.modellingsteps.EstimationStepType;
-import eu.ddmore.libpharmml.dom.modellingsteps.NONMEMdataSetType;
+import eu.ddmore.libpharmml.dom.commontypes.SymbolType;
+import eu.ddmore.libpharmml.dom.dataset.ColumnDefinition;
+import eu.ddmore.libpharmml.dom.dataset.ColumnType;
+import eu.ddmore.libpharmml.dom.modellingsteps.DatasetMapping;
+import eu.ddmore.libpharmml.dom.modellingsteps.Estimation;
+import eu.ddmore.libpharmml.dom.modellingsteps.ExternalDataSet;;
 
 public class InputStatement {
 	
@@ -42,13 +42,13 @@ public class InputStatement {
 		computeEstimationHeaders(td);
 	}
 
-	public InputStatement(List<NONMEMdataSetType> dataFiles) {
+	public InputStatement(List<ExternalDataSet> dataFiles) {
 
 		if (null == dataFiles) {
 			throw new IllegalStateException("NONMEM data set(s) cannot be null");
 		}
 
-		Iterator<NONMEMdataSetType> dsIterator = dataFiles.iterator();
+		Iterator<ExternalDataSet> dsIterator = dataFiles.iterator();
 		if (!dsIterator.hasNext()) {
 			throw new IllegalStateException("NONMEM data set(s) cannot be empty");
 		}
@@ -78,19 +78,19 @@ public class InputStatement {
 	/**
 	 * Estimation headers for NONMEM datasets
 	 * 
-	 * @param nonmemDataSet the NONMEMdataSetType to compute the estimation headers from
+	 * @param nonmemDataSet the ExternalDataSet to compute the estimation headers from
 	 */
-	private void computeEstimationHeaders(NONMEMdataSetType nonmemDataSet) {
+	private void computeEstimationHeaders(ExternalDataSet nonmemDataSet) {
 
-		List<ColumnDefnType> dataColumns = nonmemDataSet.getDataSet().getDefinition().getColumn();
+		List<ColumnDefinition> dataColumns = nonmemDataSet.getDataSet().getListOfColumnDefinition();
 
 		if (null == dataColumns) {
 			throw new IllegalStateException("NONMEM data set has no columns");
 		} else {
-			for (ColumnDefnType dataColumn : dataColumns) {
+			for (ColumnDefinition dataColumn : dataColumns) {
 				String colId = dataColumn.getColumnId().toUpperCase();
-				ColumnTypeType columnType = dataColumn.getColumnType();
-				SymbolTypeType valueType =  dataColumn.getValueType();
+				ColumnType columnType = dataColumn.getColumnType();
+				SymbolType valueType =  dataColumn.getValueType();
 				
 				if (inputHeaders.contains(colId)) {
 					throw new IllegalStateException("NONMEM data set contains duplicate columns");
@@ -109,12 +109,12 @@ public class InputStatement {
 	 * @param valueType
 	 * @param symbol
 	 */
-	public void populateCovTableDetails(ColumnTypeType columnType, SymbolTypeType valueType, String symbol){
-		if(columnType.equals(ColumnTypeType.COVARIATE)){
-			if(valueType.equals(SymbolTypeType.INT)){
+	public void populateCovTableDetails(ColumnType columnType, SymbolType valueType, String symbol){
+		if(columnType.equals(ColumnType.COVARIATE)){
+			if(valueType.equals(SymbolType.INT)){
 			catCovTableColumns.add(symbol.toUpperCase());	
 			}
-			if(valueType.equals(SymbolTypeType.REAL)){
+			if(valueType.equals(SymbolType.REAL)){
 			contCovTableColumns.add(symbol.toUpperCase());
 			}
 		}
@@ -141,9 +141,9 @@ public class InputStatement {
     private TabularDataset getObjectiveDatasetMap(EstimationStep estimateStep){
     	TabularDataset dataset = null;
     	if(estimateStep != null){
-	    	EstimationStepType stepType = estimateStep.getStep();
+	    	Estimation stepType = estimateStep.getStep();
 	    	if(stepType.getObjectiveDataSet()!=null){
-				for (DatasetMappingType dsm : stepType.getObjectiveDataSet()) {
+				for (DatasetMapping dsm : stepType.getObjectiveDataSet()) {
 					//TODO: we return first occurrence of the element assuming that there is only one 
 					//		but need to handle it in better way in future. 
 					if (dsm != null) {

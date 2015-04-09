@@ -12,12 +12,12 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.Map.Entry;
 
+import crx.converter.engine.parts.BaseRandomVariableBlock.CorrelationRef;
 import crx.converter.engine.parts.ParameterBlock;
-import crx.converter.engine.parts.BaseRandomVariableBlock.Correlation;
 import eu.ddmore.converters.nonmem.utils.Formatter;
 import eu.ddmore.converters.nonmem.utils.ParametersHelper;
-import eu.ddmore.converters.nonmem.utils.Formatter.Constant;
-import eu.ddmore.libpharmml.dom.modeldefn.ParameterRandomVariableType;
+import eu.ddmore.converters.nonmem.utils.Formatter.NmConstant;
+import eu.ddmore.libpharmml.dom.modeldefn.ParameterRandomVariable;
 
 public class OmegaBlockStatement {
 	
@@ -43,7 +43,7 @@ public class OmegaBlockStatement {
 	 * @return
 	 */
 	public void createOmegaBlocks(){
-		List<Correlation> correlations = getAllCorrelations();
+		List<CorrelationRef> correlations = getAllCorrelations();
 		
 		if(!correlations.isEmpty()){
 			initialiseOmegaBlocks(correlations);
@@ -52,7 +52,7 @@ public class OmegaBlockStatement {
 
 			for(String eta : orderedEtasToOmegaMap.values()){
 
-				for(Correlation correlation :  correlations){
+				for(CorrelationRef correlation :  correlations){
 					String firstRandomVar = correlation.rnd1.getSymbId();
 					String secondRandomVar = correlation.rnd2.getSymbId();
 					int column = getOrderedEtaIndex(firstRandomVar);
@@ -85,12 +85,12 @@ public class OmegaBlockStatement {
 	 * @param correlations
 	 * @return
 	 */
-	private String createOmegaBlockTitle(List<Correlation> correlations) {
+	private String createOmegaBlockTitle(List<CorrelationRef> correlations) {
 		Integer blocksCount = etaToOmagaMap.size();
 		StringBuilder description = new StringBuilder();
 		//This will change in case of 0.4 as it will need to deal with matrix types as well.
-		description.append((!correlations.isEmpty())?Constant.CORRELATION:" ");
-		description.append((isOmegaBlockFromStdDev)?" "+Constant.SD:"");
+		description.append((!correlations.isEmpty())?NmConstant.CORRELATION:" ");
+		description.append((isOmegaBlockFromStdDev)?" "+NmConstant.SD:"");
 		String title = String.format(Formatter.endline()+"%s %s", Formatter.omegaBlock(blocksCount),description);
 		return title;
 	}
@@ -110,8 +110,8 @@ public class OmegaBlockStatement {
 	 * 
 	 * @return
 	 */
-	private List<Correlation> getAllCorrelations() {
-		List<Correlation> correlations = new ArrayList<Correlation>();
+	private List<CorrelationRef> getAllCorrelations() {
+		List<CorrelationRef> correlations = new ArrayList<CorrelationRef>();
 		List<ParameterBlock> parameterBlocks = paramHelper.getScriptDefinition().getParameterBlocks();
 		if(!parameterBlocks.isEmpty()){
 			for(ParameterBlock block : parameterBlocks){
@@ -127,7 +127,7 @@ public class OmegaBlockStatement {
 	 * @param eta
 	 * @param randomVar1
 	 */
-	private void createFirstMatrixRow(String eta, ParameterRandomVariableType randomVar1) {
+	private void createFirstMatrixRow(String eta, ParameterRandomVariable randomVar1) {
 		if(etaToOmagaMap.get(randomVar1.getSymbId())== 1 && eta.equals(randomVar1.getSymbId())){
 			List<OmegaStatement> matrixRow = new ArrayList<OmegaStatement>();
 			String symbId = paramHelper.getNameFromParamRandomVariable(randomVar1);
@@ -141,10 +141,10 @@ public class OmegaBlockStatement {
 	 * 
 	 * @param correlations
 	 */
-	private void initialiseOmegaBlocks(List<Correlation> correlations){
+	private void initialiseOmegaBlocks(List<CorrelationRef> correlations){
 		omegaBlocks.clear();
 
-		for(Correlation correlation : correlations){
+		for(CorrelationRef correlation : correlations){
 			//Need to set SD attribute for whole block if even a single value is from std dev
 			setStdDevAttributeForOmegaBlock(correlation);
 			paramHelper.addCorrelationToMap(etasToOmegasInCorrelation,correlation);
@@ -176,7 +176,7 @@ public class OmegaBlockStatement {
         return rev;
     }
 
-	private void setStdDevAttributeForOmegaBlock(Correlation correlation) {
+	private void setStdDevAttributeForOmegaBlock(CorrelationRef correlation) {
 		if(!isOmegaBlockFromStdDev){
 			isOmegaBlockFromStdDev = paramHelper.isParamFromStdDev(correlation.rnd1) || paramHelper.isParamFromStdDev(correlation.rnd1);
 		}

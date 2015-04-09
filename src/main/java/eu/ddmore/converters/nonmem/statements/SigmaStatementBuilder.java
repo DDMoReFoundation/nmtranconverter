@@ -11,11 +11,11 @@ import java.util.Set;
 import crx.converter.engine.parts.ObservationBlock;
 import eu.ddmore.converters.nonmem.utils.Formatter;
 import eu.ddmore.converters.nonmem.utils.ParametersHelper;
-import eu.ddmore.converters.nonmem.utils.Formatter.Constant;
+import eu.ddmore.converters.nonmem.utils.Formatter.NmConstant;
 import eu.ddmore.converters.nonmem.utils.Formatter.Symbol;
-import eu.ddmore.libpharmml.dom.commontypes.RealValueType;
-import eu.ddmore.libpharmml.dom.modeldefn.ParameterRandomVariableType;
-import eu.ddmore.libpharmml.dom.modellingsteps.ParameterEstimateType;
+import eu.ddmore.libpharmml.dom.commontypes.RealValue;
+import eu.ddmore.libpharmml.dom.modeldefn.ParameterRandomVariable;
+import eu.ddmore.libpharmml.dom.modellingsteps.ParameterEstimate;
 import eu.ddmore.libpharmml.dom.uncertml.PositiveRealValueType;
 
 /**
@@ -57,13 +57,13 @@ public class SigmaStatementBuilder {
 
         String sigmaRepresentation = new String();
 
-        Set<ParameterRandomVariableType> randomVariableTypes = new HashSet<ParameterRandomVariableType>();
+        Set<ParameterRandomVariable> randomVariableTypes = new HashSet<ParameterRandomVariable>();
 
         for(ObservationBlock observationBlock: parameters.getScriptDefinition().getObservationBlocks()){
             randomVariableTypes.addAll(observationBlock.getRandomVariables());
         }
 
-        for (ParameterRandomVariableType rv : randomVariableTypes) {
+        for (ParameterRandomVariable rv : randomVariableTypes) {
 
             Boolean isStdDev = false;
 
@@ -81,7 +81,7 @@ public class SigmaStatementBuilder {
 
             StringBuilder sigmaStatements = new StringBuilder();
             if(isNumeric(sigmaRepresentation)){
-                sigmaStatements.append(Double.parseDouble(sigmaRepresentation) +" "+Constant.FIX);
+                sigmaStatements.append(Double.parseDouble(sigmaRepresentation) +" "+NmConstant.FIX);
             }else {
                 String sigmastatement = getSigmaFromInitialEstimate(sigmaRepresentation, isStdDev, parameters);
                 sigmaStatements.append(sigmastatement);
@@ -104,13 +104,13 @@ public class SigmaStatementBuilder {
     private String getSigmaFromInitialEstimate(String varId, Boolean isStdDev, ParametersHelper parameters) {
         StringBuilder sigmastatement = new StringBuilder();
 
-        for(ParameterEstimateType params : parameters.getAllEstimationParams()){
+        for(ParameterEstimate params : parameters.getAllEstimationParams()){
             String symbId = params.getSymbRef().getSymbIdRef();
             if(symbId.equals(varId)){
-                RealValueType value = (RealValueType) params.getInitialEstimate().getScalar().getValue();
+                RealValue value = (RealValue) params.getInitialEstimate().getScalar().getValue();
                 sigmastatement.append(value.getValue());
                 if(params.getInitialEstimate().isFixed()){
-                    sigmastatement.append(" " + Constant.FIX);
+                    sigmastatement.append(" " + NmConstant.FIX);
                 }else{
                     sigmastatement.append(value.getValue());
                 }
@@ -124,7 +124,7 @@ public class SigmaStatementBuilder {
 
     private void addAttributeForStdDev(StringBuilder statement, Boolean isStdDev) {
         if(isStdDev){
-            statement.append(Formatter.endline(" "+Constant.SD));
+            statement.append(Formatter.endline(" "+NmConstant.SD));
         }
     }
 

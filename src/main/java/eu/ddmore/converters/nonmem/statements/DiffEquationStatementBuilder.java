@@ -12,8 +12,8 @@ import crx.converter.engine.ScriptDefinition;
 import crx.converter.engine.parts.StructuralBlock;
 import eu.ddmore.converters.nonmem.Parser;
 import eu.ddmore.converters.nonmem.utils.Formatter;
-import eu.ddmore.libpharmml.dom.commontypes.DerivativeVariableType;
-import eu.ddmore.libpharmml.dom.commontypes.VariableDefinitionType;
+import eu.ddmore.libpharmml.dom.commontypes.DerivativeVariable;
+import eu.ddmore.libpharmml.dom.commontypes.VariableDefinition;
 
 public class DiffEquationStatementBuilder {
 	private static final String DES = "DES";
@@ -36,11 +36,11 @@ public class DiffEquationStatementBuilder {
 	 * gets DES block for pred statement
 	 * 
 	 */
-	public StringBuilder getDifferentialEquationsStatement(List<DerivativeVariableType> derivativeVarList) {
+	public StringBuilder getDifferentialEquationsStatement(List<DerivativeVariable> derivativeVarList) {
 		StringBuilder diffEqStatementBlock = new StringBuilder();
 		diffEqStatementBlock.append(Formatter.des());
 		int i=1;
-		for (DerivativeVariableType variableType : derivativeVarList){
+		for (DerivativeVariable variableType : derivativeVarList){
 			String variable = Formatter.addPrefix(variableType.getSymbId());
 			derivativeVariableMap.put(variable, Integer.toString(i++));
 			
@@ -83,7 +83,7 @@ public class DiffEquationStatementBuilder {
 	private StringBuilder addVarDefinitionTypesToDES(StructuralBlock block) {
 		
 		StringBuilder varDefinitionsBlock = new StringBuilder();
-		for (VariableDefinitionType definitionType: block.getLocalVariables()){
+		for (VariableDefinition definitionType: block.getLocalVariables()){
 			String variable = Formatter.addPrefix(definitionType.getSymbId());
 			String rhs = parser.parse(definitionType).replaceFirst(variable+" =","");			
 			if(isVarFromErrorFunction(variable)){
@@ -104,7 +104,7 @@ public class DiffEquationStatementBuilder {
 	 */
 	private StringBuilder addDerivativeVarToDES(StructuralBlock block) {
 		StringBuilder derivativeVarBlock = new StringBuilder();
-		for(DerivativeVariableType variableType: block.getStateVariables()){
+		for(DerivativeVariable variableType: block.getStateVariables()){
 			String parsedDADT = parser.parse(variableType);
 			String variable = Formatter.addPrefix(variableType.getSymbId());
 			if(isDerivativeVariableHasAmount(variable)){

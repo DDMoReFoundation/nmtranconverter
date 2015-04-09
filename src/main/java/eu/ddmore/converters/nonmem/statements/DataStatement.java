@@ -17,9 +17,9 @@ import crx.converter.engine.parts.EstimationStep;
 import crx.converter.engine.parts.TabularDataset;
 import eu.ddmore.converters.nonmem.utils.Formatter;
 import eu.ddmore.converters.nonmem.utils.ParametersHelper;
-import eu.ddmore.libpharmml.dom.modellingsteps.DatasetMappingType;
-import eu.ddmore.libpharmml.dom.modellingsteps.EstimationStepType;
-import eu.ddmore.libpharmml.dom.modellingsteps.NONMEMdataSetType;
+import eu.ddmore.libpharmml.dom.modellingsteps.DatasetMapping;
+import eu.ddmore.libpharmml.dom.modellingsteps.Estimation;
+import eu.ddmore.libpharmml.dom.modellingsteps.ExternalDataSet;
 
 public class DataStatement{
 	
@@ -52,22 +52,22 @@ public class DataStatement{
 		dataFileName = generateDataFileName(srcFile.getAbsolutePath());
 	}
 		
-	public DataStatement(List<NONMEMdataSetType> dataFiles, File srcFile) {
+	public DataStatement(List<ExternalDataSet> dataFiles, File srcFile) {
 		
 		if (null == dataFiles) {
 			throw new IllegalStateException("NONMEM data set(s) cannot be null");
 		}
 		// TODO: Handle multiple data sets
-		Iterator<NONMEMdataSetType> dsIterator = dataFiles.iterator();
+		Iterator<ExternalDataSet> dsIterator = dataFiles.iterator();
 		if (!dsIterator.hasNext()) {
 			throw new IllegalStateException("NONMEM data set(s) cannot be empty");
 		}
 		while (dsIterator.hasNext()) {
-			NONMEMdataSetType nonmemDataSet = dsIterator.next();
+		    ExternalDataSet nonmemDataSet = dsIterator.next();
 			// TODO: adding null check for time being as no examples for 0.3.1 or above are available right now.
-			if (nonmemDataSet.getDataSet().getImportData().getPath() != null) {
+			if (nonmemDataSet.getDataSet().getExternalFile().getPath() != null) {
 				String dataLocation = srcFile.getAbsoluteFile().getParentFile().getAbsolutePath();
-				dataFileName = nonmemDataSet.getDataSet().getImportData().getPath();
+				dataFileName = nonmemDataSet.getDataSet().getExternalFile().getPath();
 				File data = new File(dataLocation+File.separator+dataFileName);
 				if(data.exists()){
 					setDataFile(data);
@@ -128,9 +128,9 @@ public class DataStatement{
     private TabularDataset getObjectiveDatasetMap(EstimationStep estimateStep){
     	TabularDataset dataset = null;
     	if(estimateStep != null){
-	    	EstimationStepType stepType = estimateStep.getStep();
+	    	Estimation stepType = estimateStep.getStep();
 	    	if(stepType.getObjectiveDataSet()!=null){
-				for (DatasetMappingType dsm : stepType.getObjectiveDataSet()) {
+				for (DatasetMapping dsm : stepType.getObjectiveDataSet()) {
 					//TODO: we return first occurrence of the element assuming that there is only one 
 					//		but need to handle it in better way in future. 
 					if (dsm != null) {

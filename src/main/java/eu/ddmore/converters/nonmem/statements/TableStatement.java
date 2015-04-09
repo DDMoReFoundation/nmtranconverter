@@ -12,7 +12,7 @@ import eu.ddmore.converters.nonmem.utils.Formatter;
 import eu.ddmore.converters.nonmem.utils.ParametersHelper;
 import eu.ddmore.converters.nonmem.utils.Formatter.ColumnConstant;
 import eu.ddmore.converters.nonmem.utils.Formatter.TableConstant;
-import eu.ddmore.libpharmml.dom.modeldefn.IndividualParameterType;
+import eu.ddmore.libpharmml.dom.modeldefn.IndividualParameter;
 
 public class TableStatement {
 	
@@ -108,8 +108,8 @@ public class TableStatement {
 		StringBuilder paramTable = new StringBuilder();
 
 		for(ParameterBlock block : blocks){
-			List<IndividualParameterType> indivParamTypes = block.getIndividualParameters();
-			for(IndividualParameterType parameterType: indivParamTypes){
+			List<IndividualParameter> indivParamTypes = block.getIndividualParameters();
+			for(IndividualParameter parameterType: indivParamTypes){
 				paramTable.append(SPACE+parameterType.getSymbId());
 			}
 		}

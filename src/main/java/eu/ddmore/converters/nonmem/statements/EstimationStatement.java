@@ -10,13 +10,13 @@ import crx.converter.engine.ScriptDefinition;
 import crx.converter.engine.parts.EstimationStep;
 import crx.converter.engine.parts.Part;
 import eu.ddmore.converters.nonmem.utils.Formatter;
-import eu.ddmore.libpharmml.dom.commontypes.BooleanType;
-import eu.ddmore.libpharmml.dom.commontypes.TrueBooleanType;
+import eu.ddmore.libpharmml.dom.commontypes.BooleanValue;
+import eu.ddmore.libpharmml.dom.commontypes.TrueBoolean;
 import eu.ddmore.libpharmml.dom.maths.Equation;
-import eu.ddmore.libpharmml.dom.modellingsteps.AlgorithmType;
-import eu.ddmore.libpharmml.dom.modellingsteps.EstimationOpTypeType;
-import eu.ddmore.libpharmml.dom.modellingsteps.EstimationOperationType;
-import eu.ddmore.libpharmml.dom.modellingsteps.OperationPropertyType;
+import eu.ddmore.libpharmml.dom.modellingsteps.Algorithm;
+import eu.ddmore.libpharmml.dom.modellingsteps.EstimationOpType;
+import eu.ddmore.libpharmml.dom.modellingsteps.EstimationOperation;
+import eu.ddmore.libpharmml.dom.modellingsteps.OperationProperty;
 
 /**
  * Creates and adds estimation statement to nonmem file from script definition.
@@ -51,7 +51,7 @@ public class EstimationStatement {
      * Compute method for algorithm depending upon its definition.
      * 
      */
-    private StringBuilder computeMethod(AlgorithmType algorithm) {
+    private StringBuilder computeMethod(Algorithm algorithm) {
         StringBuilder sb = new StringBuilder();
         sb.append("METHOD=");
         if (algorithm!=null) {
@@ -107,13 +107,13 @@ public class EstimationStatement {
         if(estimationSteps!=null){
             for(EstimationStep estStep : estimationSteps){
 
-                for(EstimationOperationType operationType :estStep.getOperations()){
-                    EstimationOpTypeType optType = operationType.getOpType();
+                for(EstimationOperation operationType :estStep.getOperations()){
+                    String optType = operationType.getOpType();
                     covFound = checkForCovariateStatement(operationType);
 
-                    if(EstimationOpTypeType.EST_POP.equals(optType)){
+                    if(EstimationOpType.EST_POP.value().equals(optType)){
                         estStatement.append(computeMethod(operationType.getAlgorithm()));
-                    }else if(EstimationOpTypeType.EST_INDIV.equals(optType)){
+                    }else if(EstimationOpType.EST_INDIV.value().equals(optType)){
                         break;
                     }
                 }
@@ -139,16 +139,16 @@ public class EstimationStatement {
      * @param operationType
      * @return
      */
-    private Boolean checkForCovariateStatement(EstimationOperationType operationType){
+    private Boolean checkForCovariateStatement(EstimationOperation operationType){
         //If covariate is found in any other operations or properties already then return
         if(covFound==true){
             return covFound;
         }
-        EstimationOpTypeType optType = operationType.getOpType();
-        if(EstimationOpTypeType.EST_FIM.equals(optType)){
+        String optType = operationType.getOpType();
+        if(EstimationOpType.EST_FIM.equals(optType)){
             return true;
-        }else if(EstimationOpTypeType.EST_POP.equals(optType)){
-            for(OperationPropertyType property : operationType.getProperty()){
+        }else if(EstimationOpType.EST_POP.equals(optType)){
+            for(OperationProperty property : operationType.getProperty()){
                 if(property.getName().equals("cov") && property.getAssign()!=null){
                     if(property.getAssign().getScalar()!=null){
                         return isCovPropertyForEstOperation(property.getAssign().getScalar().getValue());	
@@ -169,9 +169,9 @@ public class EstimationStatement {
      * @return
      */
     private Boolean isCovPropertyForEstOperation(Object value) {
-        if(value instanceof BooleanType){
-            BooleanType val = (BooleanType) value;
-            return (val instanceof TrueBooleanType);
+        if(value instanceof BooleanValue){
+            BooleanValue val = (BooleanValue) value;
+            return (val instanceof TrueBoolean);
         }
         return false;
     }

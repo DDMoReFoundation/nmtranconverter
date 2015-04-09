@@ -77,7 +77,7 @@ public class ConverterProvider extends Lexer {
 		String output_filename = getScriptFilename(outputDirectory.getAbsolutePath(),model_filename);
 		PrintWriter fout = new PrintWriter(output_filename);
 		
-		parser.writeScriptHeader(fout,model_filename);
+		parser.writePreMainBlockElements(fout,src);
 		createPKPDScript(fout,src, outputDirectory);
 		
 		parser.writeEOF(fout);
@@ -105,12 +105,12 @@ public class ConverterProvider extends Lexer {
 		InputStatement inputStatement;
 		DataStatement dataStatement;
 		
-		if (getDataFiles().getNonmemDataSets().isEmpty()) {
+		if (getDataFiles().getExternalDataSets().isEmpty()) {
 			inputStatement = new InputStatement(scriptDefinition);
 			dataStatement = new DataStatement(scriptDefinition, src);
 		} else {
-			inputStatement = new InputStatement(getDataFiles().getNonmemDataSets());
-			dataStatement = new DataStatement(getDataFiles().getNonmemDataSets(),src);
+			inputStatement = new InputStatement(getDataFiles().getExternalDataSets());
+			dataStatement = new DataStatement(getDataFiles().getExternalDataSets(),src);
 		}
 		fout.write(Formatter.endline());
 		fout.write(inputStatement.getStatement());
@@ -118,7 +118,7 @@ public class ConverterProvider extends Lexer {
 		fout.write(dataStatement.getStatement());
 		fout.write(getSimulationStatement());
 
-		parser.writeParameters(fout);
+		parser.writeParameterStatement(fout);
 		
 		EstimationStatement estStatement = new EstimationStatement(scriptDefinition);
 		if(!estStatement.getEstimationSteps().isEmpty()){

@@ -21,26 +21,29 @@ import eu.ddmore.convertertoolbox.api.response.ConversionReport;
 import eu.ddmore.convertertoolbox.api.response.ConversionReport.ConversionCode;
 
 public class TestExample5 extends TestBase {
-	@Before
-	public void setUp() throws Exception {
-		inputXMLFile = "example5/example5_NONMEM.xml";
-		init(inputXMLFile, V_0_3_SUBDIR);
-	}
+    @Before
+    public void setUp() throws Exception {
+        inputXMLFile = "example5/example5_NONMEM.xml"; //example5_NONMEM_03_fixed_noSimpleParam
+        inputDataFile = "example5/datasets/example5_NONMEM.csv";
+        
+        init(inputDataFile, V_0_6_SUBDIR);
+        init(inputXMLFile, V_0_6_SUBDIR);
+    }
 
-	@Ignore
-	@Test
-	public void test() {
-		assertTrue(dir.exists());
-		assertTrue(f.exists());
-		
-		ConversionReport report = c.performConvert(f, dir);
-		assertNotNull(report);
-		assertEquals(report.getReturnCode(), ConversionCode.SUCCESS);
-		List<ConversionDetail> details = report.getDetails(Severity.INFO);
-		assertFalse(details.isEmpty());
-		assertNotNull(details.get(0));
-		ConversionDetail_ detail = (ConversionDetail_) details.get(0);
-		f = detail.getFile();
-		assertTrue(f.exists());
-	}
+    //	@Ignore
+    @Test
+    public void test() {
+        assertTrue(dir.exists());
+        assertTrue(f.exists());
+
+        ConversionReport report = c.performConvert(f, dir);
+        assertNotNull(report);
+        assertEquals(report.getReturnCode(), ConversionCode.SUCCESS);
+        List<ConversionDetail> details = report.getDetails(Severity.INFO);
+        assertFalse(details.isEmpty());
+        assertNotNull(details.get(0));
+        ConversionDetail_ detail = (ConversionDetail_) details.get(0);
+        f = detail.getFile();
+        assertTrue(f.exists());
+    }
 }

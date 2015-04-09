@@ -3,21 +3,17 @@
  ******************************************************************************/
 package eu.ddmore.converters.nonmem.statements;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.Test;
 
-import eu.ddmore.converters.nonmem.statements.DataStatement;
 import eu.ddmore.converters.nonmem.statements.InputStatement;
-import eu.ddmore.libpharmml.dom.dataset.DataSetType;
-import eu.ddmore.libpharmml.dom.dataset.ImportDataType;
-import eu.ddmore.libpharmml.dom.modellingsteps.ModellingStepsType;
-import eu.ddmore.libpharmml.dom.modellingsteps.NONMEMdataSetType;
+import eu.ddmore.libpharmml.dom.dataset.DataSet;
+import eu.ddmore.libpharmml.dom.dataset.ExternalFile;
+import eu.ddmore.libpharmml.dom.modellingsteps.ExternalDataSet;
+import eu.ddmore.libpharmml.dom.modellingsteps.ModellingSteps;
 
 public class DataStatementTest {
 
@@ -29,7 +25,7 @@ public class DataStatementTest {
 	@Test
 	public void shouldCreateValidDataStatementNONMEMdataSet() {
 
-		ModellingStepsType modellingSteps = createModellingSteps(createDataSet());
+		ModellingSteps modellingSteps = createModellingSteps(createDataSet());
 		
 		srcFile = new File(DATA_FILE_NAME);
 		
@@ -44,33 +40,33 @@ public class DataStatementTest {
 	@Test(expected = IllegalStateException.class)
 	public void shouldThrowExceptionNullNONMEMdataSet() {
 
-		new InputStatement((List<NONMEMdataSetType>)null);
+		new InputStatement((List<ExternalDataSet>)null);
 	}
 
 	@Test(expected = IllegalStateException.class)
 	public void shouldThrowExceptionEmptyNONMEMdataSet() {
 
-		new InputStatement((new ArrayList<NONMEMdataSetType>()));
+		new InputStatement((new ArrayList<ExternalDataSet>()));
 	}
 
-	private DataSetType createDataSet() {
+	private DataSet createDataSet() {
 
-		ImportDataType importData = new ImportDataType();
+		ExternalFile importData = new ExternalFile();
 		importData.setPath(DATA_FILE_NAME);
 
-		DataSetType dataset = new DataSetType();
+		DataSet dataset = new DataSet();
 		dataset.setImportData(importData);
 		
 		return dataset;
 	}
 
-	private ModellingStepsType createModellingSteps(DataSetType dataset) {
+	private ModellingSteps createModellingSteps(DataSet dataset) {
 
-		NONMEMdataSetType nonmemDataSet = new NONMEMdataSetType();
+		ExternalDataSet nonmemDataSet = new ExternalDataSet();
 		nonmemDataSet.setDataSet(dataset);
 
-		ModellingStepsType modellingSteps = new ModellingStepsType();
-		modellingSteps.getNONMEMdataSet().add(nonmemDataSet);
+		ModellingSteps modellingSteps = new ModellingSteps();
+		modellingSteps.getListOfExternalDataSet().add(nonmemDataSet);
 
 		return modellingSteps;
 	}

@@ -14,7 +14,7 @@ public class Formatter {
 	    COV, THETA, OMEGA, SIGMA, BLOCK;
 	}
 	
-	public enum Constant{
+	public enum NmConstant{
 		LOG, LOGIT, CORRELATION, FIX, SD, T;
 	}
 	

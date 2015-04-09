@@ -16,13 +16,13 @@ import crx.converter.engine.parts.ParameterBlock;
 import crx.converter.engine.parts.StructuralBlock;
 import eu.ddmore.converters.nonmem.Parser;
 import eu.ddmore.converters.nonmem.utils.Formatter;
-import eu.ddmore.libpharmml.dom.commontypes.DerivativeVariableType;
+import eu.ddmore.libpharmml.dom.commontypes.DerivativeVariable;
 import eu.ddmore.libpharmml.dom.maths.FunctionCallType;
 import eu.ddmore.libpharmml.dom.modeldefn.GaussianObsError;
 import eu.ddmore.libpharmml.dom.modeldefn.GaussianObsError.ErrorModel;
 import eu.ddmore.libpharmml.dom.modeldefn.GeneralObsError;
-import eu.ddmore.libpharmml.dom.modeldefn.IndividualParameterType;
-import eu.ddmore.libpharmml.dom.modeldefn.ObservationErrorType;
+import eu.ddmore.libpharmml.dom.modeldefn.IndividualParameter;
+import eu.ddmore.libpharmml.dom.modeldefn.ObservationError;
 
 /**
  * Creates and adds estimation statement to nonmem file from script definition.
@@ -33,7 +33,7 @@ import eu.ddmore.libpharmml.dom.modeldefn.ObservationErrorType;
 public class PredStatement {
 	
     private ScriptDefinition scriptDefinition;
-    private List<DerivativeVariableType> derivativeVarList = new ArrayList<DerivativeVariableType>();
+    private List<DerivativeVariable> derivativeVarList = new ArrayList<DerivativeVariable>();
     private List<ErrorStatement> errorStatements = new ArrayList<ErrorStatement>();
 	private Parser parser;
 	public static Boolean isDES = false;
@@ -164,7 +164,7 @@ public class PredStatement {
 		List<ErrorStatement> errorStatements = new ArrayList<ErrorStatement>();
 
 		for(ObservationBlock block : scriptDefinition.getObservationBlocks()){
-			ObservationErrorType errorType = block.getObservationError();
+			ObservationError errorType = block.getObservationError();
 			if(errorType instanceof GeneralObsError){
 //				GeneralObsError genError = (GeneralObsError) errorType;
 //				TODO : DDMORE-1013 : add support for general observation error type once details are available
@@ -205,7 +205,7 @@ public class PredStatement {
 		StringBuilder modelBlock = new StringBuilder();
 		modelBlock.append(Formatter.endline());
 		modelBlock.append(Formatter.model());
-		for(DerivativeVariableType stateVariable :getAllStateVariables()){
+		for(DerivativeVariable stateVariable :getAllStateVariables()){
 			modelBlock.append(Formatter.endline("COMP "+"("+Formatter.addPrefix(stateVariable.getSymbId())+")"));
 		}
 		return modelBlock;
@@ -216,8 +216,8 @@ public class PredStatement {
 	 * 
 	 * @return
 	 */
-	private Set<DerivativeVariableType> getAllStateVariables() {
-		Set<DerivativeVariableType> stateVariables = new LinkedHashSet<DerivativeVariableType>();
+	private Set<DerivativeVariable> getAllStateVariables() {
+		Set<DerivativeVariable> stateVariables = new LinkedHashSet<DerivativeVariable>();
 		for(StructuralBlock structuralBlock : scriptDefinition.getStructuralBlocks() ){
 			stateVariables.addAll(structuralBlock.getStateVariables());
 		}
@@ -245,7 +245,7 @@ public class PredStatement {
 	public StringBuilder getAllIndividualParamAssignments(List<ParameterBlock> blocks) {
 		StringBuilder IndividualParamAssignmentBlock = new StringBuilder();
 		for(ParameterBlock parameterBlock : blocks){
-			for(IndividualParameterType parameterType: parameterBlock.getIndividualParameters()){
+			for(IndividualParameter parameterType: parameterBlock.getIndividualParameters()){
 				IndividualParamAssignmentBlock.append(parser.createIndividualDefinition(parameterType));	
 			}
 		}
