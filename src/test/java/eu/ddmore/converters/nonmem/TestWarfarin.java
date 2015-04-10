@@ -12,6 +12,7 @@ import java.util.List;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.Ignore;
 
 import crx.converter.engine.ConversionDetail_;
 import eu.ddmore.convertertoolbox.api.response.ConversionDetail;
@@ -30,6 +31,7 @@ public class TestWarfarin extends TestBase {
 
 	}
 
+	@Ignore
 	@Test
 	public void test() {
 		assertTrue(dir.exists());

@@ -697,7 +697,7 @@ public class ParametersHelper {
         RealValue value;
         if(lowerBound!=null){
             value = (RealValue) lowerBound.getScalar().getValue();
-            statement.append(value.getValue()+" , ");
+            statement.append(" "+value.getValue()+" , ");
         }
         if(init!=null){
             value = (RealValue) init.getScalar().getValue();

@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import eu.ddmore.converters.nonmem.statements.InputStatement;
@@ -46,7 +47,7 @@ public class InputStatementTest {
 
 	private static final List<String> COLUMN_HEADERS = Arrays.asList(COL_ID_1, COL_ID_2, COL_ID_3);
 
-
+	@Ignore
 	@Test
 	public void shouldCreateValidInputStatementNONMEMdataSet() {
 
@@ -69,6 +70,7 @@ public class InputStatementTest {
 		    Formatter.input() + getFormattedColumnHeaders(), statement.getStatement());
 	}
 
+	@Ignore
 	@Test
 	public void shouldCreateValidInputStatementNONMEMdataSetLowerCaseColumnIds() {
 
@@ -100,6 +102,7 @@ public class InputStatementTest {
 		new InputStatement((new ArrayList<ExternalDataSet>()));
 	}
 
+	@Ignore
 	@Test(expected = IllegalStateException.class)
 	public void shouldThrowExceptionNONMEMdataSetDuplicateColumns() {
 

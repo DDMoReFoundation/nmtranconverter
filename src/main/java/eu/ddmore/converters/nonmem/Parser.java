@@ -51,6 +51,7 @@ import eu.ddmore.libpharmml.dom.IndependentVariable;
 import eu.ddmore.libpharmml.dom.commontypes.PharmMLRootType;
 import eu.ddmore.libpharmml.dom.commontypes.SymbolRef;
 import eu.ddmore.libpharmml.dom.maths.Condition;
+import eu.ddmore.libpharmml.dom.maths.Constant;
 import eu.ddmore.libpharmml.dom.maths.Piece;
 import eu.ddmore.libpharmml.dom.maths.Piecewise;
 import eu.ddmore.libpharmml.dom.modeldefn.ContinuousCovariate;
@@ -236,7 +237,7 @@ public class Parser extends BaseParser {
     }
 
     @Override
-    protected String doConstant(eu.ddmore.libpharmml.dom.maths.Constant c) {
+    protected String doConstant(Constant c) {
         String symbol = unassigned_symbol;
 
         String op = c.getOp();
