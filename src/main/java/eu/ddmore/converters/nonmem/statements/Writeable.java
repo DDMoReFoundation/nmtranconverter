@@ -8,6 +8,6 @@ import java.io.Writer;
 
 public interface Writeable {
 
-	void write(Writer writer) throws IOException;
+    void write(Writer writer) throws IOException;
 
 }

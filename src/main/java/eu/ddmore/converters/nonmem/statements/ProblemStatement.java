@@ -9,41 +9,41 @@ import java.io.Writer;
 import eu.ddmore.converters.nonmem.utils.Formatter;
 
 public class ProblemStatement implements Writeable {
-	
+
     private String problemDescription;
     private String statement;
-	
-	public String getProblemDescription() {
-		return problemDescription;
-	}
 
-	public ProblemStatement(String problemDescription) {
-		this.problemDescription = problemDescription;
-	}
+    public String getProblemDescription() {
+        return problemDescription;
+    }
 
-	/**
-	 * @return the printable version of this statement
-	 */
-	public String getStatement() {
+    public ProblemStatement(String problemDescription) {
+        this.problemDescription = problemDescription;
+    }
 
-		if (null == statement) {
-			StringBuilder stringBuilder = new StringBuilder(Formatter.problem());
+    /**
+     * @return the printable version of this statement
+     */
+    public String getStatement() {
 
-			if (problemDescription != null) {
-				stringBuilder.append(problemDescription);
-			}
+        if (null == statement) {
+            StringBuilder stringBuilder = new StringBuilder(Formatter.problem());
 
-			statement = stringBuilder.toString();
-		}
+            if (problemDescription != null) {
+                stringBuilder.append(problemDescription);
+            }
 
-		return statement;
-	}
+            statement = stringBuilder.toString();
+        }
 
-	/**
-	 * Writes this statement to the given Writer
-	 */
-	@Override
-	public void write(Writer writer) throws IOException {
-		writer.write(getStatement());
-	}
+        return statement;
+    }
+
+    /**
+     * Writes this statement to the given Writer
+     */
+    @Override
+    public void write(Writer writer) throws IOException {
+        writer.write(getStatement());
+    }
 }

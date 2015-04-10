@@ -28,7 +28,7 @@ public class EstimationStatement {
     }
 
     private List<EstimationStep> estimationSteps = new ArrayList<EstimationStep>();
-    
+
     private static Boolean covFound = false;
 
     public List<EstimationStep> getEstimationSteps() {

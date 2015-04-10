@@ -25,7 +25,7 @@ public class TestExample5 extends TestBase {
     public void setUp() throws Exception {
         inputXMLFile = "example5/example5_NONMEM.xml"; //example5_NONMEM_03_fixed_noSimpleParam
         inputDataFile = "example5/datasets/example5_NONMEM.csv";
-        
+
         init(inputDataFile, V_0_6_SUBDIR);
         init(inputXMLFile, V_0_6_SUBDIR);
     }

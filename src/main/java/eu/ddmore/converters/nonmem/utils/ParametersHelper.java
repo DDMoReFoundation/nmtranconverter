@@ -219,7 +219,7 @@ public class ParametersHelper {
         if(omegaSymbId!= null){
             omegaStatement = new OmegaStatement(omegaSymbId);
             omegaStatement.setInitialEstimate(initialEstimates.get(omegaSymbId));
-            
+
             if(initialEstimates.get(omegaSymbId) == null){
                 ScalarRhs scalar = getScalarRhsForSymbol(omegaSymbId);
                 if(scalar!=null){
@@ -571,7 +571,7 @@ public class ParametersHelper {
         }
         return sigmaStatement;
     }
-    
+
     public StringBuilder getThetaStatementBlock(){
         StringBuilder thetaStatement = new StringBuilder();
         if (!thetaStatements.isEmpty()) {
@@ -582,11 +582,11 @@ public class ParametersHelper {
         }
         return thetaStatement;
     }
-    
+
     public StringBuilder getOmegaStatementBlock() {
         StringBuilder omegaStatement = new StringBuilder();
         Map<String, List<OmegaStatement>> omegaBlocks = omegaBlockStatement.getOmegaBlocks();
-        
+
         if(!omegaBlocks.isEmpty()){
             omegaStatement.append(Formatter.endline(omegaBlockStatement.getOmegaBlockTitle()));
             for(String eta : omegaBlockStatement.getOrderedEtasToOmegaMap().values()){
@@ -595,7 +595,7 @@ public class ParametersHelper {
                 }
             }
         }
-        
+
         if (!omegaStatements.isEmpty()) {
             omegaStatement.append(Formatter.endline());
             omegaStatement.append(Formatter.endline(Formatter.omega()));
@@ -605,7 +605,7 @@ public class ParametersHelper {
         }
         return omegaStatement;
     }
-    
+
     /**
      * Write Theta and omega parameters according to the initial estimates, lower and upper bounds provided.
      * 
@@ -630,7 +630,7 @@ public class ParametersHelper {
             statement.append(NmConstant.SD+" ");
         }
         statement.append(Formatter.endline(")"+Formatter.indent(Symbol.COMMENT+description)));
-        
+
         return statement;
     }
 
@@ -680,7 +680,7 @@ public class ParametersHelper {
         }else {
             throw new IllegalStateException("Only upper bound or no values present for parameter : "+description);
         }
-        
+
         return statement;
     }
 

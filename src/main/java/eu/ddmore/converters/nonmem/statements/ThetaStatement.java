@@ -14,23 +14,23 @@ import crx.converter.engine.ScriptDefinition;
  *
  */
 public class ThetaStatement extends Parameter {
-	
-	private ScriptDefinition scriptDefinition;
 
-	public ThetaStatement(String symbId){
-		super(symbId);
-	}
-	
-	public void getThetaStatement(PrintWriter fout){
-		
-	}
+    private ScriptDefinition scriptDefinition;
 
-	public ScriptDefinition getScriptDefinition() {
-		return scriptDefinition;
-	}
+    public ThetaStatement(String symbId){
+        super(symbId);
+    }
 
-	public void setScriptDefinition(ScriptDefinition scriptDefinition) {
-		this.scriptDefinition = scriptDefinition;
-	}
-	
+    public void getThetaStatement(PrintWriter fout){
+
+    }
+
+    public ScriptDefinition getScriptDefinition() {
+        return scriptDefinition;
+    }
+
+    public void setScriptDefinition(ScriptDefinition scriptDefinition) {
+        this.scriptDefinition = scriptDefinition;
+    }
+
 }

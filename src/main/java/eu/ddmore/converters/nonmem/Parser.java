@@ -568,7 +568,7 @@ public class Parser extends BaseParser {
         String format = "%s/%s.%s";
         return String.format(format, output_dir, run_id, script_file_suffix);
     }
-    
+
     @Override
     public void writePreMainBlockElements(PrintWriter fout, File src) throws IOException{
         String model_filename = src.getName().replace(".xml", "");

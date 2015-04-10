@@ -10,75 +10,75 @@ import eu.ddmore.libpharmml.dom.commontypes.ScalarRhs;
  *
  */
 public class Parameter {
-	
-	private final String symbId;
-	private ScalarRhs initialEstimate;
-	private ScalarRhs lowerBound;
-	private ScalarRhs upperBound;	
-	private Integer index;
-	private boolean fixed = false;
-	private boolean isStdDev = false;
 
-	public Parameter(String symbId){
-		this.symbId = symbId;
-	}
-	
-	public void setParameterBounds(ScalarRhs initialEstimate,ScalarRhs lowerBound, ScalarRhs upperBound){
-		this.initialEstimate = initialEstimate;
-		this.lowerBound = lowerBound;
-		this.upperBound = upperBound;
-	}
-	
+    private final String symbId;
+    private ScalarRhs initialEstimate;
+    private ScalarRhs lowerBound;
+    private ScalarRhs upperBound;	
+    private Integer index;
+    private boolean fixed = false;
+    private boolean isStdDev = false;
 
-	public boolean isFixed() {
-		return fixed;
-	}
+    public Parameter(String symbId){
+        this.symbId = symbId;
+    }
 
-	public void setFixed(boolean isFixed) {
-		this.fixed = isFixed;
-	}
-	
-	public String getSymbId() {
-		return symbId;
-	}
+    public void setParameterBounds(ScalarRhs initialEstimate,ScalarRhs lowerBound, ScalarRhs upperBound){
+        this.initialEstimate = initialEstimate;
+        this.lowerBound = lowerBound;
+        this.upperBound = upperBound;
+    }
 
-	public ScalarRhs getInitialEstimate() {
-		return initialEstimate;
-	}
 
-	public void setInitialEstimate(ScalarRhs initialEstimate) {
-		this.initialEstimate = initialEstimate;
-	}
+    public boolean isFixed() {
+        return fixed;
+    }
 
-	public ScalarRhs getLowerBound() {
-		return lowerBound;
-	}
+    public void setFixed(boolean isFixed) {
+        this.fixed = isFixed;
+    }
 
-	public void setLowerBound(ScalarRhs lowerBound) {
-		this.lowerBound = lowerBound;
-	}
+    public String getSymbId() {
+        return symbId;
+    }
 
-	public ScalarRhs getUpperBound() {
-		return upperBound;
-	}
+    public ScalarRhs getInitialEstimate() {
+        return initialEstimate;
+    }
 
-	public void setUpperBound(ScalarRhs upperBound) {
-		this.upperBound = upperBound;
-	}
+    public void setInitialEstimate(ScalarRhs initialEstimate) {
+        this.initialEstimate = initialEstimate;
+    }
 
-	public Integer getIndex() {
-		return index;
-	}
+    public ScalarRhs getLowerBound() {
+        return lowerBound;
+    }
 
-	public void setIndex(Integer index) {
-		this.index = index;
-	}
-	
-	public boolean isStdDev() {
-		return isStdDev;
-	}
+    public void setLowerBound(ScalarRhs lowerBound) {
+        this.lowerBound = lowerBound;
+    }
 
-	public void setStdDev(boolean isStdDev) {
-		this.isStdDev = isStdDev;
-	}
+    public ScalarRhs getUpperBound() {
+        return upperBound;
+    }
+
+    public void setUpperBound(ScalarRhs upperBound) {
+        this.upperBound = upperBound;
+    }
+
+    public Integer getIndex() {
+        return index;
+    }
+
+    public void setIndex(Integer index) {
+        this.index = index;
+    }
+
+    public boolean isStdDev() {
+        return isStdDev;
+    }
+
+    public void setStdDev(boolean isStdDev) {
+        this.isStdDev = isStdDev;
+    }
 }

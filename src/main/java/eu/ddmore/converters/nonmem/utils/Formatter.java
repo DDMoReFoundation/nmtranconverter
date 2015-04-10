@@ -7,46 +7,46 @@ package eu.ddmore.converters.nonmem.utils;
  * 
  */
 public class Formatter {
-    
-	public enum Block{
-	    PK, ERROR, DES, MODEL, PRED, DATA, EST, 
-	    PROBLEM, SIM, TABLE, INPUT, SUBS, SUB, 
-	    COV, THETA, OMEGA, SIGMA, BLOCK;
-	}
-	
-	public enum NmConstant{
-		LOG, LOGIT, CORRELATION, FIX, SD, T;
-	}
-	
-	public enum ColumnConstant{
-		ID, TIME;
-	}
-	
-	public enum TableConstant{
-		WRES, RES, PRED, NOPRINT, DV, NOAPPEND;
-	}
-	
+
+    public enum Block{
+        PK, ERROR, DES, MODEL, PRED, DATA, EST, 
+        PROBLEM, SIM, TABLE, INPUT, SUBS, SUB, 
+        COV, THETA, OMEGA, SIGMA, BLOCK;
+    }
+
+    public enum NmConstant{
+        LOG, LOGIT, CORRELATION, FIX, SD, T;
+    }
+
+    public enum ColumnConstant{
+        ID, TIME;
+    }
+
+    public enum TableConstant{
+        WRES, RES, PRED, NOPRINT, DV, NOAPPEND;
+    }
+
     public enum Symbol{
         BLOCK("$"), 
         COMMENT(";");
-        
+
         private String symbol = new String();
         Symbol(String symbol){
             this.symbol = symbol;
         }
-        
+
         @Override
         public String toString(){
             return symbol;
         }
     }
-	
-	private static final String PREFIX = "";//"NM_";
-	private static final String NEW_LINE = System.getProperty("line.separator");
-    
+
+    private static final String PREFIX = "";//"NM_";
+    private static final String NEW_LINE = System.getProperty("line.separator");
+
     private static final String newLineBlockTitle = "%s%s "+NEW_LINE;
     private static final String inLineBlockTitle = "%s%s ";
-    
+
     /**
      * Add <code>Table</code> Block title and then continue appending on the same line
      * 
@@ -119,7 +119,7 @@ public class Formatter {
     public static String data() {
         return String.format(inLineBlockTitle,Symbol.BLOCK,Block.DATA);
     }
-    
+
     /**
      * Add <code>PK</code> title and then continue appending on the new line
      * 
