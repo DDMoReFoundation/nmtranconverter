@@ -695,17 +695,18 @@ public class ParametersHelper {
     private StringBuilder writeStatement(ScalarRhs lowerBound,ScalarRhs init,ScalarRhs upperBound){
         StringBuilder statement = new StringBuilder();
         RealValueType value;
+        String format = " %s ";
         if(lowerBound!=null){
             value = (RealValueType) lowerBound.getScalar().getValue();
-            statement.append(" "+value.getValue()+" , ");
+            statement.append(String.format(format, value.getValue())+",");
         }
         if(init!=null){
             value = (RealValueType) init.getScalar().getValue();
-            statement.append(value.getValue()+" ");
+            statement.append(String.format(format, value.getValue()));
         }
         if(upperBound!=null){
             value = (RealValueType) upperBound.getScalar().getValue();
-            statement.append(", "+value.getValue()+" ");
+            statement.append(","+String.format(format, value.getValue()));
         }
         return statement;
     }
