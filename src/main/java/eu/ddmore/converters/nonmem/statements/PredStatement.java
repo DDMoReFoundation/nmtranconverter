@@ -36,7 +36,6 @@ public class PredStatement {
     private List<DerivativeVariableType> derivativeVarList = new ArrayList<DerivativeVariableType>();
     private List<ErrorStatement> errorStatements = new ArrayList<ErrorStatement>();
 	private Parser parser;
-	public static Boolean isDES = false;
 
 	public PredStatement(ScriptDefinition scriptDefinition, Parser parser){
 		this.parser = parser;
@@ -116,10 +115,10 @@ public class PredStatement {
 		//TODO : getAbbreviatedStatement();
 		DerivativePredblock.append(getPKStatement());
 		errorStatements = prepareAllErrorStatements();
-		isDES= true;
+		Formatter.setInDesBlock(true);
 		DiffEquationStatementBuilder desBuilder = new DiffEquationStatementBuilder(scriptDefinition, errorStatements, parser);
 		DerivativePredblock.append(desBuilder.getDifferentialEquationsStatement(derivativeVarList));
-		isDES = false;
+		Formatter.setInDesBlock(false);
 		//TODO: getAESStatement();
 		DerivativePredblock.append(getErrorStatement(desBuilder.getDefinitionsParsingMap(), desBuilder.getDerivativeVariableMap()));
         

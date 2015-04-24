@@ -40,6 +40,12 @@ public class Formatter {
             return symbol;
         }
     }
+    
+    private static boolean inDesBlock= false;
+    
+    public static String getTimeSymbol(){
+        return (inDesBlock)?Constant.T.toString():ColumnConstant.TIME.toString();
+    }
 	
 	private static final String PREFIX = "";//"NM_";
 	private static final String NEW_LINE = System.getProperty("line.separator");
@@ -223,5 +229,9 @@ public class Formatter {
      */    
     public static String endline() {
         return NEW_LINE;
+    }
+
+    public static void setInDesBlock(boolean inDesBlock) {
+        Formatter.inDesBlock = inDesBlock;
     }
 }

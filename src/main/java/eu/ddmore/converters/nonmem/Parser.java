@@ -112,7 +112,7 @@ public class Parser extends BaseParser {
      */
     private String getFormattedSymbol(String symbol) {
         if (isTimeSymbol(symbol)){
-            symbol = (PredStatement.isDES)?Constant.T.toString():ColumnConstant.TIME.toString();
+            symbol = Formatter.getTimeSymbol();
         } else{
             symbol = Formatter.addPrefix(symbol);
         }
