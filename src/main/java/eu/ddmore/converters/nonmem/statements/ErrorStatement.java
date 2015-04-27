@@ -91,24 +91,24 @@ public class ErrorStatement {
 	 *  
 	 * @return
 	 */
-	public StringBuilder getDetailsForDES(Map<String,String> functionDefEqMap, Map<String,String> derivativeVarMap){
+	public StringBuilder getDetailsForDES(Map<String,String> functionDefEqMap){
 		StringBuilder errorBlock = new StringBuilder();
 		//This could be null or empty in case of non-derivative
-		errorBlock.append(getDerivativeVarDetails(functionDefEqMap, derivativeVarMap));
+		errorBlock.append(getDerivativeVarDetails(functionDefEqMap));
 		errorBlock.append(getErrorStatementDetails());
 
 		return errorBlock;	
 	}
 
-	private StringBuilder getDerivativeVarDetails(Map<String, String> functionDefEqMap, Map<String, String> derivativeVarMap) {
+	private StringBuilder getDerivativeVarDetails(Map<String, String> functionDefEqMap) {
 		StringBuilder errorBlock = new StringBuilder();
 		if(functionDefEqMap!=null){
 			if(functionDefEqMap.containsKey(function)){
-				if(derivativeVarMap.containsKey(function)){
-					String varAmount = DiffEquationStatementBuilder.getVarAmountFromCompartment(function, derivativeVarMap);
+				if(PredStatement.derivativeVarCompSequences.containsKey(function)){
+					String varAmount = DiffEquationStatementBuilder.getVarAmountFromCompartment(function);
 					functionRep = (varAmount.isEmpty())?function:varAmount;
 				}else{
-					String functionEquation= getEquationForFunctionName(functionDefEqMap, derivativeVarMap);
+					String functionEquation= getEquationForFunctionName(functionDefEqMap);
 					errorBlock.append(Formatter.endline(function+" = "+functionEquation));
 				}
 			}
@@ -123,12 +123,12 @@ public class ErrorStatement {
 	 * @param derivativeVarMap
 	 * @return
 	 */
-	public String getEquationForFunctionName(Map<String,String> functionDefEqMap, Map<String,String> derivativeVarMap){
+	public String getEquationForFunctionName(Map<String,String> functionDefEqMap){
 		if(functionDefEqMap.containsKey(function)){
 			String parsedEquation = functionDefEqMap.get(function);
-			for(String variable: derivativeVarMap.keySet()){
+			for(String variable: PredStatement.derivativeVarCompSequences.keySet()){
 				if(parsedEquation.contains(variable)){
-					String varAmount = DiffEquationStatementBuilder.getVarAmountFromCompartment(variable, derivativeVarMap);
+					String varAmount = DiffEquationStatementBuilder.getVarAmountFromCompartment(variable);
 					if(!varAmount.isEmpty()){
 					    String varToReplace = "\\b"+Pattern.quote(variable)+"\\b";
 						parsedEquation = parsedEquation.replaceAll(varToReplace, varAmount);
