@@ -23,7 +23,6 @@ import eu.ddmore.converters.nonmem.statements.Parameter;
 import eu.ddmore.converters.nonmem.statements.SigmaStatementBuilder;
 import eu.ddmore.converters.nonmem.statements.ThetaStatement;
 import eu.ddmore.converters.nonmem.utils.Formatter.Constant;
-import eu.ddmore.converters.nonmem.utils.Formatter.Symbol;
 import eu.ddmore.libpharmml.dom.commontypes.RealValueType;
 import eu.ddmore.libpharmml.dom.commontypes.Rhs;
 import eu.ddmore.libpharmml.dom.commontypes.ScalarRhs;
@@ -629,7 +628,7 @@ public class ParametersHelper {
         if(param.isStdDev()){
             statement.append(Constant.SD+" ");
         }
-        statement.append(Formatter.endline(")"+Formatter.indent(Symbol.COMMENT+description)));
+        statement.append(Formatter.endline(")"+Formatter.addComment(description)));
         
         return statement;
     }

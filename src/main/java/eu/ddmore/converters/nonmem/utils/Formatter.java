@@ -234,4 +234,9 @@ public class Formatter {
     public static void setInDesBlock(boolean inDesBlock) {
         Formatter.inDesBlock = inDesBlock;
     }
+    
+    public static String addComment(String comment){
+        return new String(Formatter.indent(Symbol.COMMENT.toString()+comment));
+        
+    }
 }

@@ -531,7 +531,7 @@ public class Parser extends BaseParser {
             statement.append(Formatter.endline());
             statement.append(String.format("%s = ", ip.getSymbId()));
             String assignment = parse(new Object(), lexer.getStatement(ip.getAssign()));
-            statement.append(Formatter.endline(assignment+Symbol.COMMENT));
+            statement.append(Formatter.endline(assignment+Formatter.addComment("")));
         }
         return statement;
     }
