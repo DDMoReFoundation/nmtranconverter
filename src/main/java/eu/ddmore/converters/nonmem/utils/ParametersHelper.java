@@ -68,7 +68,7 @@ public class ParametersHelper {
      * @param scriptDefinition
      */
     public ParametersHelper(ScriptDefinition scriptDefinition){
-        this.scriptDefinition = scriptDefinition;		
+        this.scriptDefinition = scriptDefinition;
     }
 
     /**
@@ -218,7 +218,7 @@ public class ParametersHelper {
         if(omegaSymbId!= null){
             omegaStatement = new OmegaStatement(omegaSymbId);
             omegaStatement.setInitialEstimate(initialEstimates.get(omegaSymbId));
-            
+
             if(initialEstimates.get(omegaSymbId) == null){
                 ScalarRhs scalar = getScalarRhsForSymbol(omegaSymbId);
                 if(scalar!=null){
@@ -232,20 +232,21 @@ public class ParametersHelper {
     }
 
     /**
-     * 
-     * @param omegaSymbId
-     * @return
+     * This method will return scalar rhs for a symbol specified. 
+     * If no value found, it will return null.
+     * @param symbId
+     * @return Scalar rhs value.
      */
-    private ScalarRhs getScalarRhsForSymbol(String omegaSymbId) {
-        SimpleParameterType param = simpleParams.get(omegaSymbId);
+    private ScalarRhs getScalarRhsForSymbol(String symbId) {
+        SimpleParameterType param = simpleParams.get(symbId);
         ScalarRhs scalar = null;
         if(param.getAssign().getScalar()!=null){
             scalar = new ScalarRhs();
             scalar.setScalar(param.getAssign().getScalar());
             SymbolRefType symbRef = new SymbolRefType();
-            symbRef.setId(omegaSymbId);
-            scalar.setSymbRef(symbRef);    
-        }        
+            symbRef.setId(symbId);
+            scalar.setSymbRef(symbRef);
+        }
         return scalar;
     }
 
@@ -287,7 +288,7 @@ public class ParametersHelper {
     public String getNameFromParamRandomVariable(ParameterRandomVariableType rv) {
         String symbId = null;
         if (getDistributionTypeStdDev(rv) != null) {
-            symbId = getDistributionTypeStdDev(rv).getVar().getVarId();					
+            symbId = getDistributionTypeStdDev(rv).getVar().getVarId();
         } else if (getDistributionTypeVariance(rv) != null) {
             symbId = getDistributionTypeVariance(rv).getVar().getVarId();
         }
@@ -570,7 +571,7 @@ public class ParametersHelper {
         }
         return sigmaStatement;
     }
-    
+
     public StringBuilder getThetaStatementBlock(){
         StringBuilder thetaStatement = new StringBuilder();
         if (!thetaStatements.isEmpty()) {
@@ -581,11 +582,11 @@ public class ParametersHelper {
         }
         return thetaStatement;
     }
-    
+
     public StringBuilder getOmegaStatementBlock() {
         StringBuilder omegaStatement = new StringBuilder();
         Map<String, List<OmegaStatement>> omegaBlocks = omegaBlockStatement.getOmegaBlocks();
-        
+
         if(!omegaBlocks.isEmpty()){
             omegaStatement.append(Formatter.endline(omegaBlockStatement.getOmegaBlockTitle()));
             for(String eta : omegaBlockStatement.getOrderedEtasToOmegaMap().values()){
@@ -594,7 +595,7 @@ public class ParametersHelper {
                 }
             }
         }
-        
+
         if (!omegaStatements.isEmpty()) {
             omegaStatement.append(Formatter.endline());
             omegaStatement.append(Formatter.endline(Formatter.omega()));
@@ -604,7 +605,7 @@ public class ParametersHelper {
         }
         return omegaStatement;
     }
-    
+
     /**
      * Write Theta and omega parameters according to the initial estimates, lower and upper bounds provided.
      * 
@@ -629,7 +630,7 @@ public class ParametersHelper {
             statement.append(Constant.SD+" ");
         }
         statement.append(Formatter.endline(")"+Formatter.addComment(description)));
-        
+
         return statement;
     }
 
@@ -645,7 +646,6 @@ public class ParametersHelper {
      *  Y   Y   X   (LB,IN)
      *  Y   X   Y   (LB, ,UB)
      *  Y   Y   Y   (LB,IN,UB) 
-     * @param fout
      * @param description
      * @param lowerBound
      * @param upperBound
@@ -679,7 +679,7 @@ public class ParametersHelper {
         }else {
             throw new IllegalStateException("Only upper bound or no values present for parameter : "+description);
         }
-        
+
         return statement;
     }
 
@@ -689,7 +689,6 @@ public class ParametersHelper {
      * @param lowerBound
      * @param init
      * @param upperBound
-     * @param fout
      */
     private StringBuilder writeStatement(ScalarRhs lowerBound,ScalarRhs init,ScalarRhs upperBound){
         StringBuilder statement = new StringBuilder();
