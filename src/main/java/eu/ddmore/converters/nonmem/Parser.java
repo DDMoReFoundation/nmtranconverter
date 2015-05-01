@@ -4,13 +4,17 @@
 package eu.ddmore.converters.nonmem;
 
 import static crx.converter.engine.PharmMLTypeChecker.isActivity;
+import static crx.converter.engine.PharmMLTypeChecker.isBinaryOperation;
+import static crx.converter.engine.PharmMLTypeChecker.isConstant;
 import static crx.converter.engine.PharmMLTypeChecker.isContinuousCovariate;
 import static crx.converter.engine.PharmMLTypeChecker.isCorrelation;
 import static crx.converter.engine.PharmMLTypeChecker.isCovariate;
 import static crx.converter.engine.PharmMLTypeChecker.isDerivative;
 import static crx.converter.engine.PharmMLTypeChecker.isFunction;
+import static crx.converter.engine.PharmMLTypeChecker.isFunctionCall;
 import static crx.converter.engine.PharmMLTypeChecker.isIndividualParameter;
 import static crx.converter.engine.PharmMLTypeChecker.isInitialCondition;
+import static crx.converter.engine.PharmMLTypeChecker.isJAXBElement;
 import static crx.converter.engine.PharmMLTypeChecker.isLocalVariable;
 import static crx.converter.engine.PharmMLTypeChecker.isObservationModel;
 import static crx.converter.engine.PharmMLTypeChecker.isParameter;
@@ -19,8 +23,9 @@ import static crx.converter.engine.PharmMLTypeChecker.isPiece;
 import static crx.converter.engine.PharmMLTypeChecker.isPiecewise;
 import static crx.converter.engine.PharmMLTypeChecker.isRandomVariable;
 import static crx.converter.engine.PharmMLTypeChecker.isRootType;
-import static crx.converter.engine.PharmMLTypeChecker.isScalar;
+import static crx.converter.engine.PharmMLTypeChecker.isScalarInterface;
 import static crx.converter.engine.PharmMLTypeChecker.isSequence;
+import static crx.converter.engine.PharmMLTypeChecker.isSymbolReference;
 import static crx.converter.engine.PharmMLTypeChecker.isVector;
 
 import java.io.File;
@@ -50,8 +55,11 @@ import eu.ddmore.converters.nonmem.utils.ParametersHelper;
 import eu.ddmore.libpharmml.dom.IndependentVariable;
 import eu.ddmore.libpharmml.dom.commontypes.PharmMLRootType;
 import eu.ddmore.libpharmml.dom.commontypes.SymbolRef;
+import eu.ddmore.libpharmml.dom.maths.Binop;
 import eu.ddmore.libpharmml.dom.maths.Condition;
 import eu.ddmore.libpharmml.dom.maths.Constant;
+import eu.ddmore.libpharmml.dom.maths.ExpressionValue;
+import eu.ddmore.libpharmml.dom.maths.FunctionCallType;
 import eu.ddmore.libpharmml.dom.maths.Piece;
 import eu.ddmore.libpharmml.dom.maths.Piecewise;
 import eu.ddmore.libpharmml.dom.modeldefn.ContinuousCovariate;
@@ -107,7 +115,7 @@ public class Parser extends BaseParser {
      */
     private String getFormattedSymbol(String symbol) {
         if (isTimeSymbol(symbol)){
-            symbol = (PredStatement.isDES)?NmConstant.T.toString():ColumnConstant.TIME.toString();
+            symbol = Formatter.getTimeSymbol();
         } else{
             symbol = Formatter.addPrefix(symbol);
         }
@@ -154,45 +162,45 @@ public class Parser extends BaseParser {
 
         if (leaf.data != null) {
             boolean inPiecewise = false;
+            String equationFormat = "%s = %s";
+            String lineFormat = "%s ";
             if (isPiecewise(leaf.data)) inPiecewise = true;
 
             if (!isString_(leaf.data)) leaf.data = getSymbol(leaf.data);
-            String current_value = "", current_symbol = "_FAKE_FAKE_FAKE_FAKE_";
+            String current_value = "", current_symbol = "";
             if(isLocalVariable(context)){
-                String format = "%s = %s";
                 current_symbol = Formatter.addPrefix(getSymbol(context));
-                current_value = Formatter.endline(String.format(format, current_symbol, leaf.data));
+                if(inPiecewise){
+                    current_value = String.format(lineFormat,leaf.data);    
+                }else{
+                    current_value = Formatter.endline(String.format(equationFormat, current_symbol, leaf.data));
+                }
             }else if (isDerivative(context) || isParameter(context)) {
-                String format = "%s = %s", description = "";
+                String description = "";
                 if (isRootType(context)) description = readDescription((PharmMLRootType) context);
                 current_symbol = getSymbol(context);
-                current_value = Formatter.endline(String.format(format, Formatter.addPrefix(description), leaf.data));
+                current_value = Formatter.endline(String.format(equationFormat, Formatter.addPrefix(description), leaf.data));
             } else if (isInitialCondition(context) || isFunction(context) || isSequence(context) || isVector(context)) {
                 String format = "(%s) ";
                 current_value = String.format(format, (String) leaf.data);
             } else if (isPiece(context)) { 
-                String format = "%s ";
-                current_value = String.format(format, (String) leaf.data);
+                current_value = String.format(lineFormat, (String) leaf.data);
             } else if (isContinuousCovariate(context)) {
                 current_symbol = Formatter.addPrefix(getSymbol(context));
-                String format = "%s = %s;";
-                current_value = Formatter.endline(String.format(format, current_symbol, leaf.data));
+                current_value = Formatter.endline(String.format(equationFormat, current_symbol, leaf.data));
             } else if (isActivity(context)) { 
                 current_value = getSymbol(new ActivityDoseAmountBlock((Activity) context, (String) leaf.data));
             } else if (isIndividualParameter(context)) { 
                 current_value = (String) leaf.data;
             } else if (isRandomVariable(context)) {
                 ParameterRandomVariable rv = (ParameterRandomVariable) context;
-                String format = "%s = %s;";
-                current_value = Formatter.endline(String.format(format, rv.getSymbId(), (String) leaf.data));
+                current_value = Formatter.endline(String.format(equationFormat, rv.getSymbId(), (String) leaf.data));
             } else if (isCovariate(context)) { 
                 CovariateDefinition cov = (CovariateDefinition) context;
-                String format = "%s = %s;";
-                current_value = Formatter.endline(String.format(format, cov.getSymbId(), (String) leaf.data));
+                current_value = Formatter.endline(String.format(equationFormat, cov.getSymbId(), (String) leaf.data));
             } else if (isObservationModel(context)) {
                 ObservationParameter op = (ObservationParameter) context;
-                String format = "%s = %s;";
-                current_value = Formatter.endline(String.format(format, op.getName(), (String) leaf.data));
+                current_value = Formatter.endline(String.format(equationFormat, op.getName(), (String) leaf.data));
             } else if (isCorrelation(context)) {
                 current_value = (String) leaf.data;
             } else if (isObservationModel(context)) {
@@ -201,8 +209,7 @@ public class Parser extends BaseParser {
             {
                 current_value = (String) leaf.data;
             } else {
-                String format = " %s ";
-                current_value = String.format(format, (String) leaf.data);
+                current_value = String.format(lineFormat, (String) leaf.data);
             } 
 
             if (current_value != null) {
@@ -259,7 +266,7 @@ public class Parser extends BaseParser {
         String [] conditional_stmts = new String [pieces.size()];
         String [] assignment_stmts = new String [pieces.size()];
 
-        int assignment_count = 0, else_index = -1;
+        int assignmentCount = 0, else_index = -1;
         for(int i = 0; i < pieces.size(); i++) {
             Piece piece = pieces.get(i);
             if (piece != null) {
@@ -274,31 +281,16 @@ public class Parser extends BaseParser {
                 }
 
                 // Assignment block
-                BinaryTree assignment_tree = null;
-                if (piece.getBinop() != null) { 
-                    assignment_tree = lexer.getTreeMaker().newInstance(getEquation(piece.getBinop()));
-                    assignment_count++;
-                } else if (piece.getConstant() != null) {
-                    assignment_tree = lexer.getTreeMaker().newInstance(piece.getConstant());
-                    assignment_count++;
-                } else if (piece.getFunctionCall() != null) {
-                    assignment_tree = lexer.getTreeMaker().newInstance(getEquation(piece.getFunctionCall()));
-                    assignment_count++;
-                } else if (piece.getScalar() != null) {
-                    JAXBElement<?> scalar = piece.getScalar();
-                    if (isScalar(scalar)) {
-                        assignment_tree = lexer.getTreeMaker().newInstance(getEquation(piece.getScalar()));
-                        assignment_count++;
-                    }
-                } else if (piece.getSymbRef() != null) {
-                    assignment_tree = lexer.getTreeMaker().newInstance(piece.getSymbRef());
-                    assignment_count++;
+                BinaryTree assignmentTree = getAssignmentTree(piece.getValue());
+                
+                if (assignmentTree != null) {
+                    assignmentCount++;
+                    assignment_trees[i] = assignmentTree;
                 }
-                if (assignment_tree != null) assignment_trees[i] = assignment_tree;
             }
         }
 
-        if (assignment_count == 0) throw new IllegalStateException("A piecewise block has no assignment statements.");
+        if (assignmentCount == 0) throw new IllegalStateException("A piecewise block has no assignment statements.");
 
 
         for (int i = 0; i < pieces.size(); i++) {
@@ -314,7 +306,7 @@ public class Parser extends BaseParser {
         }
 
         int block_assignment = 0;
-        StringBuilder block = new StringBuilder(Formatter.endline(" 0.0;"));
+        StringBuilder block = new StringBuilder();
         for (int i = 0; i < pieces.size(); i++) {
             Piece piece = pieces.get(i);
             if (piece == null) continue;
@@ -338,10 +330,26 @@ public class Parser extends BaseParser {
             block.append(String.format(format, field_tag, assignment_stmts[else_index]));
         }
         block.append("ENDIF");
-        if (assignment_count == 0) throw new IllegalStateException("Piecewise statement assigned no conditional blocks.");
+        if (assignmentCount == 0) throw new IllegalStateException("Piecewise statement assigned no conditional blocks.");
         symbol = block.toString();
 
         return symbol;
+    }
+    
+    private BinaryTree getAssignmentTree(ExpressionValue expressionValue){
+        BinaryTree assignmentTree = null;
+        
+        if (isBinaryOperation(expressionValue)) {
+            assignmentTree = lexer.getTreeMaker().newInstance(getEquation((Binop) expressionValue));
+        } else if (isFunctionCall(expressionValue)) {
+            assignmentTree = lexer.getTreeMaker().newInstance(getEquation((FunctionCallType) expressionValue));
+        } else if (isJAXBElement(expressionValue)) {
+            assignmentTree = lexer.getTreeMaker().newInstance(getEquation((JAXBElement<?>) expressionValue));
+        } else if (isScalarInterface(expressionValue) || isSymbolReference(expressionValue) || isConstant(expressionValue) ) {
+            assignmentTree = lexer.getTreeMaker().newInstance(expressionValue);
+        } else 
+            throw new IllegalStateException("Piecewise assignment failed (expr='" + expressionValue + "')");
+        return assignmentTree;
     }
 
     Map<String, Integer> etasOrder = new LinkedHashMap<String, Integer>();
@@ -354,7 +362,7 @@ public class Parser extends BaseParser {
         }
         parameters = new ParametersHelper(lexer.getScriptDefinition());
         setEtasOrder(parameters.createOrderedEtasMap());
-        parameters.initialiseSimpleParams(lexer.getModelParameters());
+        parameters.initialiseAllParameters(lexer.getModelParameters());
 
         setThetaAssigments();
         buildPredStatement(fout);
@@ -480,7 +488,7 @@ public class Parser extends BaseParser {
                 if (covariateDef.getContinuous() != null) {
                     String covStatement = "";
                     ContinuousCovariate continuous = covariateDef.getContinuous();
-                    if (continuous.getListOfTransformation() != null){
+                    if (continuous.getListOfTransformation() != null && !continuous.getListOfTransformation().isEmpty()){
                         covStatement = getSymbol(continuous.getListOfTransformation().get(0));
                     }
                     else covStatement = covariateDef.getSymbId();

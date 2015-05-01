@@ -85,12 +85,17 @@ public class DiffEquationStatementBuilder {
         StringBuilder varDefinitionsBlock = new StringBuilder();
         for (VariableDefinition definitionType: block.getLocalVariables()){
             String variable = Formatter.addPrefix(definitionType.getSymbId());
-            String rhs = parser.parse(definitionType).replaceFirst(variable+" =","");			
-            if(isVarFromErrorFunction(variable)){
-                definitionsParsingMap.put(variable, rhs);
-                variable = renameFunctionVariableForDES(variable);
+            String rhs = parser.parse(definitionType);
+            if(rhs.startsWith(variable+" =")) {
+                rhs = rhs.replaceFirst(variable+" =","");
+                if(isVarFromErrorFunction(variable)){
+                    definitionsParsingMap.put(variable, rhs);
+                    variable = renameFunctionVariableForDES(variable);
+                }
+                varDefinitionsBlock.append(variable+" = "+rhs);
+            }else{
+                varDefinitionsBlock.append(Formatter.endline(rhs));
             }
-            varDefinitionsBlock.append(variable+" = "+rhs);
         }
         return varDefinitionsBlock;
     }
