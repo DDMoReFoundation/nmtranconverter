@@ -41,6 +41,16 @@ public class Formatter {
         }
     }
 
+    private static boolean inDesBlock = false;
+
+    public static String getTimeSymbol(){
+        return (inDesBlock)?NmConstant.T.toString():ColumnConstant.TIME.toString();
+    }
+
+    public static void setInDesBlock(boolean inDesBlock) {
+        Formatter.inDesBlock = inDesBlock;
+    } 
+
     private static final String PREFIX = "";//"NM_";
     private static final String NEW_LINE = System.getProperty("line.separator");
 
@@ -223,5 +233,20 @@ public class Formatter {
      */    
     public static String endline() {
         return NEW_LINE;
+    }
+
+    /**
+     * Return the formatted symbol and also gets appropriate time symbol if its TIME symbol.
+     * 
+     * @param symbol 
+     * @return String formatted symbol
+     */
+    public static String getFormattedSymbol(String symbol) {
+        if (symbol.equals(ColumnConstant.TIME.toString()) || symbol.equals(NmConstant.T.toString())){
+            symbol = Formatter.getTimeSymbol();
+        } else{
+            symbol = Formatter.addPrefix(symbol);
+        }
+        return symbol;
     }
 }

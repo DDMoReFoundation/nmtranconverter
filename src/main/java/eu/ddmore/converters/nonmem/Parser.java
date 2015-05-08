@@ -31,11 +31,8 @@ import static crx.converter.engine.PharmMLTypeChecker.isVector;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Properties;
 
 import javax.xml.bind.JAXBElement;
@@ -45,13 +42,10 @@ import crx.converter.engine.parts.EstimationStep.FixedParameter;
 import crx.converter.engine.parts.ObservationBlock.ObservationParameter;
 import crx.converter.tree.BinaryTree;
 import crx.converter.tree.Node;
-import eu.ddmore.converters.nonmem.statements.PredStatement;
 import eu.ddmore.converters.nonmem.utils.Formatter;
-import eu.ddmore.converters.nonmem.utils.Formatter.Block;
 import eu.ddmore.converters.nonmem.utils.Formatter.ColumnConstant;
 import eu.ddmore.converters.nonmem.utils.Formatter.NmConstant;
 import eu.ddmore.converters.nonmem.utils.Formatter.Symbol;
-import eu.ddmore.converters.nonmem.utils.ParametersHelper;
 import eu.ddmore.libpharmml.dom.IndependentVariable;
 import eu.ddmore.libpharmml.dom.commontypes.PharmMLRootType;
 import eu.ddmore.libpharmml.dom.commontypes.SymbolRef;
@@ -62,23 +56,13 @@ import eu.ddmore.libpharmml.dom.maths.ExpressionValue;
 import eu.ddmore.libpharmml.dom.maths.FunctionCallType;
 import eu.ddmore.libpharmml.dom.maths.Piece;
 import eu.ddmore.libpharmml.dom.maths.Piecewise;
-import eu.ddmore.libpharmml.dom.modeldefn.ContinuousCovariate;
 import eu.ddmore.libpharmml.dom.modeldefn.CovariateDefinition;
-import eu.ddmore.libpharmml.dom.modeldefn.CovariateRelation;
-import eu.ddmore.libpharmml.dom.modeldefn.FixedEffectRelation;
-import eu.ddmore.libpharmml.dom.modeldefn.IndividualParameter;
-import eu.ddmore.libpharmml.dom.modeldefn.IndividualParameter.GaussianModel;
-import eu.ddmore.libpharmml.dom.modeldefn.IndividualParameter.GaussianModel.GeneralCovariate;
-import eu.ddmore.libpharmml.dom.modeldefn.LhsTransformation;
-import eu.ddmore.libpharmml.dom.modeldefn.ParameterRandomEffect;
 import eu.ddmore.libpharmml.dom.modeldefn.ParameterRandomVariable;
 import eu.ddmore.libpharmml.dom.trialdesign.Activity;
 
 public class Parser extends BaseParser {
 
-    private ParametersHelper parameters;
     private Properties binopProperties;
-    private ArrayList<String> thetas = new ArrayList<String>();
 
     public Parser() throws IOException {
         comment_char = Symbol.COMMENT.toString();
@@ -102,7 +86,7 @@ public class Parser extends BaseParser {
     @Override
     protected String doSymbolRef(SymbolRef symbRefType) {
 
-        String symbol = getFormattedSymbol(symbRefType.getSymbIdRef());
+        String symbol = Formatter.getFormattedSymbol(symbRefType.getSymbIdRef());
 
         return symbol;
     }
@@ -282,7 +266,7 @@ public class Parser extends BaseParser {
 
                 // Assignment block
                 BinaryTree assignmentTree = getAssignmentTree(piece.getValue());
-                
+
                 if (assignmentTree != null) {
                     assignmentCount++;
                     assignment_trees[i] = assignmentTree;
@@ -335,10 +319,10 @@ public class Parser extends BaseParser {
 
         return symbol;
     }
-    
+
     private BinaryTree getAssignmentTree(ExpressionValue expressionValue){
         BinaryTree assignmentTree = null;
-        
+
         if (isBinaryOperation(expressionValue)) {
             assignmentTree = lexer.getTreeMaker().newInstance(getEquation((Binop) expressionValue));
         } else if (isFunctionCall(expressionValue)) {
@@ -350,225 +334,6 @@ public class Parser extends BaseParser {
         } else 
             throw new IllegalStateException("Piecewise assignment failed (expr='" + expressionValue + "')");
         return assignmentTree;
-    }
-
-    Map<String, Integer> etasOrder = new LinkedHashMap<String, Integer>();
-
-    @Override
-    public void writeParameterStatement(PrintWriter fout) {
-        if (fout == null) return;
-        if (lexer.getModelParameters().isEmpty()) {
-            return;
-        }
-        parameters = new ParametersHelper(lexer.getScriptDefinition());
-        setEtasOrder(parameters.createOrderedEtasMap());
-        parameters.initialiseAllParameters(lexer.getModelParameters());
-
-        setThetaAssigments();
-        buildPredStatement(fout);
-
-        StringBuilder thetaStatement = parameters.getThetaStatementBlock();
-        fout.write(thetaStatement.toString());
-
-        StringBuilder omegaStatement = parameters.getOmegaStatementBlock();
-        fout.write(omegaStatement.toString());
-
-        StringBuilder sigmaStatement = parameters.getSigmaStatementBlock();
-        fout.write(sigmaStatement.toString());
-
-    }
-
-    /**
-     * Builds and writes pred statement block to file.
-     *  
-     * @param fout
-     */
-    public void buildPredStatement(PrintWriter fout){
-        PredStatement predStatement = new PredStatement(lexer.getScriptDefinition(),this);
-        predStatement.getPredStatement(fout);
-    }
-
-    /**
-     * Set theta assignements from theta parameters generated.
-     */
-    private void setThetaAssigments(){
-        thetas.addAll(parameters.getThetaParams().keySet());
-    }
-
-    /**
-     * 
-     * @param symbol
-     * @return
-     */
-    public String getThetaForSymbol(String symbol){
-        if(thetas.isEmpty()){
-            setThetaAssigments();
-        }
-        if(thetas.contains(symbol)){
-            symbol = String.format(Block.THETA+"(%s)",thetas.indexOf(symbol)+1);
-        }
-        return symbol;
-    }
-
-    /**
-     * Get individual parameter definition from individual parameter type.
-     * This method is used as part of pred core block.
-     * 
-     * @param ip
-     * @return
-     */
-    public String createIndividualDefinition(IndividualParameter ip){
-        StringBuilder statement = new StringBuilder();
-
-        String variableSymbol = ip.getSymbId();    	
-        if (ip.getAssign() != null) {
-            statement = getIndivDefinitionForAssign(ip);
-        } 
-        else if (ip.getGaussianModel() != null) {
-
-            GaussianModel gaussianModel = ip.getGaussianModel();
-            String logType = getLogType(gaussianModel.getTransformation());
-            String pop_param_symbol = parameters.getPopSymbol(gaussianModel);
-            variableSymbol = (pop_param_symbol.isEmpty())?variableSymbol:parameters.getMUSymbol(pop_param_symbol);
-
-            statement.append(String.format("%s = ", variableSymbol));
-
-            if(gaussianModel.getLinearCovariate()!=null){
-                if (!pop_param_symbol.isEmpty()) {
-                    statement.append(String.format(logType+"(%s)", Formatter.addPrefix(pop_param_symbol)));
-                }
-
-                List<CovariateRelation> covariates = gaussianModel.getLinearCovariate().getCovariate();
-                if (covariates != null) {
-                    for (CovariateRelation covariate : covariates) {
-                        if (covariate == null) continue;
-                        PharmMLRootType type = lexer.getAccessor().fetchElement(covariate.getSymbRef());
-                        statement.append(getCovariateForIndividualDefinition(covariate, type));
-                    }
-                }
-            }
-            else if (gaussianModel.getGeneralCovariate() != null) {
-                GeneralCovariate generalCov = gaussianModel.getGeneralCovariate(); 
-                String assignment = parse(generalCov, lexer.getStatement(generalCov));
-                statement.append(assignment);
-            }
-            statement.append(Formatter.endline(comment_char));
-
-            StringBuilder etas = addEtasStatementsToIndivParamDef(gaussianModel.getRandomEffects());
-            if (logType.equals(NmConstant.LOG.toString())) {
-                String format = Formatter.endline("%s = EXP(%s %s);");
-                statement.append(String.format(format, Formatter.addPrefix(ip.getSymbId()), variableSymbol,etas));
-            } else if (logType.equals(NmConstant.LOGIT.toString())) {
-                String format = Formatter.endline("%s = 1./(1 + exp(-%s));");
-                statement.append(String.format(format, Formatter.addPrefix(ip.getSymbId()), variableSymbol));
-            }
-        }
-        statement.append(Formatter.endline());
-
-        return statement.toString();
-    }
-
-    /**
-     * This method will retrieve details of parameter type passed depending upon 
-     * whether it is IDV or Covariate Definition.
-     * 
-     * @param covariate
-     * @param type
-     * @return
-     */
-    private StringBuilder getCovariateForIndividualDefinition(CovariateRelation covariate, PharmMLRootType type) {
-        StringBuilder statement = new StringBuilder();
-        if(type instanceof IndependentVariable){
-            String idvName = doIndependentVariable((IndependentVariable)type);
-            statement.append("+"+idvName);
-        }
-        else if(type instanceof CovariateDefinition){
-            CovariateDefinition covariateDef = (CovariateDefinition) type;
-            if (covariateDef != null) {
-                if (covariateDef.getContinuous() != null) {
-                    String covStatement = "";
-                    ContinuousCovariate continuous = covariateDef.getContinuous();
-                    if (continuous.getListOfTransformation() != null && !continuous.getListOfTransformation().isEmpty()){
-                        covStatement = getSymbol(continuous.getListOfTransformation().get(0));
-                    }
-                    else covStatement = covariateDef.getSymbId();
-
-                    covStatement = addFixedEffectsStatementToIndivParamDef(covariate, covStatement);
-                    if(!covStatement.isEmpty())
-                        statement.append("+"+covStatement);
-                } else if (covariateDef.getCategorical() != null) {
-                    throw new UnsupportedOperationException("No categorical yet");
-                }
-            }
-        }
-        return statement;
-    }
-
-    /**
-     * This method parses and adds fixed effects statements from covariates to individual parameter definition .
-     * @param covariate
-     * @param covStatement
-     * @return
-     */
-    private String addFixedEffectsStatementToIndivParamDef(CovariateRelation covariate, String covStatement) {
-        FixedEffectRelation fixedEffect = covariate.getFixedEffect();
-        if (fixedEffect != null) {
-            String  fixedEffectStatement = Formatter.addPrefix(fixedEffect.getSymbRef().getSymbIdRef());
-            if(fixedEffectStatement.isEmpty())
-                fixedEffectStatement = parse(fixedEffect);
-            covStatement = fixedEffectStatement + " * " + covStatement;
-        }
-        return covStatement;
-    }
-
-    /**
-     * This method will return individual definition details if assignment is present.
-     * @param ip
-     * @return
-     */
-    private StringBuilder getIndivDefinitionForAssign(IndividualParameter ip) {
-        StringBuilder statement = new StringBuilder();
-        if (ip.getAssign() != null) {
-            statement.append(Formatter.endline());
-            statement.append(String.format("%s = ", ip.getSymbId()));
-            String assignment = parse(new Object(), lexer.getStatement(ip.getAssign()));
-            statement.append(Formatter.endline(assignment+Symbol.COMMENT));
-        }
-        return statement;
-    }
-
-    /**
-     * Return log type in constant format depending on transformation type
-     * This method is mainly used to help creation of individual parameter definitions.
-     * 
-     * @param transform
-     * @return
-     */
-    private String getLogType(LhsTransformation transform) {
-        if (transform == LhsTransformation.LOG){
-            return NmConstant.LOG.toString();
-        }else if (transform == LhsTransformation.LOGIT){
-            return NmConstant.LOGIT.toString();
-        }else{
-            throw new  UnsupportedOperationException("Tranformation type "+transform.name()+" not yet supported");
-        }
-    }
-
-    /**
-     * This method adds etas from random effects to individual parameter definitions.
-     * @param random_effects
-     * @return
-     */
-    private StringBuilder addEtasStatementsToIndivParamDef(List<ParameterRandomEffect> random_effects) {
-        StringBuilder etas = new StringBuilder();
-        if (random_effects != null && !random_effects.isEmpty()) {
-            for (ParameterRandomEffect random_effect : random_effects) {
-                if (random_effect == null) continue;
-                etas.append("+ ");
-                etas.append("ETA("+etasOrder.get(random_effect.getSymbRef().get(0).getSymbIdRef())+")");
-            }
-        }
-        return etas;
     }
 
     @Override
@@ -595,26 +360,5 @@ public class Parser extends BaseParser {
         fout.write(Formatter.endline(String.format(format, comment_char, model_file)));
         format = "%s Dated "+Formatter.indent(Formatter.endline(": %s"));
         fout.write(Formatter.endline(String.format(format, comment_char, new Date())));
-    }
-
-    /**
-     * Method to be used by other classes which doesnt have visibility to BaseParser
-     * @param context
-     * @return
-     */
-    public String parse(Object context){
-        return parse(context, lexer.getStatement(context));
-    }
-
-    public Map<String, Integer> getEtasOrder() {
-        return etasOrder;
-    }
-
-    public void setEtasOrder(Map<String, Integer> etasOrder) {
-        this.etasOrder = etasOrder;
-    }
-
-    public ParametersHelper getParameters() {
-        return parameters;
     }
 }

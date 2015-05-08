@@ -34,7 +34,7 @@ public class ConverterProvider extends Lexer {
         setParser(p);
         p.setLexer(this);
 
-        VersionImpl source_version = new VersionImpl(0, 3, 1);
+        VersionImpl source_version = new VersionImpl(0, 6, 0);
         source = new LanguageVersionImpl("PharmML", source_version);
 
         VersionImpl target_version = new VersionImpl(7, 2, 0);
@@ -48,21 +48,9 @@ public class ConverterProvider extends Lexer {
         getScriptDefinition().flushAllSymbols();
         try {
             parser.setRunId(m.generateRunId());
-        } catch (Exception e) {
-            return getExceptionReport(e);
-        }
-        try {
             setOutputDirectory(outputDirectory);
-        } catch (Exception e) {
-            return getExceptionReport(e);
-        }
-        try {
             loadPharmML(src);
-        } catch (Exception e) {
-            return getExceptionReport(e);
-        }
-        // Parse each of the available structural blocks.
-        try {
+            // Parse each of the available structural blocks.
             createBlocks(outputDirectory);
             File f = createScript(src, outputDirectory);
             return getCrxSuccessReport(f);
@@ -95,6 +83,7 @@ public class ConverterProvider extends Lexer {
 
     private void createPKPDScript(PrintWriter fout, File src, File output_dir) throws IOException {
         if (fout == null || output_dir == null) return;
+        ConversionContext context = new ConversionContext(getParser(), this);
 
         ScriptDefinition scriptDefinition = getScriptDefinition();
         ProblemStatement problemStatement = new ProblemStatement(getModelName());
@@ -117,8 +106,9 @@ public class ConverterProvider extends Lexer {
         fout.write(Formatter.endline());
         fout.write(dataStatement.getStatement());
         fout.write(getSimulationStatement());
-
-        parser.writeParameterStatement(fout);
+        
+        fout.write(context.buildPredStatement().toString());
+        fout.write(context.getParameterStatement().toString());
 
         EstimationStatement estStatement = new EstimationStatement(scriptDefinition);
         if(!estStatement.getEstimationSteps().isEmpty()){

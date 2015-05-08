@@ -9,14 +9,19 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
 import crx.converter.engine.ScriptDefinition;
 import crx.converter.engine.parts.EstimationStep;
+import crx.converter.engine.parts.StructuralBlock;
 import crx.converter.engine.parts.TabularDataset;
 import eu.ddmore.converters.nonmem.utils.Formatter;
 import eu.ddmore.converters.nonmem.utils.ParametersHelper;
+import eu.ddmore.libpharmml.dom.modeldefn.pkmacro.PKMacro;
 import eu.ddmore.libpharmml.dom.modellingsteps.DatasetMapping;
 import eu.ddmore.libpharmml.dom.modellingsteps.Estimation;
 import eu.ddmore.libpharmml.dom.modellingsteps.ExternalDataSet;
@@ -63,11 +68,11 @@ public class DataStatement{
             throw new IllegalStateException("NONMEM data set(s) cannot be empty");
         }
         while (dsIterator.hasNext()) {
-            ExternalDataSet nonmemDataSet = dsIterator.next();
+            ExternalDataSet extDataSet = dsIterator.next();
             // TODO: adding null check for time being as no examples for 0.3.1 or above are available right now.
-            if (nonmemDataSet.getDataSet().getExternalFile().getPath() != null) {
+            if (extDataSet.getDataSet().getExternalFile().getPath() != null) {
                 String dataLocation = srcFile.getAbsoluteFile().getParentFile().getAbsolutePath();
-                dataFileName = nonmemDataSet.getDataSet().getExternalFile().getPath();
+                dataFileName = extDataSet.getDataSet().getExternalFile().getPath();
                 File data = new File(dataLocation+File.separator+dataFileName);
                 if(data.exists()){
                     setDataFile(data);
@@ -80,6 +85,20 @@ public class DataStatement{
 
     private  String generateDataFileName(String dataFile) {
         return new File(dataFile).getName().replace(".xml", "") +"_data.csv";
+    }
+
+    /**
+     * TODO: Update data file for pk macro changes. 
+     * This method will be updated depending upon what we get from common converter.  
+     */
+    public void updateDataFileForPkMacros(){
+        File data = getDataFile();
+        try {
+            List<String> lines = Files.readAllLines(data.toPath(), StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -140,5 +159,18 @@ public class DataStatement{
             }
         }
         return dataset;
+    }
+
+    /**
+     * TODO: get pk macro information
+     * @param structuralBlocks
+     * @return
+     */
+    private List<PKMacro> getAllPkMacros(List<StructuralBlock> structuralBlocks) {
+        List<PKMacro> pkMacros = new ArrayList<PKMacro>();
+        for(StructuralBlock structuralBlock : structuralBlocks){
+                        pkMacros.addAll(structuralBlock.getPKMacros());
+        }
+        return pkMacros;
     }
 }

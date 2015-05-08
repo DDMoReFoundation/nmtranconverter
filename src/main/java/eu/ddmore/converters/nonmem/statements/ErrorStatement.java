@@ -37,7 +37,7 @@ public class ErrorStatement {
     private String function = new String();
     private String errorType = new String();
 
-    ErrorStatement(FunctionCallType functionCallType, String output){
+    public ErrorStatement(FunctionCallType functionCallType, String output){
         if(functionCallType!=null){
             functionCall = functionCallType;
             setParamsFunctionCall();

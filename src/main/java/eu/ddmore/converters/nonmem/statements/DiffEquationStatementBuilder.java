@@ -8,9 +8,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
-import crx.converter.engine.ScriptDefinition;
 import crx.converter.engine.parts.StructuralBlock;
-import eu.ddmore.converters.nonmem.Parser;
+import eu.ddmore.converters.nonmem.ConversionContext;
 import eu.ddmore.converters.nonmem.utils.Formatter;
 import eu.ddmore.libpharmml.dom.commontypes.DerivativeVariable;
 import eu.ddmore.libpharmml.dom.commontypes.VariableDefinition;
@@ -18,18 +17,13 @@ import eu.ddmore.libpharmml.dom.commontypes.VariableDefinition;
 public class DiffEquationStatementBuilder {
     private static final String DES = "DES";
     private final String DES_VAR_SUFFIX = "_"+DES;
-    private ScriptDefinition scriptDefinition;
-    private List<ErrorStatement> errorStatements;
-    private Parser parser;
     private Map<String, String> derivativeVariableMap = new HashMap<String, String>();
     //it will hold definition types and its parsed equations which we will need to add in Error statement as well.
     private Map<String, String> definitionsParsingMap = new HashMap<String, String>();
+    ConversionContext context;
 
-
-    public DiffEquationStatementBuilder(ScriptDefinition scriptDefinition, List<ErrorStatement> errorStatements, Parser parser) {
-        this.scriptDefinition = scriptDefinition;
-        this.errorStatements = errorStatements;
-        this.parser = parser;
+    public DiffEquationStatementBuilder(ConversionContext context) {
+        this.context = context;
     }
 
     /**
@@ -51,7 +45,7 @@ public class DiffEquationStatementBuilder {
                 definitionsParsingMap.put(variable, varAmount);
         }
         diffEqStatementBlock.append(Formatter.endline());
-        for(StructuralBlock block : scriptDefinition.getStructuralBlocks()){
+        for(StructuralBlock block : context.getScriptDefinition().getStructuralBlocks()){
             diffEqStatementBlock.append(addVarDefinitionTypesToDES(block));
             diffEqStatementBlock.append(addDerivativeVarToDES(block));
         }
@@ -85,7 +79,7 @@ public class DiffEquationStatementBuilder {
         StringBuilder varDefinitionsBlock = new StringBuilder();
         for (VariableDefinition definitionType: block.getLocalVariables()){
             String variable = Formatter.addPrefix(definitionType.getSymbId());
-            String rhs = parser.parse(definitionType);
+            String rhs = context.parse(definitionType);
             if(rhs.startsWith(variable+" =")) {
                 rhs = rhs.replaceFirst(variable+" =","");
                 if(isVarFromErrorFunction(variable)){
@@ -110,7 +104,7 @@ public class DiffEquationStatementBuilder {
     private StringBuilder addDerivativeVarToDES(StructuralBlock block) {
         StringBuilder derivativeVarBlock = new StringBuilder();
         for(DerivativeVariable variableType: block.getStateVariables()){
-            String parsedDADT = parser.parse(variableType);
+            String parsedDADT = context.parse(variableType);
             String variable = Formatter.addPrefix(variableType.getSymbId());
             if(isDerivativeVariableHasAmount(variable)){
                 String index = derivativeVariableMap.get(variable);
@@ -138,7 +132,7 @@ public class DiffEquationStatementBuilder {
      * @return
      */
     private Boolean isVarFromErrorFunction(String variable){
-        for(ErrorStatement errorStatement : errorStatements){
+        for(ErrorStatement errorStatement : context.getErrorStatements()){
             if(errorStatement.getFunction().equals(variable)){
                 return true;
             }

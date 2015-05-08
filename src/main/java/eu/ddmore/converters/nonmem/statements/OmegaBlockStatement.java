@@ -51,7 +51,6 @@ public class OmegaBlockStatement {
             omegaBlockTitle = createOmegaBlockTitle(correlations);
 
             for(String eta : orderedEtasToOmegaMap.values()){
-
                 for(CorrelationRef correlation :  correlations){
                     String firstRandomVar = correlation.rnd1.getSymbId();
                     String secondRandomVar = correlation.rnd2.getSymbId();
@@ -68,13 +67,33 @@ public class OmegaBlockStatement {
                     }
 
                     if(omegas.get(column)==null){
-                        String symbId = correlation.correlationCoefficient.getSymbRef().getSymbIdRef();
-                        omegas.remove(column);
-                        omegas.add(column, paramHelper.getOmegaFromRandomVarName(symbId));	
+                        OmegaStatement omega = getOmegaForCoefficient(correlation);
+                        if(omega == null){
+                            throw new IllegalArgumentException("no coefficient value found.");
+                        }else{
+                            omegas.remove(column);
+                            omegas.add(column,omega);
+                        }
                     }
                 }
             }
         }
+    }
+    
+    /**
+     * 
+     * @param correlation
+     * @return
+     */
+    private OmegaStatement getOmegaForCoefficient(CorrelationRef correlation) {
+        OmegaStatement omega = null;
+        if(correlation.correlationCoefficient.getSymbRef()!=null){
+            omega = paramHelper.getOmegaFromRandomVarName(correlation.correlationCoefficient.getSymbRef().getSymbIdRef());
+        }else if(omega == null && correlation.correlationCoefficient.getScalar()!=null){
+            omega = new OmegaStatement(correlation.rnd1.getSymbId()+"_"+correlation.rnd2.getSymbId());
+            omega.setInitialEstimate(correlation.correlationCoefficient);
+        }
+        return omega;
     }
 
     /**

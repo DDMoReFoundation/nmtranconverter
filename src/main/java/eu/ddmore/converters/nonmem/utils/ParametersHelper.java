@@ -24,6 +24,7 @@ import eu.ddmore.converters.nonmem.statements.SigmaStatementBuilder;
 import eu.ddmore.converters.nonmem.statements.ThetaStatement;
 import eu.ddmore.converters.nonmem.utils.Formatter.NmConstant;
 import eu.ddmore.converters.nonmem.utils.Formatter.Symbol;
+import eu.ddmore.libpharmml.dom.commontypes.IntValue;
 import eu.ddmore.libpharmml.dom.commontypes.RealValue;
 import eu.ddmore.libpharmml.dom.commontypes.Rhs;
 import eu.ddmore.libpharmml.dom.commontypes.ScalarRhs;
@@ -77,7 +78,7 @@ public class ParametersHelper {
      * 
      * @param SimpleParameters
      */
-    public void initialiseSimpleParams(List<SimpleParameter> SimpleParameters){
+    public void initialiseAllParameters(List<SimpleParameter> SimpleParameters){
 
         if (SimpleParameters==null || SimpleParameters.isEmpty()) {
             return;
@@ -233,23 +234,26 @@ public class ParametersHelper {
     }
 
     /**
-     * 
-     * @param omegaSymbId
+     * Retrieves scalar rhs from parameter assignment with help of symbol id.
+     * @param symbId
      * @return
      */
-    private ScalarRhs getScalarRhsForSymbol(String omegaSymbId) {
-        SimpleParameter param = simpleParams.get(omegaSymbId);
+    private ScalarRhs getScalarRhsForSymbol(String symbId) {
+        SimpleParameter param = simpleParams.get(symbId);
         ScalarRhs scalar = null;
-        if(param.getAssign().getScalar()!=null){
+        if(param!=null && param.getAssign().getScalar()!=null){
             scalar = new ScalarRhs();
             scalar.setScalar(param.getAssign().getScalar());
             SymbolRef symbRef = new SymbolRef();
-            symbRef.setId(omegaSymbId);
+            symbRef.setId(symbId);
             scalar.setSymbRef(symbRef);    
-        }        
+        }
         return scalar;
     }
 
+    /**
+     * This will use sigma statement builder to get sigma statement.
+     */
     private void setSigmaParameters(){
         SigmaStatementBuilder sigmaStatementBuilder = new SigmaStatementBuilder();
         SigmaStatements = sigmaStatementBuilder.getSigmaStatements(this);
@@ -290,7 +294,8 @@ public class ParametersHelper {
         if (getDistributionTypeStdDev(rv) != null) {
             symbId = getDistributionTypeStdDev(rv).getVar().getVarId();					
         } else if (getDistributionTypeVariance(rv) != null) {
-            symbId = getDistributionTypeVariance(rv).getVar().getVarId();
+            if(getDistributionTypeVariance(rv).getVar()!=null)
+                symbId = getDistributionTypeVariance(rv).getVar().getVarId();
         }
         return symbId;
     }
@@ -514,10 +519,12 @@ public class ParametersHelper {
     }
 
     public void addCorrelationToMap(Map<String, String> etaTocorrelationsMap, CorrelationRef correlation) {
-        String firstVar = correlation.rnd1.getSymbId();			
+        String firstVar = correlation.rnd1.getSymbId();
         String secondVar = correlation.rnd2.getSymbId();
-        String coefficient = correlation.correlationCoefficient.getSymbRef().getSymbIdRef();
-        //add to correlations map			
+        String coefficient = "";
+        if(correlation.correlationCoefficient.getSymbRef()!=null)
+            coefficient = correlation.correlationCoefficient.getSymbRef().getSymbIdRef();
+        //add to correlations map
         etaTocorrelationsMap.put(firstVar,getNameFromParamRandomVariable(correlation.rnd1));
         etaTocorrelationsMap.put(secondVar,getNameFromParamRandomVariable(correlation.rnd2));
         etaTocorrelationsMap.put(coefficient,coefficient);
@@ -577,7 +584,7 @@ public class ParametersHelper {
         if (!thetaStatements.isEmpty()) {
             thetaStatement.append(Formatter.endline()+Formatter.theta());
             for (String thetaVar : thetaStatements.keySet()) {
-                thetaStatement.append(writeParameter(thetaStatements.get(thetaVar)));
+                thetaStatement.append(addParameter(thetaStatements.get(thetaVar)));
             }
         }
         return thetaStatement;
@@ -590,8 +597,9 @@ public class ParametersHelper {
         if(!omegaBlocks.isEmpty()){
             omegaStatement.append(Formatter.endline(omegaBlockStatement.getOmegaBlockTitle()));
             for(String eta : omegaBlockStatement.getOrderedEtasToOmegaMap().values()){
-                for(OmegaStatement omega : omegaBlocks.get(eta)){                   
-                    omegaStatement.append(writeParameter(omega));
+                for(OmegaStatement omega : omegaBlocks.get(eta)){
+                    if(omega!=null)
+                        omegaStatement.append(addParameter(omega));
                 }
             }
         }
@@ -600,7 +608,7 @@ public class ParametersHelper {
             omegaStatement.append(Formatter.endline());
             omegaStatement.append(Formatter.endline(Formatter.omega()));
             for (final String omegaVar : omegaStatements.keySet()) {
-                omegaStatement.append(writeParameter(omegaStatements.get(omegaVar)));
+                omegaStatement.append(addParameter(omegaStatements.get(omegaVar)));
             }
         }
         return omegaStatement;
@@ -613,7 +621,7 @@ public class ParametersHelper {
      * @param simpleParam
      * @param fout
      */
-    public StringBuilder writeParameter(Parameter param) {
+    public StringBuilder addParameter(Parameter param) {
         StringBuilder statement = new StringBuilder();
         String description = param.getSymbId();
 
@@ -621,7 +629,7 @@ public class ParametersHelper {
         ScalarRhs upperBound= param.getUpperBound(); 
         ScalarRhs initEstimate= param.getInitialEstimate();
         statement.append("(");
-        statement.append(writeParameterStatements(description, lowerBound, upperBound,initEstimate));
+        statement.append(prepareParameterStatements(description, lowerBound, upperBound,initEstimate));
 
         if(param.isFixed()){
             statement.append(" "+NmConstant.FIX+" ");
@@ -652,20 +660,20 @@ public class ParametersHelper {
      * @param upperBound
      * @param initEstimate
      */
-    private StringBuilder writeParameterStatements(String description,
+    private StringBuilder prepareParameterStatements(String description,
             ScalarRhs lowerBound, ScalarRhs upperBound, ScalarRhs initEstimate) {
 
         StringBuilder statement = new StringBuilder(); 
         if(lowerBound!=null){
             if(initEstimate!=null){
                 if(upperBound!=null){
-                    statement.append(writeStatement(lowerBound,initEstimate,upperBound));
+                    statement.append(prepareStatement(lowerBound,initEstimate,upperBound));
                 }else{
-                    statement.append(writeStatement(lowerBound,initEstimate,null));
+                    statement.append(prepareStatement(lowerBound,initEstimate,null));
                 }
             }else{
                 if(upperBound!=null){
-                    statement.append(writeStatement(lowerBound,null,upperBound));
+                    statement.append(prepareStatement(lowerBound,null,upperBound));
                 }else{
                     throw new IllegalStateException("Only lower bound value present for parameter : "+description);
                 }
@@ -673,9 +681,9 @@ public class ParametersHelper {
         }else if(initEstimate!=null){
             if(upperBound!=null){
                 statement.append("-INF,");
-                statement.append(writeStatement(null,initEstimate,upperBound));
+                statement.append(prepareStatement(null,initEstimate,upperBound));
             }else{
-                statement.append(writeStatement(null,initEstimate,null));
+                statement.append(prepareStatement(null,initEstimate,null));
             }
         }else {
             throw new IllegalStateException("Only upper bound or no values present for parameter : "+description);
@@ -692,18 +700,24 @@ public class ParametersHelper {
      * @param upperBound
      * @param fout
      */
-    private StringBuilder writeStatement(ScalarRhs lowerBound,ScalarRhs init,ScalarRhs upperBound){
+    private StringBuilder prepareStatement(ScalarRhs lowerBound,ScalarRhs init,ScalarRhs upperBound){
         StringBuilder statement = new StringBuilder();
         RealValue value;
-        if(lowerBound!=null){
+        if(lowerBound!=null && lowerBound.getScalar()!=null){
             value = (RealValue) lowerBound.getScalar().getValue();
             statement.append(" "+value.getValue()+" , ");
         }
-        if(init!=null){
-            value = (RealValue) init.getScalar().getValue();
-            statement.append(value.getValue()+" ");
+        if(init!=null && init.getScalar()!=null){
+            if(init.getScalar().getValue() instanceof RealValue){
+                value = (RealValue) init.getScalar().getValue();
+                statement.append(value.getValue()+" ");
+            }else if(init.getScalar().getValue() instanceof IntValue){
+                IntValue intValue = (IntValue) init.getScalar().getValue();
+                statement.append(intValue.getValue()+" ");    
+            }
+
         }
-        if(upperBound!=null){
+        if(upperBound!=null && upperBound.getScalar()!=null){
             value = (RealValue) upperBound.getScalar().getValue();
             statement.append(", "+value.getValue()+" ");
         }
