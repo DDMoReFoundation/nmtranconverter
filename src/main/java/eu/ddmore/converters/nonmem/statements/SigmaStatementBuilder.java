@@ -9,12 +9,15 @@ import java.util.List;
 import java.util.Set;
 
 import crx.converter.engine.parts.ObservationBlock;
+import crx.converter.engine.parts.ParameterBlock;
+import eu.ddmore.converters.nonmem.ConversionContext;
 import eu.ddmore.converters.nonmem.utils.Formatter;
 import eu.ddmore.converters.nonmem.utils.ParametersHelper;
 import eu.ddmore.converters.nonmem.utils.Formatter.NmConstant;
 import eu.ddmore.converters.nonmem.utils.Formatter.Symbol;
 import eu.ddmore.libpharmml.dom.commontypes.RealValue;
 import eu.ddmore.libpharmml.dom.modeldefn.ParameterRandomVariable;
+import eu.ddmore.libpharmml.dom.modeldefn.GaussianObsError.ResidualError;
 import eu.ddmore.libpharmml.dom.modellingsteps.ParameterEstimate;
 import eu.ddmore.libpharmml.dom.uncertml.PositiveRealValueType;
 
@@ -28,7 +31,10 @@ public class SigmaStatementBuilder {
      * This method will get sigma statement as per following algorithm.
      * 
      * Get random variables from observation model blocks.
-     * look for symbIdref = 'residual'
+     * 
+     * Get residual errors from observation model and look for any random variables defined anywhere in parameter model blocks.
+     * If there is any such parameter random variable, then add it to random variables list to add as Sigma.  
+     * 
      * if it exists, it will (should) have 'distribution' defined and it has 'stddev' or 'variance'
      * 
      * 1.if stddev - 
@@ -36,7 +42,7 @@ public class SigmaStatementBuilder {
      * 		$SIGMA
      * 			1 FIX
      * b. if stddev <var varId="sigma"> (sigma is example variable it can be anything)
-     * 		there will be given intial estimate for this variable
+     * 		there will be given initial estimate for this variable
      * 		check if attribute is fixed
      * 		if attribute is 'fixed=true' 
      * 			"1 FIX ;sigma"
@@ -57,11 +63,7 @@ public class SigmaStatementBuilder {
 
         String sigmaRepresentation = new String();
 
-        Set<ParameterRandomVariable> randomVariableTypes = new HashSet<ParameterRandomVariable>();
-
-        for(ObservationBlock observationBlock: parameters.getScriptDefinition().getObservationBlocks()){
-            randomVariableTypes.addAll(observationBlock.getRandomVariables());
-        }
+        Set<ParameterRandomVariable> randomVariableTypes = getRandomVariablesForSigma(parameters);
 
         for (ParameterRandomVariable rv : randomVariableTypes) {
 
@@ -91,6 +93,36 @@ public class SigmaStatementBuilder {
             sigmaParams.add(sigmaStatements.toString());
         }
         return sigmaParams;
+    }
+
+    /**
+     * Gets random variables from observation as well as parameter block (if associated with residual error)
+     * 
+     * @param parameters
+     * @return set of random variables
+     */
+    private Set<ParameterRandomVariable> getRandomVariablesForSigma(ParametersHelper parameters) {
+        Set<ParameterRandomVariable> randomVariableTypes = new HashSet<ParameterRandomVariable>();
+        
+        for(ObservationBlock observationBlock: parameters.getScriptDefinition().getObservationBlocks()){
+            randomVariableTypes.addAll(observationBlock.getRandomVariables());
+        }
+        List<ResidualError> residualErrors = ConversionContext.retrieveResidualErrors(parameters.getScriptDefinition());
+
+        for(ParameterBlock paramBlock: parameters.getScriptDefinition().getParameterBlocks()){
+            if(residualErrors.isEmpty() || paramBlock.getRandomVariables().isEmpty()){
+                break;
+            }
+            for(ResidualError error : residualErrors){
+                String errorName = error.getSymbRef().getSymbIdRef();
+                for(ParameterRandomVariable randomVar : paramBlock.getRandomVariables()){
+                    if(randomVar.getSymbId().equals(errorName)){
+                        randomVariableTypes.add(randomVar);
+                    }
+                }
+            }
+        }
+        return randomVariableTypes;
     }
 
     /**

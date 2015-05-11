@@ -24,6 +24,7 @@ import eu.ddmore.libpharmml.dom.modeldefn.GaussianObsError;
 import eu.ddmore.libpharmml.dom.modeldefn.GeneralObsError;
 import eu.ddmore.libpharmml.dom.modeldefn.ObservationError;
 import eu.ddmore.libpharmml.dom.modeldefn.GaussianObsError.ErrorModel;
+import eu.ddmore.libpharmml.dom.modeldefn.GaussianObsError.ResidualError;
 
 /**
  * Conversion context class accesses common converter for nmtran conversion and initialises 
@@ -35,8 +36,7 @@ public class ConversionContext {
     private final IParser parser;
     private final ILexer lexer;
     private final ParametersHelper parameterHelper;
-
-    private ArrayList<String> thetas = new ArrayList<String>();
+    private List<String> thetas = new ArrayList<String>();
     private Map<String, Integer> etasOrder = new LinkedHashMap<String, Integer>();
 
     private List<ErrorStatement> errorStatements = new ArrayList<ErrorStatement>();
@@ -121,7 +121,7 @@ public class ConversionContext {
         }
         return thetaAssignmentBlock;
     }
-    
+
     /**
      * This method will get theta format for symbol. 
      *  
@@ -167,17 +167,41 @@ public class ConversionContext {
             }
             if(errorType instanceof GaussianObsError){
                 GaussianObsError error = (GaussianObsError) errorType;
-                ErrorModel errorModel = error.getErrorModel();
-                String output = error.getOutput().getSymbRef().getSymbIdRef();
-                FunctionCallType functionCall = errorModel.getAssign().getEquation().getFunctionCall();
-
-                ErrorStatement errorStatement = new ErrorStatement(functionCall, output);
+                ErrorStatement errorStatement = prepareErrorStatement(error);
                 errorStatements.add(errorStatement);
             }else{
                 //              TODO : Check if there are any other types to encounter
             }
         }
         return errorStatements;
+    }
+
+    public static List<ResidualError> retrieveResidualErrors(ScriptDefinition scriptDefinition){
+        List<ResidualError> residualErrors = new ArrayList<>() ;
+        for(ObservationBlock block : scriptDefinition.getObservationBlocks()){
+            ObservationError errorType = block.getObservationError();
+            if(errorType instanceof GaussianObsError){
+                GaussianObsError error = (GaussianObsError) errorType;
+                if(error.getResidualError()!=null){
+                    residualErrors.add(error.getResidualError());
+                }
+            }
+        }
+        return residualErrors;
+    }
+
+    /**
+     * Prepares and returns error statement for the gaussian observation error
+     * @param error
+     * @return
+     */
+    private ErrorStatement prepareErrorStatement(GaussianObsError error) {
+        ErrorModel errorModel = error.getErrorModel();
+        String output = error.getOutput().getSymbRef().getSymbIdRef();
+        FunctionCallType functionCall = errorModel.getAssign().getEquation().getFunctionCall();
+
+        ErrorStatement errorStatement = new ErrorStatement(functionCall, output);
+        return errorStatement;
     }
 
     /**
@@ -228,5 +252,4 @@ public class ConversionContext {
     public ILexer getLexer() {
         return lexer;
     }
-
 }

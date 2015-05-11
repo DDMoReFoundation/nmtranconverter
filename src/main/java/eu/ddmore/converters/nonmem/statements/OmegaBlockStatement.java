@@ -17,6 +17,7 @@ import crx.converter.engine.parts.ParameterBlock;
 import eu.ddmore.converters.nonmem.utils.Formatter;
 import eu.ddmore.converters.nonmem.utils.ParametersHelper;
 import eu.ddmore.converters.nonmem.utils.Formatter.NmConstant;
+import eu.ddmore.libpharmml.dom.commontypes.ScalarRhs;
 import eu.ddmore.libpharmml.dom.modeldefn.ParameterRandomVariable;
 
 public class OmegaBlockStatement {
@@ -51,23 +52,41 @@ public class OmegaBlockStatement {
             omegaBlockTitle = createOmegaBlockTitle(correlations);
 
             for(String eta : orderedEtasToOmegaMap.values()){
-                for(CorrelationRef correlation :  correlations){
-                    String firstRandomVar = correlation.rnd1.getSymbId();
-                    String secondRandomVar = correlation.rnd2.getSymbId();
-                    int column = getOrderedEtaIndex(firstRandomVar);
-                    int row = getOrderedEtaIndex(secondRandomVar);
+                Iterator<CorrelationRef> iterator = correlations.iterator();
+                
+                while(iterator.hasNext()){
+                    CorrelationRef correlation = iterator.next();
+                    ParameterRandomVariable firstRandomVar = correlation.rnd1;
+                    ParameterRandomVariable secondRandomVar = correlation.rnd2;
+                    
+                    // row = i column = j
+                    int column = getOrderedEtaIndex(firstRandomVar.getSymbId());
+                    int row = getOrderedEtaIndex(secondRandomVar.getSymbId());
+                    
+                    if(column > row){
+                        firstRandomVar = correlation.rnd2;
+                        secondRandomVar = correlation.rnd1;
+                        
+                        int swap = column;
+                        column = row;
+                        row = swap;
+                    }
+                    
+                    createFirstMatrixRow(eta, firstRandomVar);
 
-                    createFirstMatrixRow(eta, correlation.rnd1);
-
-                    List<OmegaStatement> omegas = omegaBlocks.get(secondRandomVar);
+                    List<OmegaStatement> omegas = omegaBlocks.get(secondRandomVar.getSymbId());
+                    
+                    // add random var to matrix at [i,i]
                     if(omegas.get(row)==null){
                         omegas.remove(row);
-                        String symbId = paramHelper.getNameFromParamRandomVariable(correlation.rnd2);
+                        String symbId = paramHelper.getNameFromParamRandomVariable(secondRandomVar);
                         omegas.add(row, paramHelper.getOmegaFromRandomVarName(symbId));
                     }
-
+                    
+                    //add coefficient associated with random var1 and random var2 at [i,j] 
+                    //which is mirrored with [j,i] ([j,i] will be empty as its not required) 
                     if(omegas.get(column)==null){
-                        OmegaStatement omega = getOmegaForCoefficient(correlation);
+                        OmegaStatement omega = getOmegaForCoefficient(correlation.correlationCoefficient, firstRandomVar, secondRandomVar);
                         if(omega == null){
                             throw new IllegalArgumentException("no coefficient value found.");
                         }else{
@@ -75,6 +94,7 @@ public class OmegaBlockStatement {
                             omegas.add(column,omega);
                         }
                     }
+                    iterator.remove();
                 }
             }
         }
@@ -85,13 +105,13 @@ public class OmegaBlockStatement {
      * @param correlation
      * @return
      */
-    private OmegaStatement getOmegaForCoefficient(CorrelationRef correlation) {
+    private OmegaStatement getOmegaForCoefficient(ScalarRhs coeff, ParameterRandomVariable firstRandomVar, ParameterRandomVariable secondRandomVar) {
         OmegaStatement omega = null;
-        if(correlation.correlationCoefficient.getSymbRef()!=null){
-            omega = paramHelper.getOmegaFromRandomVarName(correlation.correlationCoefficient.getSymbRef().getSymbIdRef());
-        }else if(omega == null && correlation.correlationCoefficient.getScalar()!=null){
-            omega = new OmegaStatement(correlation.rnd1.getSymbId()+"_"+correlation.rnd2.getSymbId());
-            omega.setInitialEstimate(correlation.correlationCoefficient);
+        if(coeff.getSymbRef()!=null){
+            omega = paramHelper.getOmegaFromRandomVarName(coeff.getSymbRef().getSymbIdRef());
+        }else if(omega == null && coeff.getScalar()!=null){
+            omega = new OmegaStatement(firstRandomVar.getSymbId()+"_"+secondRandomVar.getSymbId());
+            omega.setInitialEstimate(coeff);
         }
         return omega;
     }
