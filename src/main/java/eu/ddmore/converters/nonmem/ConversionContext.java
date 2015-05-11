@@ -63,12 +63,10 @@ public class ConversionContext {
             throw new IllegalArgumentException("Cannot find simple parameters for the pharmML file.");
         }
 
+        //set etas order which will be referred by most of the blocks
         setEtasOrder(parameterHelper.createOrderedEtasMap());
         parameterHelper.initialiseAllParameters(lexer.getModelParameters());
         setThetaAssigments();
-
-        //set etas order which will be referred by most of the blocks
-        setEtasOrder(parameterHelper.createOrderedEtasMap());
 
         // Initialise error statement
         errorStatements = prepareAllErrorStatements();
