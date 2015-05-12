@@ -34,7 +34,7 @@ public class ConverterProvider extends Lexer {
 		setParser(p);
 		p.setLexer(this);
 		
-		VersionImpl source_version = new VersionImpl(0, 3, 1);
+		VersionImpl source_version = new VersionImpl(0, 6, 0);
 		source = new LanguageVersionImpl("PharmML", source_version);
 		
 		VersionImpl target_version = new VersionImpl(7, 2, 0);
