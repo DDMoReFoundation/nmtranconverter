@@ -53,36 +53,32 @@ public class OmegaBlockStatement {
 
             for(String eta : orderedEtasToOmegaMap.values()){
                 Iterator<CorrelationRef> iterator = correlations.iterator();
-                
+
                 while(iterator.hasNext()){
                     CorrelationRef correlation = iterator.next();
                     ParameterRandomVariable firstRandomVar = correlation.rnd1;
                     ParameterRandomVariable secondRandomVar = correlation.rnd2;
-                    
+
                     // row = i column = j
                     int column = getOrderedEtaIndex(firstRandomVar.getSymbId());
                     int row = getOrderedEtaIndex(secondRandomVar.getSymbId());
-                    
+
                     if(column > row){
                         firstRandomVar = correlation.rnd2;
                         secondRandomVar = correlation.rnd1;
-                        
                         int swap = column;
                         column = row;
                         row = swap;
                     }
-                    
                     createFirstMatrixRow(eta, firstRandomVar);
-
                     List<OmegaStatement> omegas = omegaBlocks.get(secondRandomVar.getSymbId());
-                    
                     // add random var to matrix at [i,i]
                     if(omegas.get(row)==null){
                         omegas.remove(row);
                         String symbId = paramHelper.getNameFromParamRandomVariable(secondRandomVar);
                         omegas.add(row, paramHelper.getOmegaFromRandomVarName(symbId));
                     }
-                    
+
                     //add coefficient associated with random var1 and random var2 at [i,j] 
                     //which is mirrored with [j,i] ([j,i] will be empty as its not required) 
                     if(omegas.get(column)==null){
@@ -99,7 +95,7 @@ public class OmegaBlockStatement {
             }
         }
     }
-    
+
     /**
      * 
      * @param correlation
