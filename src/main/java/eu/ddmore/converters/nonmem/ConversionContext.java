@@ -9,6 +9,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.xml.bind.JAXBElement;
 import crx.converter.engine.ScriptDefinition;
 import crx.converter.engine.parts.ObservationBlock;
 import crx.converter.spi.ILexer;
@@ -19,6 +20,8 @@ import eu.ddmore.converters.nonmem.statements.PredStatement;
 import eu.ddmore.converters.nonmem.utils.Formatter;
 import eu.ddmore.converters.nonmem.utils.ParametersHelper;
 import eu.ddmore.converters.nonmem.utils.Formatter.Block;
+import eu.ddmore.libpharmml.dom.commontypes.ScalarRhs;
+import eu.ddmore.libpharmml.dom.commontypes.SymbolRef;
 import eu.ddmore.libpharmml.dom.maths.FunctionCallType;
 import eu.ddmore.libpharmml.dom.modeldefn.GaussianObsError;
 import eu.ddmore.libpharmml.dom.modeldefn.GeneralObsError;
@@ -187,9 +190,26 @@ public class ConversionContext {
         }
         return residualErrors;
     }
+    
+    /**
+     * This method will create scalar Rhs object for a symbol from the scalar value provided.
+     *  
+     * @param symbol
+     * @param scalar
+     * @return ScalarRhs object
+     */
+    public static ScalarRhs createScalarRhs(String symbol,JAXBElement<?> scalar) {
+        ScalarRhs scalarRhs = new ScalarRhs();
+        scalarRhs.setScalar(scalar);
+        SymbolRef symbRef = new SymbolRef();
+        symbRef.setId(symbol);
+        scalarRhs.setSymbRef(symbRef);
+        return scalarRhs;
+    }
 
     /**
-     * Prepares and returns error statement for the gaussian observation error
+     * Prepares and returns error statement for the gaussian observation error.
+     * 
      * @param error
      * @return
      */

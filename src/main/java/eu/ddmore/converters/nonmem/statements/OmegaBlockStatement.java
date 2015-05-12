@@ -3,6 +3,7 @@
  ******************************************************************************/
 package eu.ddmore.converters.nonmem.statements;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -12,11 +13,15 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.Map.Entry;
 
+import javax.xml.bind.JAXBElement;
 import crx.converter.engine.parts.BaseRandomVariableBlock.CorrelationRef;
 import crx.converter.engine.parts.ParameterBlock;
+import eu.ddmore.converters.nonmem.ConversionContext;
 import eu.ddmore.converters.nonmem.utils.Formatter;
 import eu.ddmore.converters.nonmem.utils.ParametersHelper;
 import eu.ddmore.converters.nonmem.utils.Formatter.NmConstant;
+import eu.ddmore.libpharmml.dom.commontypes.IntValue;
+import eu.ddmore.libpharmml.dom.commontypes.ObjectFactory;
 import eu.ddmore.libpharmml.dom.commontypes.ScalarRhs;
 import eu.ddmore.libpharmml.dom.modeldefn.ParameterRandomVariable;
 
@@ -70,24 +75,22 @@ public class OmegaBlockStatement {
                         column = row;
                         row = swap;
                     }
+                    
                     createFirstMatrixRow(eta, firstRandomVar);
                     List<OmegaStatement> omegas = omegaBlocks.get(secondRandomVar.getSymbId());
                     // add random var to matrix at [i,i]
                     if(omegas.get(row)==null){
-                        omegas.remove(row);
+                        initialiseRowElements(row, omegas);
                         String symbId = paramHelper.getNameFromParamRandomVariable(secondRandomVar);
-                        omegas.add(row, paramHelper.getOmegaFromRandomVarName(symbId));
+                        omegas.set(row, paramHelper.getOmegaFromRandomVarName(symbId));
                     }
 
                     //add coefficient associated with random var1 and random var2 at [i,j] 
                     //which is mirrored with [j,i] ([j,i] will be empty as its not required) 
                     if(omegas.get(column)==null){
                         OmegaStatement omega = getOmegaForCoefficient(correlation.correlationCoefficient, firstRandomVar, secondRandomVar);
-                        if(omega == null){
-                            throw new IllegalArgumentException("no coefficient value found.");
-                        }else{
-                            omegas.remove(column);
-                            omegas.add(column,omega);
+                        if(omega != null){
+                            omegas.set(column,omega);
                         }
                     }
                     iterator.remove();
@@ -97,16 +100,58 @@ public class OmegaBlockStatement {
     }
 
     /**
+     * Initialise lower half of the mirrored matrix by empty omega variables.
+     * 
+     * @param row
+     * @param omegas
+     */
+    private void initialiseRowElements(int row, List<OmegaStatement> omegas) {
+        for(int i=0; i <=row ; i++){
+            if(omegas.get(i)==null){
+                omegas.set(i, createOmegaWithEmptyScalar("Empty Variable"));
+            }
+        }
+    }
+    /**
+     * We set omega blocks matrix using omegas with empty scalar (i.e. value '0') so that 
+     * if there is no coefficient value set for a random value pair in matrix, it will use this default value. 
+     *  
+     * @param symbol
+     * @return
+     */
+    private OmegaStatement createOmegaWithEmptyScalar(String symbol) {
+        OmegaStatement omega;
+        omega = new OmegaStatement(symbol);
+        ScalarRhs scalar = ConversionContext.createScalarRhs(symbol, createScalar(0));  
+        omega.setInitialEstimate(scalar);
+        return omega;
+    }
+
+    /**
+     * Creates scalar for the value provided.
+     * This method will be helpful when only value or no value is provided in case of correlation coefficients.
+     *  
+     * @param value
+     * @return
+     */
+    private static JAXBElement<IntValue> createScalar(Integer value) {
+        IntValue intValue = new IntValue();
+        intValue.setValue(BigInteger.valueOf(value));
+        ObjectFactory factory = new ObjectFactory();
+        return factory.createInt(intValue);
+    }
+
+    /**
      * 
      * @param correlation
      * @return
      */
-    private OmegaStatement getOmegaForCoefficient(ScalarRhs coeff, ParameterRandomVariable firstRandomVar, ParameterRandomVariable secondRandomVar) {
+    private OmegaStatement getOmegaForCoefficient(ScalarRhs coeff, ParameterRandomVariable firstVar, ParameterRandomVariable secondVar) {
         OmegaStatement omega = null;
         if(coeff.getSymbRef()!=null){
             omega = paramHelper.getOmegaFromRandomVarName(coeff.getSymbRef().getSymbIdRef());
         }else if(omega == null && coeff.getScalar()!=null){
-            omega = new OmegaStatement(firstRandomVar.getSymbId()+"_"+secondRandomVar.getSymbId());
+            omega = new OmegaStatement(firstVar.getSymbId()+"_"+secondVar.getSymbId());
             omega.setInitialEstimate(coeff);
         }
         return omega;

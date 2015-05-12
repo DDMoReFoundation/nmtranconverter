@@ -17,6 +17,7 @@ import crx.converter.engine.parts.BaseRandomVariableBlock.CorrelationRef;
 import crx.converter.engine.parts.EstimationStep.FixedParameter;
 import crx.converter.engine.parts.ParameterBlock;
 import crx.converter.engine.parts.Part;
+import eu.ddmore.converters.nonmem.ConversionContext;
 import eu.ddmore.converters.nonmem.statements.OmegaBlockStatement;
 import eu.ddmore.converters.nonmem.statements.OmegaStatement;
 import eu.ddmore.converters.nonmem.statements.Parameter;
@@ -28,7 +29,6 @@ import eu.ddmore.libpharmml.dom.commontypes.IntValue;
 import eu.ddmore.libpharmml.dom.commontypes.RealValue;
 import eu.ddmore.libpharmml.dom.commontypes.Rhs;
 import eu.ddmore.libpharmml.dom.commontypes.ScalarRhs;
-import eu.ddmore.libpharmml.dom.commontypes.SymbolRef;
 import eu.ddmore.libpharmml.dom.modeldefn.IndividualParameter;
 import eu.ddmore.libpharmml.dom.modeldefn.IndividualParameter.GaussianModel;
 import eu.ddmore.libpharmml.dom.modeldefn.IndividualParameter.GaussianModel.LinearCovariate;
@@ -242,11 +242,7 @@ public class ParametersHelper {
         SimpleParameter param = simpleParams.get(symbId);
         ScalarRhs scalar = null;
         if(param!=null && param.getAssign().getScalar()!=null){
-            scalar = new ScalarRhs();
-            scalar.setScalar(param.getAssign().getScalar());
-            SymbolRef symbRef = new SymbolRef();
-            symbRef.setId(symbId);
-            scalar.setSymbRef(symbRef);    
+            scalar = ConversionContext.createScalarRhs(symbId, param.getAssign().getScalar());    
         }
         return scalar;
     }
@@ -598,8 +594,7 @@ public class ParametersHelper {
             omegaStatement.append(Formatter.endline(omegaBlockStatement.getOmegaBlockTitle()));
             for(String eta : omegaBlockStatement.getOrderedEtasToOmegaMap().values()){
                 for(OmegaStatement omega : omegaBlocks.get(eta)){
-                    if(omega!=null)
-                        omegaStatement.append(addParameter(omega));
+                    omegaStatement.append(addParameter(omega));
                 }
             }
         }
