@@ -77,7 +77,7 @@ public class OmegaBlockStatement {
                         column = row;
                         row = swap;
                     }
-                    
+
                     createFirstMatrixRow(eta, firstRandomVar);
                     List<OmegaStatement> omegas = omegaBlocks.get(secondRandomVar.getSymbId());
                     // add random var to matrix at [i,i]
@@ -128,7 +128,7 @@ public class OmegaBlockStatement {
         omega.setInitialEstimate(scalar);
         return omega;
     }
-    
+
     /**
      * This method will create scalar Rhs object for a symbol from the scalar value provided.
      *  
@@ -257,7 +257,7 @@ public class OmegaBlockStatement {
 
         for(String eta : etaToOmagaMap.keySet()){
             ArrayList<OmegaStatement> statements = new ArrayList<OmegaStatement>();
-            for(int i=0;i<etaToOmagaMap.keySet().size();i++) statements.add(null);
+            for(int i=0;i<etaToOmagaMap.get(eta);i++) statements.add(null);
             omegaBlocks.put(eta, statements);
         }
     }
