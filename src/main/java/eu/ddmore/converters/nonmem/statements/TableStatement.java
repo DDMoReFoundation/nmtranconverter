@@ -9,7 +9,7 @@ import crx.converter.engine.ScriptDefinition;
 import crx.converter.engine.parts.ParameterBlock;
 import eu.ddmore.converters.nonmem.statements.ErrorStatement.ErrorConstant;
 import eu.ddmore.converters.nonmem.utils.Formatter;
-import eu.ddmore.converters.nonmem.utils.ParametersHelper;
+import eu.ddmore.converters.nonmem.utils.OrderedEtasHandler;
 import eu.ddmore.converters.nonmem.utils.Formatter.ColumnConstant;
 import eu.ddmore.converters.nonmem.utils.Formatter.TableConstant;
 import eu.ddmore.libpharmml.dom.modeldefn.IndividualParameter;
@@ -48,6 +48,11 @@ public class TableStatement {
 
     }
 
+    /**
+     * Returns all table statements for nmtran file.
+     * 
+     * @return string builder with table statements 
+     */
     public StringBuilder getStatements(){
         StringBuilder allTables = new StringBuilder();
         allTables.append(createTableStatement(getStdTableStatement(),TableFile.STD_TABLE.getFileName()));
@@ -62,6 +67,12 @@ public class TableStatement {
         return allTables;
     }
 
+    /**
+     * Creates table statement for table type with columns provided. 
+     * @param columns
+     * @param tableType
+     * @return
+     */
     private StringBuilder createTableStatement(StringBuilder columns, String tableType){
         StringBuilder tableStatement = new StringBuilder();
         tableStatement.append(Formatter.endline());
@@ -113,7 +124,9 @@ public class TableStatement {
                 paramTable.append(SPACE+parameterType.getSymbId());
             }
         }
-        for(String eta : ParametersHelper.getAllEtas(scriptDefinition)){
+        OrderedEtasHandler etasHandler = new OrderedEtasHandler(scriptDefinition);
+        List<String> orderedEtas = etasHandler.getOrderedEtas();
+        for(String eta : orderedEtas){
             paramTable.append(SPACE+eta.toUpperCase());
         }
         return paramTable;

@@ -16,13 +16,15 @@ import java.util.Map.Entry;
 import javax.xml.bind.JAXBElement;
 import crx.converter.engine.parts.BaseRandomVariableBlock.CorrelationRef;
 import crx.converter.engine.parts.ParameterBlock;
-import eu.ddmore.converters.nonmem.ConversionContext;
 import eu.ddmore.converters.nonmem.utils.Formatter;
+import eu.ddmore.converters.nonmem.utils.OrderedEtasHandler;
 import eu.ddmore.converters.nonmem.utils.ParametersHelper;
 import eu.ddmore.converters.nonmem.utils.Formatter.NmConstant;
+import eu.ddmore.converters.nonmem.utils.RandomVariableHelper;
 import eu.ddmore.libpharmml.dom.commontypes.IntValue;
 import eu.ddmore.libpharmml.dom.commontypes.ObjectFactory;
 import eu.ddmore.libpharmml.dom.commontypes.ScalarRhs;
+import eu.ddmore.libpharmml.dom.commontypes.SymbolRef;
 import eu.ddmore.libpharmml.dom.modeldefn.ParameterRandomVariable;
 
 public class OmegaBlockStatement {
@@ -53,7 +55,7 @@ public class OmegaBlockStatement {
 
         if(!correlations.isEmpty()){
             initialiseOmegaBlocks(correlations);
-            orderedEtasToOmegaMap = reverseMap(etaToOmagaMap);
+            orderedEtasToOmegaMap = Formatter.reverseMap(etaToOmagaMap);
             omegaBlockTitle = createOmegaBlockTitle(correlations);
 
             for(String eta : orderedEtasToOmegaMap.values()){
@@ -81,7 +83,7 @@ public class OmegaBlockStatement {
                     // add random var to matrix at [i,i]
                     if(omegas.get(row)==null){
                         initialiseRowElements(row, omegas);
-                        String symbId = paramHelper.getNameFromParamRandomVariable(secondRandomVar);
+                        String symbId = RandomVariableHelper.getNameFromParamRandomVariable(secondRandomVar);
                         omegas.set(row, paramHelper.getOmegaFromRandomVarName(symbId));
                     }
 
@@ -122,9 +124,25 @@ public class OmegaBlockStatement {
     private OmegaStatement createOmegaWithEmptyScalar(String symbol) {
         OmegaStatement omega;
         omega = new OmegaStatement(symbol);
-        ScalarRhs scalar = ConversionContext.createScalarRhs(symbol, createScalar(0));  
+        ScalarRhs scalar = createScalarRhs(symbol, createScalar(0));  
         omega.setInitialEstimate(scalar);
         return omega;
+    }
+    
+    /**
+     * This method will create scalar Rhs object for a symbol from the scalar value provided.
+     *  
+     * @param symbol
+     * @param scalar
+     * @return ScalarRhs object
+     */
+    private ScalarRhs createScalarRhs(String symbol,JAXBElement<?> scalar) {
+        ScalarRhs scalarRhs = new ScalarRhs();
+        scalarRhs.setScalar(scalar);
+        SymbolRef symbRef = new SymbolRef();
+        symbRef.setId(symbol);
+        scalarRhs.setSymbRef(symbRef);
+        return scalarRhs;
     }
 
     /**
@@ -210,7 +228,7 @@ public class OmegaBlockStatement {
     private void createFirstMatrixRow(String eta, ParameterRandomVariable randomVar1) {
         if(etaToOmagaMap.get(randomVar1.getSymbId())== 1 && eta.equals(randomVar1.getSymbId())){
             List<OmegaStatement> matrixRow = new ArrayList<OmegaStatement>();
-            String symbId = paramHelper.getNameFromParamRandomVariable(randomVar1);
+            String symbId = RandomVariableHelper.getNameFromParamRandomVariable(randomVar1);
             matrixRow.add(paramHelper.getOmegaFromRandomVarName(symbId));
             omegaBlocks.put(randomVar1.getSymbId(), matrixRow);
         }
@@ -227,7 +245,8 @@ public class OmegaBlockStatement {
         for(CorrelationRef correlation : correlations){
             //Need to set SD attribute for whole block if even a single value is from std dev
             setStdDevAttributeForOmegaBlock(correlation);
-            paramHelper.addCorrelationToMap(etasToOmegasInCorrelation,correlation);
+            OrderedEtasHandler etasHandler = new OrderedEtasHandler(paramHelper.getScriptDefinition());
+            etasHandler.addCorrelationToMap(etasToOmegasInCorrelation,correlation);
         }
 
         for(Iterator<Entry<String, Integer>> it = etaToOmagaMap.entrySet().iterator(); it.hasNext();) {
@@ -243,22 +262,9 @@ public class OmegaBlockStatement {
         }
     }
 
-    /**
-     * This method will reverse the map and return a tree map (ordered in natural order of keys).
-     * 
-     * @param map
-     * @return
-     */
-    private<K,V> TreeMap<V,K> reverseMap(Map<K,V> map) {
-        TreeMap<V,K> rev = new TreeMap<V, K>();
-        for(Map.Entry<K,V> entry : map.entrySet())
-            rev.put(entry.getValue(), entry.getKey());
-        return rev;
-    }
-
     private void setStdDevAttributeForOmegaBlock(CorrelationRef correlation) {
         if(!isOmegaBlockFromStdDev){
-            isOmegaBlockFromStdDev = paramHelper.isParamFromStdDev(correlation.rnd1) || paramHelper.isParamFromStdDev(correlation.rnd1);
+            isOmegaBlockFromStdDev = RandomVariableHelper.isParamFromStdDev(correlation.rnd1) || RandomVariableHelper.isParamFromStdDev(correlation.rnd1);
         }
     }
 

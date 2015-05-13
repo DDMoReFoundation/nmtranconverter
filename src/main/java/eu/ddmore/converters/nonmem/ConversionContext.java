@@ -5,19 +5,24 @@ package eu.ddmore.converters.nonmem;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import javax.xml.bind.JAXBElement;
 import crx.converter.engine.ScriptDefinition;
 import crx.converter.engine.parts.ObservationBlock;
+import crx.converter.engine.parts.ParameterBlock;
 import crx.converter.spi.ILexer;
 import crx.converter.spi.IParser;
 import crx.converter.tree.BinaryTree;
 import eu.ddmore.converters.nonmem.statements.ErrorStatement;
 import eu.ddmore.converters.nonmem.statements.PredStatement;
+import eu.ddmore.converters.nonmem.statements.SigmaStatementBuilder;
 import eu.ddmore.converters.nonmem.utils.Formatter;
+import eu.ddmore.converters.nonmem.utils.OrderedEtasHandler;
 import eu.ddmore.converters.nonmem.utils.ParametersHelper;
 import eu.ddmore.converters.nonmem.utils.Formatter.Block;
 import eu.ddmore.libpharmml.dom.commontypes.ScalarRhs;
@@ -26,6 +31,7 @@ import eu.ddmore.libpharmml.dom.maths.FunctionCallType;
 import eu.ddmore.libpharmml.dom.modeldefn.GaussianObsError;
 import eu.ddmore.libpharmml.dom.modeldefn.GeneralObsError;
 import eu.ddmore.libpharmml.dom.modeldefn.ObservationError;
+import eu.ddmore.libpharmml.dom.modeldefn.ParameterRandomVariable;
 import eu.ddmore.libpharmml.dom.modeldefn.GaussianObsError.ErrorModel;
 import eu.ddmore.libpharmml.dom.modeldefn.GaussianObsError.ResidualError;
 
@@ -40,8 +46,7 @@ public class ConversionContext {
     private final ILexer lexer;
     private final ParametersHelper parameterHelper;
     private List<String> thetas = new ArrayList<String>();
-    private Map<String, Integer> etasOrder = new LinkedHashMap<String, Integer>();
-
+    private Map<String, Integer> orderedEtas = new LinkedHashMap<String, Integer>();
     private List<ErrorStatement> errorStatements = new ArrayList<ErrorStatement>();
 
     ConversionContext(IParser parser, ILexer lexer) throws IOException{
@@ -60,14 +65,13 @@ public class ConversionContext {
      * @throws IOException
      */
     public void initialise() throws IOException{
-
         //initialise parameters
         if (lexer.getModelParameters().isEmpty()) {
             throw new IllegalArgumentException("Cannot find simple parameters for the pharmML file.");
         }
-
+        OrderedEtasHandler etasHandler = new OrderedEtasHandler(getScriptDefinition()); 
         //set etas order which will be referred by most of the blocks
-        setEtasOrder(parameterHelper.createOrderedEtasMap());
+        setOrderedEtas(etasHandler.createOrderedEtasMap());
         parameterHelper.initialiseAllParameters(lexer.getModelParameters());
         setThetaAssigments();
 
@@ -99,7 +103,8 @@ public class ConversionContext {
         StringBuilder omegaStatement = parameterHelper.getOmegaStatementBlock();
         parameterStatement.append(omegaStatement.toString());
 
-        StringBuilder sigmaStatement = parameterHelper.getSigmaStatementBlock();
+        SigmaStatementBuilder sigmaBuilder = new SigmaStatementBuilder(parameterHelper);
+        StringBuilder sigmaStatement = sigmaBuilder.getSigmaStatementBlock();
         parameterStatement.append(sigmaStatement.toString());
         return parameterStatement;
     }
@@ -145,8 +150,8 @@ public class ConversionContext {
      */
     public StringBuilder buildEtaAssignments() {
         StringBuilder etaAssignment = new StringBuilder();  
-        for(String eta : getEtasOrder().keySet()){
-            etaAssignment.append(Formatter.endline(eta+ " = ETA("+getEtasOrder().get(eta)+")"));
+        for(String eta : getOrderedEtas().keySet()){
+            etaAssignment.append(Formatter.endline(eta+ " = ETA("+getOrderedEtas().get(eta)+")"));
         }
         return etaAssignment;
     }
@@ -177,7 +182,27 @@ public class ConversionContext {
         return errorStatements;
     }
 
-    public static List<ResidualError> retrieveResidualErrors(ScriptDefinition scriptDefinition){
+    public static Set<ParameterRandomVariable> getEpsilonRandomVariables(ScriptDefinition scriptDefinition) {
+        Set<ParameterRandomVariable> epsilonRandomVariables = new HashSet<>();
+        List<ResidualError> residualErrors = retrieveResidualErrors(scriptDefinition);
+
+        for(ParameterBlock paramBlock: scriptDefinition.getParameterBlocks()){
+            if(residualErrors.isEmpty() || paramBlock.getRandomVariables().isEmpty()){
+                break;
+            }
+            for(ResidualError error : residualErrors){
+                String errorName = error.getSymbRef().getSymbIdRef();
+                for(ParameterRandomVariable randomVar : paramBlock.getRandomVariables()){
+                    if(randomVar.getSymbId().equals(errorName)){
+                        epsilonRandomVariables.add(randomVar);
+                    }
+                }
+            }
+        }
+        return epsilonRandomVariables;
+    }
+
+    private static List<ResidualError> retrieveResidualErrors(ScriptDefinition scriptDefinition){
         List<ResidualError> residualErrors = new ArrayList<>() ;
         for(ObservationBlock block : scriptDefinition.getObservationBlocks()){
             ObservationError errorType = block.getObservationError();
@@ -190,7 +215,7 @@ public class ConversionContext {
         }
         return residualErrors;
     }
-    
+
     /**
      * This method will create scalar Rhs object for a symbol from the scalar value provided.
      *  
@@ -247,12 +272,12 @@ public class ConversionContext {
         return lexer.getScriptDefinition();    
     }
 
-    public Map<String, Integer> getEtasOrder() {
-        return etasOrder;
+    public Map<String, Integer> getOrderedEtas() {
+        return orderedEtas;
     }
 
-    public void setEtasOrder(Map<String, Integer> etasOrder) {
-        this.etasOrder = etasOrder;
+    public void setOrderedEtas(Map<String, Integer> etasOrder) {
+        this.orderedEtas = etasOrder;
     }
 
     public ParametersHelper getParameterHelper() {

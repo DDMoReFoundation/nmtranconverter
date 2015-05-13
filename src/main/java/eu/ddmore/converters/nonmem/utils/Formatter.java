@@ -2,6 +2,10 @@
  * Copyright (C) 2015 Mango Solutions Ltd - All rights reserved.
  ******************************************************************************/
 package eu.ddmore.converters.nonmem.utils;
+
+import java.util.Map;
+import java.util.TreeMap;
+
 /**
  * Formatter for nmtran conversion from pharmML
  * 
@@ -248,5 +252,18 @@ public class Formatter {
             symbol = Formatter.addPrefix(symbol);
         }
         return symbol;
+    }
+    
+    /**
+     * This method will reverse the map and return a tree map (ordered in natural order of keys).
+     * 
+     * @param map
+     * @return
+     */
+    public static <K,V> TreeMap<V,K> reverseMap(Map<K,V> map) {
+        TreeMap<V,K> rev = new TreeMap<V, K>();
+        for(Map.Entry<K,V> entry : map.entrySet())
+            rev.put(entry.getValue(), entry.getKey());
+        return rev;
     }
 }

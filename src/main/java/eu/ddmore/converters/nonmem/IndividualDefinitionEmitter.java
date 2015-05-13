@@ -183,7 +183,7 @@ public class IndividualDefinitionEmitter {
             for (ParameterRandomEffect random_effect : random_effects) {
                 if (random_effect == null) continue;
                 etas.append("+ ");
-                etas.append("ETA("+context.getEtasOrder().get(random_effect.getSymbRef().get(0).getSymbIdRef())+")");
+                etas.append("ETA("+context.getOrderedEtas().get(random_effect.getSymbRef().get(0).getSymbIdRef())+")");
             }
         }
         return etas;

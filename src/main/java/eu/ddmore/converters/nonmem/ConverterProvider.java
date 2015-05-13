@@ -37,10 +37,10 @@ public class ConverterProvider extends Lexer {
         VersionImpl source_version = new VersionImpl(0, 6, 0);
         source = new LanguageVersionImpl("PharmML", source_version);
 
-        VersionImpl target_version = new VersionImpl(7, 2, 0);
+        VersionImpl target_version = new VersionImpl(7, 3, 0);
         target = new LanguageVersionImpl("NMTRAN", target_version);
 
-        converterVersion = new VersionImpl(1, 0, 0);
+        converterVersion = new VersionImpl(0, 1, 0);
     }
 
     @Override
@@ -106,7 +106,7 @@ public class ConverterProvider extends Lexer {
         fout.write(Formatter.endline());
         fout.write(dataStatement.getStatement());
         fout.write(getSimulationStatement());
-        
+
         fout.write(context.buildPredStatement().toString());
         fout.write(context.getParameterStatement().toString());
 

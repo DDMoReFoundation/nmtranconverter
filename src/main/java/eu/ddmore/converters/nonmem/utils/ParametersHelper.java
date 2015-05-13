@@ -13,7 +13,6 @@ import java.util.TreeMap;
 
 import crx.converter.engine.ScriptDefinition;
 import crx.converter.engine.parts.EstimationStep;
-import crx.converter.engine.parts.BaseRandomVariableBlock.CorrelationRef;
 import crx.converter.engine.parts.EstimationStep.FixedParameter;
 import crx.converter.engine.parts.ParameterBlock;
 import crx.converter.engine.parts.Part;
@@ -21,12 +20,9 @@ import eu.ddmore.converters.nonmem.ConversionContext;
 import eu.ddmore.converters.nonmem.statements.OmegaBlockStatement;
 import eu.ddmore.converters.nonmem.statements.OmegaStatement;
 import eu.ddmore.converters.nonmem.statements.Parameter;
-import eu.ddmore.converters.nonmem.statements.SigmaStatementBuilder;
 import eu.ddmore.converters.nonmem.statements.ThetaStatement;
 import eu.ddmore.converters.nonmem.utils.Formatter.NmConstant;
 import eu.ddmore.converters.nonmem.utils.Formatter.Symbol;
-import eu.ddmore.libpharmml.dom.commontypes.IntValue;
-import eu.ddmore.libpharmml.dom.commontypes.RealValue;
 import eu.ddmore.libpharmml.dom.commontypes.Rhs;
 import eu.ddmore.libpharmml.dom.commontypes.ScalarRhs;
 import eu.ddmore.libpharmml.dom.modeldefn.IndividualParameter;
@@ -36,9 +32,6 @@ import eu.ddmore.libpharmml.dom.modeldefn.ParameterRandomEffect;
 import eu.ddmore.libpharmml.dom.modeldefn.ParameterRandomVariable;
 import eu.ddmore.libpharmml.dom.modeldefn.SimpleParameter;
 import eu.ddmore.libpharmml.dom.modellingsteps.ParameterEstimate;
-import eu.ddmore.libpharmml.dom.uncertml.AbstractContinuousUnivariateDistributionType;
-import eu.ddmore.libpharmml.dom.uncertml.NormalDistribution;
-import eu.ddmore.libpharmml.dom.uncertml.PositiveRealValueType;
 
 /**
  * This is helper class for parser to parse parameter related functionality for NmTran conversion.
@@ -48,7 +41,6 @@ public class ParametersHelper {
     private static final String MU = "MU_";
     private final LinkedHashMap<String, ThetaStatement> thetaStatements = new LinkedHashMap<String, ThetaStatement>();
     private final LinkedHashMap<String, OmegaStatement> omegaStatements = new LinkedHashMap<String, OmegaStatement>();
-    private List<String> SigmaStatements = new ArrayList<String>();
 
     private final TreeMap<Integer, String> thetasToEtaOrder = new TreeMap<Integer, String>();
     private ScriptDefinition scriptDefinition;
@@ -62,7 +54,8 @@ public class ParametersHelper {
     private List<ParameterEstimate> parametersToEstimate = new ArrayList<ParameterEstimate>();
     private List<FixedParameter> fixedParameters = new ArrayList<FixedParameter>();
     private OmegaBlockStatement omegaBlockStatement = new OmegaBlockStatement(this);
-    private List<String> sigmas = new ArrayList<String>();
+    private List<String> verifiedSigmas = new ArrayList<String>();
+    OrderedEtasHandler etasHandler;
 
     /**
      * Constructor expects script definition which contains all the blocks populated as part of common converter. 
@@ -70,7 +63,8 @@ public class ParametersHelper {
      * @param scriptDefinition
      */
     public ParametersHelper(ScriptDefinition scriptDefinition){
-        this.scriptDefinition = scriptDefinition;		
+        this.scriptDefinition = scriptDefinition;
+        etasHandler = new OrderedEtasHandler(scriptDefinition);
     }
 
     /**
@@ -96,14 +90,13 @@ public class ParametersHelper {
         setAllParameterBounds(parametersToEstimate);
 
         //setOmegaBlocks before omega params and theta
-        omegaBlockStatement.setEtaToOmagaMap(createOrderedEtasMap());
+        omegaBlockStatement.setEtaToOmagaMap(etasHandler.createOrderedEtasMap());
         createOrderedThetasToEta();
 
         //need to set omegas and sigma before setting theta params
         omegaBlockStatement.createOmegaBlocks();
 
         setOmegaParameters();
-        setSigmaParameters();
         setThetaParameters();
     }
 
@@ -176,7 +169,7 @@ public class ParametersHelper {
     private boolean validateParamName(String paramName) {
         return !(paramName== null ||  omegaStatements.containsKey(paramName) || 
                 omegaBlockStatement.getEtasToOmegasInCorrelation().values().contains(paramName) ||
-                sigmas.contains(paramName) || thetaStatements.containsKey(paramName));
+                verifiedSigmas.contains(paramName) || thetaStatements.containsKey(paramName));
     }
 
     /**
@@ -248,20 +241,12 @@ public class ParametersHelper {
     }
 
     /**
-     * This will use sigma statement builder to get sigma statement.
-     */
-    private void setSigmaParameters(){
-        SigmaStatementBuilder sigmaStatementBuilder = new SigmaStatementBuilder();
-        SigmaStatements = sigmaStatementBuilder.getSigmaStatements(this);
-    }
-
-    /**
      * This method will set omega parameters apart from omega blocks.
      * 
      */
     private void setOmegaParameters(){
         for (ParameterRandomVariable rv : getRandomVarsFromParameterBlock()) {
-            String symbId = getNameFromParamRandomVariable(rv);
+            String symbId = RandomVariableHelper.getNameFromParamRandomVariable(rv);
             OmegaStatement omegaStatement = getOmegaFromRandomVarName(symbId);
             if(omegaStatement!=null){
                 for(Iterator<FixedParameter> it= fixedParameters.iterator();it.hasNext();){
@@ -271,71 +256,12 @@ public class ParametersHelper {
                         it.remove();
                     }
                 }
-                if(isParamFromStdDev(rv)){
+                if(RandomVariableHelper.isParamFromStdDev(rv)){
                     omegaStatement.setStdDev(true);
                 }
                 omegaStatements.put(symbId, omegaStatement);
             }
         }
-    }
-
-    /**
-     * Returns parameter name from parameter random variable. 
-     * The name can be obtained from either standard deviation or variance. 
-     * @param rv
-     * @return
-     */
-    public String getNameFromParamRandomVariable(ParameterRandomVariable rv) {
-        String symbId = null;
-        if (getDistributionTypeStdDev(rv) != null) {
-            symbId = getDistributionTypeStdDev(rv).getVar().getVarId();					
-        } else if (getDistributionTypeVariance(rv) != null) {
-            if(getDistributionTypeVariance(rv).getVar()!=null)
-                symbId = getDistributionTypeVariance(rv).getVar().getVarId();
-        }
-        return symbId;
-    }
-
-    /**
-     * Identifies if current parameter is from Standard Deviation.
-     * 
-     * @param rv
-     * @return
-     */
-    public Boolean isParamFromStdDev(ParameterRandomVariable rv) {
-        if (getDistributionTypeStdDev(rv) != null) {
-            return true;
-        } else if (getDistributionTypeVariance(rv) != null) {
-            return false;
-        }else{
-            throw new IllegalStateException("Distribution type for variable "+rv.getSymbId()+" is unknown");
-        }
-    }
-
-    /**
-     * Get distribution type from standard deviation.
-     * @param rv
-     * @return
-     */
-    public PositiveRealValueType getDistributionTypeStdDev(ParameterRandomVariable rv){
-        final AbstractContinuousUnivariateDistributionType distributionType = rv.getAbstractContinuousUnivariateDistribution().getValue();
-        if (distributionType instanceof NormalDistribution) {
-            return ((NormalDistribution) distributionType).getStddev();
-        }
-        return null;
-    }
-
-    /**
-     * Get distribution type from standard deviation.
-     * @param rv
-     * @return
-     */
-    public PositiveRealValueType getDistributionTypeVariance(ParameterRandomVariable rv){
-        final AbstractContinuousUnivariateDistributionType distributionType = rv.getAbstractContinuousUnivariateDistribution().getValue();
-        if (distributionType instanceof NormalDistribution) {
-            return ((NormalDistribution) distributionType).getVariance();
-        }
-        return null;
     }
 
     /**
@@ -389,71 +315,13 @@ public class ParametersHelper {
         }
         return allParams;
     }
-
-    /**
-     * Checks the order of Etas and use this order while arranging Omega blocks.
-     * This method will create map for EtaOrder which will be order for respective Omegas as well.
-     * @return 
-     */
-    public Map<String, Integer> createOrderedEtasMap(){
-        LinkedHashMap<String, Integer> etasOrderMap = new LinkedHashMap<String, Integer>();
-        //We need to have this as list as this will retains order of etas
-        List<String> etasOrder = getAllEtas(scriptDefinition);
-
-        if(!etasOrder.isEmpty()){
-            Integer etaCount = 0;
-            Map<String, String> etaTocorrelationsMap = addCorrelationValuesToMap(getAllCorrelations());
-
-            List<String> nonOmegaBlockEtas = new ArrayList<String>();
-            //order etas map
-            for(String eta : etasOrder) {
-                //no correlations so no Omega block
-                if(etaTocorrelationsMap.keySet().contains(eta)){
-                    ++etaCount;
-                    etasOrderMap.put(eta,etaCount);
-                }else{
-                    nonOmegaBlockEtas.add(eta);
-                }
-            }
-            for(String nonOmegaEta : nonOmegaBlockEtas){
-                etasOrderMap.put(nonOmegaEta, ++etaCount);
-            }
-        }
-
-        return etasOrderMap;
-    }
-
-    /**
-     * This is helper method to create ordered Etas map which gets all etas list from individual parameters. 
-     * @return
-     */
-    public static List<String> getAllEtas(ScriptDefinition scriptDefinition) {
-        List<String> etasOrder = new ArrayList<String>();
-        List<ParameterBlock> blocks = scriptDefinition.getParameterBlocks();
-
-        for(ParameterBlock block : blocks ){
-            for(IndividualParameter parameterType: block.getIndividualParameters()){
-                if (parameterType.getGaussianModel() != null) {
-                    List<ParameterRandomEffect> randomEffects = parameterType.getGaussianModel().getRandomEffects();
-                    for (ParameterRandomEffect randomEffect : randomEffects) {
-                        if (randomEffect == null) continue;
-                        String eta = randomEffect.getSymbRef().get(0).getSymbIdRef();
-                        if(!etasOrder.contains(eta)){
-                            etasOrder.add(eta);
-                        }
-                    }
-                }
-            }
-        }
-        return etasOrder;
-    }
-
+    
     /**
      * Create ordered thetas to eta map from ordered etas map.
      * The order is used to add Thetas in order of thetas.
      */
     public void createOrderedThetasToEta(){
-        Map<String, Integer> etasOrderMap = createOrderedEtasMap();
+        Map<String, Integer> etasOrderMap = etasHandler.createOrderedEtasMap();
         for(Integer nextEtaOrder : etasOrderMap.values()){
             if(thetasToEtaOrder.get(nextEtaOrder)==null || thetasToEtaOrder.get(nextEtaOrder).isEmpty()){
                 addToThetasOrderMap(etasOrderMap, nextEtaOrder);
@@ -505,43 +373,6 @@ public class ParametersHelper {
         }
     }
 
-    public LinkedHashMap<String, String> addCorrelationValuesToMap(List<CorrelationRef> correlations) {
-        //We need to have it as linked hash map so that order in which correlations are added to map will be retained.
-        LinkedHashMap<String, String> etaTocorrelationsMap = new LinkedHashMap<String, String>();
-        for(CorrelationRef correlation : correlations){
-            addCorrelationToMap(etaTocorrelationsMap,correlation);	
-        }
-        return etaTocorrelationsMap;
-    }
-
-    public void addCorrelationToMap(Map<String, String> etaTocorrelationsMap, CorrelationRef correlation) {
-        String firstVar = correlation.rnd1.getSymbId();
-        String secondVar = correlation.rnd2.getSymbId();
-        String coefficient = "";
-        if(correlation.correlationCoefficient.getSymbRef()!=null)
-            coefficient = correlation.correlationCoefficient.getSymbRef().getSymbIdRef();
-        //add to correlations map
-        etaTocorrelationsMap.put(firstVar,getNameFromParamRandomVariable(correlation.rnd1));
-        etaTocorrelationsMap.put(secondVar,getNameFromParamRandomVariable(correlation.rnd2));
-        etaTocorrelationsMap.put(coefficient,coefficient);
-    }
-
-    /**
-     * Collects correlations from all the prameter blocks. 
-     * 
-     * @return
-     */
-    public List<CorrelationRef> getAllCorrelations() {
-        List<CorrelationRef> correlations = new ArrayList<CorrelationRef>();
-        List<ParameterBlock> parameterBlocks = getScriptDefinition().getParameterBlocks();
-        if(!parameterBlocks.isEmpty()){
-            for(ParameterBlock block : parameterBlocks){
-                correlations.addAll(block.getCorrelations());				
-            }
-        }
-        return correlations;
-    }
-
     private List<ParameterRandomVariable> getRandomVarsFromParameterBlock() {
         List<ParameterBlock> parameterBlocks = getScriptDefinition().getParameterBlocks();
 
@@ -554,26 +385,11 @@ public class ParametersHelper {
         }
     }
 
-    public void addToSigmaListIfNotExists(String sigmaVar){
-        if(!sigmas.contains(sigmaVar))
-            sigmas.add(sigmaVar);
+    public void addToSigmaVerificationListIfNotExists(String sigmaVar){
+        if(!verifiedSigmas.contains(sigmaVar))
+            verifiedSigmas.add(sigmaVar);
     }
 
-    public StringBuilder getSigmaStatementBlock() {
-        StringBuilder sigmaStatement = new StringBuilder();
-        if(!SigmaStatements.isEmpty()){
-            //adding default Omega if omega block is absent but sigma is present 
-            if(omegaStatements.isEmpty()){
-                sigmaStatement.append(Formatter.endline());
-                sigmaStatement.append(Formatter.endline(Formatter.omega()+"0 "+NmConstant.FIX));
-            }
-            sigmaStatement.append(Formatter.endline()+Formatter.sigma());
-            for (final String sigmaVar: SigmaStatements) {
-                sigmaStatement.append(sigmaVar);
-            }
-        }
-        return sigmaStatement;
-    }
 
     public StringBuilder getThetaStatementBlock(){
         StringBuilder thetaStatement = new StringBuilder();
@@ -599,7 +415,7 @@ public class ParametersHelper {
             }
         }
 
-        if (!omegaStatements.isEmpty()) {
+        if (!omegaDoesNotExist()) {
             omegaStatement.append(Formatter.endline());
             omegaStatement.append(Formatter.endline(Formatter.omega()));
             for (final String omegaVar : omegaStatements.keySet()) {
@@ -607,6 +423,15 @@ public class ParametersHelper {
             }
         }
         return omegaStatement;
+    }
+    
+    /**
+     * Checks if omega statements list has any omega statements added
+     * 
+     * @return
+     */
+    public Boolean omegaDoesNotExist(){
+        return (omegaStatements == null || omegaStatements.isEmpty());
     }
 
     /**
@@ -697,24 +522,18 @@ public class ParametersHelper {
      */
     private StringBuilder prepareStatement(ScalarRhs lowerBound,ScalarRhs init,ScalarRhs upperBound){
         StringBuilder statement = new StringBuilder();
-        RealValue value;
-        if(lowerBound!=null && lowerBound.getScalar()!=null){
-            value = (RealValue) lowerBound.getScalar().getValue();
-            statement.append(" "+value.getValue()+" , ");
+        Double value;
+        if(lowerBound!=null){
+            value = ScalarValueHandler.getValueFromScalarRhs(lowerBound);
+            statement.append(" "+value+" , ");
         }
-        if(init!=null && init.getScalar()!=null){
-            if(init.getScalar().getValue() instanceof RealValue){
-                value = (RealValue) init.getScalar().getValue();
-                statement.append(value.getValue()+" ");
-            }else if(init.getScalar().getValue() instanceof IntValue){
-                IntValue intValue = (IntValue) init.getScalar().getValue();
-                statement.append(intValue.getValue()+" ");    
-            }
-
+        if(init!=null){
+            value = ScalarValueHandler.getValueFromScalarRhs(init);
+            statement.append(value+" ");
         }
-        if(upperBound!=null && upperBound.getScalar()!=null){
-            value = (RealValue) upperBound.getScalar().getValue();
-            statement.append(", "+value.getValue()+" ");
+        if(upperBound!=null){
+            value = ScalarValueHandler.getValueFromScalarRhs(upperBound);
+            statement.append(", "+value+" ");
         }
         return statement;
     }
@@ -749,9 +568,5 @@ public class ParametersHelper {
 
     public OmegaBlockStatement getOmegaBlockStatement() {
         return omegaBlockStatement;
-    }
-
-    public List<String> getSigmaStatements() {
-        return SigmaStatements;
     }
 }
