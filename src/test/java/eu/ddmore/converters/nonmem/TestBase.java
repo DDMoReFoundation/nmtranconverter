@@ -19,7 +19,7 @@ public abstract class TestBase {
     protected String inputDataFile = null;
     protected File dir = null, f = null;
 
-    final static String TEST_DATA_DIR = "/eu/ddmore/testdata/models/PharmML/";
+    final static String TEST_DATA_DIR = "/test-models/PharmML/";
     final static String WORKING_DIR = "target/MainTest_Working_Dir";
     final static String V_0_3_SUBDIR = "0.3.0/";
     final static String V_0_3_1_SUBDIR = "0.3.1/";
