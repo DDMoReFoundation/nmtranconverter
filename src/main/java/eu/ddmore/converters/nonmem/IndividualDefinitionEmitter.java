@@ -18,9 +18,12 @@ import eu.ddmore.libpharmml.dom.modeldefn.IndividualParameter.GaussianModel.Gene
 import eu.ddmore.libpharmml.dom.modeldefn.LhsTransformation;
 import eu.ddmore.libpharmml.dom.modeldefn.ParameterRandomEffect;
 
+/**
+ * 
+ */
 public class IndividualDefinitionEmitter {
     private static final String comment_char = ";";
-    ConversionContext context;
+    private final ConversionContext context;
 
     public IndividualDefinitionEmitter(ConversionContext  context) {
         this.context = context;

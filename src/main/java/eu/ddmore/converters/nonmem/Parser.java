@@ -63,6 +63,8 @@ import eu.ddmore.libpharmml.dom.trialdesign.Activity;
 public class Parser extends BaseParser {
 
     private Properties binopProperties;
+    private static final String equationFormat = "%s = %s";
+    private static final String lineFormat = "%s ";
 
     public Parser() throws IOException {
         comment_char = Symbol.COMMENT.toString();
@@ -146,8 +148,7 @@ public class Parser extends BaseParser {
 
         if (leaf.data != null) {
             boolean inPiecewise = false;
-            String equationFormat = "%s = %s";
-            String lineFormat = "%s ";
+            
             if (isPiecewise(leaf.data)) inPiecewise = true;
 
             if (!isString_(leaf.data)) leaf.data = getSymbol(leaf.data);
