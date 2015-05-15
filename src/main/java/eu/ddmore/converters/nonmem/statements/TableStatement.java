@@ -4,12 +4,12 @@
 package eu.ddmore.converters.nonmem.statements;
 
 import java.util.List;
+import java.util.Set;
 
-import crx.converter.engine.ScriptDefinition;
 import crx.converter.engine.parts.ParameterBlock;
+import eu.ddmore.converters.nonmem.ConversionContext;
 import eu.ddmore.converters.nonmem.statements.ErrorStatement.ErrorConstant;
 import eu.ddmore.converters.nonmem.utils.Formatter;
-import eu.ddmore.converters.nonmem.utils.OrderedEtasHandler;
 import eu.ddmore.converters.nonmem.utils.Formatter.ColumnConstant;
 import eu.ddmore.converters.nonmem.utils.Formatter.TableConstant;
 import eu.ddmore.libpharmml.dom.modeldefn.IndividualParameter;
@@ -34,12 +34,12 @@ public class TableStatement {
             return this.fileName;
         }
     }
-    private ScriptDefinition scriptDefinition;
+    private final ConversionContext context;
     private InputStatement inputStatement = null;
 
 
-    public TableStatement(ScriptDefinition scriptDefinition, InputStatement inputStatement){
-        this.scriptDefinition = scriptDefinition;
+    public TableStatement(ConversionContext context, InputStatement inputStatement){
+        this.context = context;
         if(inputStatement == null){
             throw new IllegalStateException("Input statement cannot be null and needs to be populated.");
         }else{
@@ -115,7 +115,7 @@ public class TableStatement {
      * @return
      */
     private StringBuilder getParamTableStatement(){
-        List<ParameterBlock> blocks =  scriptDefinition.getParameterBlocks();
+        List<ParameterBlock> blocks =  context.getScriptDefinition().getParameterBlocks();
         StringBuilder paramTable = new StringBuilder();
 
         for(ParameterBlock block : blocks){
@@ -124,8 +124,7 @@ public class TableStatement {
                 paramTable.append(SPACE+parameterType.getSymbId());
             }
         }
-        OrderedEtasHandler etasHandler = new OrderedEtasHandler(scriptDefinition);
-        List<String> orderedEtas = etasHandler.getOrderedEtas();
+        Set<String> orderedEtas = context.retrieveOrderedEtas().keySet();
         for(String eta : orderedEtas){
             paramTable.append(SPACE+eta.toUpperCase());
         }

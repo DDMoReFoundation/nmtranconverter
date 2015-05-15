@@ -6,6 +6,7 @@ package eu.ddmore.converters.nonmem.statements;
 import java.util.Map;
 import java.util.regex.Pattern;
 
+import eu.ddmore.converters.nonmem.ConversionContext;
 import eu.ddmore.converters.nonmem.utils.Formatter;
 import eu.ddmore.libpharmml.dom.maths.FunctionCallType;
 import eu.ddmore.libpharmml.dom.maths.FunctionCallType.FunctionArgument;
@@ -57,16 +58,21 @@ public class ErrorStatement {
             String param = arg.getSymbRef().getSymbIdRef();
             if(arg.getSymbId()!=null && param!=null){
                 if(arg.getSymbId().equals(FunctionArg.ADDITIVE.getDescription())){
-                    additive = Formatter.addPrefix(param);					
+                    additive = Formatter.addPrefix(param);
                 }else if(arg.getSymbId().equals(FunctionArg.PROP.getDescription())){
                     proportional = Formatter.addPrefix(param);
                 }else if(arg.getSymbId().equals(FunctionArg.FUNC.getDescription())){					
                     function = Formatter.addPrefix(param);
                 }
             }
-        }		
+        }
     }
 
+    /**
+     * Gets error statement details with help of error type specified.
+     *
+     * @return
+     */
     public StringBuilder getErrorStatementDetails(){
         StringBuilder errorBlock = new StringBuilder();
         for(ErrorType error : ErrorType.values()){
@@ -82,7 +88,7 @@ public class ErrorStatement {
      * Creates error statement details depending upon error type specified,
      * e.g. : 
      * if error type is CombinedError1 then,
-     * 		IPRED = <f>  	 
+     * 		IPRED = <f>
      *  	W = THETA(x)+THETA(y)*IPRED 
      *  	Y = IPRED+W*EPS(z) 
      *  	IRES = DV - IPRED 
@@ -97,7 +103,7 @@ public class ErrorStatement {
         errorBlock.append(getDerivativeVarDetails(functionDefEqMap, derivativeVarMap));
         errorBlock.append(getErrorStatementDetails());
 
-        return errorBlock;	
+        return errorBlock;
     }
 
     private StringBuilder getDerivativeVarDetails(Map<String, String> functionDefEqMap, Map<String, String> derivativeVarMap) {
@@ -105,7 +111,7 @@ public class ErrorStatement {
         if(functionDefEqMap!=null){
             if(functionDefEqMap.containsKey(function)){
                 if(derivativeVarMap.containsKey(function)){
-                    String varAmount = DiffEquationStatementBuilder.getVarAmountFromCompartment(function, derivativeVarMap);
+                    String varAmount = ConversionContext.getVarAmountFromCompartment(function, derivativeVarMap);
                     functionRep = (varAmount.isEmpty())?function:varAmount;
                 }else{
                     String functionEquation= getEquationForFunctionName(functionDefEqMap, derivativeVarMap);
@@ -128,7 +134,7 @@ public class ErrorStatement {
             String parsedEquation = functionDefEqMap.get(function);
             for(String variable: derivativeVarMap.keySet()){
                 if(parsedEquation.contains(variable)){
-                    String varAmount = DiffEquationStatementBuilder.getVarAmountFromCompartment(variable, derivativeVarMap);
+                    String varAmount = ConversionContext.getVarAmountFromCompartment(variable, derivativeVarMap);
                     if(!varAmount.isEmpty()){
                         String varToReplace = "\\b"+Pattern.quote(variable)+"\\b";
                         parsedEquation = parsedEquation.replaceAll(varToReplace, varAmount);

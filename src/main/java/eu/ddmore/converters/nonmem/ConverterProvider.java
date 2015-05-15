@@ -115,7 +115,7 @@ public class ConverterProvider extends Lexer {
             fout.write(estStatement.getEstimationStatement().toString());
             fout.write(estStatement.getCovStatement());	
         }
-        TableStatement tableStatement = new TableStatement(scriptDefinition,inputStatement);
+        TableStatement tableStatement = new TableStatement(context,inputStatement);
         fout.write(tableStatement.getStatements().toString());
     }
 

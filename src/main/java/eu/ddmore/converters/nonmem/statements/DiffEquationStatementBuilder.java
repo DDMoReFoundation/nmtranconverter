@@ -4,7 +4,6 @@
 package eu.ddmore.converters.nonmem.statements;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
@@ -17,7 +16,6 @@ import eu.ddmore.libpharmml.dom.commontypes.VariableDefinition;
 public class DiffEquationStatementBuilder {
     private static final String DES = "DES";
     private final String DES_VAR_SUFFIX = "_"+DES;
-    private Map<String, String> derivativeVariableMap = new HashMap<String, String>();
     //it will hold definition types and its parsed equations which we will need to add in Error statement as well.
     private Map<String, String> definitionsParsingMap = new HashMap<String, String>();
     ConversionContext context;
@@ -30,15 +28,13 @@ public class DiffEquationStatementBuilder {
      * gets DES block for pred statement
      * 
      */
-    public StringBuilder getDifferentialEquationsStatement(List<DerivativeVariable> derivativeVarList) {
+    public StringBuilder getDifferentialEquationsStatement() {
         StringBuilder diffEqStatementBlock = new StringBuilder();
         diffEqStatementBlock.append(Formatter.des());
-        int i=1;
-        for (DerivativeVariable variableType : derivativeVarList){
+        for (DerivativeVariable variableType : context.getDerivativeVars()){
             String variable = Formatter.addPrefix(variableType.getSymbId());
-            derivativeVariableMap.put(variable, Integer.toString(i++));
 
-            String varAmount = getVarAmountFromCompartment(variable, derivativeVariableMap);
+            String varAmount = ConversionContext.getVarAmountFromCompartment(variable, context.getDerivativeVarCompSequences());
             if(!varAmount.isEmpty())
                 diffEqStatementBlock.append(Formatter.endline(variable+" = "+varAmount));
             if(isVarFromErrorFunction(variable))
@@ -50,21 +46,6 @@ public class DiffEquationStatementBuilder {
             diffEqStatementBlock.append(addDerivativeVarToDES(block));
         }
         return diffEqStatementBlock;
-    }
-
-    /**
-     * This method gets variable amount from compartment and returns it.
-     * 
-     * @param variable
-     * @return
-     */
-    public static String getVarAmountFromCompartment(String variable, Map<String,String> derivativeVariableMap) {
-        String varAmount = new String(); 
-        varAmount = derivativeVariableMap.get(variable);
-        if(!varAmount.isEmpty()){
-            varAmount = "A("+varAmount+")";
-        }
-        return varAmount;
     }
 
     /**
@@ -107,7 +88,7 @@ public class DiffEquationStatementBuilder {
             String parsedDADT = context.parse(variableType);
             String variable = Formatter.addPrefix(variableType.getSymbId());
             if(isDerivativeVariableHasAmount(variable)){
-                String index = derivativeVariableMap.get(variable);
+                String index = context.getDerivativeVarCompSequences().get(variable);
                 parsedDADT = parsedDADT.replaceFirst(variable+" =", "DADT("+index+") =");
             }
             for(String derivativeVar : definitionsParsingMap.keySet()){
@@ -122,7 +103,7 @@ public class DiffEquationStatementBuilder {
     }
 
     private boolean isDerivativeVariableHasAmount(String variable) {
-        return derivativeVariableMap.containsKey(variable);
+        return context.getDerivativeVarCompSequences().containsKey(variable);
     }
 
     /**
@@ -149,10 +130,6 @@ public class DiffEquationStatementBuilder {
     private String renameFunctionVariableForDES(String variable) {
         variable = variable+DES_VAR_SUFFIX;
         return variable; 
-    }
-
-    public Map<String, String> getDerivativeVariableMap() {
-        return derivativeVariableMap;
     }
 
     public Map<String, String> getDefinitionsParsingMap() {

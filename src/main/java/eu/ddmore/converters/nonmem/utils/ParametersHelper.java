@@ -19,10 +19,8 @@ import crx.converter.engine.parts.Part;
 import eu.ddmore.converters.nonmem.ConversionContext;
 import eu.ddmore.converters.nonmem.statements.OmegaBlockStatement;
 import eu.ddmore.converters.nonmem.statements.OmegaStatement;
-import eu.ddmore.converters.nonmem.statements.Parameter;
 import eu.ddmore.converters.nonmem.statements.ThetaStatement;
 import eu.ddmore.converters.nonmem.utils.Formatter.NmConstant;
-import eu.ddmore.converters.nonmem.utils.Formatter.Symbol;
 import eu.ddmore.libpharmml.dom.commontypes.Rhs;
 import eu.ddmore.libpharmml.dom.commontypes.ScalarRhs;
 import eu.ddmore.libpharmml.dom.modeldefn.IndividualParameter;
@@ -51,11 +49,10 @@ public class ParametersHelper {
     private final Map<String, ScalarRhs> initialEstimates = new HashMap<String, ScalarRhs>();
     private final Map<String, ScalarRhs> lowerBounds = new HashMap<String, ScalarRhs>();
     private final Map<String, ScalarRhs> upperBounds = new HashMap<String, ScalarRhs>();
+    private final OmegaBlockStatement omegaBlockStatement = new OmegaBlockStatement(this);
+    private final List<String> verifiedSigmas = new ArrayList<String>();
     private List<ParameterEstimate> parametersToEstimate = new ArrayList<ParameterEstimate>();
     private List<FixedParameter> fixedParameters = new ArrayList<FixedParameter>();
-    private OmegaBlockStatement omegaBlockStatement = new OmegaBlockStatement(this);
-    private List<String> verifiedSigmas = new ArrayList<String>();
-    OrderedEtasHandler etasHandler;
 
     /**
      * Constructor expects script definition which contains all the blocks populated as part of common converter. 
@@ -64,7 +61,6 @@ public class ParametersHelper {
      */
     public ParametersHelper(ScriptDefinition scriptDefinition){
         this.scriptDefinition = scriptDefinition;
-        etasHandler = new OrderedEtasHandler(scriptDefinition);
     }
 
     /**
@@ -72,7 +68,7 @@ public class ParametersHelper {
      * 
      * @param SimpleParameters
      */
-    public void initialiseAllParameters(List<SimpleParameter> SimpleParameters){
+    public void initialiseAllParameters(List<SimpleParameter> SimpleParameters, Map<String, Integer> orderedEtas){
 
         if (SimpleParameters==null || SimpleParameters.isEmpty()) {
             return;
@@ -90,8 +86,8 @@ public class ParametersHelper {
         setAllParameterBounds(parametersToEstimate);
 
         //setOmegaBlocks before omega params and theta
-        omegaBlockStatement.setEtaToOmagaMap(etasHandler.createOrderedEtasMap());
-        createOrderedThetasToEta();
+        omegaBlockStatement.setEtaToOmagaMap(orderedEtas);
+        createOrderedThetasToEta(orderedEtas);
 
         //need to set omegas and sigma before setting theta params
         omegaBlockStatement.createOmegaBlocks();
@@ -320,21 +316,20 @@ public class ParametersHelper {
      * Create ordered thetas to eta map from ordered etas map.
      * The order is used to add Thetas in order of thetas.
      */
-    public void createOrderedThetasToEta(){
-        Map<String, Integer> etasOrderMap = etasHandler.createOrderedEtasMap();
-        for(Integer nextEtaOrder : etasOrderMap.values()){
+    public void createOrderedThetasToEta(Map<String, Integer> orderedEtas){        
+        for(Integer nextEtaOrder : orderedEtas.values()){
             if(thetasToEtaOrder.get(nextEtaOrder)==null || thetasToEtaOrder.get(nextEtaOrder).isEmpty()){
-                addToThetasOrderMap(etasOrderMap, nextEtaOrder);
+                addToThetasOrderMap(orderedEtas, nextEtaOrder);
             }
         }
     }
 
     /**
      * Creates ordered thetas list with help of etasOrderMap and individual parameters
-     * @param etasOrderMap
+     * @param orderedEtas
      * @param nextEtaOrder
      */
-    private void addToThetasOrderMap(Map<String, Integer> etasOrderMap, Integer nextEtaOrder) {
+    private void addToThetasOrderMap(Map<String, Integer> orderedEtas, Integer nextEtaOrder) {
         for(ParameterBlock block : scriptDefinition.getParameterBlocks()){
             for(IndividualParameter parameterType: block.getIndividualParameters()){
                 final GaussianModel gaussianModel = parameterType.getGaussianModel();
@@ -344,7 +339,7 @@ public class ParametersHelper {
                     for (ParameterRandomEffect randomEffect : randomEffects) {
                         if (randomEffect == null) continue;
                         String eta = randomEffect.getSymbRef().get(0).getSymbIdRef();
-                        if(etasOrderMap.get(eta).equals(nextEtaOrder)){
+                        if(orderedEtas.get(eta).equals(nextEtaOrder)){
                             thetasToEtaOrder.put(nextEtaOrder, popSymbol);
                             return;
                         }
@@ -396,7 +391,7 @@ public class ParametersHelper {
         if (!thetaStatements.isEmpty()) {
             thetaStatement.append(Formatter.endline()+Formatter.theta());
             for (String thetaVar : thetaStatements.keySet()) {
-                thetaStatement.append(addParameter(thetaStatements.get(thetaVar)));
+                thetaStatement.append(ParameterStatementHandler.addParameter(thetaStatements.get(thetaVar)));
             }
         }
         return thetaStatement;
@@ -410,7 +405,7 @@ public class ParametersHelper {
             omegaStatement.append(Formatter.endline(omegaBlockStatement.getOmegaBlockTitle()));
             for(String eta : omegaBlockStatement.getOrderedEtasToOmegaMap().values()){
                 for(OmegaStatement omega : omegaBlocks.get(eta)){
-                    omegaStatement.append(addParameter(omega));
+                    omegaStatement.append(ParameterStatementHandler.addParameter(omega));
                 }
             }
         }
@@ -419,7 +414,7 @@ public class ParametersHelper {
             omegaStatement.append(Formatter.endline());
             omegaStatement.append(Formatter.endline(Formatter.omega()));
             for (final String omegaVar : omegaStatements.keySet()) {
-                omegaStatement.append(addParameter(omegaStatements.get(omegaVar)));
+                omegaStatement.append(ParameterStatementHandler.addParameter(omegaStatements.get(omegaVar)));
             }
         }
         return omegaStatement;
@@ -432,110 +427,6 @@ public class ParametersHelper {
      */
     public Boolean omegaDoesNotExist(){
         return (omegaStatements == null || omegaStatements.isEmpty());
-    }
-
-    /**
-     * Write Theta and omega parameters according to the initial estimates, lower and upper bounds provided.
-     * 
-     * @param param
-     * @param simpleParam
-     * @param fout
-     */
-    public StringBuilder addParameter(Parameter param) {
-        StringBuilder statement = new StringBuilder();
-        String description = param.getSymbId();
-
-        ScalarRhs lowerBound = param.getLowerBound();
-        ScalarRhs upperBound= param.getUpperBound(); 
-        ScalarRhs initEstimate= param.getInitialEstimate();
-        statement.append("(");
-        statement.append(prepareParameterStatements(description, lowerBound, upperBound,initEstimate));
-
-        if(param.isFixed()){
-            statement.append(" "+NmConstant.FIX+" ");
-        }
-        if(param.isStdDev()){
-            statement.append(NmConstant.SD+" ");
-        }
-        statement.append(Formatter.endline(")"+Formatter.indent(Symbol.COMMENT+description)));
-
-        return statement;
-    }
-
-    /**
-     *  Writes parameter statement as described in following table,
-     *  
-     *  LB  IN  UB  Action expected
-     *  X   X   X   FAIL
-     *  X   X   Y   FAIL
-     *  X   Y   X   (IN)
-     *  Y   X   X   FAIL
-     *  X   Y   Y   (-INF,IN,UB)
-     *  Y   Y   X   (LB,IN)
-     *  Y   X   Y   (LB, ,UB)
-     *  Y   Y   Y   (LB,IN,UB) 
-     * @param fout
-     * @param description
-     * @param lowerBound
-     * @param upperBound
-     * @param initEstimate
-     */
-    private StringBuilder prepareParameterStatements(String description,
-            ScalarRhs lowerBound, ScalarRhs upperBound, ScalarRhs initEstimate) {
-
-        StringBuilder statement = new StringBuilder(); 
-        if(lowerBound!=null){
-            if(initEstimate!=null){
-                if(upperBound!=null){
-                    statement.append(prepareStatement(lowerBound,initEstimate,upperBound));
-                }else{
-                    statement.append(prepareStatement(lowerBound,initEstimate,null));
-                }
-            }else{
-                if(upperBound!=null){
-                    statement.append(prepareStatement(lowerBound,null,upperBound));
-                }else{
-                    throw new IllegalStateException("Only lower bound value present for parameter : "+description);
-                }
-            }
-        }else if(initEstimate!=null){
-            if(upperBound!=null){
-                statement.append("-INF,");
-                statement.append(prepareStatement(null,initEstimate,upperBound));
-            }else{
-                statement.append(prepareStatement(null,initEstimate,null));
-            }
-        }else {
-            throw new IllegalStateException("Only upper bound or no values present for parameter : "+description);
-        }
-
-        return statement;
-    }
-
-    /**
-     * Writes bound values of a parameter statement in expected format.
-     *  
-     * @param lowerBound
-     * @param init
-     * @param upperBound
-     * @param fout
-     */
-    private StringBuilder prepareStatement(ScalarRhs lowerBound,ScalarRhs init,ScalarRhs upperBound){
-        StringBuilder statement = new StringBuilder();
-        Double value;
-        if(lowerBound!=null){
-            value = ScalarValueHandler.getValueFromScalarRhs(lowerBound);
-            statement.append(" "+value+" , ");
-        }
-        if(init!=null){
-            value = ScalarValueHandler.getValueFromScalarRhs(init);
-            statement.append(value+" ");
-        }
-        if(upperBound!=null){
-            value = ScalarValueHandler.getValueFromScalarRhs(upperBound);
-            statement.append(", "+value+" ");
-        }
-        return statement;
     }
 
     public ScriptDefinition getScriptDefinition() {

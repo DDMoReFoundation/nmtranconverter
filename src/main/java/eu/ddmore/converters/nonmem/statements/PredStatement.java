@@ -4,10 +4,8 @@
 package eu.ddmore.converters.nonmem.statements;
 
 import java.util.ArrayList;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import crx.converter.engine.parts.ParameterBlock;
 import crx.converter.engine.parts.StructuralBlock;
@@ -26,20 +24,19 @@ import eu.ddmore.libpharmml.dom.modeldefn.pkmacro.PKMacroList;
  */
 public class PredStatement {
 
-    private List<DerivativeVariable> derivativeVarList = new ArrayList<DerivativeVariable>();
-    private List<PKMacroList> allPkMacros = new ArrayList<PKMacroList>(); 
-    private ConversionContext context;
+    private final ConversionContext context;
+    private List<PKMacroList> allPkMacros = new ArrayList<PKMacroList>();
 
     public PredStatement(ConversionContext context){
         this.context = context;
-        derivativeVarList.addAll(getAllStateVariables());
     }
-
+    
     public StringBuilder getPredStatement(){
         String statementName = Formatter.endline()+Formatter.pred();
         allPkMacros = getAllPkMacroLists(context.getScriptDefinition().getStructuralBlocks());
         StringBuilder predStatement = new StringBuilder();
-        if(!derivativeVarList.isEmpty()){
+        
+        if(!context.getDerivativeVars().isEmpty()){
             //TODO: Add $SUB block. need to have details around it.
             statementName = Formatter.endline()+Formatter.sub();
             predStatement.append(Formatter.endline()+Formatter.endline(Formatter.subs()+"ADVAN13 TOL=9"));
@@ -97,10 +94,10 @@ public class PredStatement {
         DerivativePredblock.append(getPKStatement());
         Formatter.setInDesBlock(true);
         DiffEquationStatementBuilder desBuilder = new DiffEquationStatementBuilder(context);
-        DerivativePredblock.append(desBuilder.getDifferentialEquationsStatement(derivativeVarList));
+        DerivativePredblock.append(desBuilder.getDifferentialEquationsStatement());
         Formatter.setInDesBlock(false);
         //TODO: getAESStatement();
-        DerivativePredblock.append(getErrorStatement(desBuilder.getDefinitionsParsingMap(), desBuilder.getDerivativeVariableMap()));
+        DerivativePredblock.append(getErrorStatement(desBuilder.getDefinitionsParsingMap()));
 
         return DerivativePredblock;
     }
@@ -111,7 +108,7 @@ public class PredStatement {
      * @return
      */
     private String getErrorStatement() {
-        return getErrorStatement(null, null);
+        return getErrorStatement(null);
     }
 
     /**
@@ -120,13 +117,13 @@ public class PredStatement {
      * @return 
      * 
      */
-    private String getErrorStatement(Map<String, String> definitionsParsingMap, Map<String, String> derivativeVariableMap) {
+    private String getErrorStatement(Map<String, String> definitionsParsingMap) {
         StringBuilder errorBlock = new StringBuilder();
         errorBlock.append(Formatter.endline());
         errorBlock.append(Formatter.error());
         for(ErrorStatement errorStatement: context.getErrorStatements()){
             if(definitionsParsingMap != null){
-                errorBlock.append(errorStatement.getDetailsForDES(definitionsParsingMap,derivativeVariableMap));
+                errorBlock.append(errorStatement.getDetailsForDES(definitionsParsingMap,context.getDerivativeVarCompSequences()));
             }else{
                 errorBlock.append(errorStatement.getErrorStatementDetails());
             }
@@ -154,8 +151,9 @@ public class PredStatement {
         StringBuilder modelBlock = new StringBuilder();
         modelBlock.append(Formatter.endline());
         modelBlock.append(Formatter.model());
-        for(DerivativeVariable stateVariable :getAllStateVariables()){
-            modelBlock.append(Formatter.endline("COMP "+"("+Formatter.addPrefix(stateVariable.getSymbId())+")"));
+        for(DerivativeVariable stateVariable :context.getDerivativeVars()){
+            String compartment = stateVariable.getSymbId().toUpperCase();
+            modelBlock.append(Formatter.endline("COMP "+"(COMP"+context.getDerivativeVarCompSequences().get(compartment)+") "+Formatter.addComment(compartment)));
         }
         return modelBlock;
     }
@@ -171,19 +169,6 @@ public class PredStatement {
         //            pkMacroLists.add(structuralBlock.getPkMacrosList());
         //        }
         return pkMacroLists;
-    }
-
-    /**
-     * Collects all derivativeVariable types (state variables) from structural blocks in order to create model statement.
-     * 
-     * @return
-     */
-    private Set<DerivativeVariable> getAllStateVariables() {
-        Set<DerivativeVariable> stateVariables = new LinkedHashSet<DerivativeVariable>();
-        for(StructuralBlock structuralBlock : context.getScriptDefinition().getStructuralBlocks() ){
-            stateVariables.addAll(structuralBlock.getStateVariables());
-        }
-        return stateVariables;
     }
 
     /**

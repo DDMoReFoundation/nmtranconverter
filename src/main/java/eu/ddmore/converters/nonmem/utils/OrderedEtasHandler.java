@@ -20,12 +20,15 @@ import eu.ddmore.libpharmml.dom.modeldefn.ParameterRandomVariable;
  */
 public class OrderedEtasHandler {
 
-    private final List<String> orderedEtas = new ArrayList<String>();
+    private final List<String> allEtas = new ArrayList<String>();
+    private final Map<String, Integer> orderedEtas = new LinkedHashMap<String, Integer>();
+    
     ScriptDefinition scriptDefinition;
 
     public OrderedEtasHandler(ScriptDefinition scriptDefinition) {
         this.scriptDefinition = scriptDefinition;
-        initialiseOrderedEtas(scriptDefinition);
+        retrieveAllEtas(scriptDefinition);
+        createOrderedEtasMap();
     }
 
     /**
@@ -33,11 +36,10 @@ public class OrderedEtasHandler {
      * This method will create map for EtaOrder which will be order for respective Omegas as well.
      * @return 
      */
-    public Map<String, Integer> createOrderedEtasMap(){
-        LinkedHashMap<String, Integer> etasOrderMap = new LinkedHashMap<String, Integer>();
+    private Map<String, Integer> createOrderedEtasMap(){
+        
         //We need to have this as list as this will retains order of etas
-        OrderedEtasHandler etasHandler = new OrderedEtasHandler(scriptDefinition);
-        List<String> etasOrder = etasHandler.getOrderedEtas();
+        List<String> etasOrder = getAllEtas();
 
         if(!etasOrder.isEmpty()){
             Integer etaCount = 0;
@@ -49,17 +51,17 @@ public class OrderedEtasHandler {
                 //no correlations so no Omega block
                 if(etaTocorrelationsMap.keySet().contains(eta)){
                     ++etaCount;
-                    etasOrderMap.put(eta,etaCount);
+                    orderedEtas.put(eta,etaCount);
                 }else{
                     nonOmegaBlockEtas.add(eta);
                 }
             }
             for(String nonOmegaEta : nonOmegaBlockEtas){
-                etasOrderMap.put(nonOmegaEta, ++etaCount);
+                orderedEtas.put(nonOmegaEta, ++etaCount);
             }
         }
 
-        return etasOrderMap;
+        return orderedEtas;
     }
     
     /**
@@ -84,7 +86,7 @@ public class OrderedEtasHandler {
      * Creates ordered Etas map which gets all etas list from individual parameters and parameter block. 
      * @return
      */
-    private List<String> initialiseOrderedEtas(ScriptDefinition scriptDefinition) {
+    private List<String> retrieveAllEtas(ScriptDefinition scriptDefinition) {
         List<ParameterBlock> blocks = scriptDefinition.getParameterBlocks();
         for(ParameterBlock block : blocks ){
             for(IndividualParameter parameterType: block.getIndividualParameters()){
@@ -93,8 +95,8 @@ public class OrderedEtasHandler {
                     for (ParameterRandomEffect randomEffect : randomEffects) {
                         if (randomEffect == null) continue;
                         String eta = randomEffect.getSymbRef().get(0).getSymbIdRef();
-                        if(!orderedEtas.contains(eta)){
-                            orderedEtas.add(eta);
+                        if(!allEtas.contains(eta)){
+                            allEtas.add(eta);
                         }
                     }
                 }
@@ -103,13 +105,13 @@ public class OrderedEtasHandler {
             for(ParameterRandomVariable variable : block.getRandomVariables()){
                 if(!epsilons.contains(variable)){
                     String eta = variable.getSymbId();
-                    if(!orderedEtas.contains(eta)){
-                        orderedEtas.add(eta);
+                    if(!allEtas.contains(eta)){
+                        allEtas.add(eta);
                     }
                 }
             }
         }
-        return orderedEtas;
+        return allEtas;
     }
 
     /**
@@ -142,7 +144,11 @@ public class OrderedEtasHandler {
         return correlations;
     }
 
-    public List<String> getOrderedEtas() {
+    public List<String> getAllEtas() {
+        return allEtas;
+    }
+    
+    public Map<String, Integer> getOrderedEtas() {
         return orderedEtas;
     }
 

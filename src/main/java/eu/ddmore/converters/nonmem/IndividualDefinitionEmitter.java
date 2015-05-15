@@ -19,7 +19,7 @@ import eu.ddmore.libpharmml.dom.modeldefn.LhsTransformation;
 import eu.ddmore.libpharmml.dom.modeldefn.ParameterRandomEffect;
 
 /**
- * 
+ * This class creates individual parameter definition from individual parameter type.
  */
 public class IndividualDefinitionEmitter {
     private static final String comment_char = ";";
@@ -186,7 +186,7 @@ public class IndividualDefinitionEmitter {
             for (ParameterRandomEffect random_effect : random_effects) {
                 if (random_effect == null) continue;
                 etas.append("+ ");
-                etas.append("ETA("+context.getOrderedEtas().get(random_effect.getSymbRef().get(0).getSymbIdRef())+")");
+                etas.append("ETA("+context.retrieveOrderedEtas().get(random_effect.getSymbRef().get(0).getSymbIdRef())+")");
             }
         }
         return etas;

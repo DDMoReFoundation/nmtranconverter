@@ -5,8 +5,9 @@ package eu.ddmore.converters.nonmem;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -15,6 +16,7 @@ import javax.xml.bind.JAXBElement;
 import crx.converter.engine.ScriptDefinition;
 import crx.converter.engine.parts.ObservationBlock;
 import crx.converter.engine.parts.ParameterBlock;
+import crx.converter.engine.parts.StructuralBlock;
 import crx.converter.spi.ILexer;
 import crx.converter.spi.IParser;
 import crx.converter.tree.BinaryTree;
@@ -22,18 +24,19 @@ import eu.ddmore.converters.nonmem.statements.ErrorStatement;
 import eu.ddmore.converters.nonmem.statements.PredStatement;
 import eu.ddmore.converters.nonmem.statements.SigmaStatementBuilder;
 import eu.ddmore.converters.nonmem.utils.Formatter;
+import eu.ddmore.converters.nonmem.utils.Formatter.Block;
 import eu.ddmore.converters.nonmem.utils.OrderedEtasHandler;
 import eu.ddmore.converters.nonmem.utils.ParametersHelper;
-import eu.ddmore.converters.nonmem.utils.Formatter.Block;
+import eu.ddmore.libpharmml.dom.commontypes.DerivativeVariable;
 import eu.ddmore.libpharmml.dom.commontypes.ScalarRhs;
 import eu.ddmore.libpharmml.dom.commontypes.SymbolRef;
 import eu.ddmore.libpharmml.dom.maths.FunctionCallType;
 import eu.ddmore.libpharmml.dom.modeldefn.GaussianObsError;
+import eu.ddmore.libpharmml.dom.modeldefn.GaussianObsError.ErrorModel;
+import eu.ddmore.libpharmml.dom.modeldefn.GaussianObsError.ResidualError;
 import eu.ddmore.libpharmml.dom.modeldefn.GeneralObsError;
 import eu.ddmore.libpharmml.dom.modeldefn.ObservationError;
 import eu.ddmore.libpharmml.dom.modeldefn.ParameterRandomVariable;
-import eu.ddmore.libpharmml.dom.modeldefn.GaussianObsError.ErrorModel;
-import eu.ddmore.libpharmml.dom.modeldefn.GaussianObsError.ResidualError;
 
 /**
  * Conversion context class accesses common converter for nmtran conversion and initialises 
@@ -45,9 +48,10 @@ public class ConversionContext {
     private final IParser parser;
     private final ILexer lexer;
     private final ParametersHelper parameterHelper;
-    private List<String> thetas = new ArrayList<String>();
-    private Map<String, Integer> orderedEtas = new LinkedHashMap<String, Integer>();
-    private List<ErrorStatement> errorStatements = new ArrayList<ErrorStatement>();
+    private final List<String> thetas = new ArrayList<String>();
+    private final List<ErrorStatement> errorStatements = new ArrayList<ErrorStatement>();
+    private final List<DerivativeVariable> derivativeVars = new ArrayList<DerivativeVariable>();
+    private final Map<String, String> derivativeVarCompSequences = new HashMap<String, String>();
 
     ConversionContext(IParser parser, ILexer lexer) throws IOException{
         this.parser = parser;
@@ -69,14 +73,14 @@ public class ConversionContext {
         if (lexer.getModelParameters().isEmpty()) {
             throw new IllegalArgumentException("Cannot find simple parameters for the pharmML file.");
         }
-        OrderedEtasHandler etasHandler = new OrderedEtasHandler(getScriptDefinition()); 
-        //set etas order which will be referred by most of the blocks
-        setOrderedEtas(etasHandler.createOrderedEtasMap());
-        parameterHelper.initialiseAllParameters(lexer.getModelParameters());
+        parameterHelper.initialiseAllParameters(lexer.getModelParameters(), retrieveOrderedEtas());
         setThetaAssigments();
 
+        derivativeVars.addAll(getAllStateVariables());
+        setDerivativeVarCompartmentSequence();
+
         // Initialise error statement
-        errorStatements = prepareAllErrorStatements();
+        prepareAllErrorStatements();
     }
 
     /**
@@ -149,9 +153,10 @@ public class ConversionContext {
      * @return
      */
     public StringBuilder buildEtaAssignments() {
-        StringBuilder etaAssignment = new StringBuilder();  
-        for(String eta : getOrderedEtas().keySet()){
-            etaAssignment.append(Formatter.endline(eta+ " = ETA("+getOrderedEtas().get(eta)+")"));
+        StringBuilder etaAssignment = new StringBuilder();
+        Map<String, Integer> orderedThetas = retrieveOrderedEtas();
+        for(String eta : orderedThetas.keySet()){
+            etaAssignment.append(Formatter.endline(eta+ " = ETA("+orderedThetas.get(eta)+")"));
         }
         return etaAssignment;
     }
@@ -162,7 +167,6 @@ public class ConversionContext {
      * @return
      */
     private List<ErrorStatement> prepareAllErrorStatements(){
-        List<ErrorStatement> errorStatements = new ArrayList<ErrorStatement>();
 
         for(ObservationBlock block : lexer.getScriptDefinition().getObservationBlocks()){
             ObservationError errorType = block.getObservationError();
@@ -247,6 +251,43 @@ public class ConversionContext {
         return errorStatement;
     }
 
+    private Map<String, String> setDerivativeVarCompartmentSequence(){
+        int i=1;
+        for (DerivativeVariable variableType : derivativeVars){
+            String variable = Formatter.addPrefix(variableType.getSymbId());
+            derivativeVarCompSequences.put(variable, Integer.toString(i++));
+        }
+        return derivativeVarCompSequences;
+    }
+
+    /**
+     * This method gets variable amount from compartment and returns it.
+     * 
+     * @param variable
+     * @return
+     */
+    public static String getVarAmountFromCompartment(String variable, Map<String,String> derivativeVariableMap) {
+        String varAmount = new String(); 
+        varAmount = derivativeVariableMap.get(variable);
+        if(!varAmount.isEmpty()){
+            varAmount = "A("+varAmount+")";
+        }
+        return varAmount;
+    }
+
+    /**
+     * Collects all derivativeVariable types (state variables) from structural blocks in order to create model statement.
+     * 
+     * @return
+     */
+    private Set<DerivativeVariable> getAllStateVariables() {
+        Set<DerivativeVariable> stateVariables = new LinkedHashSet<DerivativeVariable>();
+        for(StructuralBlock structuralBlock : getScriptDefinition().getStructuralBlocks() ){
+            stateVariables.addAll(structuralBlock.getStateVariables());
+        }
+        return stateVariables;
+    }
+
     /**
      * It will parse the object passed and returns parsed results in form of string.
      *  
@@ -272,14 +313,6 @@ public class ConversionContext {
         return lexer.getScriptDefinition();    
     }
 
-    public Map<String, Integer> getOrderedEtas() {
-        return orderedEtas;
-    }
-
-    public void setOrderedEtas(Map<String, Integer> etasOrder) {
-        this.orderedEtas = etasOrder;
-    }
-
     public ParametersHelper getParameterHelper() {
         return parameterHelper;
     }
@@ -294,5 +327,18 @@ public class ConversionContext {
 
     public ILexer getLexer() {
         return lexer;
+    }
+
+    public Map<String, Integer> retrieveOrderedEtas() {
+        OrderedEtasHandler etasHandler = new OrderedEtasHandler(getScriptDefinition());
+        return etasHandler.getOrderedEtas();
+    }
+
+    public List<DerivativeVariable> getDerivativeVars() {
+        return derivativeVars;
+    }
+
+    public Map<String, String> getDerivativeVarCompSequences() {
+        return derivativeVarCompSequences;
     }
 }

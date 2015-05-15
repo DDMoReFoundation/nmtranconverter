@@ -266,4 +266,8 @@ public class Formatter {
             rev.put(entry.getValue(), entry.getKey());
         return rev;
     }
+
+    public static String addComment(String comment) {
+        return new String(Formatter.indent(Symbol.COMMENT.toString()+comment));
+    }
 }
