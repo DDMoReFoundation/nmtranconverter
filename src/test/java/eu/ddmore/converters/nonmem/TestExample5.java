@@ -20,6 +20,7 @@ import eu.ddmore.convertertoolbox.api.response.ConversionDetail.Severity;
 import eu.ddmore.convertertoolbox.api.response.ConversionReport;
 import eu.ddmore.convertertoolbox.api.response.ConversionReport.ConversionCode;
 
+@Ignore("Currently not supported")
 public class TestExample5 extends TestBase {
     @Before
     public void setUp() throws Exception {
