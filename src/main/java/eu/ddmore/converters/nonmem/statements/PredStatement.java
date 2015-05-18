@@ -140,7 +140,7 @@ public class PredStatement {
         pkStatementBlock.append(Formatter.pk());
         pkStatementBlock.append(getPredCoreStatement());
         pkStatementBlock.append(getDifferentialInitialConditions());
-        return pkStatementBlock;
+        return new StringBuilder(pkStatementBlock.toString().toUpperCase());
     }
 
     /**
