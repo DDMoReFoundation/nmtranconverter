@@ -53,9 +53,9 @@ public class PredStatement {
         }else{
             //non derivative pred block
             predStatement.append(statementName);
-            predStatement.append(getNonDerivativePredStatement().toString());
+            predStatement.append(getNonDerivativePredStatement());
         }
-        return predStatement;
+        return new StringBuilder(predStatement.toString().toUpperCase());
     }
 
     /**
