@@ -74,8 +74,9 @@ public class OrderedEtasHandler {
         String firstVar = correlation.rnd1.getSymbId();
         String secondVar = correlation.rnd2.getSymbId();
         String coefficient = "";
-        if(correlation.correlationCoefficient.getSymbRef()!=null)
+        if(correlation.correlationCoefficient.getSymbRef()!=null){
             coefficient = correlation.correlationCoefficient.getSymbRef().getSymbIdRef();
+        }
         //add to correlations map
         etaToCorrelations.put(firstVar,RandomVariableHelper.getNameFromParamRandomVariable(correlation.rnd1));
         etaToCorrelations.put(secondVar,RandomVariableHelper.getNameFromParamRandomVariable(correlation.rnd2));

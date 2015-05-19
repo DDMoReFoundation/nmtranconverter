@@ -22,8 +22,9 @@ public class RandomVariableHelper {
         if (getDistributionTypeStdDev(rv) != null) {
             symbId = getDistributionTypeStdDev(rv).getVar().getVarId();                 
         } else if (getDistributionTypeVariance(rv) != null) {
-            if(getDistributionTypeVariance(rv).getVar()!=null)
+            if(getDistributionTypeVariance(rv).getVar()!=null){
                 symbId = getDistributionTypeVariance(rv).getVar().getVarId();
+            }
         }
         return symbId;
     }
