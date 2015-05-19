@@ -228,10 +228,13 @@ public class ParametersHelper {
      * @return
      */
     private ScalarRhs getScalarRhsForSymbol(String symbId) {
-        SimpleParameter param = simpleParams.get(symbId);
         ScalarRhs scalar = null;
-        if(param!=null && param.getAssign().getScalar()!=null){
-            scalar = ConversionContext.createScalarRhs(symbId, param.getAssign().getScalar());    
+        
+        if(simpleParams.containsKey(symbId)){
+            SimpleParameter param = simpleParams.get(symbId);
+            if(simpleParams.get(symbId).getAssign().getScalar()!=null){
+                scalar = ConversionContext.createScalarRhs(symbId, param.getAssign().getScalar());    
+            }
         }
         return scalar;
     }
@@ -311,7 +314,7 @@ public class ParametersHelper {
         }
         return allParams;
     }
-    
+
     /**
      * Create ordered thetas to eta map from ordered etas map.
      * The order is used to add Thetas in order of thetas.
@@ -385,7 +388,11 @@ public class ParametersHelper {
             verifiedSigmas.add(sigmaVar);
     }
 
-
+    /**
+     * Prepares theta statement for thetas if present.
+     *  
+     * @return omega statement
+     */
     public StringBuilder getThetaStatementBlock(){
         StringBuilder thetaStatement = new StringBuilder();
         if (!thetaStatements.isEmpty()) {
@@ -397,6 +404,11 @@ public class ParametersHelper {
         return thetaStatement;
     }
 
+    /**
+     * Prepares omega statement using omega block and omegas if present.
+     *  
+     * @return omega statement
+     */
     public StringBuilder getOmegaStatementBlock() {
         StringBuilder omegaStatement = new StringBuilder();
         Map<String, List<OmegaStatement>> omegaBlocks = omegaBlockStatement.getOmegaBlocks();
@@ -419,7 +431,7 @@ public class ParametersHelper {
         }
         return omegaStatement;
     }
-    
+
     /**
      * Checks if omega statements list has any omega statements added
      * 

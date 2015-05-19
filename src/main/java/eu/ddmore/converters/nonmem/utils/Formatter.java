@@ -262,8 +262,11 @@ public class Formatter {
      */
     public static <K,V> TreeMap<V,K> reverseMap(Map<K,V> map) {
         TreeMap<V,K> rev = new TreeMap<V, K>();
-        for(Map.Entry<K,V> entry : map.entrySet())
-            rev.put(entry.getValue(), entry.getKey());
+        for(Map.Entry<K,V> entry : map.entrySet()){
+            if(!rev.containsKey(entry.getValue())){
+                rev.put(entry.getValue(), entry.getKey());    
+            }
+        }
         return rev;
     }
 

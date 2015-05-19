@@ -86,7 +86,6 @@ public class ConversionContext {
     /**
      * Builds and writes pred statement block to file.
      *  
-     * @param fout
      * @return 
      */
     public StringBuilder buildPredStatement(){
@@ -122,7 +121,7 @@ public class ConversionContext {
 
     /**
      * This method will build theta assignment statements
-     * @param fout
+     * @return
      */
     public StringBuilder buildThetaAssignments() {
         StringBuilder thetaAssignmentBlock = new StringBuilder();  

@@ -160,7 +160,8 @@ public class OmegaBlockStatement {
     }
 
     /**
-     * 
+     * This method will get existing omega for coefficient 
+     * and it will create new one if there no omega ( or coeffiecient specified is only value) 
      * @param correlation
      * @return
      */

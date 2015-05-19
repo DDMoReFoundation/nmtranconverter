@@ -15,10 +15,10 @@ import eu.ddmore.libpharmml.dom.commontypes.VariableDefinition;
 
 public class DiffEquationStatementBuilder {
     private static final String DES = "DES";
-    private final String DES_VAR_SUFFIX = "_"+DES;
+    private static final String DES_VAR_SUFFIX = "_"+DES;
     //it will hold definition types and its parsed equations which we will need to add in Error statement as well.
-    private Map<String, String> definitionsParsingMap = new HashMap<String, String>();
-    ConversionContext context;
+    private final Map<String, String> definitionsParsingMap = new HashMap<String, String>();
+    private final ConversionContext context;
 
     public DiffEquationStatementBuilder(ConversionContext context) {
         this.context = context;

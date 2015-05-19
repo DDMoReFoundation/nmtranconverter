@@ -22,7 +22,7 @@ import eu.ddmore.libpharmml.dom.modeldefn.ParameterRandomEffect;
  * This class creates individual parameter definition from individual parameter type.
  */
 public class IndividualDefinitionEmitter {
-    private static final String comment_char = ";";
+    private static final String COMMENT_CHAR = ";";
     private final ConversionContext context;
 
     public IndividualDefinitionEmitter(ConversionContext  context) {
@@ -71,7 +71,7 @@ public class IndividualDefinitionEmitter {
                 String assignment = context.parse(generalCov);
                 statement.append(assignment);
             }
-            statement.append(Formatter.endline(comment_char));
+            statement.append(Formatter.endline(COMMENT_CHAR));
 
             StringBuilder etas = addEtasStatementsToIndivParamDef(gaussianModel.getRandomEffects());
             if (logType.equals(NmConstant.LOG.toString())) {
