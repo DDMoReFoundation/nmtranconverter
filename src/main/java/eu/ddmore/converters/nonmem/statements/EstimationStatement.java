@@ -66,10 +66,7 @@ public class EstimationStatement {
                 sb.append("COND INTER MAXEVALS=9999 PRINT=10 NOABORT");
             }
             else if (methodDefinition.equals(Method.SAEM.toString())) {
-                sb.append("SAEM INTER CTYPE=3 NITER=1000 NBURN=4000 NOPRIOR=1 CITER=10"+Formatter.endline()
-                    +"  CALPHA=0.05 IACCEPT=0.4 ISCALE_MIN=1.0E-06 ISCALE_MAX=1.0E+06"+Formatter.endline()
-                    +"  ISAMPLE_M1=2 ISAMPLE_M1A=0 ISAMPLE_M2=2 ISAMPLE_M3=2"+Formatter.endline()
-                    +"  CONSTRAIN=1 EONLY=0 ISAMPLE=2 PRINT=50");
+                sb.append("SAEM AUTO=1 PRINT=100"+Formatter.endline());
             }
             else {
                 sb.append(methodDefinition);
