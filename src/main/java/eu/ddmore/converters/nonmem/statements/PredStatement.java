@@ -3,53 +3,47 @@
  ******************************************************************************/
 package eu.ddmore.converters.nonmem.statements;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 import crx.converter.engine.parts.ParameterBlock;
-import crx.converter.engine.parts.StructuralBlock;
 import eu.ddmore.converters.nonmem.ConversionContext;
 import eu.ddmore.converters.nonmem.IndividualDefinitionEmitter;
+import eu.ddmore.converters.nonmem.statements.PkMacroAnalyser.PkMacroDetails;
 import eu.ddmore.converters.nonmem.utils.Formatter;
 import eu.ddmore.libpharmml.dom.commontypes.DerivativeVariable;
 import eu.ddmore.libpharmml.dom.modeldefn.IndividualParameter;
-import eu.ddmore.libpharmml.dom.modeldefn.pkmacro.PKMacroList;
 
 /**
  * Creates and adds estimation statement to nonmem file from script definition.
- * 
- * @author sdeshmukh
  *
  */
 public class PredStatement {
 
     private final ConversionContext context;
-    private List<PKMacroList> allPkMacros = new ArrayList<PKMacroList>();
 
     public PredStatement(ConversionContext context){
         this.context = context;
     }
-    
+
     public StringBuilder getPredStatement(){
         String statementName = Formatter.endline()+Formatter.pred();
-        allPkMacros = getAllPkMacroLists(context.getScriptDefinition().getStructuralBlocks());
         StringBuilder predStatement = new StringBuilder();
-        
+        PkMacroAnalyser analyser = new PkMacroAnalyser();
+        PkMacroDetails pkMacroDetails = analyser.analyse(context);
+        String advanType = pkMacroDetails.getMacroAdvanType();
+
         if(!context.getDerivativeVars().isEmpty()){
-            //TODO: Add $SUB block. need to have details around it.
-            statementName = Formatter.endline()+Formatter.sub();
-            predStatement.append(Formatter.endline()+Formatter.endline(Formatter.subs()+"ADVAN13 TOL=9"));
-            predStatement.append(getDerivativePredStatement().toString());
-        }else if(!allPkMacros.isEmpty()){
-            //PK macros
-            PkMacroAnalyser analyser = new PkMacroAnalyser(allPkMacros);
-            String advanType = analyser.getMacroAdvanType();
-            predStatement.append(Formatter.endline()+Formatter.endline(Formatter.subs()+advanType+" TRANS=1"));
-
-            predStatement.append(getPKStatement());
-            predStatement.append(getErrorStatement());
-
+            if(advanType.isEmpty()){
+                statementName = Formatter.endline()+Formatter.sub();
+                predStatement.append(Formatter.endline()+Formatter.endline(Formatter.subs()+"ADVAN13 TOL=9"));
+                predStatement.append(getDerivativePredStatement().toString());
+            }else{
+                //Advan PK macros
+                predStatement.append(Formatter.endline()+Formatter.endline(Formatter.subs()+advanType+" TRANS=1"));
+                predStatement.append(getPKStatement());
+                predStatement.append(getErrorStatement());
+            }
         }else{
             //non derivative pred block
             predStatement.append(statementName);
@@ -156,19 +150,6 @@ public class PredStatement {
             modelBlock.append(Formatter.endline("COMP "+"(COMP"+context.getDerivativeVarCompSequences().get(compartment)+") "+Formatter.addComment(compartment)));
         }
         return modelBlock;
-    }
-
-    /**
-     * Collects all pk macro lists from structural blocks in order to create model statement.
-     * 
-     * @return
-     */
-    private List<PKMacroList> getAllPkMacroLists(List<StructuralBlock> structuralBlocks) {
-        List<PKMacroList> pkMacroLists = new ArrayList<PKMacroList>();
-        //        for(StructuralBlock structuralBlock : structuralBlocks){
-        //            pkMacroLists.add(structuralBlock.getPkMacrosList());
-        //        }
-        return pkMacroLists;
     }
 
     /**

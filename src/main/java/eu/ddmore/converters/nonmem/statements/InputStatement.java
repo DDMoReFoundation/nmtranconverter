@@ -11,14 +11,14 @@ import crx.converter.engine.ScriptDefinition;
 import crx.converter.engine.parts.EstimationStep;
 import crx.converter.engine.parts.TabularDataset;
 import crx.converter.engine.parts.TrialDesignBlock;
+import eu.ddmore.converters.nonmem.ConversionContext;
 import eu.ddmore.converters.nonmem.utils.Formatter;
-import eu.ddmore.converters.nonmem.utils.ParametersHelper;
 import eu.ddmore.libpharmml.dom.commontypes.SymbolType;
 import eu.ddmore.libpharmml.dom.dataset.ColumnDefinition;
 import eu.ddmore.libpharmml.dom.dataset.ColumnType;
 import eu.ddmore.libpharmml.dom.modellingsteps.DatasetMapping;
 import eu.ddmore.libpharmml.dom.modellingsteps.Estimation;
-import eu.ddmore.libpharmml.dom.modellingsteps.ExternalDataSet;;
+import eu.ddmore.libpharmml.dom.modellingsteps.ExternalDataSet;
 
 public class InputStatement {
 
@@ -30,27 +30,52 @@ public class InputStatement {
     public List<String> getInputHeaders() {
         return inputHeaders;
     }
+    
+    public InputStatement(ConversionContext context) {
+        if (null == context) {
+            throw new IllegalStateException("conversion context cannot be null");
+        }
+        
+        List<ExternalDataSet> dataFiles = context.retrieveExternalDataSets();
+        
+        if(dataFiles!=null && !dataFiles.isEmpty()){
+            computeEstHeadersforExternalDataSets(dataFiles);
+        }else{
+            computeEstHeadersforTabularDataSet(context.getScriptDefinition());
+        }
+        
+        
+    }
 
-    public InputStatement(ScriptDefinition scriptDefinition) {
-
-        TabularDataset td = getObjectiveDatasetMap(ParametersHelper.getEstimationStep(scriptDefinition));
-
-        if (null == td) {
+    /**
+     * Computes estimation headers for tabular dataset retrieved from script definition.
+     * 
+     * @param scriptDefinition
+     */
+    private void computeEstHeadersforTabularDataSet(ScriptDefinition scriptDefinition) {
+        TabularDataset tabularDataset = getObjectiveDatasetMap(ConversionContext.getEstimationStep(scriptDefinition));
+        
+        if (null == tabularDataset) {
             throw new IllegalStateException("TabularDataset cannot be null");
         }
 
-        computeEstimationHeaders(td);
+        computeEstimationHeaders(tabularDataset);
     }
 
-    public InputStatement(List<ExternalDataSet> dataFiles) {
+    /**
+     * Computes estimation headers for external datasets retrieved.
+     * 
+     * @param dataFiles
+     */
+    private void computeEstHeadersforExternalDataSets(List<ExternalDataSet> dataFiles) {
 
         if (null == dataFiles) {
-            throw new IllegalStateException("NONMEM data set(s) cannot be null");
+            throw new IllegalStateException("External data set(s) cannot be null");
         }
 
         Iterator<ExternalDataSet> dsIterator = dataFiles.iterator();
         if (!dsIterator.hasNext()) {
-            throw new IllegalStateException("NONMEM data set(s) cannot be empty");
+            throw new IllegalStateException("External data set(s) cannot be empty");
         }
         while (dsIterator.hasNext()) {
             computeEstimationHeaders(dsIterator.next());
@@ -58,13 +83,13 @@ public class InputStatement {
     }
 
     /** 
-     * Estimation headers for non-NONMEM datasets
+     * Estimation headers for tabular datasets
      * 
-     * @param td the TabularDataset to compute the estimation headers from
+     * @param tabularDataset the TabularDataset to compute the estimation headers from
      */
-    private void computeEstimationHeaders(TabularDataset td) {
+    private void computeEstimationHeaders(TabularDataset tabularDataset) {
 
-        List<String> dataColumns = td.getColumnNames();
+        List<String> dataColumns = tabularDataset.getColumnNames();
 
         if (null == dataColumns) {
             throw new IllegalStateException("Objective data set has no columns");
@@ -76,16 +101,16 @@ public class InputStatement {
     }
 
     /**
-     * Estimation headers for NONMEM datasets
+     * Estimation headers for External datasets
      * 
-     * @param nonmemDataSet the ExternalDataSet to compute the estimation headers from
+     * @param externalDataSet the ExternalDataSet to compute the estimation headers from
      */
-    private void computeEstimationHeaders(ExternalDataSet nonmemDataSet) {
+    private void computeEstimationHeaders(ExternalDataSet externalDataSet) {
 
-        List<ColumnDefinition> dataColumns = nonmemDataSet.getDataSet().getListOfColumnDefinition();
+        List<ColumnDefinition> dataColumns = externalDataSet.getDataSet().getListOfColumnDefinition();
 
         if (null == dataColumns) {
-            throw new IllegalStateException("NONMEM data set has no columns");
+            throw new IllegalStateException("External data set has no columns");
         } else {
             for (ColumnDefinition dataColumn : dataColumns) {
                 String colId = dataColumn.getColumnId().toUpperCase();
@@ -93,7 +118,7 @@ public class InputStatement {
                 SymbolType valueType =  dataColumn.getValueType();
 
                 if (inputHeaders.contains(colId)) {
-                    throw new IllegalStateException("NONMEM data set contains duplicate columns");
+                    throw new IllegalStateException("External data set contains duplicate columns");
                 } else {
                     inputHeaders.add(colId);
                     populateCovTableDetails(columnType,valueType,colId);

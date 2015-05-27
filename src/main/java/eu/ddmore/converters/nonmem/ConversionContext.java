@@ -14,8 +14,10 @@ import java.util.Set;
 
 import javax.xml.bind.JAXBElement;
 import crx.converter.engine.ScriptDefinition;
+import crx.converter.engine.parts.EstimationStep;
 import crx.converter.engine.parts.ObservationBlock;
 import crx.converter.engine.parts.ParameterBlock;
+import crx.converter.engine.parts.Part;
 import crx.converter.engine.parts.StructuralBlock;
 import crx.converter.spi.ILexer;
 import crx.converter.spi.IParser;
@@ -37,6 +39,7 @@ import eu.ddmore.libpharmml.dom.modeldefn.GaussianObsError.ResidualError;
 import eu.ddmore.libpharmml.dom.modeldefn.GeneralObsError;
 import eu.ddmore.libpharmml.dom.modeldefn.ObservationError;
 import eu.ddmore.libpharmml.dom.modeldefn.ParameterRandomVariable;
+import eu.ddmore.libpharmml.dom.modellingsteps.ExternalDataSet;
 
 /**
  * Conversion context class accesses common converter for nmtran conversion and initialises 
@@ -273,6 +276,20 @@ public class ConversionContext {
         }
         return varAmount;
     }
+    
+    /**
+     * This method returns first estimation step found in steps map from script definition.
+     * 
+     * @param scriptDefinition
+     * @return
+     */
+    public static EstimationStep getEstimationStep(ScriptDefinition scriptDefinition) {
+        EstimationStep step = null;
+        for (Part nextStep : scriptDefinition.getStepsMap().values()) {
+            if (nextStep instanceof EstimationStep) step = (EstimationStep) nextStep; 
+        }
+        return step;
+    }
 
     /**
      * Collects all derivativeVariable types (state variables) from structural blocks in order to create model statement.
@@ -295,6 +312,14 @@ public class ConversionContext {
      */
     public String parse(Object context){
         return parse(context, lexer.getStatement(context));
+    }
+    
+    /**
+     * Get external dataSets from list of data files 
+     * @return
+     */
+    public List<ExternalDataSet> retrieveExternalDataSets(){
+        return getLexer().getDataFiles().getExternalDataSets();
     }
 
     /**

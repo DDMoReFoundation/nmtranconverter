@@ -15,7 +15,6 @@ import crx.converter.engine.ScriptDefinition;
 import crx.converter.engine.parts.EstimationStep;
 import crx.converter.engine.parts.EstimationStep.FixedParameter;
 import crx.converter.engine.parts.ParameterBlock;
-import crx.converter.engine.parts.Part;
 import eu.ddmore.converters.nonmem.ConversionContext;
 import eu.ddmore.converters.nonmem.statements.OmegaBlockStatement;
 import eu.ddmore.converters.nonmem.statements.OmegaStatement;
@@ -79,7 +78,7 @@ public class ParametersHelper {
             }
         }
 
-        final EstimationStep estimationStep = getEstimationStep(scriptDefinition);
+        final EstimationStep estimationStep = ConversionContext.getEstimationStep(scriptDefinition);
         parametersToEstimate = (estimationStep.hasParametersToEstimate())?estimationStep.getParametersToEstimate(): new ArrayList<ParameterEstimate>();
         fixedParameters = (estimationStep.hasFixedParameters())?estimationStep.getFixedParameters(): new ArrayList<FixedParameter>();
         // Find any bounds and initial estimates
@@ -284,20 +283,6 @@ public class ParametersHelper {
         initialEstimates.put(symbolId, paramEstimate.getInitialEstimate());
         lowerBounds.put(symbolId, paramEstimate.getLowerBound());
         upperBounds.put(symbolId, paramEstimate.getUpperBound());
-    }
-
-    /**
-     * This method returns first estimation step found in steps map from script definition.
-     * 
-     * @param scriptDefinition
-     * @return
-     */
-    public static EstimationStep getEstimationStep(ScriptDefinition scriptDefinition) {
-        EstimationStep step = null;
-        for (Part nextStep : scriptDefinition.getStepsMap().values()) {
-            if (nextStep instanceof EstimationStep) step = (EstimationStep) nextStep; 
-        }
-        return step;
     }
 
     /**

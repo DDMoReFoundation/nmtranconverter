@@ -13,7 +13,12 @@ import java.util.List;
 
 import org.junit.Ignore;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.PowerMockRunner;
 
+import eu.ddmore.converters.nonmem.ConversionContext;
 import eu.ddmore.converters.nonmem.statements.InputStatement;
 import eu.ddmore.converters.nonmem.utils.Formatter;
 import eu.ddmore.converters.nonmem.utils.Formatter.ColumnConstant;
@@ -26,6 +31,8 @@ import eu.ddmore.libpharmml.dom.dataset.ExternalFile;
 import eu.ddmore.libpharmml.dom.modellingsteps.ExternalDataSet;
 import eu.ddmore.libpharmml.dom.modellingsteps.ModellingSteps;
 
+@RunWith(PowerMockRunner.class)
+@PrepareForTest(InputStatement.class)
 public class InputStatementTest {
 
 	private static final String DATA_FILE_NAME = "warfarin_conc_pca.csv";
@@ -46,6 +53,8 @@ public class InputStatementTest {
 	private static final String COL_NUM_3 = "3";
 
 	private static final List<String> COLUMN_HEADERS = Arrays.asList(COL_ID_1, COL_ID_2, COL_ID_3);
+	
+	@Mock ConversionContext context;
 
 	@Ignore
 	@Test
@@ -60,9 +69,9 @@ public class InputStatementTest {
 //		columns.add(createColumn(COL_ID_3, COL_TYPE_3, COL_VALUE_3, COL_NUM_3));
 //		dataset.setDefinition(columnsDefinition);
 
-		ModellingSteps modellingSteps = createModellingSteps(dataset);
+//		ModellingSteps modellingSteps = createModellingSteps(dataset);
 		
-		InputStatement statement = new InputStatement(modellingSteps.getListOfExternalDataSet());
+		InputStatement statement = new InputStatement(context);
 
 		assertNotNull("InputStatement should not be null.", statement);
 		assertEquals("inputHeaders should be correct.", COLUMN_HEADERS, statement.getInputHeaders());
@@ -85,7 +94,7 @@ public class InputStatementTest {
 
 		ModellingSteps modellingSteps = createModellingSteps(dataset);
 
-		InputStatement statement = new InputStatement(modellingSteps.getListOfExternalDataSet());
+		InputStatement statement = new InputStatement(context);
 
 		assertEquals("inputHeaders should be correct.", COLUMN_HEADERS, statement.getInputHeaders());
 	}
@@ -93,13 +102,7 @@ public class InputStatementTest {
 	@Test(expected = IllegalStateException.class)
 	public void shouldThrowExceptionNullNONMEMdataSet() {
 
-		new InputStatement((List<ExternalDataSet>)null);
-	}
-
-	@Test(expected = IllegalStateException.class)
-	public void shouldThrowExceptionEmptyNONMEMdataSet() {
-
-		new InputStatement((new ArrayList<ExternalDataSet>()));
+		new InputStatement(null);
 	}
 
 	@Ignore
@@ -117,7 +120,7 @@ public class InputStatementTest {
 
 		ModellingSteps modellingSteps = createModellingSteps(dataset);
 
-		new InputStatement(modellingSteps.getListOfExternalDataSet());
+		new InputStatement(context);
 	}
 
 	private DataSet createDataSet() {

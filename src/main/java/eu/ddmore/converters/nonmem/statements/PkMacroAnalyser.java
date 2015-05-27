@@ -3,59 +3,73 @@ package eu.ddmore.converters.nonmem.statements;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.google.common.annotations.VisibleForTesting;
+
+import crx.converter.engine.parts.StructuralBlock;
+import eu.ddmore.converters.nonmem.ConversionContext;
 import eu.ddmore.libpharmml.dom.modeldefn.pkmacro.CompartmentMacro;
 import eu.ddmore.libpharmml.dom.modeldefn.pkmacro.EliminationMacro;
 import eu.ddmore.libpharmml.dom.modeldefn.pkmacro.IVMacro;
 import eu.ddmore.libpharmml.dom.modeldefn.pkmacro.MacroValue;
 import eu.ddmore.libpharmml.dom.modeldefn.pkmacro.OralMacro;
 import eu.ddmore.libpharmml.dom.modeldefn.pkmacro.PKMacro;
-import eu.ddmore.libpharmml.dom.modeldefn.pkmacro.PKMacroList;
 import eu.ddmore.libpharmml.dom.modeldefn.pkmacro.PeripheralMacro;
 
-
+/**
+ * PK macro analyser will collect pk macro information 
+ * and perform required analysis to add pk macro related changes to nmtran. 
+ */
 public class PkMacroAnalyser {
 
     enum AdvanType{
         ADVAN1,ADVAN2,ADVAN3,ADVAN4,ADVAN10,ADVAN11,ADVAN12;
     };
 
-    List<PKMacroList> pkMacros = new ArrayList<PKMacroList>();
+    /**
+     * This method will process pk macros to collect information and set macro advan type and other details. 
+     * 
+     * @param context
+     * @return
+     */
+    public PkMacroDetails analyse(ConversionContext context) {
+        PkMacroDetails details = new PkMacroDetails();
 
-    List<CompartmentMacro> compartments = new ArrayList<CompartmentMacro>();
-    List<IVMacro> ivs = new ArrayList<IVMacro>();
-    List<EliminationMacro> eliminations = new ArrayList<EliminationMacro>();
-    List<OralMacro> orals = new ArrayList<OralMacro>();
-    List<PeripheralMacro> peripherals = new ArrayList<PeripheralMacro>();
+        processPkMacros(context, details);
+        details.setMacroAdvanType(captureAdvanType(context, details));
 
-    String macroAdvanType = new String();
-
-    public PkMacroAnalyser(List<PKMacroList> pkMacroLists) {
-        this.pkMacros = pkMacroLists;
-        initialiseMacros();
-        macroAdvanType = retrieveAdvanType();
+        return details;
     }
 
-    public void initialiseMacros(){
-        for(PKMacroList pkMacro : pkMacros){
+    /**
+     * This method will process compartments, eliminations, iv/orals and peripherals from all the pk macros.
+     * Also it will determine and set pk macro advan type.
+     * 
+     */
+    private void processPkMacros(ConversionContext context, PkMacroDetails details){
+        List<PKMacro> allPkMacros = new ArrayList<PKMacro>();
+        for(StructuralBlock block : context.getScriptDefinition().getStructuralBlocks()){
+            if(block.getPKMacros()!=null){
+                allPkMacros.addAll(block.getPKMacros());
+            }
+        }
 
-            for(PKMacro macro : pkMacro.getListOfMacro()){
-                if(macro instanceof CompartmentMacro){
-                    compartments.add((CompartmentMacro) macro);
-                }else if(macro instanceof EliminationMacro){
-                    eliminations.add((EliminationMacro) macro);
-                }else if(macro instanceof IVMacro){
-                    ivs.add((IVMacro) macro);
-                }else if(macro instanceof OralMacro){
-                    orals.add((OralMacro) macro);
-                }else if(macro instanceof PeripheralMacro){
-                    peripherals.add((PeripheralMacro) macro);
-                }
+        for(PKMacro pkMacro : allPkMacros){
+            if(pkMacro instanceof CompartmentMacro){
+                details.getCompartments().add((CompartmentMacro) pkMacro);
+            }else if(pkMacro instanceof EliminationMacro){
+                details.getEliminations().add((EliminationMacro) pkMacro);
+            }else if(pkMacro instanceof IVMacro){
+                details.getIvs().add((IVMacro) pkMacro);
+            }else if(pkMacro instanceof OralMacro){
+                details.getOrals().add((OralMacro) pkMacro);
+            }else if(pkMacro instanceof PeripheralMacro){
+                details.getPeripherals().add((PeripheralMacro) pkMacro);
             }
         }
     }
 
-    /**
-     *              CMT     IV      ORAL    PERIF   ELIM
+    /*
+     *             CMT     IV      ORAL    PERIF   ELIM
      * ADVAN-1      1       1       0       0       1   k
      * ADVAN-2      1       0       1       0       1   k
      * ADVAN-3      1       1       0       1       1   k
@@ -63,46 +77,63 @@ public class PkMacroAnalyser {
      * ADVAN-10     1       1       0       0       1   km & vm
      * ADVAN-11     1       1       0       2       1   k
      * ADVAN-12     1       0       1       2       1   k
+     */
+
+    /**
+     * Retrieves advan type from compartments, eliminations and peripherals available for pk macro.
      * 
      * @return advan type
      */
-    public String retrieveAdvanType(){
+    @VisibleForTesting
+    String captureAdvanType(ConversionContext context, PkMacroDetails details) {
 
-        if(compartments.isEmpty() || eliminations.isEmpty()){
+        if(details.getCompartments().isEmpty() || details.getEliminations().isEmpty()){
             throw new IllegalArgumentException("The compartment missing from pk macro specified");
         }
-        if(peripherals.size()==0){
-            if(isIV()){
-                if(isKmAndVm()){
-                    return AdvanType.ADVAN10.toString();                           
+        
+        String advanType = new String();
+        switch(details.getPeripherals().size()){
+        case 0:
+            if(isIV(details)){
+                if(isKmAndVm(details)){
+                    advanType = AdvanType.ADVAN10.toString();
+                }else{
+                    advanType = AdvanType.ADVAN1.toString();
                 }
-                return AdvanType.ADVAN1.toString();
-
-            }else if(isOral()){
-                return AdvanType.ADVAN2.toString();
+            }else if(isOral(details)){
+                advanType = AdvanType.ADVAN2.toString();
             }
-        }else if(peripherals.size()>1){
-            if(peripherals.size() == 1){
-                if(isIV()){
-                    return AdvanType.ADVAN3.toString();
-                }else if(isOral()){
-                    return AdvanType.ADVAN4.toString();
-                }
-            }else if(peripherals.size() ==2){
-                if(isIV()){
-                    return AdvanType.ADVAN11.toString();
-                }else if(isOral()){
-                    return AdvanType.ADVAN12.toString();
-                }
+            break;
+        case 1:
+            if(isIV(details)){
+                advanType = AdvanType.ADVAN3.toString();
+            }else if(isOral(details)){
+                advanType = AdvanType.ADVAN4.toString();
             }
+            break;
+        case 2:
+            if(isIV(details)){
+                advanType = AdvanType.ADVAN11.toString();
+            }else if(isOral(details)){
+                advanType = AdvanType.ADVAN12.toString();
+            }
+            break;
+        default:
+            advanType = new String();
         }
-        return macroAdvanType;
+        return advanType;
     }
 
-    private boolean isKmAndVm(){
+    /**
+     * Determines if current elimination has Km as well as Vm.
+     * If either or them is not present then it will return as false.  
+     * 
+     * @return
+     */
+    private boolean isKmAndVm(PkMacroDetails details){
         boolean isKm = false, isVm = false ;
-        if(eliminations.get(0).getListOfValue() != null){
-            for(MacroValue vals : eliminations.get(0).getListOfValue()){
+        if(details.getEliminations().get(0).getListOfValue() != null){
+            for(MacroValue vals : details.getEliminations().get(0).getListOfValue()){
 
                 if(vals.getSymbRef()!=null){
                     String variable = vals.getSymbRef().getSymbIdRef();
@@ -118,29 +149,71 @@ public class PkMacroAnalyser {
         return (isKm && isVm);
     }
 
-    private boolean isIV(){
-        if(!ivs.isEmpty() && orals.isEmpty()){
-            if(ivs.size()==1){
+    /**
+     * Check if injection type is IV
+     * @return
+     */
+    private boolean isIV(PkMacroDetails details){
+        if(!details.getIvs().isEmpty() && details.getOrals().isEmpty()){
+            if(details.getIvs().size()==1){
                 return true;
             }
         }
         return false;
     }
 
-    private boolean isOral(){
-        if(ivs.isEmpty() && !orals.isEmpty()){
-            if(orals.size()==1){
+    /**
+     * Check if injection type is Oral
+     * @return
+     */
+    private boolean isOral(PkMacroDetails details){
+        if(details.getIvs().isEmpty() && !details.getOrals().isEmpty()){
+            if(details.getOrals().size()==1){
                 return true;
             }
         }
         return false;
     }
 
-    public String getMacroAdvanType() {
-        return macroAdvanType;
-    }
+    /**
+     * This class will store pk macro details from pharmML
+     */
+    public static class PkMacroDetails {
 
-    public void setMacroAdvanType(String macroAdvanType) {
-        this.macroAdvanType = macroAdvanType;
+        private final List<CompartmentMacro> compartments = new ArrayList<CompartmentMacro>();
+        private final List<EliminationMacro> eliminations = new ArrayList<EliminationMacro>();
+        private final List<IVMacro> ivs = new ArrayList<IVMacro>();
+        private final List<OralMacro> orals = new ArrayList<OralMacro>();
+        private final List<PeripheralMacro> peripherals = new ArrayList<PeripheralMacro>();
+
+        private String macroAdvanType;
+
+        public String getMacroAdvanType() {
+            return macroAdvanType;
+        }
+
+        private String setMacroAdvanType(String advanType) {
+            return macroAdvanType = advanType;
+        }
+
+        public List<CompartmentMacro> getCompartments() {
+            return compartments;
+        }
+
+        public List<EliminationMacro> getEliminations() {
+            return eliminations;
+        }
+
+        public List<IVMacro> getIvs() {
+            return ivs;
+        }
+
+        public List<OralMacro> getOrals() {
+            return orals;
+        }
+
+        public List<PeripheralMacro> getPeripherals() {
+            return peripherals;
+        }
     }
 }

@@ -8,7 +8,6 @@ import java.io.IOException;
 import java.io.PrintWriter;
 
 import crx.converter.engine.Lexer;
-import crx.converter.engine.ScriptDefinition;
 import crx.converter.engine.parts.EstimationStep;
 import eu.ddmore.converters.nonmem.statements.DataStatement;
 import eu.ddmore.converters.nonmem.statements.EstimationStatement;
@@ -85,7 +84,6 @@ public class ConverterProvider extends Lexer {
         if (fout == null || output_dir == null) return;
         ConversionContext context = new ConversionContext(getParser(), this);
 
-        ScriptDefinition scriptDefinition = getScriptDefinition();
         ProblemStatement problemStatement = new ProblemStatement(getModelName());
         problemStatement.write(fout);
         fout.write(Formatter.endline());
@@ -94,13 +92,9 @@ public class ConverterProvider extends Lexer {
         InputStatement inputStatement;
         DataStatement dataStatement;
 
-        if (getDataFiles().getExternalDataSets().isEmpty()) {
-            inputStatement = new InputStatement(scriptDefinition);
-            dataStatement = new DataStatement(scriptDefinition, src);
-        } else {
-            inputStatement = new InputStatement(getDataFiles().getExternalDataSets());
-            dataStatement = new DataStatement(getDataFiles().getExternalDataSets(),src);
-        }
+        inputStatement = new InputStatement(context);
+        dataStatement = new DataStatement(context,src);
+        
         fout.write(Formatter.endline());
         fout.write(inputStatement.getStatement());
         fout.write(Formatter.endline());
@@ -110,7 +104,7 @@ public class ConverterProvider extends Lexer {
         fout.write(context.buildPredStatement().toString());
         fout.write(context.getParameterStatement().toString());
 
-        EstimationStatement estStatement = new EstimationStatement(scriptDefinition);
+        EstimationStatement estStatement = new EstimationStatement(context);
         if(!estStatement.getEstimationSteps().isEmpty()){
             fout.write(estStatement.getEstimationStatement().toString());
             fout.write(estStatement.getCovStatement());	

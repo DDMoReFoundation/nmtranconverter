@@ -9,6 +9,7 @@ import java.util.List;
 import crx.converter.engine.ScriptDefinition;
 import crx.converter.engine.parts.EstimationStep;
 import crx.converter.engine.parts.Part;
+import eu.ddmore.converters.nonmem.ConversionContext;
 import eu.ddmore.converters.nonmem.utils.Formatter;
 import eu.ddmore.libpharmml.dom.commontypes.BooleanValue;
 import eu.ddmore.libpharmml.dom.commontypes.TrueBoolean;
@@ -43,8 +44,8 @@ public class EstimationStatement {
         return covFound;
     }
 
-    public EstimationStatement(ScriptDefinition scriptDefinition){
-        estimationSteps = filterOutEstimationSteps(scriptDefinition);
+    public EstimationStatement(ConversionContext context){
+        estimationSteps = filterOutEstimationSteps(context.getScriptDefinition());
     }
 
     /**

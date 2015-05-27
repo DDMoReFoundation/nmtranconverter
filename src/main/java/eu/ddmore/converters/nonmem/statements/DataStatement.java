@@ -11,17 +11,13 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-import crx.converter.engine.ScriptDefinition;
 import crx.converter.engine.parts.EstimationStep;
-import crx.converter.engine.parts.StructuralBlock;
 import crx.converter.engine.parts.TabularDataset;
+import eu.ddmore.converters.nonmem.ConversionContext;
 import eu.ddmore.converters.nonmem.utils.Formatter;
-import eu.ddmore.converters.nonmem.utils.ParametersHelper;
-import eu.ddmore.libpharmml.dom.modeldefn.pkmacro.PKMacro;
 import eu.ddmore.libpharmml.dom.modellingsteps.DatasetMapping;
 import eu.ddmore.libpharmml.dom.modellingsteps.Estimation;
 import eu.ddmore.libpharmml.dom.modellingsteps.ExternalDataSet;
@@ -46,40 +42,41 @@ public class DataStatement{
         return dataFileName;
     }
 
-    public DataStatement(ScriptDefinition scriptDefinition, File srcFile) {
-
-        TabularDataset td = getObjectiveDatasetMap(ParametersHelper.getEstimationStep(scriptDefinition));
-
-        if (null == td) {
-            throw new IllegalStateException("TabularDataset cannot be null");
+    public DataStatement(ConversionContext context, File srcFile) {
+        
+        if (null == context) {
+            throw new IllegalStateException("conversion context cannot be null");
         }
 
-        dataFileName = generateDataFileName(srcFile.getAbsolutePath());
-    }
+        List<ExternalDataSet> dataFiles = context.retrieveExternalDataSets();
+        if(dataFiles!=null && !dataFiles.isEmpty()){
 
-    public DataStatement(List<ExternalDataSet> dataFiles, File srcFile) {
-
-        if (null == dataFiles) {
-            throw new IllegalStateException("NONMEM data set(s) cannot be null");
-        }
-        // TODO: Handle multiple data sets
-        Iterator<ExternalDataSet> dsIterator = dataFiles.iterator();
-        if (!dsIterator.hasNext()) {
-            throw new IllegalStateException("NONMEM data set(s) cannot be empty");
-        }
-        while (dsIterator.hasNext()) {
-            ExternalDataSet extDataSet = dsIterator.next();
-            // TODO: adding null check for time being as no examples for 0.3.1 or above are available right now.
-            if (extDataSet.getDataSet().getExternalFile().getPath() != null) {
-                String dataLocation = srcFile.getAbsoluteFile().getParentFile().getAbsolutePath();
-                dataFileName = extDataSet.getDataSet().getExternalFile().getPath();
-                File data = new File(dataLocation+File.separator+dataFileName);
-                if(data.exists()){
-                    setDataFile(data);
-                }else{
-                    throw new IllegalStateException("NONMEM data file doesnt exist"); 
+            // TODO: Handle multiple data sets
+            Iterator<ExternalDataSet> dsIterator = dataFiles.iterator();
+            if (!dsIterator.hasNext()) {
+                throw new IllegalStateException("External data set(s) cannot be empty");
+            }
+            while (dsIterator.hasNext()) {
+                ExternalDataSet extDataSet = dsIterator.next();
+                if (extDataSet.getDataSet().getExternalFile().getPath() != null) {
+                    String dataLocation = srcFile.getAbsoluteFile().getParentFile().getAbsolutePath();
+                    dataFileName = extDataSet.getDataSet().getExternalFile().getPath();
+                    File data = new File(dataLocation+File.separator+dataFileName);
+                    if(data.exists()){
+                        setDataFile(data);
+                    }else{
+                        throw new IllegalStateException("external data file doesnt exist"); 
+                    }
                 }
             }
+        }else {
+            TabularDataset td = getObjectiveDatasetMap(ConversionContext.getEstimationStep(context.getScriptDefinition()));
+
+            if (null == td) {
+                throw new IllegalStateException("TabularDataset cannot be null");
+            }
+
+            dataFileName = generateDataFileName(srcFile.getAbsolutePath());
         }
     }
 
@@ -159,18 +156,5 @@ public class DataStatement{
             }
         }
         return dataset;
-    }
-
-    /**
-     * TODO: get pk macro information
-     * @param structuralBlocks
-     * @return
-     */
-    private List<PKMacro> getAllPkMacros(List<StructuralBlock> structuralBlocks) {
-        List<PKMacro> pkMacros = new ArrayList<PKMacro>();
-        for(StructuralBlock structuralBlock : structuralBlocks){
-                        pkMacros.addAll(structuralBlock.getPKMacros());
-        }
-        return pkMacros;
     }
 }
