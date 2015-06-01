@@ -7,11 +7,14 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.annotation.meta.When;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
+import static org.powermock.api.mockito.PowerMockito.when;
 
 import eu.ddmore.converters.nonmem.ConversionContext;
 import eu.ddmore.converters.nonmem.statements.InputStatement;
@@ -48,13 +51,7 @@ public class DataStatementTest {
 	@Test(expected = IllegalStateException.class)
 	public void shouldThrowExceptionNullNONMEMdataSet() {
 
-		new InputStatement((ConversionContext)null);
-	}
-
-	@Test(expected = IllegalStateException.class)
-	public void shouldThrowExceptionEmptyNONMEMdataSet() {
-
-		new InputStatement(context);
+		new DataStatement((ConversionContext)null,null);
 	}
 
 	private DataSet createDataSet() {
