@@ -33,9 +33,11 @@ public class PkMacroAnalyser {
      */
     public PkMacroDetails analyse(ConversionContext context) {
         PkMacroDetails details = new PkMacroDetails();
-
         processPkMacros(context, details);
-        details.setMacroAdvanType(captureAdvanType(context, details));
+
+        if(!details.isEmpty()){
+            details.setMacroAdvanType(captureAdvanType(context, details));
+        }
 
         return details;
     }
@@ -90,7 +92,7 @@ public class PkMacroAnalyser {
         if(details.getCompartments().isEmpty() || details.getEliminations().isEmpty()){
             throw new IllegalArgumentException("The compartment missing from pk macro specified");
         }
-        
+
         String advanType = new String();
         switch(details.getPeripherals().size()){
         case 0:
@@ -186,7 +188,7 @@ public class PkMacroAnalyser {
         private final List<OralMacro> orals = new ArrayList<OralMacro>();
         private final List<PeripheralMacro> peripherals = new ArrayList<PeripheralMacro>();
 
-        private String macroAdvanType;
+        private String macroAdvanType = new String();
 
         public String getMacroAdvanType() {
             return macroAdvanType;
@@ -214,6 +216,15 @@ public class PkMacroAnalyser {
 
         public List<PeripheralMacro> getPeripherals() {
             return peripherals;
+        }
+
+        public boolean isEmpty(){
+
+            return (getCompartments().isEmpty() 
+                    && getEliminations().isEmpty() 
+                    && getIvs().isEmpty() 
+                    && getOrals().isEmpty() 
+                    && getPeripherals().isEmpty());
         }
     }
 }
