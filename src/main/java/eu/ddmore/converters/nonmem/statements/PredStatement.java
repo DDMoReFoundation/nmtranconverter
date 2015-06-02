@@ -42,11 +42,12 @@ public class PredStatement {
                 //Advan PK macros
                 predStatement.append(Formatter.endline()+Formatter.endline(Formatter.subs()+advanType+" TRANS=1"));
                 predStatement.append(getPKStatement());
+                predStatement.append(Formatter.error());
                 predStatement.append(getErrorStatement());
             }
         }else{
             //non derivative pred block
-            predStatement.append(statementName);
+            predStatement.append(Formatter.endline()+statementName);
             predStatement.append(getNonDerivativePredStatement());
         }
         return new StringBuilder(predStatement.toString().toUpperCase());
@@ -59,14 +60,13 @@ public class PredStatement {
      */
     //TODO : CHANGE IT.. Talk to Henrik and update how it should work.
     private StringBuilder getNonDerivativePredStatement() {
-        StringBuilder sb = new StringBuilder();
+        StringBuilder nonDerivativePredBlock = new StringBuilder();
         //NM_D is for DOSE
-        sb.append(Formatter.endline());
-        sb.append(Formatter.endline("IF (AMT.GT.0) NM_D=AMT"));
-        sb.append(getPredCoreStatement());
-        sb.append(getErrorStatement());
+        nonDerivativePredBlock.append(Formatter.endline("IF (AMT.GT.0) NM_D=AMT"));
+        nonDerivativePredBlock.append(getPredCoreStatement());
+        nonDerivativePredBlock.append(getErrorStatement());
 
-        return sb;
+        return nonDerivativePredBlock;
     }
 
     /**
@@ -91,6 +91,7 @@ public class PredStatement {
         DerivativePredblock.append(desBuilder.getDifferentialEquationsStatement());
         Formatter.setInDesBlock(false);
         //TODO: getAESStatement();
+        DerivativePredblock.append(Formatter.endline()+Formatter.error());
         DerivativePredblock.append(getErrorStatement(desBuilder.getDefinitionsParsingMap()));
 
         return DerivativePredblock;
@@ -113,8 +114,6 @@ public class PredStatement {
      */
     private String getErrorStatement(Map<String, String> definitionsParsingMap) {
         StringBuilder errorBlock = new StringBuilder();
-        errorBlock.append(Formatter.endline());
-        errorBlock.append(Formatter.error());
         for(ErrorStatement errorStatement: context.getErrorStatements()){
             if(definitionsParsingMap != null){
                 errorBlock.append(errorStatement.getDetailsForDES(definitionsParsingMap,context.getDerivativeVarCompSequences()));

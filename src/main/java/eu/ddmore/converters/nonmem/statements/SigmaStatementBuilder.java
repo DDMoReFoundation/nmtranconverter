@@ -15,7 +15,7 @@ import eu.ddmore.converters.nonmem.utils.Formatter.NmConstant;
 import eu.ddmore.converters.nonmem.utils.Formatter.Symbol;
 import eu.ddmore.converters.nonmem.utils.ParametersHelper;
 import eu.ddmore.converters.nonmem.utils.RandomVariableHelper;
-import eu.ddmore.libpharmml.dom.commontypes.RealValue;
+import eu.ddmore.converters.nonmem.utils.ScalarValueHandler;
 import eu.ddmore.libpharmml.dom.modeldefn.ParameterRandomVariable;
 import eu.ddmore.libpharmml.dom.modellingsteps.ParameterEstimate;
 import eu.ddmore.libpharmml.dom.uncertml.PositiveRealValueType;
@@ -31,7 +31,7 @@ public class SigmaStatementBuilder {
     public SigmaStatementBuilder(ParametersHelper parametersHelper){
         paramHelper = parametersHelper; 
     }
-    
+
     /**
      * sigma statement block will prepare sigma statement block (and default omega block if omega block is absent but sigma is present) 
      * with help of parameter helper.
@@ -148,15 +148,14 @@ public class SigmaStatementBuilder {
     private String getSigmaFromInitialEstimate(String varId, Boolean isStdDev) {
         StringBuilder sigmastatement = new StringBuilder();
 
-        for(ParameterEstimate params : paramHelper.getAllEstimationParams()){
-            String symbId = params.getSymbRef().getSymbIdRef();
+        for(ParameterEstimate paramEstimate : paramHelper.getAllEstimationParams()){
+            String symbId = paramEstimate.getSymbRef().getSymbIdRef();
             if(symbId.equals(varId)){
-                RealValue value = (RealValue) params.getInitialEstimate().getScalar().getValue();
-                sigmastatement.append(value.getValue());
-                if(params.getInitialEstimate().isFixed()){
-                    sigmastatement.append(" " + NmConstant.FIX);
+                Double value = ScalarValueHandler.getValueFromScalarRhs(paramEstimate.getInitialEstimate());
+                if(paramEstimate.getInitialEstimate().isFixed()){
+                    sigmastatement.append(value+" " + NmConstant.FIX);
                 }else{
-                    sigmastatement.append(value.getValue());
+                    sigmastatement.append(value);
                 }
                 addAttributeForStdDev(sigmastatement,isStdDev);
                 sigmastatement.append(Formatter.endline(Formatter.indent(Symbol.COMMENT+ symbId)));

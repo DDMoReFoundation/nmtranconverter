@@ -8,6 +8,7 @@ import java.util.regex.Pattern;
 
 import eu.ddmore.converters.nonmem.ConversionContext;
 import eu.ddmore.converters.nonmem.utils.Formatter;
+import eu.ddmore.converters.nonmem.utils.ScalarValueHandler;
 import eu.ddmore.libpharmml.dom.maths.FunctionCallType;
 import eu.ddmore.libpharmml.dom.maths.FunctionCallType.FunctionArgument;
 
@@ -55,17 +56,34 @@ public class ErrorStatement {
     private void setParamsFunctionCall(){
         errorType = functionCall.getSymbRef().getSymbIdRef();
         for(FunctionArgument arg : functionCall.getFunctionArgument()){
-            String param = arg.getSymbRef().getSymbIdRef();
-            if(arg.getSymbId()!=null && param!=null){
+            String paramValue = fetchParamValue(arg);
+            if(arg.getSymbId()!=null && paramValue!=null){
                 if(arg.getSymbId().equals(FunctionArg.ADDITIVE.getDescription())){
-                    additive = Formatter.addPrefix(param);
+                    additive = Formatter.addPrefix(paramValue);
                 }else if(arg.getSymbId().equals(FunctionArg.PROP.getDescription())){
-                    proportional = Formatter.addPrefix(param);
+                    proportional = Formatter.addPrefix(paramValue);
                 }else if(arg.getSymbId().equals(FunctionArg.FUNC.getDescription())){					
-                    function = Formatter.addPrefix(param);
+                    function = Formatter.addPrefix(paramValue);
                 }
             }
         }
+    }
+
+    /**
+     * We need to determine parameter value from function argument to be added to nmtran. 
+     * It could be either variable name or value provided.
+     * 
+     * @param arg
+     * @return
+     */
+    private String fetchParamValue(FunctionArgument arg) {
+        String paramValue = new String();
+        if(arg.getSymbRef()!=null){
+            paramValue = arg.getSymbRef().getSymbIdRef();
+        }else if(arg.getScalar()!=null){
+            paramValue = ScalarValueHandler.getValue(arg.getScalar().getValue()).toString();
+        }
+        return paramValue;
     }
 
     /**

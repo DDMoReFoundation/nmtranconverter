@@ -22,8 +22,8 @@ import eu.ddmore.libpharmml.dom.modeldefn.ParameterRandomEffect;
  * This class creates individual parameter definition from individual parameter type.
  */
 public class IndividualDefinitionEmitter {
-    private static final String COMMENT_CHAR = ";";
     private final ConversionContext context;
+    private String logType;
 
     public IndividualDefinitionEmitter(ConversionContext  context) {
         this.context = context;
@@ -42,19 +42,20 @@ public class IndividualDefinitionEmitter {
         String variableSymbol = param.getSymbId();     
         if (param.getAssign() != null) {
             statement = getIndivDefinitionForAssign(param);
-        } 
-        else if (param.getGaussianModel() != null) {
+        }else if (param.getGaussianModel() != null) {
 
             GaussianModel gaussianModel = param.getGaussianModel();
-            String logType = getLogType(gaussianModel.getTransformation());
+
             String pop_param_symbol = context.getParameterHelper().getPopSymbol(gaussianModel);
             variableSymbol = (pop_param_symbol.isEmpty())?variableSymbol:context.getParameterHelper().getMUSymbol(pop_param_symbol);
+            identifyLogType(gaussianModel.getTransformation());
 
             statement.append(String.format("%s = ", variableSymbol));
 
             if(gaussianModel.getLinearCovariate()!=null){
                 if (!pop_param_symbol.isEmpty()) {
-                    statement.append(String.format(logType+"(%s)", Formatter.addPrefix(pop_param_symbol)));
+                    String format = (logType.isEmpty())?("%s"):(logType+"(%s)");
+                    statement.append(String.format(format, Formatter.addPrefix(pop_param_symbol)));
                 }
 
                 List<CovariateRelation> covariates = gaussianModel.getLinearCovariate().getCovariate();
@@ -65,25 +66,43 @@ public class IndividualDefinitionEmitter {
                         statement.append(getCovariateForIndividualDefinition(covariate, type));
                     }
                 }
-            }
-            else if (gaussianModel.getGeneralCovariate() != null) {
+            } else if (gaussianModel.getGeneralCovariate() != null) {
                 GeneralCovariate generalCov = gaussianModel.getGeneralCovariate(); 
                 String assignment = context.parse(generalCov);
                 statement.append(assignment);
             }
-            statement.append(Formatter.endline(COMMENT_CHAR));
+            statement.append(Formatter.endline(Symbol.COMMENT.toString()));
+            statement.append(Formatter.endline(arrangeEquationStatement(param.getSymbId(), variableSymbol, gaussianModel)));
+        }
 
-            StringBuilder etas = addEtasStatementsToIndivParamDef(gaussianModel.getRandomEffects());
+        return statement.toString();
+    }
+
+    /**
+     * Arrange resulting equation statement in the way we would want to add it to nmtran.
+     * TODO: Verify with Henrik : If it is logarithmic then exponential and other cases will have it without exponential.
+     * 
+     * @param paramId
+     * @param variableSymbol
+     * @param gaussianModel
+     * @return
+     */
+    private String arrangeEquationStatement(String paramId, String variableSymbol, GaussianModel gaussianModel) {
+        StringBuilder statement = new StringBuilder();
+        String etas = addEtasStatementsToIndivParamDef(gaussianModel.getRandomEffects());
+
+        if(!logType.isEmpty()){
             if (logType.equals(NmConstant.LOG.toString())) {
                 String format = Formatter.endline("%s = EXP(%s %s);");
-                statement.append(String.format(format, Formatter.addPrefix(param.getSymbId()), variableSymbol,etas));
+                statement.append(String.format(format, Formatter.addPrefix(paramId), variableSymbol,etas));
             } else if (logType.equals(NmConstant.LOGIT.toString())) {
                 String format = Formatter.endline("%s = 1./(1 + exp(-%s));");
-                statement.append(String.format(format, Formatter.addPrefix(param.getSymbId()), variableSymbol));
+                statement.append(String.format(format, Formatter.addPrefix(paramId), variableSymbol));
             }
+        }else{
+            String format = Formatter.endline("%s = %s %s"+Symbol.COMMENT);
+            statement.append(String.format(format, Formatter.addPrefix(paramId), variableSymbol,etas));
         }
-        statement.append(Formatter.endline());
-
         return statement.toString();
     }
 
@@ -150,7 +169,6 @@ public class IndividualDefinitionEmitter {
     private StringBuilder getIndivDefinitionForAssign(IndividualParameter ip) {
         StringBuilder statement = new StringBuilder();
         if (ip.getAssign() != null) {
-            statement.append(Formatter.endline());
             statement.append(String.format("%s = ", ip.getSymbId()));
             String assignment = context.parse(new Object(), context.getLexer().getStatement(ip.getAssign()));
             statement.append(Formatter.endline(assignment+Symbol.COMMENT));
@@ -159,17 +177,19 @@ public class IndividualDefinitionEmitter {
     }
 
     /**
-     * Return log type in constant format depending on transformation type
+     * Identifies and sets log type in constant format depending on transformation type
      * This method is mainly used to help creation of individual parameter definitions.
      * 
      * @param transform
      * @return
      */
-    private String getLogType(LhsTransformation transform) {
-        if (transform == LhsTransformation.LOG){
-            return NmConstant.LOG.toString();
+    private void identifyLogType(LhsTransformation transform) {
+        if(transform == null){
+            logType = new String();
+        }else if (transform == LhsTransformation.LOG){
+            logType = NmConstant.LOG.toString();
         }else if (transform == LhsTransformation.LOGIT){
-            return NmConstant.LOGIT.toString();
+            logType = NmConstant.LOGIT.toString();
         }else{
             throw new  UnsupportedOperationException("Tranformation type "+transform.name()+" not yet supported");
         }
@@ -180,7 +200,7 @@ public class IndividualDefinitionEmitter {
      * @param random_effects
      * @return
      */
-    private StringBuilder addEtasStatementsToIndivParamDef(List<ParameterRandomEffect> random_effects) {
+    private String addEtasStatementsToIndivParamDef(List<ParameterRandomEffect> random_effects) {
         StringBuilder etas = new StringBuilder();
         if (random_effects != null && !random_effects.isEmpty()) {
             for (ParameterRandomEffect random_effect : random_effects) {
@@ -189,7 +209,7 @@ public class IndividualDefinitionEmitter {
                 etas.append("ETA("+context.retrieveOrderedEtas().get(random_effect.getSymbRef().get(0).getSymbIdRef())+")");
             }
         }
-        return etas;
+        return etas.toString();
     }
 
     /**
@@ -201,5 +221,9 @@ public class IndividualDefinitionEmitter {
         String symbol = variable.getSymbId().toUpperCase();
         symbol = Formatter.getFormattedSymbol(symbol);
         return symbol;
+    }
+
+    public String getLogType() {
+        return logType;
     }
 }

@@ -23,6 +23,8 @@ public final class ScalarValueHandler {
             return getValue(rhs.getScalar().getValue());
         }else if(rhs.getEquation().getScalar()!=null){
             return getValue(rhs.getEquation().getScalar().getValue());
+        }else if(rhs.getEquation().getUniop()!=null){
+            return getValue(rhs.getEquation().getUniop().getValue());
         }else{
             throw new IllegalArgumentException("Scalar value doesn't exist as expected.");
         }

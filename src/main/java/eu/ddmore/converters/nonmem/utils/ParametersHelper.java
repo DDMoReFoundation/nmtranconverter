@@ -11,6 +11,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
+import com.google.common.base.Preconditions;
+
 import crx.converter.engine.ScriptDefinition;
 import crx.converter.engine.parts.EstimationStep;
 import crx.converter.engine.parts.EstimationStep.FixedParameter;
@@ -22,8 +24,10 @@ import eu.ddmore.converters.nonmem.statements.ThetaStatement;
 import eu.ddmore.converters.nonmem.utils.Formatter.NmConstant;
 import eu.ddmore.libpharmml.dom.commontypes.Rhs;
 import eu.ddmore.libpharmml.dom.commontypes.ScalarRhs;
+import eu.ddmore.libpharmml.dom.maths.Equation;
 import eu.ddmore.libpharmml.dom.modeldefn.IndividualParameter;
 import eu.ddmore.libpharmml.dom.modeldefn.IndividualParameter.GaussianModel;
+import eu.ddmore.libpharmml.dom.modeldefn.IndividualParameter.GaussianModel.GeneralCovariate;
 import eu.ddmore.libpharmml.dom.modeldefn.IndividualParameter.GaussianModel.LinearCovariate;
 import eu.ddmore.libpharmml.dom.modeldefn.ParameterRandomEffect;
 import eu.ddmore.libpharmml.dom.modeldefn.ParameterRandomVariable;
@@ -346,13 +350,31 @@ public class ParametersHelper {
     public String getPopSymbol(final GaussianModel gaussianModel) {
         LinearCovariate lcov =  gaussianModel.getLinearCovariate();
         if(lcov!=null && lcov.getPopulationParameter()!=null){
-            Rhs assign = lcov.getPopulationParameter().getAssign();
-            if(assign.getSymbRef()!=null)
-                return assign.getSymbRef().getSymbIdRef();
-            else
-                return assign.getEquation().getSymbRef().getSymbIdRef();		
+            return getSymbIdFromRhs(lcov.getPopulationParameter().getAssign());
+        }else if(gaussianModel.getGeneralCovariate()!=null){
+            GeneralCovariate generalCov = gaussianModel.getGeneralCovariate();
+            return getSymbIdFromRhs(generalCov.getAssign());
         }else{
-            throw new IllegalArgumentException("Pop symbol missing.The population parameter is not well formed.");
+          throw new IllegalArgumentException("Pop symbol missing.The population parameter is not well formed.");
+        }
+    }
+
+    /**
+     * Retrieves symbol from the symbId associated with Rhs. 
+     * If Rhs doesnt have symbId then looks for it in equation.
+     * 
+     * @param assign
+     * @return variable symbol
+     */
+    private String getSymbIdFromRhs(Rhs assign){
+        Preconditions.checkNotNull(assign);
+        Equation eq = assign.getEquation();
+        if(assign.getSymbRef()!=null){
+            return assign.getSymbRef().getSymbIdRef();
+        }else if(eq!=null && eq.getSymbRef()!=null){
+            return eq.getSymbRef().getSymbIdRef();
+        }else {
+            throw new IllegalArgumentException("Variable symbol missing in assignment. The population parameter is not well formed.");
         }
     }
 
@@ -368,6 +390,10 @@ public class ParametersHelper {
         }
     }
 
+    /**
+     * Adds identified sigma variables to verified sigmas list. 
+     * @param sigmaVar
+     */
     public void addToSigmaVerificationListIfNotExists(String sigmaVar){
         if(!verifiedSigmas.contains(sigmaVar))
             verifiedSigmas.add(sigmaVar);
