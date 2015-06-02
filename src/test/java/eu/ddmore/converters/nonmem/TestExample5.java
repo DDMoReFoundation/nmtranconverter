@@ -39,7 +39,7 @@ public class TestExample5 extends TestBase {
 
         ConversionReport report = c.performConvert(f, dir);
         assertNotNull(report);
-        assertEquals(report.getReturnCode(), ConversionCode.SUCCESS);
+        assertEquals(ConversionCode.SUCCESS, report.getReturnCode());
         List<ConversionDetail> details = report.getDetails(Severity.INFO);
         assertFalse(details.isEmpty());
         assertNotNull(details.get(0));
