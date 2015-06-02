@@ -43,7 +43,7 @@ public class DataStatement{
     }
 
     public DataStatement(ConversionContext context, File srcFile) {
-        
+
         if (null == context) {
             throw new IllegalStateException("conversion context cannot be null");
         }
