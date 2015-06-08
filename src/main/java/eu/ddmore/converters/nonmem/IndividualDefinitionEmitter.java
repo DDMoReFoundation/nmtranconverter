@@ -23,7 +23,6 @@ import eu.ddmore.libpharmml.dom.modeldefn.ParameterRandomEffect;
  */
 public class IndividualDefinitionEmitter {
     private final ConversionContext context;
-    private String logType;
 
     public IndividualDefinitionEmitter(ConversionContext  context) {
         this.context = context;
@@ -46,9 +45,10 @@ public class IndividualDefinitionEmitter {
 
             GaussianModel gaussianModel = param.getGaussianModel();
 
-            String pop_param_symbol = context.getParameterHelper().getPopSymbol(gaussianModel);
-            variableSymbol = (pop_param_symbol.isEmpty())?variableSymbol:context.getParameterHelper().getMUSymbol(pop_param_symbol);
-            identifyLogType(gaussianModel.getTransformation());
+            String pop_param_symbol = context.getOrderedThetasHandler().getPopSymbol(gaussianModel);
+            variableSymbol = (pop_param_symbol.isEmpty())?variableSymbol:context.getOrderedThetasHandler().getMUSymbol(pop_param_symbol);
+
+            String logType = identifyLogType(gaussianModel.getTransformation());
 
             statement.append(String.format("%s = ", variableSymbol));
 
@@ -72,7 +72,7 @@ public class IndividualDefinitionEmitter {
                 statement.append(assignment);
             }
             statement.append(Formatter.endline(Symbol.COMMENT.toString()));
-            statement.append(Formatter.endline(arrangeEquationStatement(param.getSymbId(), variableSymbol, gaussianModel)));
+            statement.append(Formatter.endline(arrangeEquationStatement(param.getSymbId(), variableSymbol, gaussianModel, logType)));
         }
 
         return statement.toString();
@@ -85,9 +85,10 @@ public class IndividualDefinitionEmitter {
      * @param paramId
      * @param variableSymbol
      * @param gaussianModel
+     * @param logType 
      * @return
      */
-    private String arrangeEquationStatement(String paramId, String variableSymbol, GaussianModel gaussianModel) {
+    private String arrangeEquationStatement(String paramId, String variableSymbol, GaussianModel gaussianModel, String logType) {
         StringBuilder statement = new StringBuilder();
         String etas = addEtasStatementsToIndivParamDef(gaussianModel.getRandomEffects());
 
@@ -183,13 +184,13 @@ public class IndividualDefinitionEmitter {
      * @param transform
      * @return
      */
-    private void identifyLogType(LhsTransformation transform) {
+    private String identifyLogType(LhsTransformation transform) {
         if(transform == null){
-            logType = new String();
+            return new String();
         }else if (transform == LhsTransformation.LOG){
-            logType = NmConstant.LOG.toString();
+            return NmConstant.LOG.toString();
         }else if (transform == LhsTransformation.LOGIT){
-            logType = NmConstant.LOGIT.toString();
+            return NmConstant.LOGIT.toString();
         }else{
             throw new  UnsupportedOperationException("Tranformation type "+transform.name()+" not yet supported");
         }
@@ -221,9 +222,5 @@ public class IndividualDefinitionEmitter {
         String symbol = variable.getSymbId().toUpperCase();
         symbol = Formatter.getFormattedSymbol(symbol);
         return symbol;
-    }
-
-    public String getLogType() {
-        return logType;
     }
 }

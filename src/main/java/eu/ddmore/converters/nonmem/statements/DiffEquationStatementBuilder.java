@@ -30,7 +30,6 @@ public class DiffEquationStatementBuilder {
      */
     public StringBuilder getDifferentialEquationsStatement() {
         StringBuilder diffEqStatementBlock = new StringBuilder();
-        diffEqStatementBlock.append(Formatter.des());
         for (DerivativeVariable variableType : context.getDerivativeVars()){
             String variable = Formatter.addPrefix(variableType.getSymbId());
 

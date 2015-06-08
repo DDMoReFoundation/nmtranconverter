@@ -7,7 +7,7 @@ import eu.ddmore.libpharmml.dom.commontypes.ScalarRhs;
 
 
 public class ParameterStatementHandler {
-    
+
     /**
      * Prepares Theta and omega parameters according to the initial estimates, lower and upper bounds provided.
      * 
@@ -17,7 +17,7 @@ public class ParameterStatementHandler {
      */
     public static StringBuilder addParameter(Parameter param) {
         StringBuilder statement = new StringBuilder();
-        String description = param.getSymbId();
+        String description = param.getSymbId().toUpperCase();
 
         ScalarRhs lowerBound = param.getLowerBound();
         ScalarRhs upperBound= param.getUpperBound(); 

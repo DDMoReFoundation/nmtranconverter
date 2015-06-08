@@ -11,8 +11,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-import com.google.common.base.Preconditions;
-
 import crx.converter.engine.ScriptDefinition;
 import crx.converter.engine.parts.EstimationStep;
 import crx.converter.engine.parts.EstimationStep.FixedParameter;
@@ -21,15 +19,7 @@ import eu.ddmore.converters.nonmem.ConversionContext;
 import eu.ddmore.converters.nonmem.statements.OmegaBlockStatement;
 import eu.ddmore.converters.nonmem.statements.OmegaStatement;
 import eu.ddmore.converters.nonmem.statements.ThetaStatement;
-import eu.ddmore.converters.nonmem.utils.Formatter.NmConstant;
-import eu.ddmore.libpharmml.dom.commontypes.Rhs;
 import eu.ddmore.libpharmml.dom.commontypes.ScalarRhs;
-import eu.ddmore.libpharmml.dom.maths.Equation;
-import eu.ddmore.libpharmml.dom.modeldefn.IndividualParameter;
-import eu.ddmore.libpharmml.dom.modeldefn.IndividualParameter.GaussianModel;
-import eu.ddmore.libpharmml.dom.modeldefn.IndividualParameter.GaussianModel.GeneralCovariate;
-import eu.ddmore.libpharmml.dom.modeldefn.IndividualParameter.GaussianModel.LinearCovariate;
-import eu.ddmore.libpharmml.dom.modeldefn.ParameterRandomEffect;
 import eu.ddmore.libpharmml.dom.modeldefn.ParameterRandomVariable;
 import eu.ddmore.libpharmml.dom.modeldefn.SimpleParameter;
 import eu.ddmore.libpharmml.dom.modellingsteps.ParameterEstimate;
@@ -39,11 +29,10 @@ import eu.ddmore.libpharmml.dom.modellingsteps.ParameterEstimate;
  * 
  */
 public class ParametersHelper {
-    private static final String MU = "MU_";
     private final LinkedHashMap<String, ThetaStatement> thetaStatements = new LinkedHashMap<String, ThetaStatement>();
     private final LinkedHashMap<String, OmegaStatement> omegaStatements = new LinkedHashMap<String, OmegaStatement>();
 
-    private final TreeMap<Integer, String> thetasToEtaOrder = new TreeMap<Integer, String>();
+    private TreeMap<Integer, String> thetasToEtaOrder = new TreeMap<Integer, String>();
     private ScriptDefinition scriptDefinition;
     private List<SimpleParameter> SimpleParameters = new ArrayList<SimpleParameter>();
 
@@ -90,7 +79,9 @@ public class ParametersHelper {
 
         //setOmegaBlocks before omega params and theta
         omegaBlockStatement.setEtaToOmagaMap(orderedEtas);
-        createOrderedThetasToEta(orderedEtas);
+        OrderedThetasHandler thetasHandler = new OrderedThetasHandler(scriptDefinition);
+        thetasHandler.createOrderedThetasToEta(orderedEtas);
+        thetasToEtaOrder = thetasHandler.getOrderedThetas();
 
         //need to set omegas and sigma before setting theta params
         omegaBlockStatement.createOmegaBlocks();
@@ -172,35 +163,6 @@ public class ParametersHelper {
     }
 
     /**
-     * This method will add MU statements as per ordered theta map.
-     * It will be added after individual parameter definitions.
-     * @return
-     */
-    public StringBuilder addMUStatements(){
-        StringBuilder muStatement = new StringBuilder();
-        for(Integer thetaOrder : thetasToEtaOrder.keySet()){
-            muStatement.append(Formatter.endline(MU+thetaOrder+" = "+NmConstant.LOG+"("+thetasToEtaOrder.get(thetaOrder)+")" ));
-        }
-
-        return muStatement;
-    }
-
-    /**
-     * Add MU symbol for population parameter symbol
-     * @param popSymbol
-     * @return
-     */
-    public String getMUSymbol(String popSymbol){
-        for(Integer thetaOrder: thetasToEtaOrder.keySet()){
-            if(popSymbol.equals(thetasToEtaOrder.get(thetaOrder))){
-                return new String(MU+thetaOrder);
-            }
-        }
-        return new String(); 
-
-    }
-
-    /**
      * Get omega object from random variable provided.
      * This will set omega symb id as well as bounds if there are any.
      * 
@@ -232,7 +194,7 @@ public class ParametersHelper {
      */
     private ScalarRhs getScalarRhsForSymbol(String symbId) {
         ScalarRhs scalar = null;
-        
+
         if(simpleParams.containsKey(symbId)){
             SimpleParameter param = simpleParams.get(symbId);
             if(simpleParams.get(symbId).getAssign().getScalar()!=null){
@@ -302,80 +264,6 @@ public class ParametersHelper {
             allParams.add(fixedParam.pe);
         }
         return allParams;
-    }
-
-    /**
-     * Create ordered thetas to eta map from ordered etas map.
-     * The order is used to add Thetas in order of thetas.
-     */
-    public void createOrderedThetasToEta(Map<String, Integer> orderedEtas){        
-        for(Integer nextEtaOrder : orderedEtas.values()){
-            if(thetasToEtaOrder.get(nextEtaOrder)==null || thetasToEtaOrder.get(nextEtaOrder).isEmpty()){
-                addToThetasOrderMap(orderedEtas, nextEtaOrder);
-            }
-        }
-    }
-
-    /**
-     * Creates ordered thetas list with help of etasOrderMap and individual parameters
-     * @param orderedEtas
-     * @param nextEtaOrder
-     */
-    private void addToThetasOrderMap(Map<String, Integer> orderedEtas, Integer nextEtaOrder) {
-        for(ParameterBlock block : scriptDefinition.getParameterBlocks()){
-            for(IndividualParameter parameterType: block.getIndividualParameters()){
-                final GaussianModel gaussianModel = parameterType.getGaussianModel();
-                if (gaussianModel != null) {
-                    String popSymbol = getPopSymbol(gaussianModel);
-                    List<ParameterRandomEffect> randomEffects = gaussianModel.getRandomEffects();
-                    for (ParameterRandomEffect randomEffect : randomEffects) {
-                        if (randomEffect == null) continue;
-                        String eta = randomEffect.getSymbRef().get(0).getSymbIdRef();
-                        if(orderedEtas.get(eta).equals(nextEtaOrder)){
-                            thetasToEtaOrder.put(nextEtaOrder, popSymbol);
-                            return;
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    /**
-     * This method gets population parameter symbol id from linear covariate of a gaussian model.
-     * 
-     * @param gaussianModel
-     * @return
-     */
-    public String getPopSymbol(final GaussianModel gaussianModel) {
-        LinearCovariate lcov =  gaussianModel.getLinearCovariate();
-        if(lcov!=null && lcov.getPopulationParameter()!=null){
-            return getSymbIdFromRhs(lcov.getPopulationParameter().getAssign());
-        }else if(gaussianModel.getGeneralCovariate()!=null){
-            GeneralCovariate generalCov = gaussianModel.getGeneralCovariate();
-            return getSymbIdFromRhs(generalCov.getAssign());
-        }else{
-          throw new IllegalArgumentException("Pop symbol missing.The population parameter is not well formed.");
-        }
-    }
-
-    /**
-     * Retrieves symbol from the symbId associated with Rhs. 
-     * If Rhs doesnt have symbId then looks for it in equation.
-     * 
-     * @param assign
-     * @return variable symbol
-     */
-    private String getSymbIdFromRhs(Rhs assign){
-        Preconditions.checkNotNull(assign);
-        Equation eq = assign.getEquation();
-        if(assign.getSymbRef()!=null){
-            return assign.getSymbRef().getSymbIdRef();
-        }else if(eq!=null && eq.getSymbRef()!=null){
-            return eq.getSymbRef().getSymbIdRef();
-        }else {
-            throw new IllegalArgumentException("Variable symbol missing in assignment. The population parameter is not well formed.");
-        }
     }
 
     private List<ParameterRandomVariable> getRandomVarsFromParameterBlock() {

@@ -28,6 +28,7 @@ import eu.ddmore.converters.nonmem.statements.SigmaStatementBuilder;
 import eu.ddmore.converters.nonmem.utils.Formatter;
 import eu.ddmore.converters.nonmem.utils.Formatter.Block;
 import eu.ddmore.converters.nonmem.utils.OrderedEtasHandler;
+import eu.ddmore.converters.nonmem.utils.OrderedThetasHandler;
 import eu.ddmore.converters.nonmem.utils.ParametersHelper;
 import eu.ddmore.libpharmml.dom.commontypes.DerivativeVariable;
 import eu.ddmore.libpharmml.dom.commontypes.ScalarRhs;
@@ -51,6 +52,7 @@ public class ConversionContext {
     private final IParser parser;
     private final ILexer lexer;
     private final ParametersHelper parameterHelper;
+    private final OrderedThetasHandler orderedThetasHandler;
     private final List<String> thetas = new ArrayList<String>();
     private final List<ErrorStatement> errorStatements = new ArrayList<ErrorStatement>();
     private final List<DerivativeVariable> derivativeVars = new ArrayList<DerivativeVariable>();
@@ -61,7 +63,7 @@ public class ConversionContext {
         this.lexer = lexer;
 
         this.parameterHelper = new ParametersHelper(lexer.getScriptDefinition());
-
+        this.orderedThetasHandler = new OrderedThetasHandler(getScriptDefinition());
         initialise();
     }
 
@@ -76,6 +78,7 @@ public class ConversionContext {
         if (lexer.getModelParameters().isEmpty()) {
             throw new IllegalArgumentException("Cannot find simple parameters for the pharmML file.");
         }
+        orderedThetasHandler.createOrderedThetasToEta(retrieveOrderedEtas());
         parameterHelper.initialiseAllParameters(lexer.getModelParameters(), retrieveOrderedEtas());
         setThetaAssigments();
 
@@ -276,7 +279,7 @@ public class ConversionContext {
         }
         return varAmount;
     }
-    
+
     /**
      * This method returns first estimation step found in steps map from script definition.
      * 
@@ -313,7 +316,7 @@ public class ConversionContext {
     public String parse(Object context){
         return parse(context, lexer.getStatement(context));
     }
-    
+
     /**
      * Get external dataSets from list of data files 
      * @return
@@ -351,6 +354,10 @@ public class ConversionContext {
 
     public ILexer getLexer() {
         return lexer;
+    }
+
+    public OrderedThetasHandler getOrderedThetasHandler(){
+        return orderedThetasHandler;
     }
 
     public Map<String, Integer> retrieveOrderedEtas() {
