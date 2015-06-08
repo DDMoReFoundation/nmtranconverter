@@ -22,7 +22,7 @@ public class OrderedEtasHandler {
 
     private final List<String> allEtas = new ArrayList<String>();
     private final Map<String, Integer> orderedEtas = new LinkedHashMap<String, Integer>();
-    
+
     ScriptDefinition scriptDefinition;
 
     public OrderedEtasHandler(ScriptDefinition scriptDefinition) {
@@ -37,7 +37,7 @@ public class OrderedEtasHandler {
      * @return 
      */
     private Map<String, Integer> createOrderedEtasMap(){
-        
+
         //We need to have this as list as this will retains order of etas
         List<String> etasOrder = getAllEtas();
 
@@ -63,7 +63,7 @@ public class OrderedEtasHandler {
 
         return orderedEtas;
     }
-    
+
     /**
      * Adds correlations reference to map provided for eta to correlations map.
      * 
@@ -148,7 +148,7 @@ public class OrderedEtasHandler {
     public List<String> getAllEtas() {
         return allEtas;
     }
-    
+
     public Map<String, Integer> getOrderedEtas() {
         return orderedEtas;
     }
