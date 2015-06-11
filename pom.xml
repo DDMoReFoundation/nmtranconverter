@@ -35,6 +35,15 @@
 	</properties>
 
 	<dependencies>
+        <dependency>
+            <groupId>eu.ddmore.pharmml</groupId>
+            <artifactId>libPharmML</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>eu.ddmore.pharmml</groupId>
+            <artifactId>libPharmML-PKMacro</artifactId>
+        </dependency>
+        
 		<dependency>
 			<groupId>cyprotex</groupId>
 			<artifactId>converter-engine</artifactId>
@@ -50,10 +59,6 @@
 			<artifactId>test-models</artifactId>
 			<version>0.1.2-SNAPSHOT</version>
 			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>commons-io</groupId>
-			<artifactId>commons-io</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>org.powermock</groupId>
