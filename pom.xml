@@ -14,19 +14,6 @@
 	<name>PharmML to Nonmem Converter</name>
 	<description>PharmML to Nonmem Converter (demo only)</description>
 
-	<build>
-		<plugins>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-compiler-plugin</artifactId>
-				<configuration>
-					<source>1.7</source>
-					<target>1.7</target>
-				</configuration>
-			</plugin>
-		</plugins>
-	</build>
-
 	<repositories>
 		<!-- Note that this repository definition won't be used internally at Mango 
 			since the Maven settings.xml specifies that our Artifactory server is the 
