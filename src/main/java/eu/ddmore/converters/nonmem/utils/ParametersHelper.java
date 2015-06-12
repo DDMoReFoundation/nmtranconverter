@@ -11,15 +11,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
+import javax.xml.bind.JAXBElement;
+
 import crx.converter.engine.ScriptDefinition;
 import crx.converter.engine.parts.EstimationStep;
 import crx.converter.engine.parts.EstimationStep.FixedParameter;
 import crx.converter.engine.parts.ParameterBlock;
-import eu.ddmore.converters.nonmem.ConversionContext;
 import eu.ddmore.converters.nonmem.statements.OmegaBlockStatement;
 import eu.ddmore.converters.nonmem.statements.OmegaStatement;
 import eu.ddmore.converters.nonmem.statements.ThetaStatement;
 import eu.ddmore.libpharmml.dom.commontypes.ScalarRhs;
+import eu.ddmore.libpharmml.dom.commontypes.SymbolRef;
 import eu.ddmore.libpharmml.dom.modeldefn.ParameterRandomVariable;
 import eu.ddmore.libpharmml.dom.modeldefn.SimpleParameter;
 import eu.ddmore.libpharmml.dom.modellingsteps.ParameterEstimate;
@@ -71,7 +73,7 @@ public class ParametersHelper {
             }
         }
 
-        final EstimationStep estimationStep = ConversionContext.getEstimationStep(scriptDefinition);
+        final EstimationStep estimationStep = ScriptDefinitionAccessor.getEstimationStep(scriptDefinition);
         parametersToEstimate = (estimationStep.hasParametersToEstimate())?estimationStep.getParametersToEstimate(): new ArrayList<ParameterEstimate>();
         fixedParameters = (estimationStep.hasFixedParameters())?estimationStep.getFixedParameters(): new ArrayList<FixedParameter>();
         // Find any bounds and initial estimates
@@ -198,10 +200,26 @@ public class ParametersHelper {
         if(simpleParams.containsKey(symbId)){
             SimpleParameter param = simpleParams.get(symbId);
             if(simpleParams.get(symbId).getAssign().getScalar()!=null){
-                scalar = ConversionContext.createScalarRhs(symbId, param.getAssign().getScalar());    
+                scalar = createScalarRhs(symbId, param.getAssign().getScalar());    
             }
         }
         return scalar;
+    }
+    
+    /**
+     * This method will create scalar Rhs object for a symbol from the scalar value provided.
+     *  
+     * @param symbol
+     * @param scalar
+     * @return ScalarRhs object
+     */
+    private ScalarRhs createScalarRhs(String symbol,JAXBElement<?> scalar) {
+        ScalarRhs scalarRhs = new ScalarRhs();
+        scalarRhs.setScalar(scalar);
+        SymbolRef symbRef = new SymbolRef();
+        symbRef.setId(symbol);
+        scalarRhs.setSymbRef(symbRef);
+        return scalarRhs;
     }
 
     /**

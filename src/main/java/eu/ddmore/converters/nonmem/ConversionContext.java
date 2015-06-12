@@ -6,18 +6,13 @@ package eu.ddmore.converters.nonmem;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import javax.xml.bind.JAXBElement;
 import crx.converter.engine.ScriptDefinition;
-import crx.converter.engine.parts.EstimationStep;
 import crx.converter.engine.parts.ObservationBlock;
-import crx.converter.engine.parts.ParameterBlock;
-import crx.converter.engine.parts.Part;
 import crx.converter.engine.parts.StructuralBlock;
 import crx.converter.spi.ILexer;
 import crx.converter.spi.IParser;
@@ -31,15 +26,11 @@ import eu.ddmore.converters.nonmem.utils.OrderedEtasHandler;
 import eu.ddmore.converters.nonmem.utils.OrderedThetasHandler;
 import eu.ddmore.converters.nonmem.utils.ParametersHelper;
 import eu.ddmore.libpharmml.dom.commontypes.DerivativeVariable;
-import eu.ddmore.libpharmml.dom.commontypes.ScalarRhs;
-import eu.ddmore.libpharmml.dom.commontypes.SymbolRef;
 import eu.ddmore.libpharmml.dom.maths.FunctionCallType;
 import eu.ddmore.libpharmml.dom.modeldefn.GaussianObsError;
 import eu.ddmore.libpharmml.dom.modeldefn.GaussianObsError.ErrorModel;
-import eu.ddmore.libpharmml.dom.modeldefn.GaussianObsError.ResidualError;
 import eu.ddmore.libpharmml.dom.modeldefn.GeneralObsError;
 import eu.ddmore.libpharmml.dom.modeldefn.ObservationError;
-import eu.ddmore.libpharmml.dom.modeldefn.ParameterRandomVariable;
 import eu.ddmore.libpharmml.dom.modellingsteps.ExternalDataSet;
 
 /**
@@ -191,56 +182,6 @@ public class ConversionContext {
         return errorStatements;
     }
 
-    public static Set<ParameterRandomVariable> getEpsilonRandomVariables(ScriptDefinition scriptDefinition) {
-        Set<ParameterRandomVariable> epsilonRandomVariables = new HashSet<>();
-        List<ResidualError> residualErrors = retrieveResidualErrors(scriptDefinition);
-
-        for(ParameterBlock paramBlock: scriptDefinition.getParameterBlocks()){
-            if(residualErrors.isEmpty() || paramBlock.getRandomVariables().isEmpty()){
-                break;
-            }
-            for(ResidualError error : residualErrors){
-                String errorName = error.getSymbRef().getSymbIdRef();
-                for(ParameterRandomVariable randomVar : paramBlock.getRandomVariables()){
-                    if(randomVar.getSymbId().equals(errorName)){
-                        epsilonRandomVariables.add(randomVar);
-                    }
-                }
-            }
-        }
-        return epsilonRandomVariables;
-    }
-
-    private static List<ResidualError> retrieveResidualErrors(ScriptDefinition scriptDefinition){
-        List<ResidualError> residualErrors = new ArrayList<>() ;
-        for(ObservationBlock block : scriptDefinition.getObservationBlocks()){
-            ObservationError errorType = block.getObservationError();
-            if(errorType instanceof GaussianObsError){
-                GaussianObsError error = (GaussianObsError) errorType;
-                if(error.getResidualError()!=null){
-                    residualErrors.add(error.getResidualError());
-                }
-            }
-        }
-        return residualErrors;
-    }
-
-    /**
-     * This method will create scalar Rhs object for a symbol from the scalar value provided.
-     *  
-     * @param symbol
-     * @param scalar
-     * @return ScalarRhs object
-     */
-    public static ScalarRhs createScalarRhs(String symbol,JAXBElement<?> scalar) {
-        ScalarRhs scalarRhs = new ScalarRhs();
-        scalarRhs.setScalar(scalar);
-        SymbolRef symbRef = new SymbolRef();
-        symbRef.setId(symbol);
-        scalarRhs.setSymbRef(symbRef);
-        return scalarRhs;
-    }
-
     /**
      * Prepares and returns error statement for the gaussian observation error.
      * 
@@ -263,35 +204,6 @@ public class ConversionContext {
             derivativeVarCompSequences.put(variable, Integer.toString(i++));
         }
         return derivativeVarCompSequences;
-    }
-
-    /**
-     * This method gets variable amount from compartment and returns it.
-     * 
-     * @param variable
-     * @return
-     */
-    public static String getVarAmountFromCompartment(String variable, Map<String,String> derivativeVariableMap) {
-        String varAmount = new String(); 
-        varAmount = derivativeVariableMap.get(variable);
-        if(!varAmount.isEmpty()){
-            varAmount = "A("+varAmount+")";
-        }
-        return varAmount;
-    }
-
-    /**
-     * This method returns first estimation step found in steps map from script definition.
-     * 
-     * @param scriptDefinition
-     * @return
-     */
-    public static EstimationStep getEstimationStep(ScriptDefinition scriptDefinition) {
-        EstimationStep step = null;
-        for (Part nextStep : scriptDefinition.getStepsMap().values()) {
-            if (nextStep instanceof EstimationStep) step = (EstimationStep) nextStep; 
-        }
-        return step;
     }
 
     /**

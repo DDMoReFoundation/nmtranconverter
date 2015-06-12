@@ -33,7 +33,7 @@ public class DiffEquationStatementBuilder {
         for (DerivativeVariable variableType : context.getDerivativeVars()){
             String variable = Formatter.addPrefix(variableType.getSymbId());
 
-            String varAmount = ConversionContext.getVarAmountFromCompartment(variable, context.getDerivativeVarCompSequences());
+            String varAmount = Formatter.getVarAmountFromCompartment(variable, context.getDerivativeVarCompSequences());
             if(!varAmount.isEmpty())
                 diffEqStatementBlock.append(Formatter.endline(variable+" = "+varAmount));
             if(isVarFromErrorFunction(variable))

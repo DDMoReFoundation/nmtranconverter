@@ -273,4 +273,19 @@ public class Formatter {
     public static String addComment(String comment) {
         return new String(Formatter.indent(Symbol.COMMENT.toString()+comment));
     }
+    
+    /**
+     * This method gets variable amount from compartment and returns it.
+     * 
+     * @param variable
+     * @return
+     */
+    public static String getVarAmountFromCompartment(String variable, Map<String,String> derivativeVariableMap) {
+        String varAmount = new String(); 
+        varAmount = derivativeVariableMap.get(variable);
+        if(!varAmount.isEmpty()){
+            varAmount = "A("+varAmount+")";
+        }
+        return varAmount;
+    }
 }

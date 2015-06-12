@@ -13,6 +13,7 @@ import crx.converter.engine.parts.TabularDataset;
 import crx.converter.engine.parts.TrialDesignBlock;
 import eu.ddmore.converters.nonmem.ConversionContext;
 import eu.ddmore.converters.nonmem.utils.Formatter;
+import eu.ddmore.converters.nonmem.utils.ScriptDefinitionAccessor;
 import eu.ddmore.libpharmml.dom.commontypes.SymbolType;
 import eu.ddmore.libpharmml.dom.dataset.ColumnDefinition;
 import eu.ddmore.libpharmml.dom.dataset.ColumnType;
@@ -30,21 +31,21 @@ public class InputStatement {
     public List<String> getInputHeaders() {
         return inputHeaders;
     }
-    
+
     public InputStatement(ConversionContext context) {
         if (null == context) {
             throw new IllegalStateException("conversion context cannot be null");
         }
-        
+
         List<ExternalDataSet> dataFiles = context.retrieveExternalDataSets();
-        
+
         if(dataFiles!=null && !dataFiles.isEmpty()){
             computeEstHeadersforExternalDataSets(dataFiles);
         }else{
             computeEstHeadersforTabularDataSet(context.getScriptDefinition());
         }
-        
-        
+
+
     }
 
     /**
@@ -53,8 +54,8 @@ public class InputStatement {
      * @param scriptDefinition
      */
     private void computeEstHeadersforTabularDataSet(ScriptDefinition scriptDefinition) {
-        TabularDataset tabularDataset = getObjectiveDatasetMap(ConversionContext.getEstimationStep(scriptDefinition));
-        
+        TabularDataset tabularDataset = getObjectiveDatasetMap(ScriptDefinitionAccessor.getEstimationStep(scriptDefinition));
+
         if (null == tabularDataset) {
             throw new IllegalStateException("TabularDataset cannot be null");
         }

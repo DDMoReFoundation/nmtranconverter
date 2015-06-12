@@ -18,6 +18,7 @@ import crx.converter.engine.parts.EstimationStep;
 import crx.converter.engine.parts.TabularDataset;
 import eu.ddmore.converters.nonmem.ConversionContext;
 import eu.ddmore.converters.nonmem.utils.Formatter;
+import eu.ddmore.converters.nonmem.utils.ScriptDefinitionAccessor;
 import eu.ddmore.libpharmml.dom.modellingsteps.DatasetMapping;
 import eu.ddmore.libpharmml.dom.modellingsteps.Estimation;
 import eu.ddmore.libpharmml.dom.modellingsteps.ExternalDataSet;
@@ -70,7 +71,7 @@ public class DataStatement{
                 }
             }
         }else {
-            TabularDataset td = getObjectiveDatasetMap(ConversionContext.getEstimationStep(context.getScriptDefinition()));
+            TabularDataset td = getObjectiveDatasetMap(ScriptDefinitionAccessor.getEstimationStep(context.getScriptDefinition()));
 
             if (null == td) {
                 throw new IllegalStateException("TabularDataset cannot be null");

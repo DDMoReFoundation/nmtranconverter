@@ -6,7 +6,6 @@ package eu.ddmore.converters.nonmem.statements;
 import java.util.Map;
 import java.util.regex.Pattern;
 
-import eu.ddmore.converters.nonmem.ConversionContext;
 import eu.ddmore.converters.nonmem.utils.Formatter;
 import eu.ddmore.converters.nonmem.utils.ScalarValueHandler;
 import eu.ddmore.libpharmml.dom.maths.FunctionCallType;
@@ -129,7 +128,7 @@ public class ErrorStatement {
         if(functionDefEqMap!=null){
             if(functionDefEqMap.containsKey(function)){
                 if(derivativeVarMap.containsKey(function)){
-                    String varAmount = ConversionContext.getVarAmountFromCompartment(function, derivativeVarMap);
+                    String varAmount = Formatter.getVarAmountFromCompartment(function, derivativeVarMap);
                     functionRep = (varAmount.isEmpty())?function:varAmount;
                 }else{
                     String functionEquation= getEquationForFunctionName(functionDefEqMap, derivativeVarMap);
@@ -152,7 +151,7 @@ public class ErrorStatement {
             String parsedEquation = functionDefEqMap.get(function);
             for(String variable: derivativeVarMap.keySet()){
                 if(parsedEquation.contains(variable)){
-                    String varAmount = ConversionContext.getVarAmountFromCompartment(variable, derivativeVarMap);
+                    String varAmount = Formatter.getVarAmountFromCompartment(variable, derivativeVarMap);
                     if(!varAmount.isEmpty()){
                         String varToReplace = "\\b"+Pattern.quote(variable)+"\\b";
                         parsedEquation = parsedEquation.replaceAll(varToReplace, varAmount);

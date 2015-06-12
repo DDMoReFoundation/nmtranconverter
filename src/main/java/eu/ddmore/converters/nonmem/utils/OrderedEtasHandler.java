@@ -7,9 +7,8 @@ import java.util.List;
 import java.util.Map;
 
 import crx.converter.engine.ScriptDefinition;
-import crx.converter.engine.parts.ParameterBlock;
 import crx.converter.engine.parts.BaseRandomVariableBlock.CorrelationRef;
-import eu.ddmore.converters.nonmem.ConversionContext;
+import crx.converter.engine.parts.ParameterBlock;
 import eu.ddmore.libpharmml.dom.modeldefn.IndividualParameter;
 import eu.ddmore.libpharmml.dom.modeldefn.ParameterRandomEffect;
 import eu.ddmore.libpharmml.dom.modeldefn.ParameterRandomVariable;
@@ -102,7 +101,7 @@ public class OrderedEtasHandler {
                     }
                 }
             }
-            Collection<ParameterRandomVariable> epsilons =  ConversionContext.getEpsilonRandomVariables(scriptDefinition);
+            Collection<ParameterRandomVariable> epsilons =  ScriptDefinitionAccessor.getEpsilonRandomVariables(scriptDefinition);
             for(ParameterRandomVariable variable : block.getRandomVariables()){
                 if(!epsilons.contains(variable)){
                     String eta = variable.getSymbId();

@@ -9,13 +9,13 @@ import java.util.List;
 import java.util.Set;
 
 import crx.converter.engine.parts.ObservationBlock;
-import eu.ddmore.converters.nonmem.ConversionContext;
 import eu.ddmore.converters.nonmem.utils.Formatter;
 import eu.ddmore.converters.nonmem.utils.Formatter.NmConstant;
 import eu.ddmore.converters.nonmem.utils.Formatter.Symbol;
 import eu.ddmore.converters.nonmem.utils.ParametersHelper;
 import eu.ddmore.converters.nonmem.utils.RandomVariableHelper;
 import eu.ddmore.converters.nonmem.utils.ScalarValueHandler;
+import eu.ddmore.converters.nonmem.utils.ScriptDefinitionAccessor;
 import eu.ddmore.libpharmml.dom.modeldefn.ParameterRandomVariable;
 import eu.ddmore.libpharmml.dom.modellingsteps.ParameterEstimate;
 import eu.ddmore.libpharmml.dom.uncertml.PositiveRealValueType;
@@ -133,7 +133,7 @@ public class SigmaStatementBuilder {
         for(ObservationBlock observationBlock: paramHelper.getScriptDefinition().getObservationBlocks()){
             randomVariableTypes.addAll(observationBlock.getRandomVariables());
         }
-        randomVariableTypes.addAll(ConversionContext.getEpsilonRandomVariables(paramHelper.getScriptDefinition()));
+        randomVariableTypes.addAll(ScriptDefinitionAccessor.getEpsilonRandomVariables(paramHelper.getScriptDefinition()));
         return randomVariableTypes;
     }
 
