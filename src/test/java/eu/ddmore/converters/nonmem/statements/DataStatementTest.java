@@ -4,32 +4,22 @@
 package eu.ddmore.converters.nonmem.statements;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
-
-import javax.annotation.meta.When;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
-import static org.powermock.api.mockito.PowerMockito.when;
 
 import eu.ddmore.converters.nonmem.ConversionContext;
-import eu.ddmore.converters.nonmem.statements.InputStatement;
 import eu.ddmore.libpharmml.dom.dataset.DataSet;
 import eu.ddmore.libpharmml.dom.dataset.ExternalFile;
 import eu.ddmore.libpharmml.dom.modellingsteps.ExternalDataSet;
 import eu.ddmore.libpharmml.dom.modellingsteps.ModellingSteps;
 
 @RunWith(PowerMockRunner.class)
-@PrepareForTest(InputStatement.class)
 public class DataStatementTest {
 
 	private static final String DATA_FILE_NAME = "warfarin_conc_pca.csv";
-	private static final String IGNORE_STRING = "IGNORE";
-	private static final String IGNORE_CHAR = "@";
 	File srcFile = null;
 	@Mock ConversionContext context;
 
