@@ -15,6 +15,8 @@ import java.util.Map.Entry;
 
 import javax.xml.bind.JAXBElement;
 
+import org.mockito.cglib.core.CollectionUtils;
+
 import com.google.common.base.Preconditions;
 
 import crx.converter.engine.parts.BaseRandomVariableBlock.CorrelationRef;
@@ -59,7 +61,7 @@ public class OmegaBlockStatement {
 
         if(!correlations.isEmpty()){
             initialiseOmegaBlocks(correlations);
-            orderedEtasToOmegaMap = Formatter.reverseMap(etaToOmagaMap);
+            CollectionUtils.reverse(etaToOmagaMap, orderedEtasToOmegaMap);
             omegaBlockTitle = createOmegaBlockTitle(correlations);
 
             for(String eta : orderedEtasToOmegaMap.values()){
