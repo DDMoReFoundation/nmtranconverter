@@ -61,22 +61,10 @@ public class PredStatement {
     //TODO : CHANGE IT.. Talk to Henrik and update how it should work.
     private StringBuilder getNonDerivativePredStatement() {
         StringBuilder nonDerivativePredBlock = new StringBuilder();
-        //NM_D is for DOSE
-        nonDerivativePredBlock.append(Formatter.endline(";IF (AMT.GT.0) NM_D=AMT"));
         nonDerivativePredBlock.append(getPredCoreStatement());
-        DiffEquationStatementBuilder desBuilder = new DiffEquationStatementBuilder(context);
-        nonDerivativePredBlock.append(retrieveDEStatement(desBuilder));
         nonDerivativePredBlock.append(getErrorStatement());
 
         return nonDerivativePredBlock;
-    }
-
-    private StringBuilder retrieveDEStatement(DiffEquationStatementBuilder desBuilder) {
-        StringBuilder deStatement = new StringBuilder(); 
-        Formatter.setInDesBlock(true);
-        deStatement.append(desBuilder.getDifferentialEquationsStatement());
-        Formatter.setInDesBlock(false);
-        return deStatement;
     }
 
     /**
@@ -98,7 +86,9 @@ public class PredStatement {
         DerivativePredblock.append(getPKStatement());
         DiffEquationStatementBuilder desBuilder = new DiffEquationStatementBuilder(context);
         DerivativePredblock.append(Formatter.des());
-        DerivativePredblock.append(retrieveDEStatement(desBuilder));
+        Formatter.setInDesBlock(true);
+        DerivativePredblock.append(desBuilder.getDifferentialEquationsStatement());
+        Formatter.setInDesBlock(false);
         //TODO: getAESStatement();
         DerivativePredblock.append(Formatter.endline()+Formatter.error());
         DerivativePredblock.append(getErrorStatement(desBuilder.getDefinitionsParsingMap()));
