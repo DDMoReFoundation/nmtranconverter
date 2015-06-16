@@ -14,6 +14,9 @@ import java.util.TreeMap;
 import java.util.Map.Entry;
 
 import javax.xml.bind.JAXBElement;
+
+import com.google.common.base.Preconditions;
+
 import crx.converter.engine.parts.BaseRandomVariableBlock.CorrelationRef;
 import crx.converter.engine.parts.ParameterBlock;
 import eu.ddmore.converters.nonmem.utils.Formatter;
@@ -29,6 +32,7 @@ import eu.ddmore.libpharmml.dom.modeldefn.ParameterRandomVariable;
 
 public class OmegaBlockStatement {
 
+    private static final String EMPTY_VARIABLE = "Empty Variable";
     private final Map<String, List<OmegaStatement>> omegaBlocks = new HashMap<String, List<OmegaStatement>>();
     private Map<String, String> etasToOmegasInCorrelation = new LinkedHashMap<String, String>();
 
@@ -89,8 +93,13 @@ public class OmegaBlockStatement {
 
                     //add coefficient associated with random var1 and random var2 at [i,j] 
                     //which is mirrored with [j,i] ([j,i] will be empty as its not required) 
-                    if(omegas.get(column)==null){
-                        OmegaStatement omega = getOmegaForCoefficient(correlation.correlationCoefficient, firstRandomVar, secondRandomVar);
+                    if(omegas.get(column)==null || omegas.get(column).getSymbId().equals(EMPTY_VARIABLE)){
+                        OmegaStatement omega = null ;
+                        if(correlation.isCorrelation()){
+                             omega = getOmegaForCoefficient(correlation.correlationCoefficient, firstRandomVar, secondRandomVar);
+                        }else if(correlation.isCovariance()){
+                            omega = getOmegaForCoefficient(correlation.covariance, firstRandomVar, secondRandomVar);
+                        }
                         if(omega != null){
                             omegas.set(column,omega);
                         }
@@ -110,7 +119,7 @@ public class OmegaBlockStatement {
     private void initialiseRowElements(int row, List<OmegaStatement> omegas) {
         for(int i=0; i <=row ; i++){
             if(omegas.get(i)==null){
-                omegas.set(i, createOmegaWithEmptyScalar("Empty Variable"));
+                omegas.set(i, createOmegaWithEmptyScalar(EMPTY_VARIABLE));
             }
         }
     }
@@ -166,14 +175,16 @@ public class OmegaBlockStatement {
      * @return
      */
     private OmegaStatement getOmegaForCoefficient(ScalarRhs coeff, ParameterRandomVariable firstVar, ParameterRandomVariable secondVar) {
-        OmegaStatement omega = null;
+        Preconditions.checkNotNull(coeff, "coefficient value should not be null");
         if(coeff.getSymbRef()!=null){
-            omega = paramHelper.getOmegaFromRandomVarName(coeff.getSymbRef().getSymbIdRef());
-        }else if(omega == null && coeff.getScalar()!=null){
-            omega = new OmegaStatement(firstVar.getSymbId()+"_"+secondVar.getSymbId());
+            return paramHelper.getOmegaFromRandomVarName(coeff.getSymbRef().getSymbIdRef()); 
+        }else if(coeff.getScalar()!=null){
+            OmegaStatement omega = new OmegaStatement(firstVar.getSymbId()+"_"+secondVar.getSymbId());
             omega.setInitialEstimate(coeff);
+            return omega;
+        }else {
+            throw new IllegalArgumentException("The Scalarrhs coefficient should have either variable or scalar value specified. "); 
         }
-        return omega;
     }
 
     /**
@@ -188,10 +199,27 @@ public class OmegaBlockStatement {
         Integer blocksCount = etaToOmagaMap.size();
         StringBuilder description = new StringBuilder();
         //This will change in case of 0.4 as it will need to deal with matrix types as well.
-        description.append((!correlations.isEmpty())?NmConstant.CORRELATION:" ");
+        description.append((isCorrelation(correlations))?NmConstant.CORRELATION:" ");
         description.append((isOmegaBlockFromStdDev)?" "+NmConstant.SD:"");
         String title = String.format(Formatter.endline()+"%s %s", Formatter.omegaBlock(blocksCount),description);
         return title;
+    }
+
+    /**
+     * Checks if correlation exists and returns the result.
+     * 
+     * @param correlations
+     * @return
+     */
+    private Boolean isCorrelation(List<CorrelationRef> correlations) {
+        if(correlations!=null && !correlations.isEmpty()){
+            for(CorrelationRef correlation : correlations){
+                if(correlation.isCorrelation()){
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     /**

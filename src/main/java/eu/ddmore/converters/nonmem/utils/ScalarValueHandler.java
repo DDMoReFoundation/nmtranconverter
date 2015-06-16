@@ -11,6 +11,23 @@ import eu.ddmore.libpharmml.dom.commontypes.ScalarRhs;
  * This class helps to get value from scalar objects.
  */
 public final class ScalarValueHandler {
+
+    /**
+     * Gets variable from scalar rhs if it exists or else looks for scalar value and returns in string form.
+     *    
+     * @param rhs
+     * @return scalar variable or value
+     */
+    public static String getVariableOrValueFromScalarRhs(ScalarRhs rhs) {
+        String coefficient;
+        if(rhs.getSymbRef()!=null){
+            coefficient = rhs.getSymbRef().getSymbIdRef();
+        }
+        else{
+            coefficient = getValueFromScalarRhs(rhs).toString();
+        }
+        return coefficient;
+    }
     
     /**
      * Accepts scalar rhs object and looks for value in either scalar or scalar in equation.

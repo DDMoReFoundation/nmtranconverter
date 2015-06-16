@@ -44,6 +44,7 @@ public class ConversionContext {
     private final ILexer lexer;
     private final ParametersHelper parameterHelper;
     private final OrderedThetasHandler orderedThetasHandler;
+    private final OrderedEtasHandler etasHandler;
     private final List<String> thetas = new ArrayList<String>();
     private final List<ErrorStatement> errorStatements = new ArrayList<ErrorStatement>();
     private final List<DerivativeVariable> derivativeVars = new ArrayList<DerivativeVariable>();
@@ -55,6 +56,7 @@ public class ConversionContext {
 
         this.parameterHelper = new ParametersHelper(lexer.getScriptDefinition());
         this.orderedThetasHandler = new OrderedThetasHandler(getScriptDefinition());
+        this.etasHandler = new OrderedEtasHandler(getScriptDefinition());
         initialise();
     }
 
@@ -273,7 +275,6 @@ public class ConversionContext {
     }
 
     public Map<String, Integer> retrieveOrderedEtas() {
-        OrderedEtasHandler etasHandler = new OrderedEtasHandler(getScriptDefinition());
         return etasHandler.getOrderedEtas();
     }
 

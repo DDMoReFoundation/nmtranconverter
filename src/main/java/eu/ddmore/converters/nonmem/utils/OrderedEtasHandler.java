@@ -59,7 +59,6 @@ public class OrderedEtasHandler {
                 orderedEtas.put(nonOmegaEta, ++etaCount);
             }
         }
-
         return orderedEtas;
     }
 
@@ -73,8 +72,10 @@ public class OrderedEtasHandler {
         String firstVar = correlation.rnd1.getSymbId();
         String secondVar = correlation.rnd2.getSymbId();
         String coefficient = "";
-        if(correlation.correlationCoefficient.getSymbRef()!=null){
-            coefficient = correlation.correlationCoefficient.getSymbRef().getSymbIdRef();
+        if(correlation.isCorrelation()){
+            coefficient = ScalarValueHandler.getVariableOrValueFromScalarRhs(correlation.correlationCoefficient);
+        }else if(correlation.isCovariance()){
+            coefficient = ScalarValueHandler.getVariableOrValueFromScalarRhs(correlation.covariance).toString();
         }
         //add to correlations map
         etaToCorrelations.put(firstVar,RandomVariableHelper.getNameFromParamRandomVariable(correlation.rnd1));
