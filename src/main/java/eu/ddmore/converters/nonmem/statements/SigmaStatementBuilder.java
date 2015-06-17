@@ -26,7 +26,7 @@ import eu.ddmore.libpharmml.dom.uncertml.PositiveRealValueType;
  */
 public class SigmaStatementBuilder {
 
-    ParametersHelper paramHelper;
+    private ParametersHelper paramHelper;
 
     public SigmaStatementBuilder(ParametersHelper parametersHelper){
         paramHelper = parametersHelper; 
