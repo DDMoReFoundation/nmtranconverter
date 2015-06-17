@@ -80,7 +80,7 @@ public class ParametersHelper {
         setAllParameterBounds(parametersToEstimate);
 
         //setOmegaBlocks before omega params and theta
-        omegaBlockStatement.setEtaToOmagaMap(new HashMap<String, Integer>(orderedEtas));
+        omegaBlockStatement.setEtaToOmagaMap(orderedEtas);
         OrderedThetasHandler thetasHandler = new OrderedThetasHandler(scriptDefinition);
         thetasHandler.createOrderedThetasToEta(orderedEtas);
         thetasToEtaOrder = thetasHandler.getOrderedThetas();

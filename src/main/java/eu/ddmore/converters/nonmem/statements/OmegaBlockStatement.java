@@ -61,7 +61,7 @@ public class OmegaBlockStatement {
 
         if(!correlations.isEmpty()){
             initialiseOmegaBlocks(correlations);
-            CollectionUtils.reverse(etaToOmagaMap, orderedEtasToOmegaMap);
+            orderedEtasToOmegaMap = Formatter.reverseMap(etaToOmagaMap);
             omegaBlockTitle = createOmegaBlockTitle(correlations);
 
             for(String eta : orderedEtasToOmegaMap.values()){
@@ -304,7 +304,7 @@ public class OmegaBlockStatement {
     }
 
     public void setEtaToOmagaMap(Map<String, Integer> etaToOmagaMap) {
-        this.etaToOmagaMap = etaToOmagaMap;
+        this.etaToOmagaMap = new HashMap<String, Integer>(etaToOmagaMap);
     }
 
     public Map<String, List<OmegaStatement>> getOmegaBlocks() {
