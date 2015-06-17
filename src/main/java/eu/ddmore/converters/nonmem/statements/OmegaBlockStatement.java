@@ -15,8 +15,6 @@ import java.util.Map.Entry;
 
 import javax.xml.bind.JAXBElement;
 
-import org.mockito.cglib.core.CollectionUtils;
-
 import com.google.common.base.Preconditions;
 
 import crx.converter.engine.parts.BaseRandomVariableBlock.CorrelationRef;
