@@ -3,7 +3,6 @@
  ******************************************************************************/
 package eu.ddmore.converters.nonmem.statements;
 
-import java.util.List;
 import java.util.Map;
 
 import crx.converter.engine.parts.ParameterBlock;
@@ -73,10 +72,9 @@ public class PredStatement {
      */
     private StringBuilder getPredCoreStatement() {
         StringBuilder predCoreBlock = new StringBuilder();
-        List<ParameterBlock> blocks = context.getScriptDefinition().getParameterBlocks();
         predCoreBlock.append(Formatter.endline(context.buildThetaAssignments().toString()));
         predCoreBlock.append(Formatter.endline(context.buildEtaAssignments().toString()));
-        predCoreBlock.append(getAllIndividualParamAssignments(blocks));
+        predCoreBlock.append(getAllIndividualParamAssignments());
         return predCoreBlock;
     }
 
@@ -156,7 +154,7 @@ public class PredStatement {
      * 
      * @return
      */
-    public StringBuilder getDifferentialInitialConditions(){
+    private StringBuilder getDifferentialInitialConditions(){
         StringBuilder builder = new StringBuilder();
         if(!context.getScriptDefinition().getStructuralBlocks().isEmpty())
             builder = InitConditionBuilder.getDifferentialInitialConditions(context.getScriptDefinition().getStructuralBlocks());	
@@ -169,10 +167,10 @@ public class PredStatement {
      * @param blocks
      * @return
      */
-    public StringBuilder getAllIndividualParamAssignments(List<ParameterBlock> blocks) {
+    private StringBuilder getAllIndividualParamAssignments() {
         StringBuilder IndividualParamAssignmentBlock = new StringBuilder();
         IndividualDefinitionEmitter individualDefEmitter = new IndividualDefinitionEmitter(context);
-        for(ParameterBlock parameterBlock : blocks){
+        for(ParameterBlock parameterBlock : context.getScriptDefinition().getParameterBlocks()){
             for(IndividualParameter parameterType: parameterBlock.getIndividualParameters()){
                 IndividualParamAssignmentBlock.append(individualDefEmitter.createIndividualDefinition(parameterType));
             }
