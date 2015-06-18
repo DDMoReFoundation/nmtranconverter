@@ -56,12 +56,13 @@ public class PredStatement {
     /**
      * Returns non derivative pred statement.
      * @return 
-     * 
      */
-    //TODO : CHANGE IT.. Talk to Henrik and update how it should work.
     private StringBuilder getNonDerivativePredStatement() {
         StringBuilder nonDerivativePredBlock = new StringBuilder();
+        DiscreteHandler discreteHandler = new DiscreteHandler();
+
         nonDerivativePredBlock.append(getPredCoreStatement());
+        nonDerivativePredBlock.append(discreteHandler.getDiscreteDetails(context));
         nonDerivativePredBlock.append(getErrorStatement());
 
         return nonDerivativePredBlock;
