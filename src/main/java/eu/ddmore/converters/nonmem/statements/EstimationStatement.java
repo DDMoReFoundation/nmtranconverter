@@ -56,7 +56,7 @@ public class EstimationStatement {
         StringBuilder sb = new StringBuilder();
         sb.append("METHOD=");
         if (algorithm!=null) {
-            String methodDefinition =algorithm.getDefinition();
+            String methodDefinition =algorithm.getDefinition().trim().toUpperCase();
             if (methodDefinition.equals(Method.FO.toString())) {
                 sb.append("ZERO MAXEVALS=9999 PRINT=10 NOABORT");
             }
@@ -143,9 +143,9 @@ public class EstimationStatement {
             return covFound;
         }
         String optType = operationType.getOpType();
-        if(EstimationOpType.EST_FIM.equals(optType)){
+        if(EstimationOpType.EST_FIM.value().equals(optType)){
             return true;
-        }else if(EstimationOpType.EST_POP.equals(optType)){
+        }else if(EstimationOpType.EST_POP.value().equals(optType)){
             for(OperationProperty property : operationType.getProperty()){
                 if(property.getName().equals("cov") && property.getAssign()!=null){
                     if(property.getAssign().getScalar()!=null){
