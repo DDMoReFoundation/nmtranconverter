@@ -3,6 +3,7 @@
  ******************************************************************************/
 package eu.ddmore.converters.nonmem.statements;
 
+import java.util.List;
 import java.util.Map;
 
 import crx.converter.engine.parts.ParameterBlock;
@@ -11,6 +12,9 @@ import eu.ddmore.converters.nonmem.IndividualDefinitionEmitter;
 import eu.ddmore.converters.nonmem.statements.PkMacroAnalyser.PkMacroDetails;
 import eu.ddmore.converters.nonmem.utils.Formatter;
 import eu.ddmore.libpharmml.dom.commontypes.DerivativeVariable;
+import eu.ddmore.libpharmml.dom.modeldefn.ContinuousCovariate;
+import eu.ddmore.libpharmml.dom.modeldefn.CovariateDefinition;
+import eu.ddmore.libpharmml.dom.modeldefn.CovariateTransformation;
 import eu.ddmore.libpharmml.dom.modeldefn.IndividualParameter;
 
 /**
@@ -74,6 +78,7 @@ public class PredStatement {
         StringBuilder predCoreBlock = new StringBuilder();
         predCoreBlock.append(Formatter.endline(context.buildThetaAssignments().toString()));
         predCoreBlock.append(Formatter.endline(context.buildEtaAssignments().toString()));
+        predCoreBlock.append(Formatter.endline(context.getSimpleParamAssignments().toString()));
         predCoreBlock.append(getAllIndividualParamAssignments());
         return predCoreBlock;
     }
@@ -170,6 +175,16 @@ public class PredStatement {
     private StringBuilder getAllIndividualParamAssignments() {
         StringBuilder IndividualParamAssignmentBlock = new StringBuilder();
         IndividualDefinitionEmitter individualDefEmitter = new IndividualDefinitionEmitter(context);
+        
+        //Find and add transformed covariates before indiv parameter definitions 
+        List<CovariateDefinition> covDefs = context.getLexer().getCovariates();
+        for(CovariateDefinition covDef : covDefs){
+            ContinuousCovariate contCov = covDef.getContinuous();
+            for(CovariateTransformation transformation : contCov.getListOfTransformation()){
+                String transCovDefinition = context.getParser().getSymbol(transformation);
+                IndividualParamAssignmentBlock.append(Formatter.endline(transCovDefinition));
+            }
+        }
         for(ParameterBlock parameterBlock : context.getScriptDefinition().getParameterBlocks()){
             for(IndividualParameter parameterType: parameterBlock.getIndividualParameters()){
                 IndividualParamAssignmentBlock.append(individualDefEmitter.createIndividualDefinition(parameterType));

@@ -9,6 +9,7 @@ import static crx.converter.engine.PharmMLTypeChecker.isConstant;
 import static crx.converter.engine.PharmMLTypeChecker.isContinuousCovariate;
 import static crx.converter.engine.PharmMLTypeChecker.isCorrelation;
 import static crx.converter.engine.PharmMLTypeChecker.isCovariate;
+import static crx.converter.engine.PharmMLTypeChecker.isCovariateTransform;
 import static crx.converter.engine.PharmMLTypeChecker.isDerivative;
 import static crx.converter.engine.PharmMLTypeChecker.isFunction;
 import static crx.converter.engine.PharmMLTypeChecker.isFunctionCall;
@@ -57,6 +58,7 @@ import eu.ddmore.libpharmml.dom.maths.FunctionCallType;
 import eu.ddmore.libpharmml.dom.maths.Piece;
 import eu.ddmore.libpharmml.dom.maths.Piecewise;
 import eu.ddmore.libpharmml.dom.modeldefn.CovariateDefinition;
+import eu.ddmore.libpharmml.dom.modeldefn.CovariateTransformation;
 import eu.ddmore.libpharmml.dom.modeldefn.ParameterRandomVariable;
 import eu.ddmore.libpharmml.dom.trialdesign.Activity;
 
@@ -148,7 +150,7 @@ public class Parser extends BaseParser {
 
         if (leaf.data != null) {
             boolean inPiecewise = false;
-            
+
             if (isPiecewise(leaf.data)) inPiecewise = true;
 
             if (!isString_(leaf.data)) leaf.data = getSymbol(leaf.data);
@@ -183,7 +185,16 @@ public class Parser extends BaseParser {
             } else if (isCovariate(context)) { 
                 CovariateDefinition cov = (CovariateDefinition) context;
                 current_value = Formatter.endline(String.format(equationFormat, cov.getSymbId(), (String) leaf.data));
-            } else if (isObservationModel(context)) {
+            } else if(isCovariateTransform(context)){
+                CovariateTransformation cov = (CovariateTransformation) context;
+                current_symbol = cov.getTransformedCovariate().getSymbId();
+                if(inPiecewise){
+                    current_value = String.format(lineFormat,leaf.data);    
+                }else{
+                    current_value = Formatter.endline(String.format(equationFormat, current_symbol, leaf.data));
+                }
+            }
+            else if (isObservationModel(context)) {
                 ObservationParameter op = (ObservationParameter) context;
                 current_value = Formatter.endline(String.format(equationFormat, op.getName(), (String) leaf.data));
             } else if (isCorrelation(context)) {

@@ -26,11 +26,13 @@ import eu.ddmore.converters.nonmem.utils.OrderedEtasHandler;
 import eu.ddmore.converters.nonmem.utils.OrderedThetasHandler;
 import eu.ddmore.converters.nonmem.utils.ParametersHelper;
 import eu.ddmore.libpharmml.dom.commontypes.DerivativeVariable;
+import eu.ddmore.libpharmml.dom.maths.Equation;
 import eu.ddmore.libpharmml.dom.maths.FunctionCallType;
 import eu.ddmore.libpharmml.dom.modeldefn.GaussianObsError;
 import eu.ddmore.libpharmml.dom.modeldefn.GaussianObsError.ErrorModel;
 import eu.ddmore.libpharmml.dom.modeldefn.GeneralObsError;
 import eu.ddmore.libpharmml.dom.modeldefn.ObservationError;
+import eu.ddmore.libpharmml.dom.modeldefn.SimpleParameter;
 import eu.ddmore.libpharmml.dom.modellingsteps.ExternalDataSet;
 
 /**
@@ -109,6 +111,21 @@ public class ConversionContext {
         StringBuilder sigmaStatement = sigmaBuilder.getSigmaStatementBlock();
         parameterStatement.append(sigmaStatement.toString());
         return parameterStatement;
+    }
+
+    /**
+     * This method will build simple parameter assignment statements
+     * @return
+     */
+    public StringBuilder getSimpleParamAssignments() {
+        StringBuilder simpleParamAssignmentBlock = new StringBuilder();
+        Map<String, SimpleParameter> params = parameterHelper.getSimpleParamsWithAssignment();
+        for(String simpleParam : params.keySet()){
+            Equation simpleParamAssignmentEq = params.get(simpleParam).getAssign().getEquation();
+            String parsedEquation = getParser().getSymbol(simpleParamAssignmentEq);
+            simpleParamAssignmentBlock.append(Formatter.endline(simpleParam+ " = "+ parsedEquation));
+        }
+        return simpleParamAssignmentBlock;
     }
 
     /**

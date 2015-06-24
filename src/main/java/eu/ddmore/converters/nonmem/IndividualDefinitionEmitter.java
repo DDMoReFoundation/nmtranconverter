@@ -2,12 +2,13 @@ package eu.ddmore.converters.nonmem;
 
 import java.util.List;
 
+import com.google.common.base.Preconditions;
+
 import eu.ddmore.converters.nonmem.utils.Formatter;
 import eu.ddmore.converters.nonmem.utils.Formatter.NmConstant;
 import eu.ddmore.converters.nonmem.utils.Formatter.Symbol;
 import eu.ddmore.libpharmml.dom.IndependentVariable;
 import eu.ddmore.libpharmml.dom.commontypes.PharmMLRootType;
-import eu.ddmore.libpharmml.dom.modeldefn.ContinuousCovariate;
 import eu.ddmore.libpharmml.dom.modeldefn.CovariateDefinition;
 import eu.ddmore.libpharmml.dom.modeldefn.CovariateRelation;
 import eu.ddmore.libpharmml.dom.modeldefn.CovariateTransformation;
@@ -60,10 +61,10 @@ public class IndividualDefinitionEmitter {
 
                 List<CovariateRelation> covariates = gaussianModel.getLinearCovariate().getCovariate();
                 if (covariates != null) {
-                    for (CovariateRelation covariate : covariates) {
-                        if (covariate == null) continue;
-                        PharmMLRootType type = context.getLexer().getAccessor().fetchElement(covariate.getSymbRef());
-                        statement.append(getCovariateForIndividualDefinition(covariate, type));
+                    for (CovariateRelation covRelation : covariates) {
+                        if (covRelation == null) continue;
+                        PharmMLRootType type = context.getLexer().getAccessor().fetchElement(covRelation.getSymbRef());
+                        statement.append(getCovariateForIndividualDefinition(covRelation, type));
                     }
                 }
             } else if (gaussianModel.getGeneralCovariate() != null) {
@@ -76,6 +77,58 @@ public class IndividualDefinitionEmitter {
         }
 
         return statement.toString();
+    }
+
+    /**
+     * This method will retrieve details of parameter type passed depending upon 
+     * whether it is IDV or Covariate Definition.
+     * 
+     * @param covRelation
+     * @param type
+     * @return
+     */
+    private StringBuilder getCovariateForIndividualDefinition(CovariateRelation covRelation, PharmMLRootType type) {
+        Preconditions.checkNotNull(type, "Covariate type associated with covariate relation cannot be null. ");
+        StringBuilder statement = new StringBuilder();
+        String valueToAppend = new String();
+
+        if(type instanceof IndependentVariable){
+            valueToAppend = doIndependentVariable((IndependentVariable)type);
+        } else if(type instanceof CovariateTransformation){
+            String covStatement = covRelation.getSymbRef().getSymbIdRef();
+            valueToAppend = addFixedEffectsStatementToIndivParamDef(covRelation, covStatement);
+        }
+        else if(type instanceof CovariateDefinition){
+            CovariateDefinition covDefinition = (CovariateDefinition) type;
+
+            if (covDefinition.getContinuous() != null) {
+                String covStatement = covDefinition.getSymbId();
+                valueToAppend = addFixedEffectsStatementToIndivParamDef(covRelation, covStatement);
+            } else if (covDefinition.getCategorical() != null) {
+                throw new UnsupportedOperationException("No categorical yet");
+            }
+        }
+        if(!valueToAppend.isEmpty()){
+            statement.append("+"+valueToAppend);
+        }
+        return statement;
+    }
+
+    /**
+     * This method parses and adds fixed effects statements from covariates to individual parameter definition .
+     * @param covariate
+     * @param covStatement
+     * @return
+     */
+    private String addFixedEffectsStatementToIndivParamDef(CovariateRelation covariate, String covStatement) {
+        FixedEffectRelation fixedEffect = covariate.getFixedEffect();
+        if (fixedEffect != null) {
+            String  fixedEffectStatement = Formatter.addPrefix(fixedEffect.getSymbRef().getSymbIdRef());
+            if(fixedEffectStatement.isEmpty())
+                fixedEffectStatement = context.parse(fixedEffect);
+            covStatement = fixedEffectStatement + " * " + covStatement;
+        }
+        return covStatement;
     }
 
     /**
@@ -105,60 +158,6 @@ public class IndividualDefinitionEmitter {
             statement.append(String.format(format, Formatter.addPrefix(paramId), variableSymbol,etas));
         }
         return statement.toString();
-    }
-
-    /**
-     * This method will retrieve details of parameter type passed depending upon 
-     * whether it is IDV or Covariate Definition.
-     * 
-     * @param covariate
-     * @param type
-     * @return
-     */
-    private StringBuilder getCovariateForIndividualDefinition(CovariateRelation covariate, PharmMLRootType type) {
-        StringBuilder statement = new StringBuilder();
-        if(type instanceof IndependentVariable){
-            String idvName = doIndependentVariable((IndependentVariable)type);
-            statement.append("+"+idvName);
-        }
-        else if(type instanceof CovariateDefinition){
-            CovariateDefinition covariateDef = (CovariateDefinition) type;
-            if (covariateDef != null) {
-                if (covariateDef.getContinuous() != null) {
-                    String covStatement = "";
-                    ContinuousCovariate continuous = covariateDef.getContinuous();
-                    List<CovariateTransformation> transformations = continuous.getListOfTransformation();
-                    if (transformations != null && !transformations.isEmpty()){
-                        covStatement = context.getParser().getSymbol(continuous.getListOfTransformation().get(0));
-                    }
-                    else covStatement = covariateDef.getSymbId();
-
-                    covStatement = addFixedEffectsStatementToIndivParamDef(covariate, covStatement);
-                    if(!covStatement.isEmpty())
-                        statement.append("+"+covStatement);
-                } else if (covariateDef.getCategorical() != null) {
-                    throw new UnsupportedOperationException("No categorical yet");
-                }
-            }
-        }
-        return statement;
-    }
-
-    /**
-     * This method parses and adds fixed effects statements from covariates to individual parameter definition .
-     * @param covariate
-     * @param covStatement
-     * @return
-     */
-    private String addFixedEffectsStatementToIndivParamDef(CovariateRelation covariate, String covStatement) {
-        FixedEffectRelation fixedEffect = covariate.getFixedEffect();
-        if (fixedEffect != null) {
-            String  fixedEffectStatement = Formatter.addPrefix(fixedEffect.getSymbRef().getSymbIdRef());
-            if(fixedEffectStatement.isEmpty())
-                fixedEffectStatement = context.parse(fixedEffect);
-            covStatement = fixedEffectStatement + " * " + covStatement;
-        }
-        return covStatement;
     }
 
     /**

@@ -36,10 +36,10 @@ public class ParametersHelper {
 
     private TreeMap<Integer, String> thetasToEtaOrder = new TreeMap<Integer, String>();
     private ScriptDefinition scriptDefinition;
-    private List<SimpleParameter> SimpleParameters = new ArrayList<SimpleParameter>();
 
     // These are keyed by symbol ID
     private final Map<String, SimpleParameter> simpleParams = new HashMap<String, SimpleParameter>();
+    private final Map<String, SimpleParameter> simpleParamsWithAssignment = new HashMap<String, SimpleParameter>();
     private final Map<String, ScalarRhs> initialEstimates = new HashMap<String, ScalarRhs>();
     private final Map<String, ScalarRhs> lowerBounds = new HashMap<String, ScalarRhs>();
     private final Map<String, ScalarRhs> upperBounds = new HashMap<String, ScalarRhs>();
@@ -60,16 +60,19 @@ public class ParametersHelper {
     /**
      * This method initialises all the Sigma, Omega and Theta parameter maps from simple parameters and their properties.
      * 
-     * @param SimpleParameters
+     * @param simpleParameters
      */
-    public void initialiseAllParameters(List<SimpleParameter> SimpleParameters, Map<String, Integer> orderedEtas){
+    public void initialiseAllParameters(List<SimpleParameter> simpleParameters, Map<String, Integer> orderedEtas){
 
-        if (SimpleParameters==null || SimpleParameters.isEmpty()) {
+        if (simpleParameters==null || simpleParameters.isEmpty()) {
             return;
         }else {
-            setSimpleParameters(SimpleParameters);
-            for (SimpleParameter simpleParam : SimpleParameters) {
-                simpleParams.put(simpleParam.getSymbId(), simpleParam);
+            for (SimpleParameter simpleParam : simpleParameters) {
+                if(simpleParam.getAssign().getEquation()!=null){
+                    simpleParamsWithAssignment.put(simpleParam.getSymbId(), simpleParam);
+                }else{
+                    simpleParams.put(simpleParam.getSymbId(), simpleParam);
+                }
             }
         }
 
@@ -205,7 +208,7 @@ public class ParametersHelper {
         }
         return scalar;
     }
-    
+
     /**
      * This method will create scalar Rhs object for a symbol from the scalar value provided.
      *  
@@ -362,14 +365,6 @@ public class ParametersHelper {
         return scriptDefinition;
     }
 
-    public List<SimpleParameter> getSimpleParameters() {
-        return SimpleParameters;
-    }
-
-    public void setSimpleParameters(List<SimpleParameter> SimpleParameters) {
-        this.SimpleParameters = SimpleParameters;
-    }
-
     public List<ParameterEstimate> getParametersToEstimate() {
         return parametersToEstimate;
     }
@@ -388,5 +383,9 @@ public class ParametersHelper {
 
     public OmegaBlockStatement getOmegaBlockStatement() {
         return omegaBlockStatement;
+    }
+
+    public Map<String, SimpleParameter> getSimpleParamsWithAssignment() {
+        return simpleParamsWithAssignment;
     }
 }
