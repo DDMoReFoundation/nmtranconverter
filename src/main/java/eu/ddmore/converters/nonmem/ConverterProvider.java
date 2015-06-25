@@ -125,5 +125,6 @@ public class ConverterProvider extends Lexer {
     protected void initialise() {
         EstimationStep.setUseDefaultParameterEstimate(true);
         EstimationStep.setDefaultParameterEstimateValue(1.0);
+        setUsePiecewiseAsEvents(true);
     }
 }

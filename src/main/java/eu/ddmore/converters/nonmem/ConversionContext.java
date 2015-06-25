@@ -13,7 +13,9 @@ import java.util.Set;
 
 import crx.converter.engine.ScriptDefinition;
 import crx.converter.engine.parts.ObservationBlock;
+import crx.converter.engine.parts.ParameterBlock;
 import crx.converter.engine.parts.StructuralBlock;
+import crx.converter.engine.parts.ParameterBlock.Event;
 import crx.converter.spi.ILexer;
 import crx.converter.spi.IParser;
 import crx.converter.tree.BinaryTree;
@@ -56,7 +58,7 @@ public class ConversionContext {
         this.parser = parser;
         this.lexer = lexer;
 
-        this.parameterHelper = new ParametersHelper(lexer.getScriptDefinition());
+        this.parameterHelper = new ParametersHelper(getScriptDefinition());
         this.orderedThetasHandler = new OrderedThetasHandler(getScriptDefinition());
         this.etasHandler = new OrderedEtasHandler(getScriptDefinition());
         initialise();
@@ -120,12 +122,46 @@ public class ConversionContext {
     public StringBuilder getSimpleParamAssignments() {
         StringBuilder simpleParamAssignmentBlock = new StringBuilder();
         Map<String, SimpleParameter> params = parameterHelper.getSimpleParamsWithAssignment();
-        for(String simpleParam : params.keySet()){
-            Equation simpleParamAssignmentEq = params.get(simpleParam).getAssign().getEquation();
-            String parsedEquation = getParser().getSymbol(simpleParamAssignmentEq);
-            simpleParamAssignmentBlock.append(Formatter.endline(simpleParam+ " = "+ parsedEquation));
+
+        for(String simpleParamSymbol : params.keySet()){
+            SimpleParameter simpleParam = params.get(simpleParamSymbol);
+            Event event = getEventForParameter(simpleParam);
+            String parsedEquation = new String();
+            if(event !=null){
+                if(event.getPiecewiseTree()!=null && event.getPiecewiseTree().size()>0){
+                    parsedEquation = parse(event.getParameter(), event.getPiecewiseTree());
+                }
+            }else {
+                Equation simpleParamAssignmentEq = simpleParam.getAssign().getEquation();
+                parsedEquation = simpleParamSymbol+ " = "+ getParser().getSymbol(simpleParamAssignmentEq);
+            }
+
+            if(!parsedEquation.isEmpty()){
+                simpleParamAssignmentBlock.append(Formatter.endline(parsedEquation));
+            }
         }
         return simpleParamAssignmentBlock;
+    }
+
+    /**
+     * Get event for parameter from parameter block. 
+     *  
+     * @param param
+     * @return
+     */
+    private Event getEventForParameter(SimpleParameter param){
+        for(ParameterBlock pb : getScriptDefinition().getParameterBlocks()){
+            if (pb.hasEvents()) {
+                for (Event event : pb.getEvents()) {
+                    if (event != null) {
+                        if (param.getSymbId().equals(event.getParameter().getSymbId())){
+                            return event;
+                        }
+                    }
+                }
+            }
+        }
+        return null;
     }
 
     /**

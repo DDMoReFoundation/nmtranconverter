@@ -60,6 +60,7 @@ import eu.ddmore.libpharmml.dom.maths.Piecewise;
 import eu.ddmore.libpharmml.dom.modeldefn.CovariateDefinition;
 import eu.ddmore.libpharmml.dom.modeldefn.CovariateTransformation;
 import eu.ddmore.libpharmml.dom.modeldefn.ParameterRandomVariable;
+import eu.ddmore.libpharmml.dom.modeldefn.SimpleParameter;
 import eu.ddmore.libpharmml.dom.trialdesign.Activity;
 
 public class Parser extends BaseParser {
@@ -140,6 +141,17 @@ public class Parser extends BaseParser {
         return binopProperties;
     }
 
+    /**
+     * Generate code for a parameter reference. 
+     * Currently override this method to get access to simple parameter symbol.
+     * 
+     * @param p Parameter
+     * @return String
+     */
+    protected String doParameter(SimpleParameter p) {
+        return z.get(p);
+    }
+
     /*
      * (non-Javadoc)
      * @see crx.converter.engine.BaseParser#rootLeafHandler(java.lang.Object, crx.converter.tree.Node, java.io.PrintWriter)
@@ -157,42 +169,33 @@ public class Parser extends BaseParser {
             String current_value = "", current_symbol = "";
             if(isLocalVariable(context)){
                 current_symbol = Formatter.addPrefix(getSymbol(context));
-                if(inPiecewise){
-                    current_value = String.format(lineFormat,leaf.data);    
-                }else{
-                    current_value = Formatter.endline(String.format(equationFormat, current_symbol, leaf.data));
-                }
+                current_value = getValueWhenPiecewise(leaf, inPiecewise, current_symbol);
             }else if (isDerivative(context) || isParameter(context)) {
-                String description = "";
-                if (isRootType(context)) description = readDescription((PharmMLRootType) context);
                 current_symbol = getSymbol(context);
-                current_value = Formatter.endline(String.format(equationFormat, Formatter.addPrefix(description), leaf.data));
+                String description = (isRootType(context))? readDescription((PharmMLRootType) context) : current_symbol;
+                current_value = getValueWhenPiecewise(leaf, inPiecewise, description);
             } else if (isInitialCondition(context) || isFunction(context) || isSequence(context) || isVector(context)) {
                 String format = "(%s) ";
                 current_value = String.format(format, (String) leaf.data);
-            } else if (isPiece(context)) { 
+            } else if (isPiece(context)) {
                 current_value = String.format(lineFormat, (String) leaf.data);
             } else if (isContinuousCovariate(context)) {
                 current_symbol = Formatter.addPrefix(getSymbol(context));
                 current_value = Formatter.endline(String.format(equationFormat, current_symbol, leaf.data));
-            } else if (isActivity(context)) { 
+            } else if (isActivity(context)) {
                 current_value = getSymbol(new ActivityDoseAmountBlock((Activity) context, (String) leaf.data));
             } else if (isIndividualParameter(context)) { 
                 current_value = (String) leaf.data;
             } else if (isRandomVariable(context)) {
                 ParameterRandomVariable rv = (ParameterRandomVariable) context;
                 current_value = Formatter.endline(String.format(equationFormat, rv.getSymbId(), (String) leaf.data));
-            } else if (isCovariate(context)) { 
+            } else if (isCovariate(context)) {
                 CovariateDefinition cov = (CovariateDefinition) context;
                 current_value = Formatter.endline(String.format(equationFormat, cov.getSymbId(), (String) leaf.data));
             } else if(isCovariateTransform(context)){
                 CovariateTransformation cov = (CovariateTransformation) context;
                 current_symbol = cov.getTransformedCovariate().getSymbId();
-                if(inPiecewise){
-                    current_value = String.format(lineFormat,leaf.data);    
-                }else{
-                    current_value = Formatter.endline(String.format(equationFormat, current_symbol, leaf.data));
-                }
+                current_value = getValueWhenPiecewise(leaf, inPiecewise, current_symbol);
             }
             else if (isObservationModel(context)) {
                 ObservationParameter op = (ObservationParameter) context;
@@ -216,6 +219,14 @@ public class Parser extends BaseParser {
             }
         } else
             throw new IllegalStateException("Should be a statement string bound to the root.data element.");
+    }
+
+    private String getValueWhenPiecewise(Node leaf, boolean inPiecewise, String description) {
+        if(inPiecewise){
+            return String.format(lineFormat,leaf.data);
+        }else{
+            return Formatter.endline(String.format(equationFormat, description, leaf.data));
+        }
     }
 
     /*
