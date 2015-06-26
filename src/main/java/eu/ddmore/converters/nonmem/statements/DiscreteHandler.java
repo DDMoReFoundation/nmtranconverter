@@ -3,14 +3,15 @@ package eu.ddmore.converters.nonmem.statements;
 import java.util.ArrayList;
 import java.util.List;
 
+import crx.converter.engine.ScriptDefinition;
 import crx.converter.engine.parts.ObservationBlock;
-import eu.ddmore.converters.nonmem.ConversionContext;
 import eu.ddmore.converters.nonmem.utils.Formatter;
 import eu.ddmore.libpharmml.dom.modeldefn.CommonObservationModel;
 import eu.ddmore.libpharmml.dom.modeldefn.CountData;
 import eu.ddmore.libpharmml.dom.modeldefn.CountPMF;
 import eu.ddmore.libpharmml.dom.modeldefn.TTEFunction;
 import eu.ddmore.libpharmml.dom.modeldefn.TimeToEventData;
+import eu.ddmore.libpharmml.dom.uncertml.NegativeBinomialDistribution;
 import eu.ddmore.libpharmml.dom.uncertml.PoissonDistribution;
 
 /**
@@ -18,27 +19,50 @@ import eu.ddmore.libpharmml.dom.uncertml.PoissonDistribution;
  */
 public class DiscreteHandler {
     
+
+    private boolean isDiscrete = false;
+    private boolean isCountData = false;
+    private boolean isPoissonDist = false;
+    private boolean isNegativeBinomial = false;
+    private boolean isCategoricalData = false;
+    private boolean isTimeToEventData = false;
+    
+    private StringBuilder discreteStatement;
+    
+    public DiscreteHandler(ScriptDefinition definition){
+        initialise(definition);
+        
+    }
+
+    private void initialise(ScriptDefinition definition) {
+        setDiscreteStatement(getDiscreteDetails(definition));
+    }
+
     /**
      * Gets details for discrete statements from observation blocks.
      * 
      * @param convContext
      * @return discrete statement with details
      */
-    public StringBuilder getDiscreteDetails(ConversionContext context) {
-        List<ObservationBlock> blocks = context.getScriptDefinition().getObservationBlocks();
+    private StringBuilder getDiscreteDetails(ScriptDefinition definition) {
+        List<ObservationBlock> blocks = definition.getObservationBlocks();
         StringBuilder discreteStatement = new StringBuilder();
         for(ObservationBlock block :blocks){
             
             if(block.isDiscrete()){
+                setDiscrete(true);
                 if(block.getCountData()!=null){
-                    List<String> poissonDistVars = getDiscreteVariables(block.getCountData());
-                    for(String poissonDistVar : poissonDistVars){
+                    setCountData(true);
+                    List<String> distVars = getDiscreteVariables(block.getCountData());
+                    for(String poissonDistVar : distVars){
                         discreteStatement.append(createCountDataStatements(poissonDistVar));
                     }
                 } else if(block.getCategoricalData()!=null){
-                    //TODO : Categical stuff
+                    setCategoricalData(true);
+                    //TODO : Categorical stuff
 
                 } else if(block.getTimeToEventData()!=null){
+                    setTimeToEventData(true);
                     List<String> tteVars = getDiscreteVariables(block.getTimeToEventData());
                     for(String timeToEventVar : tteVars){
                         discreteStatement.append(createTimeToEventDataStatements(timeToEventVar));
@@ -80,6 +104,7 @@ public class DiscreteHandler {
     private String getPoissonDistributionVariable(CountPMF countPMF) {
         String poissonDistVar = new String();
         if(countPMF.getDistribution() instanceof PoissonDistribution){
+            setPoissonDist(true);
             PoissonDistribution poissonDist = (PoissonDistribution) countPMF.getDistribution();
             if(poissonDist.getRate()!=null){
                if(poissonDist.getRate().getVar()!=null){
@@ -90,6 +115,9 @@ public class DiscreteHandler {
                    throw new IllegalArgumentException("The poisson distribution doesn't have any value specified for rate.");
                }
             }
+        } else if (countPMF.getDistribution() instanceof NegativeBinomialDistribution){
+            setNegativeBinomial(true);
+//            NegativeBinomialDistribution negativeBinomialDist = (NegativeBinomialDistribution) countPMF.getDistribution();   
         }
         return poissonDistVar;
     }
@@ -152,5 +180,72 @@ public class DiscreteHandler {
         if(lineToAppend!= null){
             stringToAdd.append(Formatter.endline(lineToAppend));
         }
+    }
+    
+    public boolean isDiscrete() {
+        return isDiscrete;
+    }
+
+    
+    public void setDiscrete(boolean isDiscrete) {
+        this.isDiscrete = isDiscrete;
+    }
+
+    
+    public boolean isCountData() {
+        return isCountData;
+    }
+
+    
+    public void setCountData(boolean isCountData) {
+        this.isCountData = isCountData;
+    }
+
+    
+    public boolean isPoissonDist() {
+        return isPoissonDist;
+    }
+
+    
+    public void setPoissonDist(boolean isPoissonDist) {
+        this.isPoissonDist = isPoissonDist;
+    }
+
+    
+    public boolean isNegativeBinomial() {
+        return isNegativeBinomial;
+    }
+
+    
+    public void setNegativeBinomial(boolean isNegativeBinomial) {
+        this.isNegativeBinomial = isNegativeBinomial;
+    }
+
+    
+    public boolean isCategoricalData() {
+        return isCategoricalData;
+    }
+
+    
+    public void setCategoricalData(boolean isCategoricalData) {
+        this.isCategoricalData = isCategoricalData;
+    }
+    
+    
+    public boolean isTimeToEventData() {
+        return isTimeToEventData;
+    }
+
+    
+    public void setTimeToEventData(boolean isTimeToEventData) {
+        this.isTimeToEventData = isTimeToEventData;
+    }
+
+    public StringBuilder getDiscreteStatement() {
+        return discreteStatement;
+    }
+
+    public void setDiscreteStatement(StringBuilder discreteStatement) {
+        this.discreteStatement = discreteStatement;
     }
 }

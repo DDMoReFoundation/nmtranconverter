@@ -19,6 +19,7 @@ import crx.converter.engine.parts.ParameterBlock.Event;
 import crx.converter.spi.ILexer;
 import crx.converter.spi.IParser;
 import crx.converter.tree.BinaryTree;
+import eu.ddmore.converters.nonmem.statements.DiscreteHandler;
 import eu.ddmore.converters.nonmem.statements.ErrorStatement;
 import eu.ddmore.converters.nonmem.statements.PredStatement;
 import eu.ddmore.converters.nonmem.statements.SigmaStatementBuilder;
@@ -48,6 +49,7 @@ public class ConversionContext {
     private final ILexer lexer;
     private final ParametersHelper parameterHelper;
     private final OrderedThetasHandler orderedThetasHandler;
+    private final DiscreteHandler discreteHandler;
     private final OrderedEtasHandler etasHandler;
     private final List<String> thetas = new ArrayList<String>();
     private final List<ErrorStatement> errorStatements = new ArrayList<ErrorStatement>();
@@ -61,6 +63,7 @@ public class ConversionContext {
         this.parameterHelper = new ParametersHelper(getScriptDefinition());
         this.orderedThetasHandler = new OrderedThetasHandler(getScriptDefinition());
         this.etasHandler = new OrderedEtasHandler(getScriptDefinition());
+        this.discreteHandler = new DiscreteHandler(getScriptDefinition());
         initialise();
     }
 
@@ -337,5 +340,9 @@ public class ConversionContext {
 
     public Map<String, String> getDerivativeVarCompSequences() {
         return derivativeVarCompSequences;
+    }
+
+    public DiscreteHandler getDiscreteHandler() {
+        return discreteHandler;
     }
 }

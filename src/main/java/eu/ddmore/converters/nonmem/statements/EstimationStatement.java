@@ -31,20 +31,10 @@ public class EstimationStatement {
     private List<EstimationStep> estimationSteps = new ArrayList<EstimationStep>();
 
     private static Boolean covFound = false;
+    ConversionContext context;
 
-    public List<EstimationStep> getEstimationSteps() {
-        return estimationSteps;
-    }
-
-    public void setEstimationSteps(List<EstimationStep> estimationSteps) {
-        this.estimationSteps = estimationSteps;
-    }
-
-    public Boolean isCovFound() {
-        return covFound;
-    }
-
-    public EstimationStatement(ConversionContext context){
+    public EstimationStatement(ConversionContext convContext){
+        this.context = convContext;
         estimationSteps = filterOutEstimationSteps(context.getScriptDefinition());
     }
 
@@ -62,6 +52,9 @@ public class EstimationStatement {
             }
             else if(methodDefinition.equals(Method.FOCE.toString())) {
                 sb.append("COND MAXEVALS=9999 PRINT=10 NOABORT");
+                if(context.getDiscreteHandler().isPoissonDist()){
+                    sb.append(" -2LL LAPLACE");
+                }
             }
             else if (methodDefinition.equals(Method.FOCEI.toString())) {
                 sb.append("COND INTER MAXEVALS=9999 PRINT=10 NOABORT");
@@ -172,5 +165,17 @@ public class EstimationStatement {
             return (val instanceof TrueBoolean);
         }
         return false;
+    }
+
+    public List<EstimationStep> getEstimationSteps() {
+        return estimationSteps;
+    }
+
+    public void setEstimationSteps(List<EstimationStep> estimationSteps) {
+        this.estimationSteps = estimationSteps;
+    }
+
+    public Boolean isCovFound() {
+        return covFound;
     }
 }

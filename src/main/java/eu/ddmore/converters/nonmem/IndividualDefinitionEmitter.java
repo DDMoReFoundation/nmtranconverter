@@ -55,7 +55,7 @@ public class IndividualDefinitionEmitter {
 
             if(gaussianModel.getLinearCovariate()!=null){
                 if (!pop_param_symbol.isEmpty()) {
-                    String format = (logType.isEmpty())?("%s"):(logType+"(%s)");
+                    String format = (logType.equals(NmConstant.LOG.toString()))?(logType+"(%s)"):("%s");
                     statement.append(String.format(format, Formatter.addPrefix(pop_param_symbol)));
                 }
 

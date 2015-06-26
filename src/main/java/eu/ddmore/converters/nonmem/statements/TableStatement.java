@@ -102,10 +102,12 @@ public class TableStatement {
                 stdTable.append(SPACE+inputHeader);
             }
         }
-        stdTable.append(SPACE + TableConstant.PRED + SPACE + ErrorConstant.IPRED + SPACE +
-            TableConstant.RES + SPACE + ErrorConstant.IRES + SPACE + TableConstant.WRES + 
-            SPACE + ErrorConstant.IWRES + SPACE);
-        stdTable.append(ErrorConstant.Y + SPACE + TableConstant.DV);
+        if(!context.getDiscreteHandler().isPoissonDist()){
+            stdTable.append(SPACE + TableConstant.PRED + SPACE + ErrorConstant.IPRED + SPACE +
+                TableConstant.RES + SPACE + ErrorConstant.IRES + SPACE + TableConstant.WRES + 
+                SPACE + ErrorConstant.IWRES );
+        }
+        stdTable.append(SPACE +ErrorConstant.Y + SPACE + TableConstant.DV);
         return stdTable;
     }
 

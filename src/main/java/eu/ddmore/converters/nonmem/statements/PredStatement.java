@@ -62,10 +62,9 @@ public class PredStatement {
      */
     private StringBuilder getNonDerivativePredStatement() {
         StringBuilder nonDerivativePredBlock = new StringBuilder();
-        DiscreteHandler discreteHandler = new DiscreteHandler();
 
         nonDerivativePredBlock.append(getPredCoreStatement());
-        nonDerivativePredBlock.append(discreteHandler.getDiscreteDetails(context));
+        nonDerivativePredBlock.append(context.getDiscreteHandler().getDiscreteStatement());
         nonDerivativePredBlock.append(getErrorStatement());
 
         return nonDerivativePredBlock;
@@ -78,6 +77,7 @@ public class PredStatement {
         StringBuilder predCoreBlock = new StringBuilder();
         predCoreBlock.append(Formatter.endline(context.buildThetaAssignments().toString()));
         predCoreBlock.append(Formatter.endline(context.buildEtaAssignments().toString()));
+        predCoreBlock.append(getTransformedCovStatement().toString());
         predCoreBlock.append(Formatter.endline(context.getSimpleParamAssignments().toString()));
         predCoreBlock.append(getAllIndividualParamAssignments());
         return predCoreBlock;
@@ -175,7 +175,16 @@ public class PredStatement {
     private StringBuilder getAllIndividualParamAssignments() {
         StringBuilder IndividualParamAssignmentBlock = new StringBuilder();
         IndividualDefinitionEmitter individualDefEmitter = new IndividualDefinitionEmitter(context);
+        for(ParameterBlock parameterBlock : context.getScriptDefinition().getParameterBlocks()){
+            for(IndividualParameter parameterType: parameterBlock.getIndividualParameters()){
+                IndividualParamAssignmentBlock.append(individualDefEmitter.createIndividualDefinition(parameterType));
+            }
+        }
+        return IndividualParamAssignmentBlock;
+    }
 
+    private StringBuilder getTransformedCovStatement() {
+        StringBuilder transformedCovBlock = new StringBuilder();
         //Find and add transformed covariates before indiv parameter definitions 
         List<CovariateDefinition> covDefs = context.getLexer().getCovariates();
         for(CovariateDefinition covDef : covDefs){
@@ -183,15 +192,10 @@ public class PredStatement {
                 ContinuousCovariate contCov = covDef.getContinuous();
                 for(CovariateTransformation transformation : contCov.getListOfTransformation()){
                     String transCovDefinition = context.getParser().getSymbol(transformation);
-                    IndividualParamAssignmentBlock.append(Formatter.endline(transCovDefinition));
+                    transformedCovBlock.append(Formatter.endline(transCovDefinition));
                 }
             }
         }
-        for(ParameterBlock parameterBlock : context.getScriptDefinition().getParameterBlocks()){
-            for(IndividualParameter parameterType: parameterBlock.getIndividualParameters()){
-                IndividualParamAssignmentBlock.append(individualDefEmitter.createIndividualDefinition(parameterType));
-            }
-        }
-        return IndividualParamAssignmentBlock;
+        return transformedCovBlock;
     }
 }
