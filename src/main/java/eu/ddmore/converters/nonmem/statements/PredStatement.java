@@ -179,8 +179,8 @@ public class PredStatement {
         //Find and add transformed covariates before indiv parameter definitions 
         List<CovariateDefinition> covDefs = context.getLexer().getCovariates();
         for(CovariateDefinition covDef : covDefs){
-            ContinuousCovariate contCov = covDef.getContinuous();
-            if(contCov.getListOfTransformation()!=null){
+            if(covDef.getContinuous()!=null){
+                ContinuousCovariate contCov = covDef.getContinuous();
                 for(CovariateTransformation transformation : contCov.getListOfTransformation()){
                     String transCovDefinition = context.getParser().getSymbol(transformation);
                     IndividualParamAssignmentBlock.append(Formatter.endline(transCovDefinition));
