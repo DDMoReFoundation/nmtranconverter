@@ -43,32 +43,41 @@ public class EstimationStatement {
      * 
      */
     private StringBuilder computeMethod(Algorithm algorithm) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("METHOD=");
+        StringBuilder estStatement = new StringBuilder();
+        String simCommentsForDiscrete = new String(
+            Formatter.endline(";Sim_start")
+            +Formatter.endline(";$SIM (12345) (12345 UNIFORM) ONLYSIM NOPREDICTION")
+            +Formatter.endline(";Sim_end"));
+
+        if(context.getDiscreteHandler().isCountData()){
+            estStatement.append(Formatter.endline(simCommentsForDiscrete));
+        }
+        
+        estStatement.append("METHOD=");
         if (algorithm!=null) {
             String methodDefinition =algorithm.getDefinition().trim().toUpperCase();
             if (methodDefinition.equals(Method.FO.toString())) {
-                sb.append("ZERO MAXEVALS=9999 PRINT=10 NOABORT");
+                estStatement.append("ZERO MAXEVALS=9999 PRINT=10 NOABORT");
             }
             else if(methodDefinition.equals(Method.FOCE.toString())) {
-                sb.append("COND MAXEVALS=9999 PRINT=10 NOABORT");
+                estStatement.append("COND MAXEVALS=9999 PRINT=10 NOABORT");
                 if(context.getDiscreteHandler().isPoissonDist()){
-                    sb.append(" -2LL LAPLACE");
+                    estStatement.append(" -2LL LAPLACE");
                 }
             }
             else if (methodDefinition.equals(Method.FOCEI.toString())) {
-                sb.append("COND INTER MAXEVALS=9999 PRINT=10 NOABORT");
+                estStatement.append("COND INTER MAXEVALS=9999 PRINT=10 NOABORT");
             }
             else if (methodDefinition.equals(Method.SAEM.toString())) {
-                sb.append("SAEM AUTO=1 PRINT=100"+Formatter.endline());
+                estStatement.append("SAEM AUTO=1 PRINT=100"+Formatter.endline());
             }
             else {
-                sb.append(methodDefinition);
+                estStatement.append(methodDefinition);
             }
         } else {
-            sb.append("COND");
+            estStatement.append("COND");
         }
-        return sb;
+        return estStatement;
     }
 
     /**
