@@ -89,8 +89,8 @@ public class DiscreteHandlerTest {
     public void testIfDiscreteStatementsAreCreatedForCountData() {
         CountDataSetUp();
         
-        DiscreteHandler discreteHandler = new DiscreteHandler();
-        assertFalse(discreteHandler.getDiscreteDetails(context).toString().isEmpty());
+        DiscreteHandler discreteHandler = new DiscreteHandler(definition);
+        assertFalse(discreteHandler.getDiscreteStatement().toString().isEmpty());
     }
     
     /**
@@ -100,8 +100,8 @@ public class DiscreteHandlerTest {
     public void testIfDiscreteStatementsAreCreatedForTimeToEventData() {
         TimeToEventDataSetUp();
         
-        DiscreteHandler discreteHandler = new DiscreteHandler();
-        assertFalse(discreteHandler.getDiscreteDetails(context).toString().isEmpty());
+        DiscreteHandler discreteHandler = new DiscreteHandler(definition);
+        assertFalse(discreteHandler.getDiscreteStatement().toString().isEmpty());
     }
 
 }
