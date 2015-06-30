@@ -109,11 +109,11 @@ public class SigmaStatementBuilder {
             StringBuilder sigmaStatements = new StringBuilder();
             if(isNumeric(sigmaRepresentation)){
                 sigmaStatements.append(Double.parseDouble(sigmaRepresentation) +" "+NmConstant.FIX);
+                addAttributeForStdDev(sigmaStatements,isStdDev);
             }else {
                 String sigmastatement = getSigmaFromInitialEstimate(sigmaRepresentation, isStdDev);
                 sigmaStatements.append(sigmastatement);
             }
-            addAttributeForStdDev(sigmaStatements,isStdDev);
             sigmaStatements.append(Formatter.endline());
             sigmaParams.add(sigmaStatements.toString());
         }
@@ -157,7 +157,7 @@ public class SigmaStatementBuilder {
                     sigmastatement.append(value);
                 }
                 addAttributeForStdDev(sigmastatement,isStdDev);
-                sigmastatement.append(Formatter.endline(Formatter.indent(Symbol.COMMENT+ symbId)));
+                sigmastatement.append(Formatter.indent(Symbol.COMMENT+ symbId)+Formatter.endline());
                 paramHelper.addToSigmaVerificationListIfNotExists(symbId);
             }
         }
@@ -172,7 +172,7 @@ public class SigmaStatementBuilder {
      */
     private void addAttributeForStdDev(StringBuilder statement, Boolean isStdDev) {
         if(isStdDev){
-            statement.append(Formatter.endline(" "+NmConstant.SD));
+            statement.append(" "+NmConstant.SD);
         }
     }
 
