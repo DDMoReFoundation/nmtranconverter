@@ -22,7 +22,6 @@ import crx.converter.tree.BinaryTree;
 import eu.ddmore.converters.nonmem.statements.DiscreteHandler;
 import eu.ddmore.converters.nonmem.statements.ErrorStatement;
 import eu.ddmore.converters.nonmem.statements.PredStatement;
-import eu.ddmore.converters.nonmem.statements.SigmaStatementBuilder;
 import eu.ddmore.converters.nonmem.utils.Formatter;
 import eu.ddmore.converters.nonmem.utils.Formatter.Block;
 import eu.ddmore.converters.nonmem.utils.OrderedEtasHandler;
@@ -112,9 +111,9 @@ public class ConversionContext {
         StringBuilder omegaStatement = parameterHelper.getOmegaStatementBlock();
         parameterStatement.append(omegaStatement.toString());
 
-        SigmaStatementBuilder sigmaBuilder = new SigmaStatementBuilder(parameterHelper);
-        StringBuilder sigmaStatement = sigmaBuilder.getSigmaStatementBlock();
+        StringBuilder sigmaStatement = parameterHelper.getSigmaStatementBlock();
         parameterStatement.append(sigmaStatement.toString());
+
         return parameterStatement;
     }
 

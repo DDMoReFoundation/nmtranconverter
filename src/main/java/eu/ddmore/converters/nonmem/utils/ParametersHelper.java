@@ -9,6 +9,7 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 
 import javax.xml.bind.JAXBElement;
@@ -19,6 +20,7 @@ import crx.converter.engine.parts.EstimationStep.FixedParameter;
 import crx.converter.engine.parts.ParameterBlock;
 import eu.ddmore.converters.nonmem.statements.OmegaBlockStatement;
 import eu.ddmore.converters.nonmem.statements.OmegaStatement;
+import eu.ddmore.converters.nonmem.statements.SigmaStatementBuilder;
 import eu.ddmore.converters.nonmem.statements.ThetaStatement;
 import eu.ddmore.libpharmml.dom.commontypes.ScalarRhs;
 import eu.ddmore.libpharmml.dom.commontypes.SymbolRef;
@@ -45,9 +47,10 @@ public class ParametersHelper {
     private final Map<String, ScalarRhs> upperBounds = new HashMap<String, ScalarRhs>();
     private final OmegaBlockStatement omegaBlockStatement = new OmegaBlockStatement(this);
     private final List<String> verifiedSigmas = new ArrayList<String>();
+    private final Set<ParameterRandomVariable> epsilonVars;
     private List<ParameterEstimate> parametersToEstimate = new ArrayList<ParameterEstimate>();
     private List<FixedParameter> fixedParameters = new ArrayList<FixedParameter>();
-
+    private StringBuilder sigmaStatement;
     /**
      * Constructor expects script definition which contains all the blocks populated as part of common converter. 
      *   
@@ -55,6 +58,7 @@ public class ParametersHelper {
      */
     public ParametersHelper(ScriptDefinition scriptDefinition){
         this.scriptDefinition = scriptDefinition;
+        epsilonVars = ScriptDefinitionAccessor.getEpsilonRandomVariables(getScriptDefinition());
     }
 
     /**
@@ -92,7 +96,13 @@ public class ParametersHelper {
         omegaBlockStatement.createOmegaBlocks();
 
         setOmegaParameters();
+        setSigmaParameters();
         setThetaParameters();
+    }
+
+    private void setSigmaParameters(){
+        SigmaStatementBuilder sigmaBuilder = new SigmaStatementBuilder(this);
+        sigmaStatement = sigmaBuilder.getSigmaStatementBlock();
     }
 
     /**
@@ -231,6 +241,7 @@ public class ParametersHelper {
      */
     private void setOmegaParameters(){
         for (ParameterRandomVariable rv : getRandomVarsFromParameterBlock()) {
+
             String symbId = RandomVariableHelper.getNameFromParamRandomVariable(rv);
             OmegaStatement omegaStatement = getOmegaFromRandomVarName(symbId);
             if(omegaStatement!=null){
@@ -288,15 +299,31 @@ public class ParametersHelper {
     }
 
     private List<ParameterRandomVariable> getRandomVarsFromParameterBlock() {
-        List<ParameterBlock> parameterBlocks = getScriptDefinition().getParameterBlocks();
+        List<ParameterRandomVariable> randomVariables = new ArrayList<ParameterRandomVariable>();
 
         //Unless parameterBlocks is empty, getting first parameter Block.
-        if(!parameterBlocks.isEmpty()){
-            return parameterBlocks.get(0).getRandomVariables();
-        }
-        else{
+        if(!getScriptDefinition().getParameterBlocks().isEmpty()){
+            List<ParameterBlock> parameterBlocks = getScriptDefinition().getParameterBlocks();
+            for(ParameterBlock block : parameterBlocks){
+                for(ParameterRandomVariable variable : block.getRandomVariables()){
+                    if(!isResidualError(variable.getSymbId())){
+                        randomVariables.add(variable);
+                    }
+                }
+            }
+        } else{
             throw new IllegalStateException("parameterBlocks cannot be empty");
         }
+        return randomVariables;
+    }
+
+    private boolean isResidualError(String symbId) {
+        for(ParameterRandomVariable randomVariable : getEpsilonVars()){
+            if(randomVariable.getSymbId().equals(symbId)){
+                return true;  
+            }
+        }
+        return false;
     }
 
     /**
@@ -308,6 +335,9 @@ public class ParametersHelper {
             verifiedSigmas.add(sigmaVar);
     }
 
+    public StringBuilder getSigmaStatementBlock() {
+        return sigmaStatement;
+    }
     /**
      * Prepares theta statement for thetas if present.
      *  
@@ -387,5 +417,9 @@ public class ParametersHelper {
 
     public Map<String, SimpleParameter> getSimpleParamsWithAssignment() {
         return simpleParamsWithAssignment;
+    }
+
+    public Set<ParameterRandomVariable> getEpsilonVars() {
+        return epsilonVars;
     }
 }
