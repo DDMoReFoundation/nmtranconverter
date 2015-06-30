@@ -1,3 +1,6 @@
+/*******************************************************************************
+ * Copyright (C) 2015 Mango Solutions Ltd - All rights reserved.
+ ******************************************************************************/
 package eu.ddmore.converters.nonmem.utils;
 
 import java.util.Map;
@@ -10,7 +13,10 @@ import eu.ddmore.converters.nonmem.statements.DiffEquationStatementBuilder;
 import eu.ddmore.converters.nonmem.statements.ErrorStatement;
 import eu.ddmore.libpharmml.dom.commontypes.VariableDefinition;
 
-
+/**
+ * This class retrieves local variable definitions from structural blocks.
+ *  
+ */
 public class LocalVariableHandler {
     ConversionContext context;
     public LocalVariableHandler(ConversionContext context){
@@ -42,29 +48,27 @@ public class LocalVariableHandler {
     public StringBuilder addVarDefinitionTypes(StructuralBlock block, Map<String, String> varDefinitionsInDES) {
 
         StringBuilder varDefinitionsBlock = new StringBuilder();
-        
+
         for (VariableDefinition definitionType: block.getLocalVariables()){
             String variable = Formatter.addPrefix(definitionType.getSymbId());
             String lhs = "";
             String rhs = context.parse(definitionType);
-            
+
             if(Formatter.isInDesBlock()){
-                
                 if(rhs.startsWith(variable+" =")) {
-                    rhs = rhs.replaceFirst(variable+" =","");
-                    
                     if(isVarFromErrorFunction(variable)){
+                        rhs = rhs.replaceFirst(variable+" =","");
                         Preconditions.checkNotNull(varDefinitionsInDES,"variable definitions map needs to be provided to add local variable definition for DES.");
                         varDefinitionsInDES.put(variable, rhs);
                         lhs = DiffEquationStatementBuilder.renameFunctionVariableForDES(variable);
                     }
                 }
             }
-            
+
             if(lhs.isEmpty()){
                 varDefinitionsBlock.append(rhs);
             }else {
-                varDefinitionsBlock.append(variable+" = "+rhs);
+                varDefinitionsBlock.append(lhs+" = "+rhs);
             }
         }
         return varDefinitionsBlock;

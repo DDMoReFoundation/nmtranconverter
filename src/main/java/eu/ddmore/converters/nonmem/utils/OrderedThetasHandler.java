@@ -1,3 +1,6 @@
+/*******************************************************************************
+ * Copyright (C) 2015 Mango Solutions Ltd - All rights reserved.
+ ******************************************************************************/
 package eu.ddmore.converters.nonmem.utils;
 
 import java.util.List;
@@ -16,7 +19,10 @@ import eu.ddmore.libpharmml.dom.modeldefn.IndividualParameter.GaussianModel;
 import eu.ddmore.libpharmml.dom.modeldefn.IndividualParameter.GaussianModel.GeneralCovariate;
 import eu.ddmore.libpharmml.dom.modeldefn.IndividualParameter.GaussianModel.LinearCovariate;
 
-
+/**
+ * This class handles ordered thetas and associated methods to retrieve information from it.
+ *  
+ */
 public class OrderedThetasHandler {
     private static final String MU = "MU_";
     private final TreeMap<Integer, String> orderedThetas = new TreeMap<Integer, String>();

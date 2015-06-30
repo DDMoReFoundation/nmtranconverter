@@ -1,3 +1,6 @@
+/*******************************************************************************
+ * Copyright (C) 2015 Mango Solutions Ltd - All rights reserved.
+ ******************************************************************************/
 package eu.ddmore.converters.nonmem.utils;
 
 import java.util.ArrayList;
@@ -15,7 +18,10 @@ import eu.ddmore.libpharmml.dom.modeldefn.ObservationError;
 import eu.ddmore.libpharmml.dom.modeldefn.ParameterRandomVariable;
 import eu.ddmore.libpharmml.dom.modeldefn.GaussianObsError.ResidualError;
 
-
+/**
+ * This class contains methods which access script definition and return expected values/information in return.
+ *  
+ */
 public class ScriptDefinitionAccessor {
 
     /**

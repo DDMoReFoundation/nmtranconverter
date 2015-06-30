@@ -1,3 +1,6 @@
+/*******************************************************************************
+ * Copyright (C) 2015 Mango Solutions Ltd - All rights reserved.
+ ******************************************************************************/
 package eu.ddmore.converters.nonmem.utils;
 
 import eu.ddmore.converters.nonmem.statements.Parameter;
@@ -5,7 +8,9 @@ import eu.ddmore.converters.nonmem.utils.Formatter.NmConstant;
 import eu.ddmore.converters.nonmem.utils.Formatter.Symbol;
 import eu.ddmore.libpharmml.dom.commontypes.ScalarRhs;
 
-
+/**
+ * This class deals with handling and formatting of parameter statements. 
+ */
 public class ParameterStatementHandler {
 
     /**
