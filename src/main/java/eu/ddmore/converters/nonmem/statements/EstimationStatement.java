@@ -44,15 +44,7 @@ public class EstimationStatement {
      */
     private StringBuilder computeMethod(Algorithm algorithm) {
         StringBuilder estStatement = new StringBuilder();
-        String simCommentsForDiscrete = new String(
-            Formatter.endline(";Sim_start")
-            +Formatter.endline(";$SIM (12345) (12345 UNIFORM) ONLYSIM NOPREDICTION")
-            +Formatter.endline(";Sim_end"));
 
-        if(context.getDiscreteHandler().isCountData()){
-            estStatement.append(Formatter.endline(simCommentsForDiscrete));
-        }
-        
         estStatement.append("METHOD=");
         if (algorithm!=null) {
             String methodDefinition =algorithm.getDefinition().trim().toUpperCase();
@@ -103,6 +95,16 @@ public class EstimationStatement {
     public StringBuilder getEstimationStatement() {
         StringBuilder estStatement = new StringBuilder();
         estStatement.append(Formatter.endline());
+
+        String simCommentsForDiscrete = new String(
+            Formatter.endline(";Sim_start")
+            +Formatter.endline(";$SIM (12345) (12345 UNIFORM) ONLYSIM NOPREDICTION")
+            +Formatter.endline(";Sim_end"));
+
+        if(context.getDiscreteHandler().isCountData()){
+            estStatement.append(Formatter.endline(simCommentsForDiscrete));
+        }
+
         estStatement.append(Formatter.est());
         if(estimationSteps!=null){
             for(EstimationStep estStep : estimationSteps){

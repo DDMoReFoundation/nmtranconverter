@@ -11,6 +11,7 @@ import eu.ddmore.converters.nonmem.ConversionContext;
 import eu.ddmore.converters.nonmem.IndividualDefinitionEmitter;
 import eu.ddmore.converters.nonmem.statements.PkMacroAnalyser.PkMacroDetails;
 import eu.ddmore.converters.nonmem.utils.Formatter;
+import eu.ddmore.converters.nonmem.utils.LocalVariableHandler;
 import eu.ddmore.libpharmml.dom.commontypes.DerivativeVariable;
 import eu.ddmore.libpharmml.dom.modeldefn.ContinuousCovariate;
 import eu.ddmore.libpharmml.dom.modeldefn.CovariateDefinition;
@@ -62,8 +63,11 @@ public class PredStatement {
      */
     private StringBuilder getNonDerivativePredStatement() {
         StringBuilder nonDerivativePredBlock = new StringBuilder();
+        LocalVariableHandler variableHandler = new LocalVariableHandler(context);
 
         nonDerivativePredBlock.append(getPredCoreStatement());
+        nonDerivativePredBlock.append(variableHandler.getVarDefinitionTypesForNonDES()+Formatter.endline());
+        nonDerivativePredBlock.append(getAllIndividualParamAssignments());
         nonDerivativePredBlock.append(context.getDiscreteHandler().getDiscreteStatement());
         nonDerivativePredBlock.append(getErrorStatement());
 
@@ -75,11 +79,11 @@ public class PredStatement {
      */
     private StringBuilder getPredCoreStatement() {
         StringBuilder predCoreBlock = new StringBuilder();
-        predCoreBlock.append(Formatter.endline(context.buildThetaAssignments().toString()));
-        predCoreBlock.append(Formatter.endline(context.buildEtaAssignments().toString()));
-        predCoreBlock.append(getTransformedCovStatement().toString());
-        predCoreBlock.append(Formatter.endline(context.getSimpleParamAssignments().toString()));
-        predCoreBlock.append(getAllIndividualParamAssignments());
+        predCoreBlock.append(context.buildThetaAssignments()+Formatter.endline());
+        predCoreBlock.append(context.buildEtaAssignments()+Formatter.endline());
+        predCoreBlock.append(getTransformedCovStatement());
+        predCoreBlock.append(context.getSimpleParamAssignments()+Formatter.endline());
+
         return predCoreBlock;
     }
 
@@ -95,7 +99,7 @@ public class PredStatement {
         Formatter.setInDesBlock(false);
         //TODO: getAESStatement();
         DerivativePredblock.append(Formatter.endline()+Formatter.error());
-        DerivativePredblock.append(getErrorStatement(desBuilder.getDefinitionsParsingMap()));
+        DerivativePredblock.append(getErrorStatement(desBuilder.getVarDefinitions()));
 
         return DerivativePredblock;
     }
@@ -135,6 +139,7 @@ public class PredStatement {
         pkStatementBlock.append(Formatter.endline());
         pkStatementBlock.append(Formatter.pk());
         pkStatementBlock.append(getPredCoreStatement());
+        pkStatementBlock.append(getAllIndividualParamAssignments());
         pkStatementBlock.append(getDifferentialInitialConditions());
         return new StringBuilder(pkStatementBlock.toString().toUpperCase());
     }

@@ -18,7 +18,6 @@ import eu.ddmore.libpharmml.dom.uncertml.PoissonDistribution;
  * Handles discrete statement details from pharmML to add to nmtran
  */
 public class DiscreteHandler {
-    
 
     private boolean isDiscrete = false;
     private boolean isCountData = false;
@@ -26,12 +25,11 @@ public class DiscreteHandler {
     private boolean isNegativeBinomial = false;
     private boolean isCategoricalData = false;
     private boolean isTimeToEventData = false;
-    
+
     private StringBuilder discreteStatement;
-    
+
     public DiscreteHandler(ScriptDefinition definition){
         initialise(definition);
-        
     }
 
     private void initialise(ScriptDefinition definition) {
@@ -48,7 +46,7 @@ public class DiscreteHandler {
         List<ObservationBlock> blocks = definition.getObservationBlocks();
         StringBuilder discreteStatement = new StringBuilder();
         for(ObservationBlock block :blocks){
-            
+
             if(block.isDiscrete()){
                 setDiscrete(true);
                 if(block.getCountData()!=null){
@@ -72,7 +70,7 @@ public class DiscreteHandler {
         }
         return discreteStatement;
     }
-    
+
     /**
      * Retrieves required variables related to discrete block from common observation model.
      * 
@@ -94,7 +92,7 @@ public class DiscreteHandler {
         }
         return variables;
     }
-    
+
     /**
      *  Gets distribution variable specified for discrete block.
      *  
@@ -102,26 +100,26 @@ public class DiscreteHandler {
      * @return
      */
     private String getPoissonDistributionVariable(CountPMF countPMF) {
-        String poissonDistVar = new String();
+        String distributionVar = new String();
         if(countPMF.getDistribution() instanceof PoissonDistribution){
             setPoissonDist(true);
             PoissonDistribution poissonDist = (PoissonDistribution) countPMF.getDistribution();
             if(poissonDist.getRate()!=null){
-               if(poissonDist.getRate().getVar()!=null){
-                   poissonDistVar = poissonDist.getRate().getVar().getVarId();       
-               } else if(poissonDist.getRate().getPrVal()!=null){
-                   poissonDistVar = poissonDist.getRate().getPrVal().toString();
-               }else {
-                   throw new IllegalArgumentException("The poisson distribution doesn't have any value specified for rate.");
-               }
+                if(poissonDist.getRate().getVar()!=null){
+                    distributionVar = poissonDist.getRate().getVar().getVarId();       
+                } else if(poissonDist.getRate().getPrVal()!=null){
+                    distributionVar = poissonDist.getRate().getPrVal().toString();
+                }else {
+                    throw new IllegalArgumentException("The poisson distribution doesn't have any value specified for rate.");
+                }
             }
         } else if (countPMF.getDistribution() instanceof NegativeBinomialDistribution){
             setNegativeBinomial(true);
-//            NegativeBinomialDistribution negativeBinomialDist = (NegativeBinomialDistribution) countPMF.getDistribution();   
+            //            NegativeBinomialDistribution negativeBinomialDist = (NegativeBinomialDistribution) countPMF.getDistribution();   
         }
-        return poissonDistVar;
+        return distributionVar;
     }
-    
+
     /**
      * Create statements for time to event data with help of the variable provided.
      * 
@@ -145,14 +143,14 @@ public class DiscreteHandler {
      */
     private StringBuilder createCountDataStatements(String poissonDistVar) {
         StringBuilder stringToAdd = new StringBuilder();
-        
+
         stringToAdd.append(Formatter.endline());
         appendLine(stringToAdd,"IF (ICALL.EQ.4) THEN");
         appendLine(stringToAdd,Formatter.indent("T=0"));
         appendLine(stringToAdd,Formatter.indent(" N=0"));
         appendLine(stringToAdd,Formatter.indent(Formatter.indent(" DO WHILE (T.LT.1)              ;Loop")));
         appendLine(stringToAdd,Formatter.indent(Formatter.indent(" CALL RANDOM (2,R)              ;Random number in a uniform distribution")));
-        
+
         appendLine(stringToAdd,Formatter.indent(Formatter.indent(" T=T-LOG(1-R)/"+poissonDistVar)));
         appendLine(stringToAdd,Formatter.indent(Formatter.indent(" IF (T.LT.1) N=N+1")));
         appendLine(stringToAdd,Formatter.indent(Formatter.indent(" END DO")));
@@ -181,62 +179,62 @@ public class DiscreteHandler {
             stringToAdd.append(Formatter.endline(lineToAppend));
         }
     }
-    
+
     public boolean isDiscrete() {
         return isDiscrete;
     }
 
-    
+
     public void setDiscrete(boolean isDiscrete) {
         this.isDiscrete = isDiscrete;
     }
 
-    
+
     public boolean isCountData() {
         return isCountData;
     }
 
-    
+
     public void setCountData(boolean isCountData) {
         this.isCountData = isCountData;
     }
 
-    
+
     public boolean isPoissonDist() {
         return isPoissonDist;
     }
 
-    
+
     public void setPoissonDist(boolean isPoissonDist) {
         this.isPoissonDist = isPoissonDist;
     }
 
-    
+
     public boolean isNegativeBinomial() {
         return isNegativeBinomial;
     }
 
-    
+
     public void setNegativeBinomial(boolean isNegativeBinomial) {
         this.isNegativeBinomial = isNegativeBinomial;
     }
 
-    
+
     public boolean isCategoricalData() {
         return isCategoricalData;
     }
 
-    
+
     public void setCategoricalData(boolean isCategoricalData) {
         this.isCategoricalData = isCategoricalData;
     }
-    
-    
+
+
     public boolean isTimeToEventData() {
         return isTimeToEventData;
     }
 
-    
+
     public void setTimeToEventData(boolean isTimeToEventData) {
         this.isTimeToEventData = isTimeToEventData;
     }

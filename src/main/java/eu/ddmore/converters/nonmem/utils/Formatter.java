@@ -47,13 +47,17 @@ public class Formatter {
 
     private static boolean inDesBlock = false;
 
-    public static String getTimeSymbol(){
-        return (inDesBlock)?NmConstant.T.toString():ColumnConstant.TIME.toString();
+    public static boolean isInDesBlock() {
+        return inDesBlock;
     }
 
     public static void setInDesBlock(boolean inDesBlock) {
         Formatter.inDesBlock = inDesBlock;
-    } 
+    }
+
+    public static String getTimeSymbol(){
+        return (inDesBlock)?NmConstant.T.toString():ColumnConstant.TIME.toString();
+    }
 
     private static final String PREFIX = "";//"NM_";
     private static final String NEW_LINE = System.getProperty("line.separator");
@@ -253,7 +257,7 @@ public class Formatter {
         }
         return symbol;
     }
-    
+
     /**
      * This method will reverse the map and return a tree map (ordered in natural order of keys).
      * 

@@ -102,7 +102,7 @@ public class TableStatement {
                 stdTable.append(SPACE+inputHeader);
             }
         }
-        if(!context.getDiscreteHandler().isPoissonDist()){
+        if(!context.getDiscreteHandler().isDiscrete()){
             stdTable.append(SPACE + TableConstant.PRED + SPACE + ErrorConstant.IPRED + SPACE +
                 TableConstant.RES + SPACE + ErrorConstant.IRES + SPACE + TableConstant.WRES + 
                 SPACE + ErrorConstant.IWRES );
