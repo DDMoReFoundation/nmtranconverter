@@ -84,6 +84,67 @@ public class Parser extends BaseParser {
         binopProperties = loadBinopProperties();
     }
 
+    protected String doBinaryOperation(Binop binopType, String leftStatement, String rightStatement) {
+
+        String operator = convertBinoperator(binopType);
+        if (operator.equals(LOGX)) 
+            return String.format(getLogXFormat(), leftStatement, rightStatement);
+        else if (operator.equals(ROOT)) 
+            return String.format(getRootFormat(), leftStatement, rightStatement);
+        else if (operator.equals(MIN)) 
+            return String.format(getMinFormat(), leftStatement, rightStatement);
+        else if (operator.equals(MAX)) 
+            return String.format(getMaxFormat(), leftStatement, rightStatement);
+        else if (operator.equals(REM)) 
+            return String.format(getRemFormat(), leftStatement, rightStatement);
+        else{
+            return getBinaryOperatorFormat(operator,leftStatement, rightStatement);
+        }
+    }
+    
+    private String getBinaryOperatorFormat(String op, String leftStatement, String rightStatement){
+
+        String operator = getScriptBinaryOperator(op);
+    
+        if(op.equalsIgnoreCase(PLUS)){
+            return sum(leftStatement, operator, rightStatement);
+        }else if(op.equalsIgnoreCase(MINUS)) {
+            return subtraction(leftStatement, operator, rightStatement);
+        }else if(op.equalsIgnoreCase(DIVIDE)) {
+            return division(leftStatement, operator, rightStatement);
+        }else {
+            return genericMathOperation(leftStatement, operator, rightStatement);
+        }
+    }
+    
+    private String sum(String left, String operator, String right) {
+        String strToReturn = "("+left + operator + right+")"; 
+        return strToReturn;
+    }
+
+    private String subtraction(String left, String operator, String right) {
+        String strToReturn =  "(" + addParenthesesIfNeeded(left) + operator + addParenthesesIfNeeded(right) +")";
+        return strToReturn;
+    }
+
+    private String division(String left, String operator, String right) {
+        String strToReturn =  addParenthesesIfNeeded(left) + operator + addParenthesesIfNeeded(right);
+        return strToReturn;
+    }
+
+    private String genericMathOperation(String left, String operator, String right) {
+        String strToReturn =  addParenthesesIfNeeded(left) + operator + addParenthesesIfNeeded(right);
+        return strToReturn;
+    }
+
+    private String addParenthesesIfNeeded(String operand) {
+        if ( (operand.contains(PLUS) || operand.contains(MINUS)) && !operand.startsWith("(")) {
+            return "("+ operand +")";
+        } else {
+            return operand;
+        }
+    }
+
     /*
      * (non-Javadoc)
      * @see crx.converter.engine.BaseParser#doSymbolRef(eu.ddmore.libpharmml.dom.commontypes.SymbolRef)
@@ -336,7 +397,7 @@ public class Parser extends BaseParser {
             String format = Formatter.endline(Formatter.indent("%s = %s"));
             block.append(String.format(format, field_tag, assignment_stmts[else_index]));
         }
-        block.append("ENDIF");
+        block.append(Formatter.endline("ENDIF"));
         if (assignmentCount == 0) throw new IllegalStateException("Piecewise statement assigned no conditional blocks.");
         symbol = block.toString();
 
