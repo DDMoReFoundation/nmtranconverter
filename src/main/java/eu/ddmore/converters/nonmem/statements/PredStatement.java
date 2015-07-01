@@ -66,8 +66,8 @@ public class PredStatement {
         LocalVariableHandler variableHandler = new LocalVariableHandler(context);
 
         nonDerivativePredBlock.append(getPredCoreStatement());
-        nonDerivativePredBlock.append(variableHandler.getVarDefinitionTypesForNonDES()+Formatter.endline());
         nonDerivativePredBlock.append(getAllIndividualParamAssignments());
+        nonDerivativePredBlock.append(variableHandler.getVarDefinitionTypesForNonDES()+Formatter.endline());
         nonDerivativePredBlock.append(context.getDiscreteHandler().getDiscreteStatement());
         nonDerivativePredBlock.append(getErrorStatement());
 
