@@ -41,7 +41,7 @@ public class ParametersHelper {
 
     // These are keyed by symbol ID
     private final Map<String, SimpleParameter> simpleParams = new HashMap<String, SimpleParameter>();
-    private final Map<String, SimpleParameter> simpleParamsWithAssignment = new HashMap<String, SimpleParameter>();
+    private final Map<String, SimpleParameter> simpleParamsWithAssignment = new LinkedHashMap<String, SimpleParameter>();
     private final Map<String, ScalarRhs> initialEstimates = new HashMap<String, ScalarRhs>();
     private final Map<String, ScalarRhs> lowerBounds = new HashMap<String, ScalarRhs>();
     private final Map<String, ScalarRhs> upperBounds = new HashMap<String, ScalarRhs>();
