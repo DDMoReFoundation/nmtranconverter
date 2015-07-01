@@ -323,8 +323,8 @@ public class Parser extends BaseParser {
             String operator = "IF";
             String format = Formatter.endline("%s (%s) THEN")+Formatter.endline(Formatter.indent("%s = %s"));
             if (block_assignment > 0) {
-                operator = "ELSE IF ";
-                format = Formatter.endline(" %s (%s)")+Formatter.endline(Formatter.indent("%s = %s"));
+                operator = "ELSEIF ";
+                format = Formatter.endline(" %s (%s) THEN")+Formatter.endline(Formatter.indent("%s = %s"));
             }
             String conditionStatement = conditional_stmts[i].replaceAll("\\s+","");
             block.append(String.format(format, operator, conditionStatement, field_tag, assignment_stmts[i]));
