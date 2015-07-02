@@ -53,7 +53,7 @@ public class EstimationStatement {
             }
             else if(methodDefinition.equals(Method.FOCE.toString())) {
                 estStatement.append("COND MAXEVALS=9999 PRINT=10 NOABORT");
-                if(context.getDiscreteHandler().isPoissonDist()){
+                if(context.getDiscreteHandler().isCountData()){
                     estStatement.append(" -2LL LAPLACE");
                 }
             }

@@ -3,6 +3,8 @@ package eu.ddmore.converters.nonmem.statements;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.google.common.base.Preconditions;
+
 import crx.converter.engine.ScriptDefinition;
 import crx.converter.engine.parts.ObservationBlock;
 import eu.ddmore.converters.nonmem.utils.Formatter;
@@ -11,8 +13,12 @@ import eu.ddmore.libpharmml.dom.modeldefn.CountData;
 import eu.ddmore.libpharmml.dom.modeldefn.CountPMF;
 import eu.ddmore.libpharmml.dom.modeldefn.TTEFunction;
 import eu.ddmore.libpharmml.dom.modeldefn.TimeToEventData;
+import eu.ddmore.libpharmml.dom.uncertml.NaturalNumberValueType;
 import eu.ddmore.libpharmml.dom.uncertml.NegativeBinomialDistribution;
 import eu.ddmore.libpharmml.dom.uncertml.PoissonDistribution;
+import eu.ddmore.libpharmml.dom.uncertml.PositiveRealValueType;
+import eu.ddmore.libpharmml.dom.uncertml.ProbabilityValueType;
+import eu.ddmore.libpharmml.dom.uncertml.VarRefType;
 
 /**
  * Handles discrete statement details from pharmML to add to nmtran
@@ -51,20 +57,15 @@ public class DiscreteHandler {
                 setDiscrete(true);
                 if(block.getCountData()!=null){
                     setCountData(true);
-                    List<String> distVars = getDiscreteVariables(block.getCountData());
-                    for(String poissonDistVar : distVars){
-                        discreteStatement.append(createCountDataStatements(poissonDistVar));
-                    }
+                        discreteStatement.append(getDiscreteStatements(block.getCountData()));
                 } else if(block.getCategoricalData()!=null){
                     setCategoricalData(true);
-                    //TODO : Categorical stuff
+                    //TODO : Categorical data
 
                 } else if(block.getTimeToEventData()!=null){
                     setTimeToEventData(true);
-                    List<String> tteVars = getDiscreteVariables(block.getTimeToEventData());
-                    for(String timeToEventVar : tteVars){
-                        discreteStatement.append(createTimeToEventDataStatements(timeToEventVar));
-                    }
+                    //TODO : Incomplete TTE data
+                    discreteStatement.append(getDiscreteStatements(block.getCountData()));
                 }
             }
         }
@@ -77,20 +78,20 @@ public class DiscreteHandler {
      * @param obsModel
      * @return
      */
-    private List<String> getDiscreteVariables(CommonObservationModel obsModel){
-        List<String> variables = new ArrayList<String>();
+    private StringBuilder getDiscreteStatements(CommonObservationModel obsModel){
+        StringBuilder statement = new StringBuilder();
         if(obsModel instanceof CountData){
             CountData countData = (CountData) obsModel;
             for(CountPMF countPMF :countData.getListOfPMF()){
-                variables.add(getPoissonDistributionVariable(countPMF));
+                statement.append(getCountDataStatement(countPMF));
             }
         }else if(obsModel instanceof TimeToEventData){
             TimeToEventData tteData = (TimeToEventData) obsModel;
             for(TTEFunction tteFunction : tteData.getListOfHazardFunction()){
-                variables.add(tteFunction.getSymbId());
+                statement.append(createTimeToEventDataStatements(tteFunction.getSymbId()));
             }
         }
-        return variables;
+        return statement;
     }
 
     /**
@@ -99,25 +100,58 @@ public class DiscreteHandler {
      * @param block
      * @return
      */
-    private String getPoissonDistributionVariable(CountPMF countPMF) {
-        String distributionVar = new String();
+    private StringBuilder getCountDataStatement(CountPMF countPMF) {
+        StringBuilder countDistStatement = new StringBuilder();
+        
         if(countPMF.getDistribution() instanceof PoissonDistribution){
             setPoissonDist(true);
+            
             PoissonDistribution poissonDist = (PoissonDistribution) countPMF.getDistribution();
-            if(poissonDist.getRate()!=null){
-                if(poissonDist.getRate().getVar()!=null){
-                    distributionVar = poissonDist.getRate().getVar().getVarId();       
-                } else if(poissonDist.getRate().getPrVal()!=null){
-                    distributionVar = poissonDist.getRate().getPrVal().toString();
-                }else {
-                    throw new IllegalArgumentException("The poisson distribution doesn't have any value specified for rate.");
-                }
-            }
+            String poissonDistVar = getCountDataValue(poissonDist.getRate());
+            countDistStatement.append(createPoissonStatements(poissonDistVar));
+            
         } else if (countPMF.getDistribution() instanceof NegativeBinomialDistribution){
             setNegativeBinomial(true);
-            //            NegativeBinomialDistribution negativeBinomialDist = (NegativeBinomialDistribution) countPMF.getDistribution();   
+            
+            NegativeBinomialDistribution negativeBinomialDist = (NegativeBinomialDistribution) countPMF.getDistribution();
+            String numberOfFailures = getCountDataValue(negativeBinomialDist.getNumberOfFailures());
+            String probability = getCountDataValue(negativeBinomialDist.getProbability());
+            countDistStatement.append(createNegativeBinomialStatement(numberOfFailures, probability));
         }
-        return distributionVar;
+        return countDistStatement;
+    }
+    
+    private String getCountDataValue(PositiveRealValueType valueType){
+        Preconditions.checkNotNull(valueType, "Rate value cannot be null for poisson data.");
+        if(valueType.getVar()!=null){
+            return valueType.getVar().getVarId();
+        }else if(valueType.getPrVal()!=null){
+            return valueType.getPrVal().toString();
+        }else {
+            throw new IllegalArgumentException("The specified type doesn't have any value specified.");
+        }
+    }
+    
+    private String getCountDataValue(NaturalNumberValueType valueType){
+        Preconditions.checkNotNull(valueType, "Number of failures Value cannot be null for negative binomial");
+        if(valueType.getVar()!=null){
+            return valueType.getVar().getVarId();
+        }else if(valueType.getNVal()!=null){
+            return valueType.getNVal().toString();
+        }else {
+            throw new IllegalArgumentException("The specified type doesn't have any value specified.");
+        }
+    }
+
+    private String getCountDataValue(ProbabilityValueType valueType){
+        Preconditions.checkNotNull(valueType, "Probability Value cannot be null for negative binomial");
+        if(valueType.getVar()!=null){
+            return valueType.getVar().getVarId();
+        }else if(valueType.getPVal()!=null){
+            return valueType.getPVal().toString();
+        }else {
+            throw new IllegalArgumentException("The specified type doesn't have any value specified.");
+        }
     }
 
     /**
@@ -136,12 +170,12 @@ public class DiscreteHandler {
     }
 
     /**
-     * Create statements for time to event data with help of the poisson distribution variable provided.
+     * Create statements for count data with help of the poisson distribution variable provided.
      * 
      * @param poissonDistVar
      * @return
      */
-    private StringBuilder createCountDataStatements(String poissonDistVar) {
+    private StringBuilder createPoissonStatements(String poissonDistVar) {
         StringBuilder stringToAdd = new StringBuilder();
 
         stringToAdd.append(Formatter.endline());
@@ -166,6 +200,31 @@ public class DiscreteHandler {
         appendLine(stringToAdd,"LPOI = -"+poissonDistVar+"+DV*LOG("+poissonDistVar+")-LFAC");
         appendLine(stringToAdd,";-2 Log Likelihood");
         appendLine(stringToAdd,"Y=-2*(LPOI)");
+        return stringToAdd;
+    }
+
+    /**
+     * Create statements for count data with help of the negative binomial details provided.
+     * 
+     * @param poissonDistVar
+     * @return
+     */
+    private StringBuilder createNegativeBinomialStatement(String numberOfFailures, String probability ){
+        
+        StringBuilder stringToAdd = new StringBuilder();
+
+        stringToAdd.append(Formatter.endline());
+        appendLine(stringToAdd,"AGM1=DV + "+numberOfFailures);
+        appendLine(stringToAdd,"AGM2="+numberOfFailures);
+        appendLine(stringToAdd,"PREC1=(1+1/(12*AGM1))");
+        appendLine(stringToAdd,"PREC2=(1+1/(12*AGM2))");
+        appendLine(stringToAdd,"GAM1=SQRT(2*3.1415)*(AGM1**(AGM1-0.5))*EXP(-AGM1)*PREC1");
+        appendLine(stringToAdd,"GAM2=SQRT(2*3.1415)*(AGM2**(AGM2-0.5))*EXP(-AGM2)*PREC2");
+        appendLine(stringToAdd,"FDV=1");
+        appendLine(stringToAdd,"IF(DV.GT.0) FDV=SQRT(2*3.1415)*DV**(DV+0.5)*EXP(-DV)*(1+1/(12*DV))");
+        appendLine(stringToAdd,"YY=(GAM1/(FDV*GAM2))*( "+probability+"**DV)*(1-"+probability+")**"+numberOfFailures);
+        appendLine(stringToAdd,"Y=-2*LOG(YY)");
+        
         return stringToAdd;
     }
 
