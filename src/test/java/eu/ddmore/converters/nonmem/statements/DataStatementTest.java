@@ -3,33 +3,30 @@
  ******************************************************************************/
 package eu.ddmore.converters.nonmem.statements;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
 
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.powermock.modules.junit4.PowerMockRunner;
 
-import eu.ddmore.converters.nonmem.statements.DataStatement;
-import eu.ddmore.converters.nonmem.statements.InputStatement;
-import eu.ddmore.libpharmml.dom.dataset.DataSetType;
-import eu.ddmore.libpharmml.dom.dataset.ImportDataType;
-import eu.ddmore.libpharmml.dom.modellingsteps.ModellingStepsType;
-import eu.ddmore.libpharmml.dom.modellingsteps.NONMEMdataSetType;
+import eu.ddmore.converters.nonmem.ConversionContext;
+import eu.ddmore.libpharmml.dom.dataset.DataSet;
+import eu.ddmore.libpharmml.dom.dataset.ExternalFile;
+import eu.ddmore.libpharmml.dom.modellingsteps.ExternalDataSet;
+import eu.ddmore.libpharmml.dom.modellingsteps.ModellingSteps;
 
+@RunWith(PowerMockRunner.class)
 public class DataStatementTest {
 
 	private static final String DATA_FILE_NAME = "warfarin_conc_pca.csv";
-	private static final String IGNORE_STRING = "IGNORE";
-	private static final String IGNORE_CHAR = "@";
 	File srcFile = null;
+	@Mock ConversionContext context;
 
 	@Test
 	public void shouldCreateValidDataStatementNONMEMdataSet() {
 
-		ModellingStepsType modellingSteps = createModellingSteps(createDataSet());
+		ModellingSteps modellingSteps = createModellingSteps(createDataSet());
 		
 		srcFile = new File(DATA_FILE_NAME);
 		
@@ -44,33 +41,27 @@ public class DataStatementTest {
 	@Test(expected = IllegalStateException.class)
 	public void shouldThrowExceptionNullNONMEMdataSet() {
 
-		new InputStatement((List<NONMEMdataSetType>)null);
+		new DataStatement((ConversionContext)null,null);
 	}
 
-	@Test(expected = IllegalStateException.class)
-	public void shouldThrowExceptionEmptyNONMEMdataSet() {
+	private DataSet createDataSet() {
 
-		new InputStatement((new ArrayList<NONMEMdataSetType>()));
-	}
-
-	private DataSetType createDataSet() {
-
-		ImportDataType importData = new ImportDataType();
+		ExternalFile importData = new ExternalFile();
 		importData.setPath(DATA_FILE_NAME);
 
-		DataSetType dataset = new DataSetType();
+		DataSet dataset = new DataSet();
 		dataset.setImportData(importData);
 		
 		return dataset;
 	}
 
-	private ModellingStepsType createModellingSteps(DataSetType dataset) {
+	private ModellingSteps createModellingSteps(DataSet dataset) {
 
-		NONMEMdataSetType nonmemDataSet = new NONMEMdataSetType();
+		ExternalDataSet nonmemDataSet = new ExternalDataSet();
 		nonmemDataSet.setDataSet(dataset);
 
-		ModellingStepsType modellingSteps = new ModellingStepsType();
-		modellingSteps.getNONMEMdataSet().add(nonmemDataSet);
+		ModellingSteps modellingSteps = new ModellingSteps();
+		modellingSteps.getListOfExternalDataSet().add(nonmemDataSet);
 
 		return modellingSteps;
 	}

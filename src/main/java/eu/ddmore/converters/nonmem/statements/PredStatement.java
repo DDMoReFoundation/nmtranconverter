@@ -3,114 +3,75 @@
  ******************************************************************************/
 package eu.ddmore.converters.nonmem.statements;
 
-import java.io.PrintWriter;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
-import crx.converter.engine.ScriptDefinition;
-import crx.converter.engine.parts.ObservationBlock;
 import crx.converter.engine.parts.ParameterBlock;
-import crx.converter.engine.parts.StructuralBlock;
-import eu.ddmore.converters.nonmem.Parser;
+import eu.ddmore.converters.nonmem.ConversionContext;
+import eu.ddmore.converters.nonmem.IndividualDefinitionEmitter;
+import eu.ddmore.converters.nonmem.statements.PkMacroAnalyser.PkMacroDetails;
 import eu.ddmore.converters.nonmem.utils.Formatter;
-import eu.ddmore.libpharmml.dom.commontypes.DerivativeVariableType;
-import eu.ddmore.libpharmml.dom.maths.FunctionCallType;
-import eu.ddmore.libpharmml.dom.modeldefn.GaussianObsError;
-import eu.ddmore.libpharmml.dom.modeldefn.GaussianObsError.ErrorModel;
-import eu.ddmore.libpharmml.dom.modeldefn.GeneralObsError;
-import eu.ddmore.libpharmml.dom.modeldefn.IndividualParameterType;
-import eu.ddmore.libpharmml.dom.modeldefn.ObservationErrorType;
+import eu.ddmore.converters.nonmem.utils.LocalVariableHandler;
+import eu.ddmore.libpharmml.dom.commontypes.DerivativeVariable;
+import eu.ddmore.libpharmml.dom.modeldefn.ContinuousCovariate;
+import eu.ddmore.libpharmml.dom.modeldefn.CovariateDefinition;
+import eu.ddmore.libpharmml.dom.modeldefn.CovariateTransformation;
+import eu.ddmore.libpharmml.dom.modeldefn.IndividualParameter;
 
 /**
  * Creates and adds estimation statement to nonmem file from script definition.
- * 
- * @author sdeshmukh
  *
  */
 public class PredStatement {
 
-    private ScriptDefinition scriptDefinition;
-    private List<DerivativeVariableType> derivativeVarList = new ArrayList<DerivativeVariableType>();
-    public static Map<String, String> derivativeVarCompSequences = new HashMap<String, String>();
-    private List<ErrorStatement> errorStatements = new ArrayList<ErrorStatement>();
-    private Parser parser;
+    private final ConversionContext context;
 
-    public PredStatement(ScriptDefinition scriptDefinition, Parser parser){
-        this.parser = parser;
-        this.scriptDefinition = scriptDefinition;
-        getAllDerivativeVarsFromStateVars();
-        setDerivativeVarCompartmentSequence();
+    public PredStatement(ConversionContext context){
+        this.context = context;
     }
 
-    private void getAllDerivativeVarsFromStateVars() {
-        derivativeVarList.addAll(getAllStateVariables());
-    }
-
-    private void setDerivativeVarCompartmentSequence(){
-        int i=1;
-        derivativeVarCompSequences = new HashMap<String, String>();
-        for (DerivativeVariableType variableType : derivativeVarList){
-            String variable = Formatter.addPrefix(variableType.getSymbId());
-            derivativeVarCompSequences.put(variable, Integer.toString(i++));
-        }
-    }
-
-    public void getPredStatement(PrintWriter fout){
+    public StringBuilder getPredStatement(){
         String statementName = Formatter.endline()+Formatter.pred();
-        if(!derivativeVarList.isEmpty()){
-            //TODO: Add $SUB block. need to have details around it.
-            statementName = Formatter.endline()+Formatter.sub();
-            fout.write(Formatter.endline()+Formatter.endline(Formatter.subs()+"ADVAN13 TOL=9"));
-            fout.write(getDerivativePredStatement().toString());
+        StringBuilder predStatement = new StringBuilder();
+        PkMacroAnalyser analyser = new PkMacroAnalyser();
+        PkMacroDetails pkMacroDetails = analyser.analyse(context);
+        String advanType = pkMacroDetails.getMacroAdvanType();
+
+        if(!context.getDerivativeVars().isEmpty()){
+            if(advanType.isEmpty()){
+                statementName = Formatter.endline()+Formatter.sub();
+                predStatement.append(Formatter.endline()+Formatter.endline(Formatter.subs()+"ADVAN13 TOL=9"));
+                predStatement.append(getDerivativePredStatement().toString());
+            }else{
+                //Advan PK macros
+                predStatement.append(Formatter.endline()+Formatter.endline(Formatter.subs()+advanType+" TRANS=1"));
+                predStatement.append(getPKStatement());
+                predStatement.append(Formatter.error());
+                predStatement.append(getErrorStatement());
+            }
         }else{
-            fout.write(statementName);
-            fout.write(getNonDerivativePredStatement().toString());
+            //non derivative pred block
+            predStatement.append(Formatter.endline()+statementName);
+            predStatement.append(getNonDerivativePredStatement());
         }
+        return new StringBuilder(predStatement.toString().toUpperCase());
     }
 
     /**
      * Returns non derivative pred statement.
      * @return 
-     * 
      */
     private StringBuilder getNonDerivativePredStatement() {
-        StringBuilder sb = new StringBuilder();
-        //NM_D is for DOSE
-        sb.append(Formatter.endline());
-        sb.append(Formatter.endline("IF (AMT.GT.0) NM_D=AMT"));
-        sb.append(getPredCoreStatement());
-        errorStatements = prepareAllErrorStatements();
-        sb.append(getErrorStatement());
+        StringBuilder nonDerivativePredBlock = new StringBuilder();
+        LocalVariableHandler variableHandler = new LocalVariableHandler(context);
 
-        return sb;
-    }
+        nonDerivativePredBlock.append(getPredCoreStatement());
+        nonDerivativePredBlock.append(getAllIndividualParamAssignments());
+        nonDerivativePredBlock.append(variableHandler.getVarDefinitionTypesForNonDES()+Formatter.endline());
+        nonDerivativePredBlock.append(context.getDiscreteHandler().getDiscreteStatement());
+        nonDerivativePredBlock.append(getErrorStatement());
 
-    /**
-     * This method will build theta assignment statements
-     * @param fout
-     */
-    public StringBuilder buildThetaAssignments() {
-        StringBuilder thetaAssignmentBlock = new StringBuilder();  
-        for(String theta : parser.getParameters().getThetaParams().keySet()){
-            thetaAssignmentBlock.append(Formatter.endline(theta+ " = "+parser.getThetaForSymbol(theta)));
-        }
-        return thetaAssignmentBlock;
-    }
-
-    /**
-     * This method will build eta assignment statements to be displayed after theta assignments.
-     * @return
-     */
-    public StringBuilder buildEtaAssignments() {
-        StringBuilder etaAssignment = new StringBuilder();
-        for(String eta : parser.getEtasOrder().keySet()){
-            etaAssignment.append(Formatter.endline(eta+ " = ETA("+parser.getEtasOrder().get(eta)+")"));
-        }
-        return etaAssignment;
+        return nonDerivativePredBlock;
     }
 
     /**
@@ -118,10 +79,11 @@ public class PredStatement {
      */
     private StringBuilder getPredCoreStatement() {
         StringBuilder predCoreBlock = new StringBuilder();
-        List<ParameterBlock> blocks = scriptDefinition.getParameterBlocks();
-        predCoreBlock.append(Formatter.endline(buildThetaAssignments().toString()));
-        predCoreBlock.append(Formatter.endline(buildEtaAssignments().toString()));
-        predCoreBlock.append(getAllIndividualParamAssignments(blocks));
+        predCoreBlock.append(context.buildThetaAssignments()+Formatter.endline());
+        predCoreBlock.append(context.buildEtaAssignments()+Formatter.endline());
+        predCoreBlock.append(getTransformedCovStatement());
+        predCoreBlock.append(context.getSimpleParamAssignments()+Formatter.endline());
+
         return predCoreBlock;
     }
 
@@ -130,13 +92,14 @@ public class PredStatement {
         DerivativePredblock.append(getModelStatement());
         //TODO : getAbbreviatedStatement();
         DerivativePredblock.append(getPKStatement());
-        errorStatements = prepareAllErrorStatements();
+        DiffEquationStatementBuilder desBuilder = new DiffEquationStatementBuilder(context);
+        DerivativePredblock.append(Formatter.des());
         Formatter.setInDesBlock(true);
-        DiffEquationStatementBuilder desBuilder = new DiffEquationStatementBuilder(scriptDefinition, errorStatements, parser);
-        DerivativePredblock.append(desBuilder.getDifferentialEquationsStatement(derivativeVarList));
+        DerivativePredblock.append(desBuilder.getDifferentialEquationsStatement());
         Formatter.setInDesBlock(false);
         //TODO: getAESStatement();
-        DerivativePredblock.append(getErrorStatement(desBuilder.getDefinitionsParsingMap()));
+        DerivativePredblock.append(Formatter.endline()+Formatter.error());
+        DerivativePredblock.append(getErrorStatement(desBuilder.getVarDefinitions()));
 
         return DerivativePredblock;
     }
@@ -158,46 +121,14 @@ public class PredStatement {
      */
     private String getErrorStatement(Map<String, String> definitionsParsingMap) {
         StringBuilder errorBlock = new StringBuilder();
-        errorBlock.append(Formatter.endline());
-        errorBlock.append(Formatter.error());
-        for(ErrorStatement errorStatement: errorStatements){
+        for(ErrorStatement errorStatement: context.getErrorStatements()){
             if(definitionsParsingMap != null){
-                errorBlock.append(errorStatement.getDetailsForDES(definitionsParsingMap));
+                errorBlock.append(errorStatement.getDetailsForDES(definitionsParsingMap,context.getDerivativeVarCompSequences()));
             }else{
                 errorBlock.append(errorStatement.getErrorStatementDetails());
             }
         }
         return errorBlock.toString();
-    }
-
-    /**
-     * This method will list prepare all the error statements and returns the list.
-     * We need to prepare this list separately as we need to use it in DES block before writing out to ERROR block.
-     * @return
-     */
-    private List<ErrorStatement> prepareAllErrorStatements(){
-        List<ErrorStatement> errorStatements = new ArrayList<ErrorStatement>();
-
-        for(ObservationBlock block : scriptDefinition.getObservationBlocks()){
-            ObservationErrorType errorType = block.getObservationError();
-            if(errorType instanceof GeneralObsError){
-                //				GeneralObsError genError = (GeneralObsError) errorType;
-                //				TODO : DDMORE-1013 : add support for general observation error type once details are available
-                //			    throw new IllegalArgumentException("general observation error type is not yet supported.");
-            }
-            if(errorType instanceof GaussianObsError){
-                GaussianObsError error = (GaussianObsError) errorType;
-                ErrorModel errorModel = error.getErrorModel();
-                String output = error.getOutput().getSymbRef().getSymbIdRef();
-                FunctionCallType functionCall = errorModel.getAssign().getEquation().getFunctionCall();
-
-                ErrorStatement errorStatement = new ErrorStatement(functionCall, output);
-                errorStatements.add(errorStatement);
-            }else{
-                //				TODO : Check if there are any other types to encounter
-            }
-        }
-        return errorStatements;
     }
 
     /**
@@ -208,8 +139,9 @@ public class PredStatement {
         pkStatementBlock.append(Formatter.endline());
         pkStatementBlock.append(Formatter.pk());
         pkStatementBlock.append(getPredCoreStatement());
+        pkStatementBlock.append(getAllIndividualParamAssignments());
         pkStatementBlock.append(getDifferentialInitialConditions());
-        return pkStatementBlock;
+        return new StringBuilder(pkStatementBlock.toString().toUpperCase());
     }
 
     /**
@@ -220,24 +152,11 @@ public class PredStatement {
         StringBuilder modelBlock = new StringBuilder();
         modelBlock.append(Formatter.endline());
         modelBlock.append(Formatter.model());
-        for(DerivativeVariableType stateVariable :getAllStateVariables()){
+        for(DerivativeVariable stateVariable :context.getDerivativeVars()){
             String compartment = stateVariable.getSymbId().toUpperCase();
-            modelBlock.append(Formatter.endline("COMP "+"( COMP"+derivativeVarCompSequences.get(compartment)+") "+Formatter.addComment(compartment)));
+            modelBlock.append(Formatter.endline("COMP "+"(COMP"+context.getDerivativeVarCompSequences().get(compartment)+") "+Formatter.addComment(compartment)));
         }
         return modelBlock;
-    }
-
-    /**
-     * Collects all derivativeVariable types (state variables) from structural blocks in order to create model statement.
-     * 
-     * @return
-     */
-    private Set<DerivativeVariableType> getAllStateVariables() {
-        Set<DerivativeVariableType> stateVariables = new LinkedHashSet<DerivativeVariableType>();
-        for(StructuralBlock structuralBlock : scriptDefinition.getStructuralBlocks() ){
-            stateVariables.addAll(structuralBlock.getStateVariables());
-        }
-        return stateVariables;
     }
 
     /**
@@ -245,10 +164,10 @@ public class PredStatement {
      * 
      * @return
      */
-    public StringBuilder getDifferentialInitialConditions(){
+    private StringBuilder getDifferentialInitialConditions(){
         StringBuilder builder = new StringBuilder();
-        if(!scriptDefinition.getStructuralBlocks().isEmpty())
-            builder = InitConditionBuilder.getDifferentialInitialConditions(scriptDefinition.getStructuralBlocks());	
+        if(!context.getScriptDefinition().getStructuralBlocks().isEmpty())
+            builder = InitConditionBuilder.getDifferentialInitialConditions(context.getScriptDefinition().getStructuralBlocks());	
         return builder;
     }
 
@@ -258,13 +177,30 @@ public class PredStatement {
      * @param blocks
      * @return
      */
-    public StringBuilder getAllIndividualParamAssignments(List<ParameterBlock> blocks) {
+    private StringBuilder getAllIndividualParamAssignments() {
         StringBuilder IndividualParamAssignmentBlock = new StringBuilder();
-        for(ParameterBlock parameterBlock : blocks){
-            for(IndividualParameterType parameterType: parameterBlock.getIndividualParameters()){
-                IndividualParamAssignmentBlock.append(parser.createIndividualDefinition(parameterType));	
+        IndividualDefinitionEmitter individualDefEmitter = new IndividualDefinitionEmitter(context);
+        for(ParameterBlock parameterBlock : context.getScriptDefinition().getParameterBlocks()){
+            for(IndividualParameter parameterType: parameterBlock.getIndividualParameters()){
+                IndividualParamAssignmentBlock.append(individualDefEmitter.createIndividualDefinition(parameterType));
             }
         }
         return IndividualParamAssignmentBlock;
+    }
+
+    private StringBuilder getTransformedCovStatement() {
+        StringBuilder transformedCovBlock = new StringBuilder();
+        //Find and add transformed covariates before indiv parameter definitions 
+        List<CovariateDefinition> covDefs = context.getLexer().getCovariates();
+        for(CovariateDefinition covDef : covDefs){
+            if(covDef.getContinuous()!=null){
+                ContinuousCovariate contCov = covDef.getContinuous();
+                for(CovariateTransformation transformation : contCov.getListOfTransformation()){
+                    String transCovDefinition = context.getParser().getSymbol(transformation);
+                    transformedCovBlock.append(Formatter.endline(transCovDefinition));
+                }
+            }
+        }
+        return transformedCovBlock;
     }
 }

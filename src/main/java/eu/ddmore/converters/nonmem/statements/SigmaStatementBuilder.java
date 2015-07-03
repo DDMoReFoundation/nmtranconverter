@@ -10,11 +10,13 @@ import java.util.Set;
 
 import crx.converter.engine.parts.ObservationBlock;
 import eu.ddmore.converters.nonmem.utils.Formatter;
+import eu.ddmore.converters.nonmem.utils.Formatter.NmConstant;
+import eu.ddmore.converters.nonmem.utils.Formatter.Symbol;
 import eu.ddmore.converters.nonmem.utils.ParametersHelper;
-import eu.ddmore.converters.nonmem.utils.Formatter.Constant;
-import eu.ddmore.libpharmml.dom.commontypes.RealValueType;
-import eu.ddmore.libpharmml.dom.modeldefn.ParameterRandomVariableType;
-import eu.ddmore.libpharmml.dom.modellingsteps.ParameterEstimateType;
+import eu.ddmore.converters.nonmem.utils.RandomVariableHelper;
+import eu.ddmore.converters.nonmem.utils.ScalarValueHandler;
+import eu.ddmore.libpharmml.dom.modeldefn.ParameterRandomVariable;
+import eu.ddmore.libpharmml.dom.modellingsteps.ParameterEstimate;
 import eu.ddmore.libpharmml.dom.uncertml.PositiveRealValueType;
 
 /**
@@ -23,11 +25,43 @@ import eu.ddmore.libpharmml.dom.uncertml.PositiveRealValueType;
  */
 public class SigmaStatementBuilder {
 
+    private ParametersHelper paramHelper;
+
+    public SigmaStatementBuilder(ParametersHelper parametersHelper){
+        paramHelper = parametersHelper; 
+    }
+
+    /**
+     * sigma statement block will prepare sigma statement block (and default omega block if omega block is absent but sigma is present) 
+     * with help of parameter helper.
+     * @return sigma statement
+     */
+    public StringBuilder getSigmaStatementBlock() {
+        StringBuilder sigmaStatement = new StringBuilder();
+        List<String> sigmaStatements = getSigmaStatements();
+
+        if(!sigmaStatements.isEmpty()){
+            //adding default Omega if omega block is absent but sigma is present 
+            if(paramHelper.omegaDoesNotExist()){
+                sigmaStatement.append(Formatter.endline());
+                sigmaStatement.append(Formatter.endline(Formatter.omega()+"0 "+NmConstant.FIX));
+            }
+            sigmaStatement.append(Formatter.endline()+Formatter.sigma());
+            for (final String sigmaVar: sigmaStatements) {
+                sigmaStatement.append(sigmaVar);
+            }
+        }
+        return sigmaStatement;
+    }
+
     /**
      * This method will get sigma statement as per following algorithm.
      * 
      * Get random variables from observation model blocks.
-     * look for symbIdref = 'residual'
+     * 
+     * Get residual errors from observation model and look for any random variables defined anywhere in parameter model blocks.
+     * If there is any such parameter random variable, then add it to random variables list to add as Sigma.  
+     * 
      * if it exists, it will (should) have 'distribution' defined and it has 'stddev' or 'variance'
      * 
      * 1.if stddev - 
@@ -35,7 +69,7 @@ public class SigmaStatementBuilder {
      * 		$SIGMA
      * 			1 FIX
      * b. if stddev <var varId="sigma"> (sigma is example variable it can be anything)
-     * 		there will be given intial estimate for this variable
+     * 		there will be given initial estimate for this variable
      * 		check if attribute is fixed
      * 		if attribute is 'fixed=true' 
      * 			"1 FIX ;sigma"
@@ -46,50 +80,60 @@ public class SigmaStatementBuilder {
      * 4. if variance -
      * 		same as above without squaring the value.
      *  
-     * @param ParametersHelper
      * @return List<String> list of sigma statements
      */
 
-    public List<String> getSigmaStatements(ParametersHelper parameters) {
+    private List<String> getSigmaStatements() {
 
         List<String> sigmaParams = new ArrayList<String>();
-
         String sigmaRepresentation = new String();
 
-        Set<ParameterRandomVariableType> randomVariableTypes = new HashSet<ParameterRandomVariableType>();
+        Set<ParameterRandomVariable> randomVariableTypes = getRandomVariablesForSigma();
 
-        for(ObservationBlock observationBlock: parameters.getScriptDefinition().getObservationBlocks()){
-            randomVariableTypes.addAll(observationBlock.getRandomVariables());
-        }
-
-        for (ParameterRandomVariableType rv : randomVariableTypes) {
+        for (ParameterRandomVariable rv : randomVariableTypes) {
 
             Boolean isStdDev = false;
 
-            PositiveRealValueType stddevDistribution = parameters.getDistributionTypeStdDev(rv);
+            PositiveRealValueType stddevDistribution = RandomVariableHelper.getDistributionTypeStdDev(rv);
             if(stddevDistribution!=null){
                 sigmaRepresentation = getSigmaFromStddevDistribution(stddevDistribution);
             }
 
-            PositiveRealValueType varianceDistribution = parameters.getDistributionTypeVariance(rv);
+            PositiveRealValueType varianceDistribution = RandomVariableHelper.getDistributionTypeVariance(rv);
             if(varianceDistribution!=null){
                 sigmaRepresentation = getSigmaFromVarianceDistribution(varianceDistribution);
             }
 
-            isStdDev = parameters.isParamFromStdDev(rv);
+            isStdDev = RandomVariableHelper.isParamFromStdDev(rv);
 
             StringBuilder sigmaStatements = new StringBuilder();
             if(isNumeric(sigmaRepresentation)){
-                sigmaStatements.append(Double.parseDouble(sigmaRepresentation) +" "+Constant.FIX);
+                sigmaStatements.append(Double.parseDouble(sigmaRepresentation) +" "+NmConstant.FIX);
+                addAttributeForStdDev(sigmaStatements,isStdDev);
             }else {
-                String sigmastatement = getSigmaFromInitialEstimate(sigmaRepresentation, isStdDev, parameters);
+                String sigmastatement = getSigmaFromInitialEstimate(sigmaRepresentation, isStdDev);
                 sigmaStatements.append(sigmastatement);
             }
-            addAttributeForStdDev(sigmaStatements,isStdDev);
             sigmaStatements.append(Formatter.endline());
             sigmaParams.add(sigmaStatements.toString());
         }
         return sigmaParams;
+    }
+
+    /**
+     * Gets random variables from observation as well as parameter block (if associated with residual error)
+     * 
+     * @param context
+     * @return set of random variables
+     */
+    private Set<ParameterRandomVariable> getRandomVariablesForSigma() {
+        Set<ParameterRandomVariable> randomVariableTypes = new HashSet<ParameterRandomVariable>();
+
+        for(ObservationBlock observationBlock: paramHelper.getScriptDefinition().getObservationBlocks()){
+            randomVariableTypes.addAll(observationBlock.getRandomVariables());
+        }
+        randomVariableTypes.addAll(paramHelper.getEpsilonVars());
+        return randomVariableTypes;
     }
 
     /**
@@ -100,33 +144,44 @@ public class SigmaStatementBuilder {
      * @param isStdDev - std dev flag
      * @return sigma - statement string
      */
-    private String getSigmaFromInitialEstimate(String varId, Boolean isStdDev, ParametersHelper parameters) {
+    private String getSigmaFromInitialEstimate(String varId, Boolean isStdDev) {
         StringBuilder sigmastatement = new StringBuilder();
 
-        for(ParameterEstimateType params : parameters.getAllEstimationParams()){
-            String symbId = params.getSymbRef().getSymbIdRef();
+        for(ParameterEstimate paramEstimate : paramHelper.getAllEstimationParams()){
+            String symbId = paramEstimate.getSymbRef().getSymbIdRef();
             if(symbId.equals(varId)){
-                RealValueType value = (RealValueType) params.getInitialEstimate().getScalar().getValue();
-                sigmastatement.append(value.getValue());
-                if(params.getInitialEstimate().isFixed()){
-                    sigmastatement.append(" " + Constant.FIX);
+                Double value = ScalarValueHandler.getValueFromScalarRhs(paramEstimate.getInitialEstimate());
+                if(paramEstimate.getInitialEstimate().isFixed()){
+                    sigmastatement.append(value+" " + NmConstant.FIX);
                 }else{
-                    sigmastatement.append(value.getValue());
+                    sigmastatement.append(value);
                 }
                 addAttributeForStdDev(sigmastatement,isStdDev);
-                sigmastatement.append(Formatter.endline(Formatter.addComment(symbId)));
-                parameters.addToSigmaListIfNotExists(symbId);
+                sigmastatement.append(Formatter.indent(Symbol.COMMENT+ symbId)+Formatter.endline());
+                paramHelper.addToSigmaVerificationListIfNotExists(symbId);
             }
         }
         return sigmastatement.toString();
     }
 
+    /**
+     * Adds attribute for standard deviation if statement is for standard deviation.
+     * 
+     * @param statement
+     * @param isStdDev
+     */
     private void addAttributeForStdDev(StringBuilder statement, Boolean isStdDev) {
         if(isStdDev){
-            statement.append(Formatter.endline(" "+Constant.SD));
+            statement.append(" "+NmConstant.SD);
         }
     }
 
+    /**
+     * Gets sigma representation for standard deviation distribution.
+     * 
+     * @param stddevDistribution
+     * @return
+     */
     private String getSigmaFromStddevDistribution(PositiveRealValueType stddevDistribution) {
         String sigmaRepresentation = new String();
 
@@ -141,6 +196,12 @@ public class SigmaStatementBuilder {
         return sigmaRepresentation;
     }
 
+    /**
+     * Gets sigma representation for standard deviation variance.
+     * 
+     * @param varianceDistribution
+     * @return
+     */
     private String getSigmaFromVarianceDistribution(PositiveRealValueType varianceDistribution) {
         String sigmaRepresentation = new String();
         if(varianceDistribution!=null){

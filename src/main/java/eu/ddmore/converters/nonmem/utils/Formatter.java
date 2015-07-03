@@ -2,57 +2,69 @@
  * Copyright (C) 2015 Mango Solutions Ltd - All rights reserved.
  ******************************************************************************/
 package eu.ddmore.converters.nonmem.utils;
+
+import java.util.Map;
+import java.util.TreeMap;
+
 /**
  * Formatter for nmtran conversion from pharmML
  * 
  */
 public class Formatter {
-    
-	public enum Block{
-	    PK, ERROR, DES, MODEL, PRED, DATA, EST, 
-	    PROBLEM, SIM, TABLE, INPUT, SUBS, SUB, 
-	    COV, THETA, OMEGA, SIGMA, BLOCK;
-	}
-	
-	public enum Constant{
-		LOG, LOGIT, CORRELATION, FIX, SD, T;
-	}
-	
-	public enum ColumnConstant{
-		ID, TIME;
-	}
-	
-	public enum TableConstant{
-		WRES, RES, PRED, NOPRINT, DV, NOAPPEND;
-	}
-	
+
+    public enum Block{
+        PK, ERROR, DES, MODEL, PRED, DATA, EST, 
+        PROBLEM, SIM, TABLE, INPUT, SUBS, SUB, 
+        COV, THETA, OMEGA, SIGMA, BLOCK;
+    }
+
+    public enum NmConstant{
+        LOG, LOGIT, CORRELATION, FIX, SD, T;
+    }
+
+    public enum ColumnConstant{
+        ID, TIME;
+    }
+
+    public enum TableConstant{
+        WRES, RES, PRED, NOPRINT, DV, NOAPPEND;
+    }
+
     public enum Symbol{
         BLOCK("$"), 
         COMMENT(";");
-        
+
         private String symbol = new String();
         Symbol(String symbol){
             this.symbol = symbol;
         }
-        
+
         @Override
         public String toString(){
             return symbol;
         }
     }
-    
-    private static boolean inDesBlock= false;
-    
-    public static String getTimeSymbol(){
-        return (inDesBlock)?Constant.T.toString():ColumnConstant.TIME.toString();
+
+    private static boolean inDesBlock = false;
+
+    public static boolean isInDesBlock() {
+        return inDesBlock;
     }
-	
-	private static final String PREFIX = "";//"NM_";
-	private static final String NEW_LINE = System.getProperty("line.separator");
-    
+
+    public static void setInDesBlock(boolean inDesBlock) {
+        Formatter.inDesBlock = inDesBlock;
+    }
+
+    public static String getTimeSymbol(){
+        return (inDesBlock)?NmConstant.T.toString():ColumnConstant.TIME.toString();
+    }
+
+    private static final String PREFIX = "";//"NM_";
+    private static final String NEW_LINE = System.getProperty("line.separator");
+
     private static final String newLineBlockTitle = "%s%s "+NEW_LINE;
     private static final String inLineBlockTitle = "%s%s ";
-    
+
     /**
      * Add <code>Table</code> Block title and then continue appending on the same line
      * 
@@ -125,7 +137,7 @@ public class Formatter {
     public static String data() {
         return String.format(inLineBlockTitle,Symbol.BLOCK,Block.DATA);
     }
-    
+
     /**
      * Add <code>PK</code> title and then continue appending on the new line
      * 
@@ -231,12 +243,53 @@ public class Formatter {
         return NEW_LINE;
     }
 
-    public static void setInDesBlock(boolean inDesBlock) {
-        Formatter.inDesBlock = inDesBlock;
+    /**
+     * Return the formatted symbol and also gets appropriate time symbol if its TIME symbol.
+     * 
+     * @param symbol 
+     * @return String formatted symbol
+     */
+    public static String getFormattedSymbol(String symbol) {
+        if (symbol.equals(ColumnConstant.TIME.toString()) || symbol.equals(NmConstant.T.toString())){
+            symbol = Formatter.getTimeSymbol();
+        } else{
+            symbol = Formatter.addPrefix(symbol);
+        }
+        return symbol;
     }
-    
-    public static String addComment(String comment){
+
+    /**
+     * This method will reverse the map and return a tree map (ordered in natural order of keys).
+     * 
+     * @param map
+     * @return
+     */
+    public static <K,V> TreeMap<V,K> reverseMap(Map<K,V> map) {
+        TreeMap<V,K> rev = new TreeMap<V, K>();
+        for(Map.Entry<K,V> entry : map.entrySet()){
+            if(!rev.containsKey(entry.getValue())){
+                rev.put(entry.getValue(), entry.getKey());    
+            }
+        }
+        return rev;
+    }
+
+    public static String addComment(String comment) {
         return new String(Formatter.indent(Symbol.COMMENT.toString()+comment));
-        
+    }
+
+    /**
+     * This method gets variable amount from compartment and returns it.
+     * 
+     * @param variable
+     * @return
+     */
+    public static String getVarAmountFromCompartment(String variable, Map<String,String> derivativeVariableMap) {
+        String varAmount = new String(); 
+        varAmount = derivativeVariableMap.get(variable);
+        if(!varAmount.isEmpty()){
+            varAmount = "A("+varAmount+")";
+        }
+        return varAmount;
     }
 }

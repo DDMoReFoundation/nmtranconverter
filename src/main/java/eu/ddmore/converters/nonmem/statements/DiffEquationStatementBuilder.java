@@ -4,94 +4,49 @@
 package eu.ddmore.converters.nonmem.statements;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
-import crx.converter.engine.ScriptDefinition;
 import crx.converter.engine.parts.StructuralBlock;
-import eu.ddmore.converters.nonmem.Parser;
+import eu.ddmore.converters.nonmem.ConversionContext;
 import eu.ddmore.converters.nonmem.utils.Formatter;
-import eu.ddmore.libpharmml.dom.commontypes.DerivativeVariableType;
-import eu.ddmore.libpharmml.dom.commontypes.VariableDefinitionType;
+import eu.ddmore.converters.nonmem.utils.LocalVariableHandler;
+import eu.ddmore.libpharmml.dom.commontypes.DerivativeVariable;
 
 public class DiffEquationStatementBuilder {
     private static final String DES = "DES";
-    private final String DES_VAR_SUFFIX = "_"+DES;
-    private ScriptDefinition scriptDefinition;
-    private List<ErrorStatement> errorStatements;
-    private Parser parser;
+    private static final String DES_VAR_SUFFIX = "_"+DES;
     //it will hold definition types and its parsed equations which we will need to add in Error statement as well.
-    private Map<String, String> definitionsParsingMap = new HashMap<String, String>();
+    private final Map<String, String> varDefinitionsInDES = new HashMap<String, String>();
+    private final ConversionContext context;
 
-
-    public DiffEquationStatementBuilder(ScriptDefinition scriptDefinition, List<ErrorStatement> errorStatements, Parser parser) {
-        this.scriptDefinition = scriptDefinition;
-        this.errorStatements = errorStatements;
-        this.parser = parser;
+    public DiffEquationStatementBuilder(ConversionContext context) {
+        this.context = context;
     }
 
     /**
      * gets DES block for pred statement
      * 
-     * @param derivativeVars
-     * @return
      */
-    public StringBuilder getDifferentialEquationsStatement(List<DerivativeVariableType> derivativeVars) {
+    public StringBuilder getDifferentialEquationsStatement() {
         StringBuilder diffEqStatementBlock = new StringBuilder();
-        diffEqStatementBlock.append(Formatter.des());
+        LocalVariableHandler variableHandler = new LocalVariableHandler(context);
 
-        for (DerivativeVariableType variableType : derivativeVars){
+        for (DerivativeVariable variableType : context.getDerivativeVars()){
             String variable = Formatter.addPrefix(variableType.getSymbId());
-            String varAmount = getVarAmountFromCompartment(variable);
+
+            String varAmount = Formatter.getVarAmountFromCompartment(variable, context.getDerivativeVarCompSequences());
             if(!varAmount.isEmpty())
                 diffEqStatementBlock.append(Formatter.endline(variable+" = "+varAmount));
-            if(isVarFromErrorFunction(variable))
-                definitionsParsingMap.put(variable, varAmount);
+            if(variableHandler.isVarFromErrorFunction(variable))
+                varDefinitionsInDES.put(variable, varAmount);
         }
         diffEqStatementBlock.append(Formatter.endline());
-        for(StructuralBlock block : scriptDefinition.getStructuralBlocks()){
-            diffEqStatementBlock.append(addVarDefinitionTypesToDES(block));
+        for(StructuralBlock block : context.getScriptDefinition().getStructuralBlocks()){
+            diffEqStatementBlock.append(variableHandler.addVarDefinitionTypes(block,varDefinitionsInDES));
             diffEqStatementBlock.append(addDerivativeVarToDES(block));
         }
         return diffEqStatementBlock;
-    }
-
-    /**
-     * This method gets variable amount from compartment and returns it.
-     * 
-     * @param variable
-     * @return
-     */
-    public static String getVarAmountFromCompartment(String variable) {
-        String varAmount = new String(); 
-        varAmount = PredStatement.derivativeVarCompSequences.get(variable);
-        if(!varAmount.isEmpty()){
-            varAmount = "A("+varAmount+")";
-        }
-        return varAmount;
-    }
-
-    /**
-     * This method gets variable definitions for the variables and adds them to DES
-     * As workaround to issues with variables used in Error model, we rename those variables in DES block
-     *   
-     * @param block
-     * @return
-     */
-    private StringBuilder addVarDefinitionTypesToDES(StructuralBlock block) {
-
-        StringBuilder varDefinitionsBlock = new StringBuilder();
-        for (VariableDefinitionType definitionType: block.getLocalVariables()){
-            String variable = Formatter.addPrefix(definitionType.getSymbId());
-            String rhs = parser.parse(definitionType).replaceFirst(variable+" =","");			
-            if(isVarFromErrorFunction(variable)){
-                definitionsParsingMap.put(variable, rhs);
-                variable = renameFunctionVariableForDES(variable);
-            }
-            varDefinitionsBlock.append(variable+" = "+rhs);
-        }
-        return varDefinitionsBlock;
     }
 
     /**
@@ -103,15 +58,14 @@ public class DiffEquationStatementBuilder {
      */
     private StringBuilder addDerivativeVarToDES(StructuralBlock block) {
         StringBuilder derivativeVarBlock = new StringBuilder();
-        
-        for(DerivativeVariableType variableType: block.getStateVariables()){
-            String parsedDADT = parser.parse(variableType);
+        for(DerivativeVariable variableType: block.getStateVariables()){
+            String parsedDADT = context.parse(variableType);
             String variable = Formatter.addPrefix(variableType.getSymbId());
             if(isDerivativeVariableHasAmount(variable)){
-                String index = PredStatement.derivativeVarCompSequences.get(variable);
+                String index = context.getDerivativeVarCompSequences().get(variable);
                 parsedDADT = parsedDADT.replaceFirst(variable+" =", "DADT("+index+") =");
             }
-            for(String derivativeVar : definitionsParsingMap.keySet()){
+            for(String derivativeVar : varDefinitionsInDES.keySet()){
                 String varToReplace = new String("\\b"+Pattern.quote(derivativeVar)+"\\b");
                 if(!isDerivativeVariableHasAmount(derivativeVar)){
                     parsedDADT = parsedDADT.replaceAll(varToReplace, renameFunctionVariableForDES(derivativeVar));
@@ -123,22 +77,7 @@ public class DiffEquationStatementBuilder {
     }
 
     private boolean isDerivativeVariableHasAmount(String variable) {
-        return PredStatement.derivativeVarCompSequences.containsKey(variable);
-    }
-
-    /**
-     * Determines if variable is function variable from error model.
-     * 
-     * @param variable
-     * @return
-     */
-    private Boolean isVarFromErrorFunction(String variable){
-        for(ErrorStatement errorStatement : errorStatements){
-            if(errorStatement.getFunction().equals(variable)){
-                return true;
-            }
-        }
-        return false;
+        return context.getDerivativeVarCompSequences().containsKey(variable);
     }
 
     /**
@@ -147,12 +86,12 @@ public class DiffEquationStatementBuilder {
      * @param variable
      * @return
      */
-    private String renameFunctionVariableForDES(String variable) {
+    public static String renameFunctionVariableForDES(String variable) {
         variable = variable+DES_VAR_SUFFIX;
         return variable; 
     }
 
-    public Map<String, String> getDefinitionsParsingMap() {
-        return definitionsParsingMap;
+    public Map<String, String> getVarDefinitions() {
+        return varDefinitionsInDES;
     }
 }
