@@ -1,6 +1,5 @@
 package eu.ddmore.converters.nonmem.statements;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import com.google.common.base.Preconditions;
@@ -18,7 +17,6 @@ import eu.ddmore.libpharmml.dom.uncertml.NegativeBinomialDistribution;
 import eu.ddmore.libpharmml.dom.uncertml.PoissonDistribution;
 import eu.ddmore.libpharmml.dom.uncertml.PositiveRealValueType;
 import eu.ddmore.libpharmml.dom.uncertml.ProbabilityValueType;
-import eu.ddmore.libpharmml.dom.uncertml.VarRefType;
 
 /**
  * Handles discrete statement details from pharmML to add to nmtran
@@ -65,7 +63,7 @@ public class DiscreteHandler {
                 } else if(block.getTimeToEventData()!=null){
                     setTimeToEventData(true);
                     //TODO : Incomplete TTE data
-                    discreteStatement.append(getDiscreteStatements(block.getCountData()));
+                    discreteStatement.append(getDiscreteStatements(block.getTimeToEventData()));
                 }
             }
         }
