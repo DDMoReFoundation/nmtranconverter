@@ -373,7 +373,6 @@ public class Parser extends BaseParser {
             }
         }
 
-        int block_assignment = 0;
         StringBuilder block = new StringBuilder();
         for (int i = 0; i < pieces.size(); i++) {
             Piece piece = pieces.get(i);
@@ -383,21 +382,17 @@ public class Parser extends BaseParser {
             if (!(conditional_stmts[i] != null && assignment_stmts[i] != null)) continue;	
             String operator = "IF";
             String format = Formatter.endline("%s (%s) THEN")+Formatter.endline(Formatter.indent("%s = %s"));
-            if (block_assignment > 0) {
-                operator = "ELSEIF ";
-                format = Formatter.endline(" %s (%s) THEN")+Formatter.endline(Formatter.indent("%s = %s"));
-            }
             String conditionStatement = conditional_stmts[i].replaceAll("\\s+","");
             block.append(String.format(format, operator, conditionStatement, field_tag, assignment_stmts[i]));
-            block_assignment++;
+
+            if (else_block != null && else_index >= 0) {
+                block.append(Formatter.endline("ELSE"));
+                String elseformat = Formatter.endline(Formatter.indent("%s = %s"));
+                block.append(String.format(elseformat, field_tag, assignment_stmts[else_index]));
+            }
+            block.append(Formatter.endline("ENDIF"));
         }
 
-        if (else_block != null && else_index >= 0) {
-            block.append(Formatter.endline("ELSE"));
-            String format = Formatter.endline(Formatter.indent("%s = %s"));
-            block.append(String.format(format, field_tag, assignment_stmts[else_index]));
-        }
-        block.append(Formatter.endline("ENDIF"));
         if (assignmentCount == 0) throw new IllegalStateException("Piecewise statement assigned no conditional blocks.");
         symbol = block.toString();
 

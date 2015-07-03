@@ -59,7 +59,7 @@ public class DiffEquationStatementBuilder {
     private StringBuilder addDerivativeVarToDES(StructuralBlock block) {
         StringBuilder derivativeVarBlock = new StringBuilder();
         for(DerivativeVariable variableType: block.getStateVariables()){
-            String parsedDADT = context.parse(variableType);
+            String parsedDADT = context.parse(variableType).toUpperCase();
             String variable = Formatter.addPrefix(variableType.getSymbId());
             if(isDerivativeVariableHasAmount(variable)){
                 String index = context.getDerivativeVarCompSequences().get(variable);
