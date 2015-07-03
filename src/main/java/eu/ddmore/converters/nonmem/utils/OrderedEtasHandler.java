@@ -12,6 +12,7 @@ import java.util.Map;
 import crx.converter.engine.ScriptDefinition;
 import crx.converter.engine.parts.BaseRandomVariableBlock.CorrelationRef;
 import crx.converter.engine.parts.ParameterBlock;
+import eu.ddmore.libpharmml.dom.commontypes.ScalarRhs;
 import eu.ddmore.libpharmml.dom.modeldefn.IndividualParameter;
 import eu.ddmore.libpharmml.dom.modeldefn.ParameterRandomEffect;
 import eu.ddmore.libpharmml.dom.modeldefn.ParameterRandomVariable;
@@ -76,14 +77,31 @@ public class OrderedEtasHandler {
         String secondVar = correlation.rnd2.getSymbId();
         String coefficient = "";
         if(correlation.isCorrelation()){
-            coefficient = ScalarValueHandler.getVariableOrValueFromScalarRhs(correlation.correlationCoefficient);
+            coefficient = getVariableOrValueFromScalarRhs(correlation.correlationCoefficient);
         }else if(correlation.isCovariance()){
-            coefficient = ScalarValueHandler.getVariableOrValueFromScalarRhs(correlation.covariance).toString();
+            coefficient = getVariableOrValueFromScalarRhs(correlation.covariance).toString();
         }
         //add to correlations map
         etaToCorrelations.put(firstVar,RandomVariableHelper.getNameFromParamRandomVariable(correlation.rnd1));
         etaToCorrelations.put(secondVar,RandomVariableHelper.getNameFromParamRandomVariable(correlation.rnd2));
         etaToCorrelations.put(coefficient,coefficient);
+    }
+    
+    /**
+     * Gets variable from scalar rhs if it exists or else looks for scalar value and returns in string form.
+     *    
+     * @param rhs
+     * @return scalar variable or value
+     */
+    private String getVariableOrValueFromScalarRhs(ScalarRhs rhs) {
+        String coefficient;
+        if(rhs.getSymbRef()!=null){
+            coefficient = rhs.getSymbRef().getSymbIdRef();
+        }
+        else{
+            coefficient = ScalarValueHandler.getValueFromScalarRhs(rhs).toString();
+        }
+        return coefficient;
     }
 
     /**
