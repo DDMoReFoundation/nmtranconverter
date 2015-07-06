@@ -258,24 +258,8 @@ public class Formatter {
         return symbol;
     }
 
-    /**
-     * This method will reverse the map and return a tree map (ordered in natural order of keys).
-     * 
-     * @param map
-     * @return
-     */
-    public static <K,V> TreeMap<V,K> reverseMap(Map<K,V> map) {
-        TreeMap<V,K> rev = new TreeMap<V, K>();
-        for(Map.Entry<K,V> entry : map.entrySet()){
-            if(!rev.containsKey(entry.getValue())){
-                rev.put(entry.getValue(), entry.getKey());    
-            }
-        }
-        return rev;
-    }
-
     public static String addComment(String comment) {
-        return new String(Formatter.indent(Symbol.COMMENT.toString()+comment));
+        return Formatter.indent(Symbol.COMMENT.toString()+comment);
     }
 
     /**
