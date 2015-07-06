@@ -4,7 +4,6 @@
 package eu.ddmore.converters.nonmem.utils;
 
 import java.util.Map;
-import java.util.TreeMap;
 
 /**
  * Formatter for nmtran conversion from pharmML
