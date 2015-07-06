@@ -86,7 +86,7 @@ public class OrderedEtasHandler {
         etaToCorrelations.put(secondVar,RandomVariableHelper.getNameFromParamRandomVariable(correlation.rnd2));
         etaToCorrelations.put(coefficient,coefficient);
     }
-    
+
     /**
      * Gets variable from scalar rhs if it exists or else looks for scalar value and returns in string form.
      *    
@@ -117,23 +117,29 @@ public class OrderedEtasHandler {
                     for (ParameterRandomEffect randomEffect : randomEffects) {
                         if (randomEffect == null) continue;
                         String eta = randomEffect.getSymbRef().get(0).getSymbIdRef();
-                        if(!allEtas.contains(eta)){
-                            allEtas.add(eta);
-                        }
+                        addRandomVarToAllEtas(eta);
                     }
                 }
             }
+            
+            for(ParameterRandomVariable variable : block.getLinkedRandomVariables()){
+                addRandomVarToAllEtas(variable.getSymbId());
+            }
+
             Collection<ParameterRandomVariable> epsilons =  ScriptDefinitionAccessor.getEpsilonRandomVariables(scriptDefinition);
             for(ParameterRandomVariable variable : block.getRandomVariables()){
                 if(!epsilons.contains(variable)){
-                    String eta = variable.getSymbId();
-                    if(!allEtas.contains(eta)){
-                        allEtas.add(eta);
-                    }
+                    addRandomVarToAllEtas(variable.getSymbId());
                 }
             }
         }
         return allEtas;
+    }
+
+    private void addRandomVarToAllEtas(String eta) {
+        if(!allEtas.contains(eta)){
+            allEtas.add(eta);
+        }
     }
 
     /**
