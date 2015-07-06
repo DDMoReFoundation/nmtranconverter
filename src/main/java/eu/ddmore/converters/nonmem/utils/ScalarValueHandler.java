@@ -65,7 +65,7 @@ public final class ScalarValueHandler {
     }
 
     /**
-     * This method will accept scalar value object and retrievs value in form of double.
+     * This method will accept scalar value object and retrieves value in form of double.
      *  
      * @param object
      * @return
