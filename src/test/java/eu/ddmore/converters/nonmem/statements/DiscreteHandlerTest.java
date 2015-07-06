@@ -1,6 +1,6 @@
-/**
- * 
- */
+/*******************************************************************************
+ * Copyright (C) 2015 Mango Solutions Ltd - All rights reserved.
+ ******************************************************************************/
 package eu.ddmore.converters.nonmem.statements;
 
 import static org.junit.Assert.*;
@@ -46,9 +46,6 @@ public class DiscreteHandlerTest {
     @Mock TTEFunction tteFunction;
     
     
-    /**
-     * @throws java.lang.Exception
-     */
     @Before
     public void setUp() throws Exception {
         when(context.getScriptDefinition()).thenReturn(definition);
@@ -59,7 +56,7 @@ public class DiscreteHandlerTest {
         when(observationBlock.isDiscrete()).thenReturn(true);
     }
     
-    private void CountDataSetUp(){
+    private void countDataSetUp(){
         when(observationBlock.getCountData()).thenReturn(countData);
         List<CountPMF> countPMFs = new ArrayList<CountPMF>();
         countPMFs.add(countPMF);
@@ -72,7 +69,7 @@ public class DiscreteHandlerTest {
         when(poissonDist.getRate().getVar().getVarId()).thenReturn("LAMBDA");
     }
     
-    private void TimeToEventDataSetUp(){
+    private void timeToEventDataSetUp(){
         when(observationBlock.getTimeToEventData()).thenReturn(tteData);
         
         List<TTEFunction> tteFunctions = new ArrayList<TTEFunction>();
@@ -82,23 +79,17 @@ public class DiscreteHandlerTest {
         when(tteFunction.getSymbId()).thenReturn("HAZ");
     }
     
-    /**
-     * Checks if discrete statements are created for count data when it exists.
-     */
     @Test
     public void testIfDiscreteStatementsAreCreatedForCountData() {
-        CountDataSetUp();
+        countDataSetUp();
         
         DiscreteHandler discreteHandler = new DiscreteHandler(definition);
         assertFalse(discreteHandler.getDiscreteStatement().toString().isEmpty());
     }
     
-    /**
-     * Checks if discrete statements are created for time to event data when it exists.
-     */
     @Test
     public void testIfDiscreteStatementsAreCreatedForTimeToEventData() {
-        TimeToEventDataSetUp();
+        timeToEventDataSetUp();
         
         DiscreteHandler discreteHandler = new DiscreteHandler(definition);
         assertFalse(discreteHandler.getDiscreteStatement().toString().isEmpty());

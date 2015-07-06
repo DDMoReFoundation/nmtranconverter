@@ -1,3 +1,6 @@
+/*******************************************************************************
+ * Copyright (C) 2015 Mango Solutions Ltd - All rights reserved.
+ ******************************************************************************/
 package eu.ddmore.converters.nonmem.statements;
 
 import java.util.List;
@@ -37,6 +40,7 @@ public class DiscreteHandler {
     }
 
     private void initialise(ScriptDefinition definition) {
+        Preconditions.checkNotNull(definition, "Script definition cannot be null");
         setDiscreteStatement(getDiscreteDetails(definition));
     }
 
@@ -47,6 +51,8 @@ public class DiscreteHandler {
      * @return discrete statement with details
      */
     private StringBuilder getDiscreteDetails(ScriptDefinition definition) {
+        Preconditions.checkNotNull(definition.getObservationBlocks(), "Observation block cannot be null");
+        
         List<ObservationBlock> blocks = definition.getObservationBlocks();
         StringBuilder discreteStatement = new StringBuilder();
         for(ObservationBlock block :blocks){
@@ -226,11 +232,6 @@ public class DiscreteHandler {
         return stringToAdd;
     }
 
-    /**
-     * Adds line at the end of the string build and appends it with end of line. 
-     * @param stringToAdd
-     * @param lineToAppend
-     */
     private void appendLine(StringBuilder stringToAdd, String lineToAppend) {
         if(lineToAppend!= null){
             stringToAdd.append(Formatter.endline(lineToAppend));
