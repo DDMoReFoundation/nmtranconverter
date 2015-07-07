@@ -38,7 +38,7 @@ public class DataStatementTest {
 //		assertEquals("DataStatement should be correct.",STATEMENT_BLOCK_NAME + " " + DATA_FILE_NAME + " " + IGNORE_STRING + "=" + IGNORE_CHAR, dataStatement.getStatement());
 	}
 
-	@Test(expected = IllegalStateException.class)
+	@Test(expected = NullPointerException.class)
 	public void shouldThrowExceptionNullNONMEMdataSet() {
 
 		new DataStatement((ConversionContext)null,null);

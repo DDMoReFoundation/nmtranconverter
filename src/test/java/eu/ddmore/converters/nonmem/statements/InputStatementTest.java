@@ -52,7 +52,7 @@ public class InputStatementTest {
 	
 	@Mock ConversionContext context;
 
-	@Ignore
+	@Ignore("The input statement needs to be finalised and test needs to be revised for updates")
 	@Test
 	public void shouldCreateValidInputStatementNONMEMdataSet() {
 
@@ -68,7 +68,7 @@ public class InputStatementTest {
 		    Formatter.input() + getFormattedColumnHeaders(), statement.getStatement());
 	}
 
-	@Ignore
+	@Ignore("The input statement needs to be finalised and test needs to be revised for updates")
 	@Test
 	public void shouldCreateValidInputStatementNONMEMdataSetLowerCaseColumnIds() {
 
@@ -83,7 +83,7 @@ public class InputStatementTest {
 		assertEquals("inputHeaders should be correct.", COLUMN_HEADERS, statement.getInputHeaders());
 	}
 
-	@Test(expected = IllegalStateException.class)
+	@Test(expected = NullPointerException.class)
 	public void shouldThrowExceptionNullNONMEMdataSet() {
 
 		new InputStatement(null);
