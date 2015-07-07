@@ -7,7 +7,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 import java.math.BigInteger;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -15,11 +14,9 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
 import eu.ddmore.converters.nonmem.ConversionContext;
-import eu.ddmore.converters.nonmem.statements.InputStatement;
 import eu.ddmore.converters.nonmem.utils.Formatter;
 import eu.ddmore.converters.nonmem.utils.Formatter.ColumnConstant;
 import eu.ddmore.libpharmml.dom.commontypes.SymbolType;
@@ -32,7 +29,6 @@ import eu.ddmore.libpharmml.dom.modellingsteps.ExternalDataSet;
 import eu.ddmore.libpharmml.dom.modellingsteps.ModellingSteps;
 
 @RunWith(PowerMockRunner.class)
-@PrepareForTest(InputStatement.class)
 public class InputStatementTest {
 
 	private static final String DATA_FILE_NAME = "warfarin_conc_pca.csv";
@@ -63,13 +59,6 @@ public class InputStatementTest {
 		DataSet dataset = createDataSet();
 
 		ColumnsDefinitionType columnsDefinition = new ColumnsDefinitionType();
-//		List<ColumnDefinition> columns = columnsDefinition.getColumn();
-//		columns.add(createColumn(COL_ID_1, COL_TYPE_1, COL_VALUE_1, COL_NUM_1));
-//		columns.add(createColumn(COL_ID_2, COL_TYPE_2, COL_VALUE_2, COL_NUM_2));
-//		columns.add(createColumn(COL_ID_3, COL_TYPE_3, COL_VALUE_3, COL_NUM_3));
-//		dataset.setDefinition(columnsDefinition);
-
-//		ModellingSteps modellingSteps = createModellingSteps(dataset);
 		
 		InputStatement statement = new InputStatement(context);
 
@@ -86,11 +75,6 @@ public class InputStatementTest {
 		DataSet dataset = createDataSet();
 
 		ColumnsDefinitionType columnsDefinition = new ColumnsDefinitionType();
-//		List<ColumnDefinition> columns = columnsDefinition.getColumn();
-//		columns.add(createColumn(COL_ID_1.toLowerCase(), COL_TYPE_1, COL_VALUE_1, COL_NUM_1));
-//		columns.add(createColumn(COL_ID_2, COL_TYPE_2, COL_VALUE_2, COL_NUM_2));
-//		columns.add(createColumn(COL_ID_3.toLowerCase(), COL_TYPE_3, COL_VALUE_3, COL_NUM_3));
-//		dataset.setDefinition(columnsDefinition);
 
 		ModellingSteps modellingSteps = createModellingSteps(dataset);
 
@@ -105,18 +89,13 @@ public class InputStatementTest {
 		new InputStatement(null);
 	}
 
-	@Ignore
+	@Ignore ("The input statement needs to be finalised and test needs to be revised for updates")
 	@Test(expected = IllegalStateException.class)
 	public void shouldThrowExceptionNONMEMdataSetDuplicateColumns() {
 
 		DataSet dataset = createDataSet();
 
 		ColumnsDefinitionType columnsDefinition = new ColumnsDefinitionType();
-//		List<ColumnDefnType> columns = columnsDefinition.getColumn();
-//		columns.add(createColumn(COL_ID_1, COL_TYPE_1, COL_VALUE_1, COL_NUM_1));
-//		columns.add(createColumn(COL_ID_2, COL_TYPE_2, COL_VALUE_2, COL_NUM_2));
-//		columns.add(createColumn(COL_ID_1, COL_TYPE_1, COL_VALUE_1, COL_NUM_1));
-//		dataset.setDefinition(columnsDefinition);
 
 		ModellingSteps modellingSteps = createModellingSteps(dataset);
 

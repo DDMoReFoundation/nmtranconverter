@@ -7,6 +7,8 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import com.google.common.base.Preconditions;
+
 import crx.converter.engine.ScriptDefinition;
 import crx.converter.engine.parts.EstimationStep;
 import crx.converter.engine.parts.TabularDataset;
@@ -33,9 +35,7 @@ public class InputStatement {
     }
 
     public InputStatement(ConversionContext context) {
-        if (null == context) {
-            throw new IllegalStateException("conversion context cannot be null");
-        }
+        Preconditions.checkNotNull(context, "Conversion Context cannot be null");
 
         List<ExternalDataSet> dataFiles = context.retrieveExternalDataSets();
 
@@ -54,11 +54,10 @@ public class InputStatement {
      * @param scriptDefinition
      */
     private void computeEstHeadersforTabularDataSet(ScriptDefinition scriptDefinition) {
-        TabularDataset tabularDataset = getObjectiveDatasetMap(ScriptDefinitionAccessor.getEstimationStep(scriptDefinition));
+        Preconditions.checkNotNull(scriptDefinition, "Script definition Context cannot be null");
 
-        if (null == tabularDataset) {
-            throw new IllegalStateException("TabularDataset cannot be null");
-        }
+        TabularDataset tabularDataset = getObjectiveDatasetMap(ScriptDefinitionAccessor.getEstimationStep(scriptDefinition));
+        Preconditions.checkNotNull(scriptDefinition, "TabularDataset cannot be null");
 
         computeEstimationHeaders(tabularDataset);
     }
@@ -70,14 +69,11 @@ public class InputStatement {
      */
     private void computeEstHeadersforExternalDataSets(List<ExternalDataSet> dataFiles) {
 
-        if (null == dataFiles) {
-            throw new IllegalStateException("External data set(s) cannot be null");
-        }
+        Preconditions.checkNotNull(dataFiles, "External data set(s) cannot be null");
 
         Iterator<ExternalDataSet> dsIterator = dataFiles.iterator();
-        if (!dsIterator.hasNext()) {
-            throw new IllegalStateException("External data set(s) cannot be empty");
-        }
+        Preconditions.checkState(dsIterator.hasNext(), "External data set(s) cannot be empty");
+
         while (dsIterator.hasNext()) {
             computeEstimationHeaders(dsIterator.next());
         }
@@ -92,12 +88,10 @@ public class InputStatement {
 
         List<String> dataColumns = tabularDataset.getColumnNames();
 
-        if (null == dataColumns) {
-            throw new IllegalStateException("Objective data set has no columns");
-        } else {
-            for (String dataColumn: dataColumns) {
-                inputHeaders.add(dataColumn);
-            }
+        Preconditions.checkNotNull(dataColumns, "Objective data set has no columns");
+
+        for (String dataColumn: dataColumns) {
+            inputHeaders.add(dataColumn);
         }
     }
 
@@ -109,21 +103,18 @@ public class InputStatement {
     private void computeEstimationHeaders(ExternalDataSet externalDataSet) {
 
         List<ColumnDefinition> dataColumns = externalDataSet.getDataSet().getListOfColumnDefinition();
+        Preconditions.checkNotNull(dataColumns, "External data set has no columns");
 
-        if (null == dataColumns) {
-            throw new IllegalStateException("External data set has no columns");
-        } else {
-            for (ColumnDefinition dataColumn : dataColumns) {
-                String colId = dataColumn.getColumnId().toUpperCase();
-                ColumnType columnType = dataColumn.getColumnType();
-                SymbolType valueType =  dataColumn.getValueType();
+        for (ColumnDefinition dataColumn : dataColumns) {
+            String colId = dataColumn.getColumnId().toUpperCase();
+            ColumnType columnType = dataColumn.getColumnType();
+            SymbolType valueType =  dataColumn.getValueType();
 
-                if (inputHeaders.contains(colId)) {
-                    throw new IllegalStateException("External data set contains duplicate columns");
-                } else {
-                    inputHeaders.add(colId);
-                    populateCovTableDetails(columnType,valueType,colId);
-                }
+            if (inputHeaders.contains(colId)) {
+                throw new IllegalStateException("External data set contains duplicate columns for : "+colId);
+            } else {
+                inputHeaders.add(colId);
+                populateCovTableDetails(columnType,valueType,colId);
             }
         }
     }

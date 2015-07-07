@@ -25,6 +25,7 @@ import eu.ddmore.libpharmml.dom.modeldefn.IndividualParameter;
 public class PredStatement {
 
     private final ConversionContext context;
+    PkMacroAnalyser analyser = new PkMacroAnalyser();
 
     public PredStatement(ConversionContext context){
         this.context = context;
@@ -33,7 +34,6 @@ public class PredStatement {
     public StringBuilder getPredStatement(){
         String statementName = Formatter.endline()+Formatter.pred();
         StringBuilder predStatement = new StringBuilder();
-        PkMacroAnalyser analyser = new PkMacroAnalyser();
         PkMacroDetails pkMacroDetails = analyser.analyse(context);
         String advanType = pkMacroDetails.getMacroAdvanType();
 
@@ -202,5 +202,13 @@ public class PredStatement {
             }
         }
         return transformedCovBlock;
+    }
+
+    public PkMacroAnalyser getAnalyser() {
+        return analyser;
+    }
+
+    public void setAnalyser(PkMacroAnalyser analyser) {
+        this.analyser = analyser;
     }
 }

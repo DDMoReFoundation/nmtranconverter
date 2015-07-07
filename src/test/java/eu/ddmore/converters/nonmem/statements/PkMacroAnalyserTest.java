@@ -11,7 +11,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
 import crx.converter.engine.ScriptDefinition;
@@ -22,28 +21,31 @@ import eu.ddmore.libpharmml.dom.modeldefn.pkmacro.CompartmentMacro;
 import eu.ddmore.libpharmml.dom.modeldefn.pkmacro.EliminationMacro;
 import eu.ddmore.libpharmml.dom.modeldefn.pkmacro.IVMacro;
 import eu.ddmore.libpharmml.dom.modeldefn.pkmacro.OralMacro;
+import eu.ddmore.libpharmml.dom.modeldefn.pkmacro.PKMacro;
 import eu.ddmore.libpharmml.dom.modeldefn.pkmacro.PeripheralMacro;
 
 @RunWith(PowerMockRunner.class)
-@PrepareForTest(PkMacroAnalyser.class)
 public class PkMacroAnalyserTest {
 
-    @Mock PkMacroAnalyser analyser;
+    PkMacroAnalyser analyser = new PkMacroAnalyser();
     @Mock ConversionContext context;
     @Mock ScriptDefinition definition;
     @Mock PkMacroDetails details;
+    @Mock StructuralBlock block;
 
     private List<CompartmentMacro> cmtMacros = new  ArrayList<CompartmentMacro>();
-    List<EliminationMacro> eliminationMacros = new  ArrayList<EliminationMacro>();
-    List<IVMacro> ivMacros = new  ArrayList<IVMacro>();
-    List<OralMacro> oralMacros = new  ArrayList<OralMacro>();
-    List<PeripheralMacro> peripheralMacros = new  ArrayList<PeripheralMacro>();
+    private List<EliminationMacro> eliminationMacros = new  ArrayList<EliminationMacro>();
+    private List<IVMacro> ivMacros = new  ArrayList<IVMacro>();
+    private List<OralMacro> oralMacros = new  ArrayList<OralMacro>();
+    private List<PeripheralMacro> peripheralMacros = new  ArrayList<PeripheralMacro>();
 
     @Before
     public void setUp() throws Exception {
         when(context.getScriptDefinition()).thenReturn(definition);
-        when(definition.getStructuralBlocks()).thenReturn(new ArrayList<StructuralBlock>());
-
+        List<StructuralBlock> blocks = new ArrayList<StructuralBlock>();
+        blocks.add(block);
+        when(definition.getStructuralBlocks()).thenReturn(blocks);
+        
         when(details.getCompartments()).thenReturn(cmtMacros);
         when(details.getEliminations()).thenReturn(eliminationMacros);
         when(details.getIvs()).thenReturn(ivMacros);
@@ -52,14 +54,17 @@ public class PkMacroAnalyserTest {
     }
 
     @Test
-    public void CreateAnalyserAndGetAdvanType() {
+    public void shouldAnalysePkMacrosInConversionContext() {
         cmtMacros.add(new CompartmentMacro());
         eliminationMacros.add(new EliminationMacro());
-
-        when(details.getMacroAdvanType()).thenReturn(PkMacroAnalyser.AdvanType.ADVAN1.toString() );
-
-        when(analyser.analyse(context)).thenReturn(details);
-        assertFalse("AdvanType should not be empty",details.getMacroAdvanType().isEmpty());
+        ArrayList<PKMacro> pkMacros = new ArrayList<PKMacro>();
+        pkMacros.add(new CompartmentMacro());
+        pkMacros.add(new EliminationMacro());
+        
+        when(block.getPKMacros()).thenReturn(pkMacros);
+        
+        PkMacroDetails macroDetails = analyser.analyse(context);
+        assertTrue("pk macro details should not be empty",!macroDetails.isEmpty());
     }
 
     @Test
@@ -68,8 +73,7 @@ public class PkMacroAnalyserTest {
         eliminationMacros.add(new EliminationMacro());
         ivMacros.add(new IVMacro());
 
-        analyser = new PkMacroAnalyser();
-        String capturedAdvanType = analyser.captureAdvanType(context,details);
+        String capturedAdvanType = analyser.captureAdvanType(details);
         verifyAdvanType(PkMacroAnalyser.AdvanType.ADVAN1.toString(), capturedAdvanType);
     }
 
@@ -79,8 +83,7 @@ public class PkMacroAnalyserTest {
         eliminationMacros.add(new EliminationMacro());
         oralMacros.add(new OralMacro());
 
-        analyser = new PkMacroAnalyser();
-        String capturedAdvanType = analyser.captureAdvanType(context,details);
+        String capturedAdvanType = analyser.captureAdvanType(details);
         verifyAdvanType(PkMacroAnalyser.AdvanType.ADVAN2.toString(), capturedAdvanType);
     }
 
@@ -91,8 +94,7 @@ public class PkMacroAnalyserTest {
         ivMacros.add(new IVMacro());
         peripheralMacros.add(new PeripheralMacro());
 
-        analyser = new PkMacroAnalyser();
-        String capturedAdvanType = analyser.captureAdvanType(context,details);
+        String capturedAdvanType = analyser.captureAdvanType(details);
         verifyAdvanType(PkMacroAnalyser.AdvanType.ADVAN3.toString(), capturedAdvanType);
     }
 
@@ -103,8 +105,7 @@ public class PkMacroAnalyserTest {
         oralMacros.add(new OralMacro());
         peripheralMacros.add(new PeripheralMacro());
 
-        analyser = new PkMacroAnalyser();
-        String capturedAdvanType = analyser.captureAdvanType(context,details);
+        String capturedAdvanType = analyser.captureAdvanType(details);
         verifyAdvanType(PkMacroAnalyser.AdvanType.ADVAN4.toString(), capturedAdvanType);
     }
 
@@ -116,8 +117,7 @@ public class PkMacroAnalyserTest {
         peripheralMacros.add(new PeripheralMacro());
         peripheralMacros.add(new PeripheralMacro());
 
-        analyser = new PkMacroAnalyser();
-        String capturedAdvanType = analyser.captureAdvanType(context,details);        
+        String capturedAdvanType = analyser.captureAdvanType(details);        
         verifyAdvanType(PkMacroAnalyser.AdvanType.ADVAN11.toString(), capturedAdvanType);
     }
 
@@ -129,8 +129,7 @@ public class PkMacroAnalyserTest {
         peripheralMacros.add(new PeripheralMacro());
         peripheralMacros.add(new PeripheralMacro());
 
-        analyser = new PkMacroAnalyser();
-        String capturedAdvanType = analyser.captureAdvanType(context,details);        
+        String capturedAdvanType = analyser.captureAdvanType(details);        
         verifyAdvanType(PkMacroAnalyser.AdvanType.ADVAN12.toString(), capturedAdvanType);
     }
 

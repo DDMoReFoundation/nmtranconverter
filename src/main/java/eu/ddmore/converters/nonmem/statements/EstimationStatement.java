@@ -6,6 +6,8 @@ package eu.ddmore.converters.nonmem.statements;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.google.common.base.Preconditions;
+
 import crx.converter.engine.ScriptDefinition;
 import crx.converter.engine.parts.EstimationStep;
 import crx.converter.engine.parts.Part;
@@ -34,6 +36,7 @@ public class EstimationStatement {
     ConversionContext context;
 
     public EstimationStatement(ConversionContext convContext){
+        Preconditions.checkNotNull(convContext, "Conversion Context cannot be null");
         this.context = convContext;
         estimationSteps = filterOutEstimationSteps(context.getScriptDefinition());
     }
@@ -78,6 +81,7 @@ public class EstimationStatement {
      * @return
      */
     public List<EstimationStep> filterOutEstimationSteps(ScriptDefinition scriptDefinition) {
+        Preconditions.checkNotNull(context.getScriptDefinition(), "Script definiton cannot be null");
         List<EstimationStep> estSteps = new ArrayList<EstimationStep>(); 
         for(Part nextStep : scriptDefinition.getStepsMap().values()) {
             if (nextStep instanceof EstimationStep){

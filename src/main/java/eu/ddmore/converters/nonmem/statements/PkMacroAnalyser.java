@@ -4,7 +4,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
 
+import crx.converter.engine.ScriptDefinition;
 import crx.converter.engine.parts.StructuralBlock;
 import eu.ddmore.converters.nonmem.ConversionContext;
 import eu.ddmore.libpharmml.dom.modeldefn.pkmacro.CompartmentMacro;
@@ -32,11 +34,11 @@ public class PkMacroAnalyser {
      * @return
      */
     public PkMacroDetails analyse(ConversionContext context) {
-        PkMacroDetails details = new PkMacroDetails();
-        processPkMacros(context, details);
-
+        Preconditions.checkNotNull(context, "Conversion Context cannot be null");
+        
+        PkMacroDetails details = processPkMacros(context.getScriptDefinition());        
         if(!details.isEmpty()){
-            details.setMacroAdvanType(captureAdvanType(context, details));
+            details.setMacroAdvanType(captureAdvanType(details));
         }
 
         return details;
@@ -47,9 +49,12 @@ public class PkMacroAnalyser {
      * Also it will determine and set pk macro advan type.
      * 
      */
-    private void processPkMacros(ConversionContext context, PkMacroDetails details){
+    private PkMacroDetails processPkMacros(ScriptDefinition scriptDefinition){
+        Preconditions.checkNotNull(scriptDefinition, "Script definition cannot be null");
+        
+        PkMacroDetails details = new PkMacroDetails();
         List<PKMacro> allPkMacros = new ArrayList<PKMacro>();
-        for(StructuralBlock block : context.getScriptDefinition().getStructuralBlocks()){
+        for(StructuralBlock block : scriptDefinition.getStructuralBlocks()){
             if(block.getPKMacros()!=null){
                 allPkMacros.addAll(block.getPKMacros());
             }
@@ -68,6 +73,7 @@ public class PkMacroAnalyser {
                 details.getPeripherals().add((PeripheralMacro) pkMacro);
             }
         }
+        return details;
     }
 
     /*
@@ -87,7 +93,7 @@ public class PkMacroAnalyser {
      * @return advan type
      */
     @VisibleForTesting
-    String captureAdvanType(ConversionContext context, PkMacroDetails details) {
+    String captureAdvanType(PkMacroDetails details) {
 
         if(details.getCompartments().isEmpty() || details.getEliminations().isEmpty()){
             throw new IllegalArgumentException("The compartment missing from pk macro specified");

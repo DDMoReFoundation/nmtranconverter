@@ -14,6 +14,8 @@ import java.nio.file.Files;
 import java.util.Iterator;
 import java.util.List;
 
+import com.google.common.base.Preconditions;
+
 import crx.converter.engine.parts.EstimationStep;
 import crx.converter.engine.parts.TabularDataset;
 import eu.ddmore.converters.nonmem.ConversionContext;
@@ -26,10 +28,9 @@ import eu.ddmore.libpharmml.dom.modellingsteps.ExternalDataSet;
 public class DataStatement{
 
     private static final Character IGNORE_CHAR = '@';
-    String statement;
-    String dataFileName = "";
-    File dataFile = null;
-    String delimSybol;
+    private String statement;
+    private String dataFileName = "";
+    private File dataFile = null;
 
     public File getDataFile() {
         return dataFile;
@@ -45,18 +46,13 @@ public class DataStatement{
 
     public DataStatement(ConversionContext context, File srcFile) {
 
-        if (null == context) {
-            throw new IllegalStateException("conversion context cannot be null");
-        }
+        Preconditions.checkNotNull(context, "conversion context cannot be null");
 
         List<ExternalDataSet> dataFiles = context.retrieveExternalDataSets();
         if(dataFiles!=null && !dataFiles.isEmpty()){
 
             // TODO: Handle multiple data sets
             Iterator<ExternalDataSet> dsIterator = dataFiles.iterator();
-            if (!dsIterator.hasNext()) {
-                throw new IllegalStateException("External data set(s) cannot be empty");
-            }
             while (dsIterator.hasNext()) {
                 ExternalDataSet extDataSet = dsIterator.next();
                 if (extDataSet.getDataSet().getExternalFile().getPath() != null) {
@@ -66,7 +62,7 @@ public class DataStatement{
                     if(data.exists()){
                         setDataFile(data);
                     }else{
-                        throw new IllegalStateException("external data file doesnt exist"); 
+                        throw new IllegalStateException("external data file doesnt exist for path :"+data.getAbsolutePath()); 
                     }
                 }
             }
