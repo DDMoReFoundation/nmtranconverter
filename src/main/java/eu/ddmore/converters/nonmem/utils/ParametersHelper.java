@@ -10,7 +10,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeMap;
 
 import javax.xml.bind.JAXBElement;
 
@@ -36,7 +35,7 @@ public class ParametersHelper {
     private final LinkedHashMap<String, ThetaStatement> thetaStatements = new LinkedHashMap<String, ThetaStatement>();
     private final LinkedHashMap<String, OmegaStatement> omegaStatements = new LinkedHashMap<String, OmegaStatement>();
 
-    private TreeMap<Integer, String> thetasToEtaOrder = new TreeMap<Integer, String>();
+    private Map<Integer, String> thetasToEtaOrder;
     private ScriptDefinition scriptDefinition;
 
     // These are keyed by symbol ID
@@ -45,20 +44,26 @@ public class ParametersHelper {
     private final Map<String, ScalarRhs> initialEstimates = new HashMap<String, ScalarRhs>();
     private final Map<String, ScalarRhs> lowerBounds = new HashMap<String, ScalarRhs>();
     private final Map<String, ScalarRhs> upperBounds = new HashMap<String, ScalarRhs>();
-    private final OmegaBlockStatement omegaBlockStatement = new OmegaBlockStatement(this);
+    private final OmegaBlockStatement omegaBlockStatement;
     private final List<String> verifiedSigmas = new ArrayList<String>();
     private final Set<ParameterRandomVariable> epsilonVars;
-    private List<ParameterEstimate> parametersToEstimate = new ArrayList<ParameterEstimate>();
-    private List<FixedParameter> fixedParameters = new ArrayList<FixedParameter>();
+    private final OrderedEtasHandler orderedEtasHandler;
+    private List<ParameterEstimate> parametersToEstimate;
+    private List<FixedParameter> fixedParameters;
     private StringBuilder sigmaStatement;
+
     /**
      * Constructor expects script definition which contains all the blocks populated as part of common converter. 
      *   
      * @param scriptDefinition
      */
-    public ParametersHelper(ScriptDefinition scriptDefinition){
+    public ParametersHelper(ScriptDefinition scriptDefinition,OrderedEtasHandler orderedEtasHandler, OrderedThetasHandler thetasHandler){
         this.scriptDefinition = scriptDefinition;
+        this.orderedEtasHandler = orderedEtasHandler;
         epsilonVars = ScriptDefinitionAccessor.getEpsilonRandomVariables(getScriptDefinition());
+        thetasToEtaOrder = thetasHandler.getOrderedThetas();
+
+        omegaBlockStatement = new OmegaBlockStatement(this, orderedEtasHandler);
     }
 
     /**
@@ -66,7 +71,7 @@ public class ParametersHelper {
      * 
      * @param simpleParameters
      */
-    public void initialiseAllParameters(List<SimpleParameter> simpleParameters, Map<String, Integer> orderedEtas){
+    public void initialiseAllParameters(List<SimpleParameter> simpleParameters){
 
         if (simpleParameters==null || simpleParameters.isEmpty()) {
             return;
@@ -83,18 +88,14 @@ public class ParametersHelper {
         final EstimationStep estimationStep = ScriptDefinitionAccessor.getEstimationStep(scriptDefinition);
         parametersToEstimate = (estimationStep.hasParametersToEstimate())?estimationStep.getParametersToEstimate(): new ArrayList<ParameterEstimate>();
         fixedParameters = (estimationStep.hasFixedParameters())?estimationStep.getFixedParameters(): new ArrayList<FixedParameter>();
+
         // Find any bounds and initial estimates
         setAllParameterBounds(parametersToEstimate);
 
         //setOmegaBlocks before omega params and theta
-        omegaBlockStatement.setEtaToOmagaMap(orderedEtas);
-        OrderedThetasHandler thetasHandler = new OrderedThetasHandler(scriptDefinition);
-        thetasHandler.createOrderedThetasToEta(orderedEtas);
-        thetasToEtaOrder = thetasHandler.getOrderedThetas();
-
-        //need to set omegas and sigma before setting theta params
         omegaBlockStatement.createOmegaBlocks();
 
+        //need to set omegas and sigma before setting theta params
         setOmegaParameters();
         setSigmaParameters();
         setThetaParameters();
@@ -173,7 +174,7 @@ public class ParametersHelper {
      */
     private boolean validateParamName(String paramName) {
         return !(paramName== null ||  omegaStatements.containsKey(paramName) || 
-                omegaBlockStatement.getEtasToOmegasInCorrelation().values().contains(paramName) ||
+                orderedEtasHandler.getEtasToOmegasInCorrelation().values().contains(paramName) ||
                 verifiedSigmas.contains(paramName) || thetaStatements.containsKey(paramName));
     }
 
@@ -365,7 +366,7 @@ public class ParametersHelper {
 
         if(!omegaBlocks.isEmpty()){
             omegaStatement.append(Formatter.endline(omegaBlockStatement.getOmegaBlockTitle()));
-            for(String eta : omegaBlockStatement.getOrderedEtasToOmegaMap().values()){
+            for(String eta : omegaBlockStatement.getOmegaOrderToEtas().values()){
                 for(OmegaStatement omega : omegaBlocks.get(eta)){
                     omegaStatement.append(ParameterStatementHandler.addParameter(omega));
                 }

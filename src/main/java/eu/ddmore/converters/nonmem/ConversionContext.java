@@ -59,10 +59,10 @@ public class ConversionContext {
         this.parser = parser;
         this.lexer = lexer;
 
-        this.parameterHelper = new ParametersHelper(getScriptDefinition());
         this.orderedThetasHandler = new OrderedThetasHandler(getScriptDefinition());
         this.etasHandler = new OrderedEtasHandler(getScriptDefinition());
         this.discreteHandler = new DiscreteHandler(getScriptDefinition());
+        this.parameterHelper = new ParametersHelper(getScriptDefinition(), etasHandler, orderedThetasHandler);
         initialise();
     }
 
@@ -78,7 +78,7 @@ public class ConversionContext {
             throw new IllegalArgumentException("Cannot find simple parameters for the pharmML file.");
         }
         orderedThetasHandler.createOrderedThetasToEta(retrieveOrderedEtas());
-        parameterHelper.initialiseAllParameters(lexer.getModelParameters(), retrieveOrderedEtas());
+        parameterHelper.initialiseAllParameters(lexer.getModelParameters());
         setThetaAssigments();
 
         derivativeVars.addAll(getAllStateVariables());
@@ -343,5 +343,10 @@ public class ConversionContext {
 
     public DiscreteHandler getDiscreteHandler() {
         return discreteHandler;
+    }
+
+
+    public OrderedEtasHandler getEtasHandler() {
+        return etasHandler;
     }
 }

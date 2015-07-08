@@ -7,9 +7,9 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.Map.Entry;
 
@@ -34,16 +34,18 @@ public class OmegaBlockStatement {
 
     private static final String EMPTY_VARIABLE = "Empty Variable";
     private final Map<String, List<OmegaStatement>> omegaBlocks = new HashMap<String, List<OmegaStatement>>();
-    private Map<String, String> etasToOmegasInCorrelation = new LinkedHashMap<String, String>();
 
     private String omegaBlockTitle;
     private Boolean isOmegaBlockFromStdDev = false;
-    private Map<String, Integer> etaToOmagaMap = new HashMap<String, Integer>();
-    private Map<Integer, String> orderedEtasToOmegaMap = new TreeMap<Integer, String>();
-    private ParametersHelper paramHelper;
+    private Map<String, Integer> etaToOmagas = new HashMap<String, Integer>();
+    private Map<Integer, String> omegaOrderToEtas = new TreeMap<Integer, String>();
+    private final ParametersHelper paramHelper;
+    private final Set<String> etasInCorrelation;
 
-    public OmegaBlockStatement(ParametersHelper parameters) {
-        paramHelper = parameters;
+    public OmegaBlockStatement(ParametersHelper parameter, OrderedEtasHandler orderedEtasHandler) {
+        this.paramHelper = parameter;
+        etasInCorrelation = orderedEtasHandler.getEtasToOmegasInCorrelation().keySet();
+        setEtaToOmagas(orderedEtasHandler.getOrderedEtas());
     }
 
 
@@ -59,10 +61,10 @@ public class OmegaBlockStatement {
 
         if(!correlations.isEmpty()){
             initialiseOmegaBlocks(correlations);
-            orderedEtasToOmegaMap = reverseMap(etaToOmagaMap);
+            omegaOrderToEtas = reverseMap(etaToOmagas);
             omegaBlockTitle = createOmegaBlockTitle(correlations);
 
-            for(String eta : orderedEtasToOmegaMap.values()){
+            for(String eta : omegaOrderToEtas.values()){
                 Iterator<CorrelationRef> iterator = correlations.iterator();
 
                 while(iterator.hasNext()){
@@ -96,7 +98,7 @@ public class OmegaBlockStatement {
                     if(omegas.get(column)==null || omegas.get(column).getSymbId().equals(EMPTY_VARIABLE)){
                         OmegaStatement omega = null ;
                         if(correlation.isCorrelation()){
-                             omega = getOmegaForCoefficient(correlation.correlationCoefficient, firstRandomVar, secondRandomVar);
+                            omega = getOmegaForCoefficient(correlation.correlationCoefficient, firstRandomVar, secondRandomVar);
                         }else if(correlation.isCovariance()){
                             omega = getOmegaForCoefficient(correlation.covariance, firstRandomVar, secondRandomVar);
                         }
@@ -109,7 +111,7 @@ public class OmegaBlockStatement {
             }
         }
     }
-    
+
     /**
      * This method will reverse the map and return a tree map (ordered in natural order of keys).
      * 
@@ -212,7 +214,7 @@ public class OmegaBlockStatement {
      * @return
      */
     private String createOmegaBlockTitle(List<CorrelationRef> correlations) {
-        Integer blocksCount = etaToOmagaMap.size();
+        Integer blocksCount = etaToOmagas.size();
         StringBuilder description = new StringBuilder();
         //This will change in case of 0.4 as it will need to deal with matrix types as well.
         description.append((isCorrelation(correlations))?NmConstant.CORRELATION:" ");
@@ -245,7 +247,7 @@ public class OmegaBlockStatement {
      * @return
      */
     private int getOrderedEtaIndex(String randomVariable) {
-        return (etaToOmagaMap.get(randomVariable)>0)?etaToOmagaMap.get(randomVariable)-1:0;
+        return (etaToOmagas.get(randomVariable)>0)?etaToOmagas.get(randomVariable)-1:0;
     }
 
     /**
@@ -271,7 +273,7 @@ public class OmegaBlockStatement {
      * @param randomVar1
      */
     private void createFirstMatrixRow(String eta, ParameterRandomVariable randomVar1) {
-        if(etaToOmagaMap.get(randomVar1.getSymbId())== 1 && eta.equals(randomVar1.getSymbId())){
+        if(etaToOmagas.get(randomVar1.getSymbId())== 1 && eta.equals(randomVar1.getSymbId())){
             List<OmegaStatement> matrixRow = new ArrayList<OmegaStatement>();
             String symbId = RandomVariableHelper.getNameFromParamRandomVariable(randomVar1);
             matrixRow.add(paramHelper.getOmegaFromRandomVarName(symbId));
@@ -290,19 +292,17 @@ public class OmegaBlockStatement {
         for(CorrelationRef correlation : correlations){
             //Need to set SD attribute for whole block if even a single value is from std dev
             setStdDevAttributeForOmegaBlock(correlation);
-            OrderedEtasHandler etasHandler = new OrderedEtasHandler(paramHelper.getScriptDefinition());
-            etasHandler.addCorrelationToMap(etasToOmegasInCorrelation,correlation);
         }
 
-        for(Iterator<Entry<String, Integer>> it = etaToOmagaMap.entrySet().iterator(); it.hasNext();) {
-            if(!etasToOmegasInCorrelation.keySet().contains(it.next().getKey())){
+        for(Iterator<Entry<String, Integer>> it = etaToOmagas.entrySet().iterator(); it.hasNext();) {
+            if(!etasInCorrelation.contains(it.next().getKey())){
                 it.remove();
             }
         }
 
-        for(String eta : etaToOmagaMap.keySet()){
+        for(String eta : etaToOmagas.keySet()){
             ArrayList<OmegaStatement> statements = new ArrayList<OmegaStatement>();
-            for(int i=0;i<etaToOmagaMap.get(eta);i++) statements.add(null);
+            for(int i=0;i<etaToOmagas.get(eta);i++) statements.add(null);
             omegaBlocks.put(eta, statements);
         }
     }
@@ -313,28 +313,23 @@ public class OmegaBlockStatement {
         }
     }
 
-    public Map<String, Integer> getEtaToOmagaMap() {
-        return etaToOmagaMap;
+    public Map<String, Integer> getEtaToOmagas() {
+        return etaToOmagas;
     }
 
-    public void setEtaToOmagaMap(Map<String, Integer> etaToOmagaMap) {
-        this.etaToOmagaMap = new HashMap<String, Integer>(etaToOmagaMap);
+    public void setEtaToOmagas(Map<String, Integer> etaToOmagaMap) {
+        this.etaToOmagas = new HashMap<String, Integer>(etaToOmagaMap);
     }
 
     public Map<String, List<OmegaStatement>> getOmegaBlocks() {
         return omegaBlocks;
     }
 
-    public Map<String, String> getEtasToOmegasInCorrelation() {
-        return etasToOmegasInCorrelation;
+    public Map<Integer, String> getOmegaOrderToEtas() {
+        return omegaOrderToEtas;
     }
-    public Map<Integer, String> getOrderedEtasToOmegaMap() {
-        return orderedEtasToOmegaMap;
-    }
-
 
     public String getOmegaBlockTitle() {
         return omegaBlockTitle;
     }
-
 }

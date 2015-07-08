@@ -9,6 +9,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.google.common.base.Preconditions;
+
 import crx.converter.engine.ScriptDefinition;
 import crx.converter.engine.parts.BaseRandomVariableBlock.CorrelationRef;
 import crx.converter.engine.parts.ParameterBlock;
@@ -25,11 +27,13 @@ public class OrderedEtasHandler {
 
     private final List<String> allEtas = new ArrayList<String>();
     private final Map<String, Integer> orderedEtas = new LinkedHashMap<String, Integer>();
-
-    ScriptDefinition scriptDefinition;
+    private final Map<String, String> etasToOmegasInCorrelation;
+    private final ScriptDefinition scriptDefinition;
 
     public OrderedEtasHandler(ScriptDefinition scriptDefinition) {
+        Preconditions.checkNotNull(scriptDefinition, "Script definition cannot be null");
         this.scriptDefinition = scriptDefinition;
+        etasToOmegasInCorrelation = addCorrelationValuesToMap(getAllCorrelations());
         retrieveAllEtas(scriptDefinition);
         createOrderedEtasMap();
     }
@@ -46,13 +50,12 @@ public class OrderedEtasHandler {
 
         if(!etasOrder.isEmpty()){
             Integer etaCount = 0;
-            Map<String, String> etaTocorrelationsMap = addCorrelationValuesToMap(getAllCorrelations());
 
             List<String> nonOmegaBlockEtas = new ArrayList<String>();
             //order etas map
             for(String eta : etasOrder) {
                 //no correlations so no Omega block
-                if(etaTocorrelationsMap.keySet().contains(eta)){
+                if(etasToOmegasInCorrelation.keySet().contains(eta)){
                     ++etaCount;
                     orderedEtas.put(eta,etaCount);
                 }else{
@@ -178,6 +181,10 @@ public class OrderedEtasHandler {
 
     public Map<String, Integer> getOrderedEtas() {
         return orderedEtas;
+    }
+
+    public Map<String, String> getEtasToOmegasInCorrelation() {
+        return etasToOmegasInCorrelation;
     }
 
 }
