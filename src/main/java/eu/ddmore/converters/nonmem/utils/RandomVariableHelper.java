@@ -16,7 +16,9 @@ public class RandomVariableHelper {
     
     /**
      * Returns parameter name from parameter random variable. 
-     * The name can be obtained from either standard deviation or variance. 
+     * The name can be obtained from either standard deviation or variance.
+     * This method will return null if name is not found in random variable provided.
+     *  
      * @param rv
      * @return
      */

@@ -1,3 +1,6 @@
+/*******************************************************************************
+ * Copyright (C) 2015 Mango Solutions Ltd - All rights reserved.
+ ******************************************************************************/
 package eu.ddmore.converters.nonmem.statements;
 
 import java.util.ArrayList;
@@ -140,8 +143,9 @@ public class PkMacroAnalyser {
      */
     private boolean isKmAndVm(PkMacroDetails details){
         boolean isKm = false, isVm = false ;
-        if(details.getEliminations().get(0).getListOfValue() != null){
-            for(MacroValue vals : details.getEliminations().get(0).getListOfValue()){
+        final List<MacroValue> eliminationMacroValues = details.getEliminations().get(0).getListOfValue();
+        if(eliminationMacroValues != null && !eliminationMacroValues.isEmpty()){
+            for(MacroValue vals : eliminationMacroValues){
 
                 if(vals.getSymbRef()!=null){
                     String variable = vals.getSymbRef().getSymbIdRef();

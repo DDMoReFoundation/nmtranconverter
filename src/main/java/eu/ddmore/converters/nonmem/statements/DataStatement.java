@@ -69,9 +69,7 @@ public class DataStatement{
         }else {
             TabularDataset td = getObjectiveDatasetMap(ScriptDefinitionAccessor.getEstimationStep(context.getScriptDefinition()));
 
-            if (null == td) {
-                throw new IllegalStateException("TabularDataset cannot be null");
-            }
+            Preconditions.checkNotNull(td, "TabularDataset cannot be null");
 
             dataFileName = generateDataFileName(srcFile.getAbsolutePath());
         }

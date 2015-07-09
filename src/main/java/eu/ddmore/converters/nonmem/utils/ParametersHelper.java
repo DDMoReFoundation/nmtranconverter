@@ -13,6 +13,8 @@ import java.util.Set;
 
 import javax.xml.bind.JAXBElement;
 
+import com.google.common.base.Preconditions;
+
 import crx.converter.engine.ScriptDefinition;
 import crx.converter.engine.parts.EstimationStep;
 import crx.converter.engine.parts.EstimationStep.FixedParameter;
@@ -114,20 +116,22 @@ public class ParametersHelper {
     private void setThetaParameters(){
         final Map<String, ThetaStatement> unOrderedThetas = new HashMap<String, ThetaStatement>();
         for(ParameterEstimate parameter : parametersToEstimate){
+            Preconditions.checkNotNull(parameter.getSymbRef(), "Parameter to estimate doesnt have parameter symbol.");
             String paramName = parameter.getSymbRef().getSymbIdRef();
-            createThetaForValidParam(unOrderedThetas, paramName, false);
+            createAndAddThetaForValidParamToMap(unOrderedThetas, paramName, false);
             simpleParams.remove(paramName);
         }
         for(FixedParameter fixedParameter : fixedParameters){
+            Preconditions.checkNotNull(fixedParameter.pe.getSymbRef(), "Fixed Parameter doesnt have parameter symbol.");
             String paramName = fixedParameter.pe.getSymbRef().getSymbIdRef();
-            createThetaForValidParam(unOrderedThetas, paramName, true);
+            createAndAddThetaForValidParamToMap(unOrderedThetas, paramName, true);
             simpleParams.remove(paramName);
         }
         for(String paramName : simpleParams.keySet()){
             ScalarRhs scalar = getScalarRhsForSymbol(paramName);
             if(scalar !=null){
                 initialEstimates.put(paramName, scalar);
-                createThetaForValidParam(unOrderedThetas, paramName, true);    
+                createAndAddThetaForValidParamToMap(unOrderedThetas, paramName, true);    
             }
         }
         thetaStatements.putAll(unOrderedThetas);
@@ -139,7 +143,7 @@ public class ParametersHelper {
      * @param unOrderedThetas
      * @param paramName
      */
-    private void createThetaForValidParam(final Map<String, ThetaStatement> unOrderedThetas, String paramName, Boolean isFixed) {
+    private void createAndAddThetaForValidParamToMap(final Map<String, ThetaStatement> unOrderedThetas, String paramName, Boolean isFixed) {
         if(validateParamName(paramName)){
             ThetaStatement thetaStatement = new ThetaStatement(paramName);
             if(!thetasToEtaOrder.containsValue(paramName)){

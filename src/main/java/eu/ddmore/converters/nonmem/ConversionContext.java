@@ -106,13 +106,13 @@ public class ConversionContext {
         StringBuilder parameterStatement = new StringBuilder();
 
         StringBuilder thetaStatement = parameterHelper.getThetaStatementBlock();
-        parameterStatement.append(thetaStatement.toString());
+        parameterStatement.append(thetaStatement);
 
         StringBuilder omegaStatement = parameterHelper.getOmegaStatementBlock();
-        parameterStatement.append(omegaStatement.toString());
+        parameterStatement.append(omegaStatement);
 
         StringBuilder sigmaStatement = parameterHelper.getSigmaStatementBlock();
-        parameterStatement.append(sigmaStatement.toString());
+        parameterStatement.append(sigmaStatement);
 
         return parameterStatement;
     }

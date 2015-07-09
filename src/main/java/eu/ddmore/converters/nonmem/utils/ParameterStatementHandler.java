@@ -3,6 +3,8 @@
  ******************************************************************************/
 package eu.ddmore.converters.nonmem.utils;
 
+import com.google.common.base.Preconditions;
+
 import eu.ddmore.converters.nonmem.statements.Parameter;
 import eu.ddmore.converters.nonmem.utils.Formatter.NmConstant;
 import eu.ddmore.converters.nonmem.utils.Formatter.Symbol;
@@ -21,6 +23,7 @@ public class ParameterStatementHandler {
      * @param fout
      */
     public static StringBuilder addParameter(Parameter param) {
+        Preconditions.checkNotNull(param, "Paramter cannot be null");
         StringBuilder statement = new StringBuilder();
         String description = param.getSymbId().toUpperCase();
 
