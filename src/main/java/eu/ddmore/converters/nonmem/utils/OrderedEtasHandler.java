@@ -129,6 +129,7 @@ public class OrderedEtasHandler {
                 addRandomVarToAllEtas(variable.getSymbId());
             }
 
+            
             Collection<ParameterRandomVariable> epsilons =  ScriptDefinitionAccessor.getEpsilonRandomVariables(scriptDefinition);
             for(ParameterRandomVariable variable : block.getRandomVariables()){
                 if(!epsilons.contains(variable)){
