@@ -145,10 +145,6 @@ public class Parser extends BaseParser {
         }
     }
 
-    /*
-     * (non-Javadoc)
-     * @see crx.converter.engine.BaseParser#doSymbolRef(eu.ddmore.libpharmml.dom.commontypes.SymbolRef)
-     */
     @Override
     protected String doSymbolRef(SymbolRef symbRefType) {
 
@@ -213,18 +209,12 @@ public class Parser extends BaseParser {
         return z.get(p);
     }
 
-    /*
-     * (non-Javadoc)
-     * @see crx.converter.engine.BaseParser#rootLeafHandler(java.lang.Object, crx.converter.tree.Node, java.io.PrintWriter)
-     */
     @Override
     protected void rootLeafHandler(Object context, Node leaf, PrintWriter fout) {
         if (leaf == null) throw new NullPointerException("Tree leaf is NULL.");
 
         if (leaf.data != null) {
-            boolean inPiecewise = false;
-
-            if (isPiecewise(leaf.data)) inPiecewise = true;
+            boolean inPiecewise = (isPiecewise(leaf.data));
 
             if (!isString_(leaf.data)) leaf.data = getSymbol(leaf.data);
             String current_value = "", current_symbol = "";

@@ -8,6 +8,8 @@ import java.lang.reflect.Method;
 import java.math.BigInteger;
 import java.util.Properties;
 
+import com.google.common.base.Preconditions;
+
 import eu.ddmore.converters.nonmem.ConversionContext;
 import eu.ddmore.libpharmml.dom.commontypes.IntValue;
 import eu.ddmore.libpharmml.dom.commontypes.RealValue;
@@ -27,6 +29,7 @@ public final class ScalarValueHandler {
      * @return
      */
     public static Double getValueFromScalarRhs(ScalarRhs rhs) {
+        Preconditions.checkNotNull(rhs, "Scalar rhs cannot be null");
         if(rhs.getScalar()!=null){
             return getValue(rhs.getScalar().getValue());
         }else if(rhs.getEquation().getScalar()!=null){
@@ -71,6 +74,7 @@ public final class ScalarValueHandler {
      * @return
      */
     public static Double getValue(Object object) {
+        Preconditions.checkNotNull(object, "The object value cannot be null");
         try {
             Method handler = ScalarValueHandler.class.getMethod("getValue", object.getClass());
             return (Double)handler.invoke(null, object);
@@ -80,10 +84,12 @@ public final class ScalarValueHandler {
     }
     
     public static Double getValue(IntValue num) {
+        Preconditions.checkNotNull(num, "The integer value cannot be null");
         BigInteger number = num.getValue();
         return number.doubleValue();
     }
     public static Double getValue(RealValue num) {
+        Preconditions.checkNotNull(num, "The real value cannot be null");
         return num.getValue();
     }
 }

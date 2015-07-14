@@ -75,7 +75,10 @@ public class OrderedEtasHandler {
      * @param etaToCorrelations
      * @param correlation
      */
-    public void addCorrelationToMap(Map<String, String> etaToCorrelations, CorrelationRef correlation) {
+    private void addCorrelationToMap(Map<String, String> etaToCorrelations, CorrelationRef correlation) {
+        Preconditions.checkNotNull(etaToCorrelations, "eta to correlations map cannot be null");
+        Preconditions.checkNotNull(correlation, "Correlation reference cannot be null");
+        
         String firstVar = correlation.rnd1.getSymbId();
         String secondVar = correlation.rnd2.getSymbId();
         String coefficient = "";
