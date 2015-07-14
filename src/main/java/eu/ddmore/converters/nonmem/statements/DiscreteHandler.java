@@ -98,12 +98,6 @@ public class DiscreteHandler {
         return statement;
     }
 
-    /**
-     *  Gets distribution variable specified for discrete block.
-     *  
-     * @param block
-     * @return
-     */
     private StringBuilder getCountDataStatement(CountPMF countPMF) {
         StringBuilder countDistStatement = new StringBuilder();
         
