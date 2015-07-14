@@ -100,10 +100,9 @@ public class EstimationStatement {
         StringBuilder estStatement = new StringBuilder();
         estStatement.append(Formatter.endline());
 
-        String simCommentsForDiscrete = new String(
-            Formatter.endline(";Sim_start")
-            +Formatter.endline(";$SIM (12345) (12345 UNIFORM) ONLYSIM NOPREDICTION")
-            +Formatter.endline(";Sim_end"));
+        String simCommentsForDiscrete = Formatter.endline(";Sim_start")
+                +Formatter.endline(";$SIM (12345) (12345 UNIFORM) ONLYSIM NOPREDICTION")
+                +Formatter.endline(";Sim_end");
 
         if(context.getDiscreteHandler().isCountData()){
             estStatement.append(Formatter.endline(simCommentsForDiscrete));

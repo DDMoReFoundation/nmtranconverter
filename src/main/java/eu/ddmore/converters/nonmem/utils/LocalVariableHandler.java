@@ -9,7 +9,6 @@ import com.google.common.base.Preconditions;
 
 import crx.converter.engine.parts.StructuralBlock;
 import eu.ddmore.converters.nonmem.ConversionContext;
-import eu.ddmore.converters.nonmem.statements.DiffEquationStatementBuilder;
 import eu.ddmore.converters.nonmem.statements.ErrorStatement;
 import eu.ddmore.libpharmml.dom.commontypes.VariableDefinition;
 
@@ -18,14 +17,16 @@ import eu.ddmore.libpharmml.dom.commontypes.VariableDefinition;
  *  
  */
 public class LocalVariableHandler {
-    ConversionContext context;
+    private final ConversionContext context;
+
     public LocalVariableHandler(ConversionContext context){
         this.context = context;
     }
 
     /**
+     * This method gets variable definitions for the non DES variables and adds them to statement.
      * 
-     * @return
+     * @return string builder variable definitions types
      */
     public StringBuilder getVarDefinitionTypesForNonDES(){
         StringBuilder varDefinitionsBlock = new StringBuilder();
@@ -43,7 +44,7 @@ public class LocalVariableHandler {
      * 
      * @param block
      * @param varDefinitionsInDES
-     * @return
+     * @return string builder variable definitions types
      */
     public StringBuilder addVarDefinitionTypes(StructuralBlock block, Map<String, String> varDefinitionsInDES) {
 
@@ -60,7 +61,7 @@ public class LocalVariableHandler {
                         rhs = rhs.replaceFirst(variable+" =","");
                         Preconditions.checkNotNull(varDefinitionsInDES,"variable definitions map needs to be provided to add local variable definition for DES.");
                         varDefinitionsInDES.put(variable, rhs);
-                        lhs = DiffEquationStatementBuilder.renameFunctionVariableForDES(variable);
+                        lhs = Formatter.renameFunctionVariableForDES(variable);
                     }
                 }
             }
@@ -78,7 +79,7 @@ public class LocalVariableHandler {
      * Determines if variable is function variable from error model.
      * 
      * @param variable
-     * @return
+     * @return boolean result
      */
     public Boolean isVarFromErrorFunction(String variable){
         for(ErrorStatement errorStatement : context.getErrorStatements()){

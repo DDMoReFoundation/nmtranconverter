@@ -84,6 +84,7 @@ public class Parser extends BaseParser {
         binopProperties = loadBinopProperties();
     }
 
+    @Override
     protected String doBinaryOperation(Binop binopType, String leftStatement, String rightStatement) {
 
         String operator = convertBinoperator(binopType);
@@ -101,11 +102,11 @@ public class Parser extends BaseParser {
             return getBinaryOperatorFormat(operator,leftStatement, rightStatement);
         }
     }
-    
+
     private String getBinaryOperatorFormat(String op, String leftStatement, String rightStatement){
 
         String operator = getScriptBinaryOperator(op);
-    
+
         if(op.equalsIgnoreCase(PLUS)){
             return sum(leftStatement, operator, rightStatement);
         }else if(op.equalsIgnoreCase(MINUS)) {
@@ -116,7 +117,7 @@ public class Parser extends BaseParser {
             return genericMathOperation(leftStatement, operator, rightStatement);
         }
     }
-    
+
     private String sum(String left, String operator, String right) {
         String strToReturn = "("+left + operator + right+")"; 
         return strToReturn;

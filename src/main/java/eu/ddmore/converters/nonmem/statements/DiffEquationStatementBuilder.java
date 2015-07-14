@@ -14,8 +14,6 @@ import eu.ddmore.converters.nonmem.utils.LocalVariableHandler;
 import eu.ddmore.libpharmml.dom.commontypes.DerivativeVariable;
 
 public class DiffEquationStatementBuilder {
-    private static final String DES = "DES";
-    private static final String DES_VAR_SUFFIX = "_"+DES;
     //it will hold definition types and its parsed equations which we will need to add in Error statement as well.
     private final Map<String, String> varDefinitionsInDES = new HashMap<String, String>();
     private final ConversionContext context;
@@ -66,9 +64,9 @@ public class DiffEquationStatementBuilder {
                 parsedDADT = parsedDADT.replaceFirst(variable+" =", "DADT("+index+") =");
             }
             for(String derivativeVar : varDefinitionsInDES.keySet()){
-                String varToReplace = new String("\\b"+Pattern.quote(derivativeVar)+"\\b");
+                String varToReplace = "\\b"+Pattern.quote(derivativeVar)+"\\b";
                 if(!isDerivativeVariableHasAmount(derivativeVar)){
-                    parsedDADT = parsedDADT.replaceAll(varToReplace, renameFunctionVariableForDES(derivativeVar));
+                    parsedDADT = parsedDADT.replaceAll(varToReplace, Formatter.renameFunctionVariableForDES(derivativeVar));
                 }
             }
             derivativeVarBlock.append(parsedDADT);
@@ -78,17 +76,6 @@ public class DiffEquationStatementBuilder {
 
     private boolean isDerivativeVariableHasAmount(String variable) {
         return context.getDerivativeVarCompSequences().containsKey(variable);
-    }
-
-    /**
-     * This method will rename variable which is defined as Function variable in error model block.
-     * This will be used in DES statement.
-     * @param variable
-     * @return
-     */
-    public static String renameFunctionVariableForDES(String variable) {
-        variable = variable+DES_VAR_SUFFIX;
-        return variable; 
     }
 
     public Map<String, String> getVarDefinitions() {
