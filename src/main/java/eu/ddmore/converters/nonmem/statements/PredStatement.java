@@ -25,7 +25,7 @@ import eu.ddmore.libpharmml.dom.modeldefn.IndividualParameter;
 public class PredStatement {
 
     private final ConversionContext context;
-    PkMacroAnalyser analyser = new PkMacroAnalyser();
+    private final PkMacroAnalyser analyser = new PkMacroAnalyser();
 
     public PredStatement(ConversionContext context){
         this.context = context;
@@ -206,9 +206,5 @@ public class PredStatement {
 
     public PkMacroAnalyser getAnalyser() {
         return analyser;
-    }
-
-    public void setAnalyser(PkMacroAnalyser analyser) {
-        this.analyser = analyser;
     }
 }
