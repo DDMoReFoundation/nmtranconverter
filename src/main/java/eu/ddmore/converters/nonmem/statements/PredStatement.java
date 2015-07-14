@@ -178,14 +178,14 @@ public class PredStatement {
      * @return
      */
     private StringBuilder getAllIndividualParamAssignments() {
-        StringBuilder IndividualParamAssignmentBlock = new StringBuilder();
+        StringBuilder individualParamAssignmentBlock = new StringBuilder();
         IndividualDefinitionEmitter individualDefEmitter = new IndividualDefinitionEmitter(context);
         for(ParameterBlock parameterBlock : context.getScriptDefinition().getParameterBlocks()){
             for(IndividualParameter parameterType: parameterBlock.getIndividualParameters()){
-                IndividualParamAssignmentBlock.append(individualDefEmitter.createIndividualDefinition(parameterType));
+                individualParamAssignmentBlock.append(individualDefEmitter.createIndividualDefinition(parameterType));
             }
         }
-        return IndividualParamAssignmentBlock;
+        return individualParamAssignmentBlock;
     }
 
     private StringBuilder getTransformedCovStatement() {

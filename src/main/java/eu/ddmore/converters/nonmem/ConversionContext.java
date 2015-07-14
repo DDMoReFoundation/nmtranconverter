@@ -145,12 +145,6 @@ public class ConversionContext {
         return simpleParamAssignmentBlock;
     }
 
-    /**
-     * Get event for parameter from parameter block. 
-     *  
-     * @param param
-     * @return
-     */
     private Event getEventForParameter(SimpleParameter param){
         for(ParameterBlock pb : getScriptDefinition().getParameterBlocks()){
             if (pb.hasEvents()) {
@@ -174,8 +168,8 @@ public class ConversionContext {
     }
 
     /**
-     * This method will build theta assignment statements
-     * @return
+     * This method builds theta assignment statements with help of parameter helper.
+     * @return theta assignments
      */
     public StringBuilder buildThetaAssignments() {
         StringBuilder thetaAssignmentBlock = new StringBuilder();  
