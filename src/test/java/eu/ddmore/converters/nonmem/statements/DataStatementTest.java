@@ -5,6 +5,7 @@ package eu.ddmore.converters.nonmem.statements;
 
 import java.io.File;
 
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -23,6 +24,7 @@ public class DataStatementTest {
 	File srcFile = null;
 	@Mock ConversionContext context;
 
+	@Ignore("we need to create test suite with valid test data to create data statement.")
 	@Test
 	public void shouldCreateValidDataStatementNONMEMdataSet() {
 
@@ -30,7 +32,6 @@ public class DataStatementTest {
 		
 		srcFile = new File(DATA_FILE_NAME);
 		
-		//TODO : we need to create test suite which will have test data which will allow data statement to be created. 
 //		DataStatement dataStatement = new DataStatement(modellingSteps.getNONMEMdataSet(),srcFile);
 
 //		assertNotNull("DataStatement should not be null.", dataStatement);
