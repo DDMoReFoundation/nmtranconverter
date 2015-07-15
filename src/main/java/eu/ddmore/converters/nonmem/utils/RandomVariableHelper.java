@@ -3,6 +3,8 @@
  ******************************************************************************/
 package eu.ddmore.converters.nonmem.utils;
 
+import com.google.common.base.Preconditions;
+
 import eu.ddmore.libpharmml.dom.modeldefn.ParameterRandomVariable;
 import eu.ddmore.libpharmml.dom.uncertml.AbstractContinuousUnivariateDistributionType;
 import eu.ddmore.libpharmml.dom.uncertml.NormalDistribution;
@@ -23,6 +25,7 @@ public class RandomVariableHelper {
      * @return
      */
     public static String getNameFromParamRandomVariable(ParameterRandomVariable rv) {
+        Preconditions.checkNotNull(rv, "Parameter random variable cannot be null.");
         String symbId = null;
         if (getDistributionTypeStdDev(rv) != null) {
             symbId = getDistributionTypeStdDev(rv).getVar().getVarId();                 
@@ -41,6 +44,7 @@ public class RandomVariableHelper {
      * @return
      */
     public static Boolean isParamFromStdDev(ParameterRandomVariable rv) {
+        Preconditions.checkNotNull(rv, "Parameter random variable cannot be null.");
         if (getDistributionTypeStdDev(rv) != null) {
             return true;
         } else if (getDistributionTypeVariance(rv) != null) {
@@ -56,6 +60,7 @@ public class RandomVariableHelper {
      * @return
      */
     public static PositiveRealValueType getDistributionTypeStdDev(ParameterRandomVariable rv){
+        Preconditions.checkNotNull(rv, "Parameter random variable cannot be null.");
         final AbstractContinuousUnivariateDistributionType distributionType = rv.getAbstractContinuousUnivariateDistribution().getValue();
         if (distributionType instanceof NormalDistribution) {
             return ((NormalDistribution) distributionType).getStddev();
@@ -69,6 +74,7 @@ public class RandomVariableHelper {
      * @return
      */
     public static PositiveRealValueType getDistributionTypeVariance(ParameterRandomVariable rv){
+        Preconditions.checkNotNull(rv, "Parameter random variable cannot be null.");
         final AbstractContinuousUnivariateDistributionType distributionType = rv.getAbstractContinuousUnivariateDistribution().getValue();
         if (distributionType instanceof NormalDistribution) {
             return ((NormalDistribution) distributionType).getVariance();
