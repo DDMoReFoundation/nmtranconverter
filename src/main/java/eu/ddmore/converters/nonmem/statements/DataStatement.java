@@ -9,9 +9,6 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.util.Iterator;
 import java.util.List;
 
 import com.google.common.base.Preconditions;
@@ -29,7 +26,7 @@ public class DataStatement{
 
     private static final Character IGNORE_CHAR = '@';
     private String statement;
-    private String dataFileName = "";
+    private String dataFileName = null;
     private File dataFile = null;
 
     public File getDataFile() {
@@ -51,10 +48,7 @@ public class DataStatement{
         List<ExternalDataSet> dataFiles = context.retrieveExternalDataSets();
         if(dataFiles!=null && !dataFiles.isEmpty()){
 
-            // TODO: Handle multiple data sets
-            Iterator<ExternalDataSet> dsIterator = dataFiles.iterator();
-            while (dsIterator.hasNext()) {
-                ExternalDataSet extDataSet = dsIterator.next();
+            for (ExternalDataSet extDataSet : dataFiles) {
                 if (extDataSet.getDataSet().getExternalFile().getPath() != null) {
                     String dataLocation = srcFile.getAbsoluteFile().getParentFile().getAbsolutePath();
                     dataFileName = extDataSet.getDataSet().getExternalFile().getPath();
@@ -77,20 +71,6 @@ public class DataStatement{
 
     private  String generateDataFileName(String dataFile) {
         return new File(dataFile).getName().replace(".xml", "") +"_data.csv";
-    }
-
-    /**
-     * TODO: Update data file for pk macro changes. 
-     * This method will be updated depending upon what we get from common converter.  
-     */
-    public void updateDataFileForPkMacros(){
-        File data = getDataFile();
-        try {
-            List<String> lines = Files.readAllLines(data.toPath(), StandardCharsets.UTF_8);
-        } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
     }
 
     /**
