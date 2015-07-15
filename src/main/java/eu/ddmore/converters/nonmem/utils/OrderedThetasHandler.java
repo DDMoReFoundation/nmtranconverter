@@ -39,7 +39,8 @@ public class OrderedThetasHandler {
      * Create ordered thetas to eta map from ordered etas map.
      * The order is used to add Thetas in order of thetas.
      */
-    public void createOrderedThetasToEta(Map<String, Integer> orderedEtas){        
+    public void createOrderedThetasToEta(Map<String, Integer> orderedEtas){ 
+        Preconditions.checkNotNull(orderedEtas, "Ordered etas cannot be null.");
         for(Integer nextEtaOrder : orderedEtas.values()){
             if(StringUtils.isEmpty(orderedThetas.get(nextEtaOrder))){
                 addToThetasOrderMap(orderedEtas, nextEtaOrder);
