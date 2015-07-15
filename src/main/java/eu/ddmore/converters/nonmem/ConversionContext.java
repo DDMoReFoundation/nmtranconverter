@@ -19,7 +19,7 @@ import crx.converter.engine.parts.ParameterBlock.Event;
 import crx.converter.spi.ILexer;
 import crx.converter.spi.IParser;
 import crx.converter.tree.BinaryTree;
-import eu.ddmore.converters.nonmem.statements.DiscreteHandler;
+import eu.ddmore.converters.nonmem.utils.DiscreteHandler;
 import eu.ddmore.converters.nonmem.statements.ErrorStatement;
 import eu.ddmore.converters.nonmem.statements.PredStatement;
 import eu.ddmore.converters.nonmem.utils.Formatter;

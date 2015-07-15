@@ -19,6 +19,7 @@ import org.powermock.modules.junit4.PowerMockRunner;
 import crx.converter.engine.ScriptDefinition;
 import crx.converter.engine.parts.ObservationBlock;
 import eu.ddmore.converters.nonmem.ConversionContext;
+import eu.ddmore.converters.nonmem.utils.DiscreteHandler;
 import eu.ddmore.libpharmml.dom.modeldefn.CountData;
 import eu.ddmore.libpharmml.dom.modeldefn.CountPMF;
 import eu.ddmore.libpharmml.dom.modeldefn.TTEFunction;
