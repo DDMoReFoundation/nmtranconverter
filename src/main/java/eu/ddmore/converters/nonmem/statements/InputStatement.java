@@ -30,10 +30,6 @@ public class InputStatement {
     private List<String> inputHeaders = new ArrayList<String>();
     private String statement;
 
-    public List<String> getInputHeaders() {
-        return inputHeaders;
-    }
-
     public InputStatement(ConversionContext context) {
         Preconditions.checkNotNull(context, "Conversion Context cannot be null");
 
@@ -79,11 +75,6 @@ public class InputStatement {
         }
     }
 
-    /** 
-     * Estimation headers for tabular datasets
-     * 
-     * @param tabularDataset the TabularDataset to compute the estimation headers from
-     */
     private void computeEstimationHeaders(TabularDataset tabularDataset) {
 
         List<String> dataColumns = tabularDataset.getColumnNames();
@@ -95,11 +86,6 @@ public class InputStatement {
         }
     }
 
-    /**
-     * Estimation headers for External datasets
-     * 
-     * @param externalDataSet the ExternalDataSet to compute the estimation headers from
-     */
     private void computeEstimationHeaders(ExternalDataSet externalDataSet) {
 
         List<ColumnDefinition> dataColumns = externalDataSet.getDataSet().getListOfColumnDefinition();
@@ -190,4 +176,9 @@ public class InputStatement {
     public List<String> getContCovTableColumns() {
         return contCovTableColumns;
     }
+
+    public List<String> getInputHeaders() {
+        return inputHeaders;
+    }
+
 }

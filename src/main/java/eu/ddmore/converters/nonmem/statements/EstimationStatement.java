@@ -30,22 +30,17 @@ public class EstimationStatement {
         FO, FOCE, FOCEI, SAEM
     }
 
-    private List<EstimationStep> estimationSteps = new ArrayList<EstimationStep>();
-
-    private static Boolean covFound = false;
-    ConversionContext context;
+    private final List<EstimationStep> estimationSteps;
+    private final ConversionContext context;
+    private Boolean covFound = false;
 
     public EstimationStatement(ConversionContext convContext){
         Preconditions.checkNotNull(convContext, "Conversion Context cannot be null");
         this.context = convContext;
-        estimationSteps = filterOutEstimationSteps(context.getScriptDefinition());
+        estimationSteps = getEstimationSteps(context.getScriptDefinition());
     }
 
-    /**
-     * Compute method for algorithm depending upon its definition.
-     * 
-     */
-    private StringBuilder computeMethod(Algorithm algorithm) {
+    private StringBuilder buildEstimationStatementFromAlgorithm(Algorithm algorithm) {
         StringBuilder estStatement = new StringBuilder();
 
         estStatement.append("METHOD=");
@@ -78,11 +73,11 @@ public class EstimationStatement {
     /**
      * Collects estimation steps from steps map
      * @param scriptDefinition
-     * @return
+     * @return list of estimation steps
      */
-    public List<EstimationStep> filterOutEstimationSteps(ScriptDefinition scriptDefinition) {
+    public List<EstimationStep> getEstimationSteps(ScriptDefinition scriptDefinition) {
         Preconditions.checkNotNull(context.getScriptDefinition(), "Script definiton cannot be null");
-        List<EstimationStep> estSteps = new ArrayList<EstimationStep>(); 
+        List<EstimationStep> estSteps = new ArrayList<EstimationStep>();
         for(Part nextStep : scriptDefinition.getStepsMap().values()) {
             if (nextStep instanceof EstimationStep){
                 estSteps.add((EstimationStep) nextStep);
@@ -92,9 +87,9 @@ public class EstimationStatement {
     }
 
     /**
-     * this method will create estimation statement for nonmem file from estimation steps collected from steps map.
+     * This method will create estimation statement for nonmem file from estimation steps collected from steps map.
      * 
-     * @param fout
+     * @return estimation statement
      */
     public StringBuilder getEstimationStatement() {
         StringBuilder estStatement = new StringBuilder();
@@ -117,7 +112,7 @@ public class EstimationStatement {
                     covFound = checkForCovariateStatement(operationType);
 
                     if(EstimationOpType.EST_POP.value().equals(optType)){
-                        estStatement.append(computeMethod(operationType.getAlgorithm()));
+                        estStatement.append(buildEstimationStatementFromAlgorithm(operationType.getAlgorithm()));
                     }else if(EstimationOpType.EST_INDIV.value().equals(optType)){
                         break;
                     }
@@ -142,7 +137,7 @@ public class EstimationStatement {
      * Checks if covariate statement exists for estimation operation type and return boolean result.
      * 
      * @param operationType
-     * @return
+     * @return boolean result
      */
     private Boolean checkForCovariateStatement(EstimationOperation operationType){
         //If covariate is found in any other operations or properties already then return
@@ -183,10 +178,6 @@ public class EstimationStatement {
 
     public List<EstimationStep> getEstimationSteps() {
         return estimationSteps;
-    }
-
-    public void setEstimationSteps(List<EstimationStep> estimationSteps) {
-        this.estimationSteps = estimationSteps;
     }
 
     public Boolean isCovFound() {

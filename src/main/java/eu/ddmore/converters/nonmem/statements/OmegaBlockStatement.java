@@ -41,8 +41,12 @@ public class OmegaBlockStatement {
     private Map<Integer, String> omegaOrderToEtas = new TreeMap<Integer, String>();
     private final ParametersHelper paramHelper;
     private final Set<String> etasInCorrelation;
+    private String firstVariable = new String();
+    private String secondVariable = new String();
 
     public OmegaBlockStatement(ParametersHelper parameter, OrderedEtasHandler orderedEtasHandler) {
+        Preconditions.checkNotNull(parameter, "parameter should not be null");
+        Preconditions.checkNotNull(orderedEtasHandler, "ordered etas handler should not be null");
         this.paramHelper = parameter;
         etasInCorrelation = orderedEtasHandler.getEtasToOmegasInCorrelation().keySet();
         setEtaToOmagas(orderedEtasHandler.getOrderedEtas());
@@ -54,7 +58,6 @@ public class OmegaBlockStatement {
      * We will need ordered etas and eta to omega map to determine order of the omega block elements.
      * Currently only correlations are supported.
      *  
-     * @return
      */
     public void createOmegaBlocks(){
         List<CorrelationRef> correlations = getAllCorrelations();
@@ -84,13 +87,15 @@ public class OmegaBlockStatement {
                         row = swap;
                     }
 
+                    firstVariable = RandomVariableHelper.getNameFromParamRandomVariable(firstRandomVar);
+                    secondVariable = RandomVariableHelper.getNameFromParamRandomVariable(secondRandomVar);
+
                     createFirstMatrixRow(eta, firstRandomVar);
                     List<OmegaStatement> omegas = omegaBlocks.get(secondRandomVar.getSymbId());
                     // add random var to matrix at [i,i]
                     if(omegas.get(row)==null){
                         initialiseRowElements(row, omegas);
-                        String symbId = RandomVariableHelper.getNameFromParamRandomVariable(secondRandomVar);
-                        omegas.set(row, paramHelper.getOmegaFromRandomVarName(symbId));
+                        omegas.set(row, paramHelper.getOmegaFromRandomVarName(secondVariable));
                     }
 
                     //add coefficient associated with random var1 and random var2 at [i,j] 
@@ -197,7 +202,7 @@ public class OmegaBlockStatement {
         if(coeff.getSymbRef()!=null){
             return paramHelper.getOmegaFromRandomVarName(coeff.getSymbRef().getSymbIdRef()); 
         }else if(coeff.getScalar()!=null){
-            OmegaStatement omega = new OmegaStatement(firstVar.getSymbId()+"_"+secondVar.getSymbId());
+            OmegaStatement omega = new OmegaStatement(firstVariable+"_"+secondVariable);
             omega.setInitialEstimate(coeff);
             return omega;
         }else {
@@ -275,8 +280,7 @@ public class OmegaBlockStatement {
     private void createFirstMatrixRow(String eta, ParameterRandomVariable randomVar1) {
         if(etaToOmagas.get(randomVar1.getSymbId())== 1 && eta.equals(randomVar1.getSymbId())){
             List<OmegaStatement> matrixRow = new ArrayList<OmegaStatement>();
-            String symbId = RandomVariableHelper.getNameFromParamRandomVariable(randomVar1);
-            matrixRow.add(paramHelper.getOmegaFromRandomVarName(symbId));
+            matrixRow.add(paramHelper.getOmegaFromRandomVarName(firstVariable));
             omegaBlocks.put(randomVar1.getSymbId(), matrixRow);
         }
     }

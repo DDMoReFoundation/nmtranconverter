@@ -69,10 +69,8 @@ public class ConversionContext {
     /**
      * This method will initialise parameters, eta order, theta assignments and error statements, 
      * which will be required for nmtran block translations.
-     *  
-     * @throws IOException
      */
-    public void initialise() throws IOException{
+    private void initialise(){
         //initialise parameters
         if (lexer.getModelParameters().isEmpty()) {
             throw new IllegalArgumentException("Cannot find simple parameters for the pharmML file.");
@@ -89,9 +87,9 @@ public class ConversionContext {
     }
 
     /**
-     * Builds and writes pred statement block to file.
+     * Builds pred statement block.
      *  
-     * @return 
+     * @return pred statement
      */
     public StringBuilder buildPredStatement(){
         PredStatement predStatement = new PredStatement(this);

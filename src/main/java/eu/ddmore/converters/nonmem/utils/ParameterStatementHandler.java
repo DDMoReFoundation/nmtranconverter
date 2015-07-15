@@ -19,8 +19,7 @@ public class ParameterStatementHandler {
      * Prepares Theta and omega parameters according to the initial estimates, lower and upper bounds provided.
      * 
      * @param param
-     * @param simpleParam
-     * @param fout
+     * @return parameter statement
      */
     public static StringBuilder addParameter(Parameter param) {
         Preconditions.checkNotNull(param, "Paramter cannot be null");
@@ -56,11 +55,12 @@ public class ParameterStatementHandler {
      *  Y   Y   X   (LB,IN)
      *  Y   X   Y   (LB, ,UB)
      *  Y   Y   Y   (LB,IN,UB) 
-     * @param fout
+     * 
      * @param description
      * @param lowerBound
      * @param upperBound
      * @param initEstimate
+     * @return parameter statement
      */
     private static StringBuilder prepareParameterStatements(String description,
             ScalarRhs lowerBound, ScalarRhs upperBound, ScalarRhs initEstimate) {
@@ -96,11 +96,11 @@ public class ParameterStatementHandler {
 
     /**
      * Writes bound values of a parameter statement in expected format.
-     *  
+     * 
      * @param lowerBound
      * @param init
      * @param upperBound
-     * @param fout
+     * @return parameter statement
      */
     private static StringBuilder prepareStatement(ScalarRhs lowerBound,ScalarRhs init,ScalarRhs upperBound){
         StringBuilder statement = new StringBuilder();
