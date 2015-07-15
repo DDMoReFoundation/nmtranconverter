@@ -41,8 +41,6 @@ public class OmegaBlockStatement {
     private Map<Integer, String> omegaOrderToEtas = new TreeMap<Integer, String>();
     private final ParametersHelper paramHelper;
     private final Set<String> etasInCorrelation;
-    private String firstVariable = new String();
-    private String secondVariable = new String();
 
     public OmegaBlockStatement(ParametersHelper parameter, OrderedEtasHandler orderedEtasHandler) {
         Preconditions.checkNotNull(parameter, "parameter should not be null");
@@ -87,14 +85,12 @@ public class OmegaBlockStatement {
                         row = swap;
                     }
 
-                    firstVariable = RandomVariableHelper.getNameFromParamRandomVariable(firstRandomVar);
-                    secondVariable = RandomVariableHelper.getNameFromParamRandomVariable(secondRandomVar);
-
                     createFirstMatrixRow(eta, firstRandomVar);
                     List<OmegaStatement> omegas = omegaBlocks.get(secondRandomVar.getSymbId());
                     // add random var to matrix at [i,i]
                     if(omegas.get(row)==null){
                         initialiseRowElements(row, omegas);
+                        String secondVariable = RandomVariableHelper.getNameFromParamRandomVariable(secondRandomVar);
                         omegas.set(row, paramHelper.getOmegaFromRandomVarName(secondVariable));
                     }
 
@@ -202,6 +198,8 @@ public class OmegaBlockStatement {
         if(coeff.getSymbRef()!=null){
             return paramHelper.getOmegaFromRandomVarName(coeff.getSymbRef().getSymbIdRef()); 
         }else if(coeff.getScalar()!=null){
+            String firstVariable = RandomVariableHelper.getNameFromParamRandomVariable(firstVar);
+            String secondVariable = RandomVariableHelper.getNameFromParamRandomVariable(secondVar);
             OmegaStatement omega = new OmegaStatement(firstVariable+"_"+secondVariable);
             omega.setInitialEstimate(coeff);
             return omega;
@@ -280,6 +278,7 @@ public class OmegaBlockStatement {
     private void createFirstMatrixRow(String eta, ParameterRandomVariable randomVar1) {
         if(etaToOmagas.get(randomVar1.getSymbId())== 1 && eta.equals(randomVar1.getSymbId())){
             List<OmegaStatement> matrixRow = new ArrayList<OmegaStatement>();
+            String firstVariable = RandomVariableHelper.getNameFromParamRandomVariable(randomVar1);
             matrixRow.add(paramHelper.getOmegaFromRandomVarName(firstVariable));
             omegaBlocks.put(randomVar1.getSymbId(), matrixRow);
         }
