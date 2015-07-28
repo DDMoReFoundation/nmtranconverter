@@ -25,6 +25,19 @@ public class Formatter {
         ID, TIME;
     }
 
+    public enum ReservedColumnConstant{
+        EVID;
+
+        public static boolean contains(String val){
+            for (ReservedColumnConstant columnType : ReservedColumnConstant.values()) {
+                if (columnType.name().equals(val)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+    }
+
     public enum TableConstant{
         WRES, RES, PRED, NOPRINT, DV, NOAPPEND;
     }

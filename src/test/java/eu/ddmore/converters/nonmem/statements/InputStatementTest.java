@@ -3,147 +3,75 @@
  ******************************************************************************/
 package eu.ddmore.converters.nonmem.statements;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.powermock.api.mockito.PowerMockito.when;
 
-import java.math.BigInteger;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
 
-import org.junit.Ignore;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Answers;
 import org.mockito.Mock;
 import org.powermock.modules.junit4.PowerMockRunner;
 
 import eu.ddmore.converters.nonmem.ConversionContext;
-import eu.ddmore.converters.nonmem.utils.Formatter;
 import eu.ddmore.converters.nonmem.utils.Formatter.ColumnConstant;
 import eu.ddmore.libpharmml.dom.commontypes.SymbolType;
 import eu.ddmore.libpharmml.dom.dataset.ColumnDefinition;
 import eu.ddmore.libpharmml.dom.dataset.ColumnType;
-import eu.ddmore.libpharmml.dom.dataset.ColumnsDefinitionType;
-import eu.ddmore.libpharmml.dom.dataset.DataSet;
-import eu.ddmore.libpharmml.dom.dataset.ExternalFile;
 import eu.ddmore.libpharmml.dom.modellingsteps.ExternalDataSet;
-import eu.ddmore.libpharmml.dom.modellingsteps.ModellingSteps;
+import eu.ddmore.libpharmml.util.WrappedList;
 
 @RunWith(PowerMockRunner.class)
 public class InputStatementTest {
-
-	private static final String DATA_FILE_NAME = "warfarin_conc_pca.csv";
-	
-	private static final String COL_ID_1 = ColumnConstant.ID.toString();
-	private static final ColumnType COL_TYPE_1 = ColumnType.ID;
-	private static final SymbolType COL_VALUE_1 = SymbolType.ID;
-	private static final String COL_NUM_1 = "1";
-
-	private static final String COL_ID_2 = ColumnConstant.TIME.toString();
-	private static final ColumnType COL_TYPE_2 = ColumnType.IDV;
-	private static final SymbolType COL_VALUE_2 = SymbolType.ID;
-	private static final String COL_NUM_2 = "2";
-	
-	private static final String COL_ID_3 = "WT";
-	private static final ColumnType COL_TYPE_3 = ColumnType.COVARIATE;
-	private static final SymbolType COL_VALUE_3 = SymbolType.ID;
-	private static final String COL_NUM_3 = "3";
-
-	private static final List<String> COLUMN_HEADERS = Arrays.asList(COL_ID_1, COL_ID_2, COL_ID_3);
-	
-	@Mock ConversionContext context;
-
-	@Ignore("The input statement needs to be finalised and test needs to be revised for updates")
-	@Test
-	public void shouldCreateValidInputStatementNONMEMdataSet() {
-
-		DataSet dataset = createDataSet();
-
-		ColumnsDefinitionType columnsDefinition = new ColumnsDefinitionType();
-		
-		InputStatement statement = new InputStatement(context);
-
-		assertNotNull("InputStatement should not be null.", statement);
-		assertEquals("inputHeaders should be correct.", COLUMN_HEADERS, statement.getInputHeaders());
-		assertEquals("InputStatement should be correct.",
-		    Formatter.input() + getFormattedColumnHeaders(), statement.getStatement());
-	}
-
-	@Ignore("The input statement needs to be finalised and test needs to be revised for updates")
-	@Test
-	public void shouldCreateValidInputStatementNONMEMdataSetLowerCaseColumnIds() {
-
-		DataSet dataset = createDataSet();
-
-		ColumnsDefinitionType columnsDefinition = new ColumnsDefinitionType();
-
-		ModellingSteps modellingSteps = createModellingSteps(dataset);
-
-		InputStatement statement = new InputStatement(context);
-
-		assertEquals("inputHeaders should be correct.", COLUMN_HEADERS, statement.getInputHeaders());
-	}
-
-	@Test(expected = NullPointerException.class)
-	public void shouldThrowExceptionNullNONMEMdataSet() {
-
-		new InputStatement(null);
-	}
-
-	@Ignore ("The input statement needs to be finalised and test needs to be revised for updates")
-	@Test(expected = IllegalStateException.class)
-	public void shouldThrowExceptionNONMEMdataSetDuplicateColumns() {
-
-		DataSet dataset = createDataSet();
-
-		ColumnsDefinitionType columnsDefinition = new ColumnsDefinitionType();
-
-		ModellingSteps modellingSteps = createModellingSteps(dataset);
-
-		new InputStatement(context);
-	}
-
-	private DataSet createDataSet() {
-
-		ExternalFile importData = new ExternalFile();
-		importData.setPath(DATA_FILE_NAME);
-
-		DataSet dataset = new DataSet();
-		dataset.setImportData(importData);
-		
-		return dataset;
-	}
-
-	private ModellingSteps createModellingSteps(DataSet dataset) {
-
-	    ExternalDataSet nonmemDataSet = new ExternalDataSet();
-		nonmemDataSet.setDataSet(dataset);
-
-		ModellingSteps modellingSteps = new ModellingSteps();
-		modellingSteps.getListOfExternalDataSet().add(nonmemDataSet);
-
-		return modellingSteps;
-	}
-
-	private ColumnDefinition createColumn(String id, ColumnType type, SymbolType value, String num) {
-
-		ColumnDefinition cd = new ColumnDefinition();
-		cd.setColumnId(id);
-		cd.setColumnType(type);
-		cd.setValueType(value);
-		cd.setColumnNum(new BigInteger(num));
-
-		return cd;
-	}
-	
-	private String getFormattedColumnHeaders() {
-
-		StringBuilder headers = new StringBuilder();
-
-		for (String header : COLUMN_HEADERS) {
-			headers.append(" ");
-			headers.append(header.toUpperCase());
-		}
-		
-		return headers.toString();
-	}
+    
+    @Mock(answer=Answers.RETURNS_DEEP_STUBS) ConversionContext context;
+    @Mock ExternalDataSet dataSet;
+    
+    InputStatement inputStatement;
+    
+    
+    private static final String COL_ID_1 = ColumnConstant.ID.toString();
+    private static final ColumnType COL_TYPE_1 = ColumnType.ID;
+    private static final SymbolType COL_VALUE_1 = SymbolType.ID;
+    private static final Integer COL_NUM_1 = new Integer(1);
+    ColumnDefinition id = new ColumnDefinition(COL_ID_1, COL_TYPE_1, COL_VALUE_1, COL_NUM_1);
+    
+    private static final String COL_ID_2 = ColumnConstant.TIME.toString();
+    private static final ColumnType COL_TYPE_2 = ColumnType.IDV;
+    private static final SymbolType COL_VALUE_2 = SymbolType.ID;
+    private static final Integer COL_NUM_2 = new Integer(2);
+    ColumnDefinition time = new ColumnDefinition(COL_ID_2, COL_TYPE_2, COL_VALUE_2, COL_NUM_2);
+    
+    private static final String COL_ID_3 = "WT";
+    private static final ColumnType COL_TYPE_3 = ColumnType.COVARIATE;
+    private static final SymbolType COL_VALUE_3 = SymbolType.ID;
+    private static final Integer COL_NUM_3 = new Integer(3);
+    ColumnDefinition wt = new ColumnDefinition(COL_ID_3, COL_TYPE_3, COL_VALUE_3, COL_NUM_3);
+    
+    @Before
+    public void setUp() throws Exception {
+        inputStatement = new InputStatement(context);
+        List<ExternalDataSet> externalDataSets = new ArrayList<ExternalDataSet>();
+        when(context.retrieveExternalDataSets()).thenReturn(externalDataSets);
+        
+        when(externalDataSets.isEmpty()).thenReturn(true);
+        WrappedList<ColumnDefinition> dataColumns = new WrappedList<ColumnDefinition>();
+        dataColumns.add(id);
+        dataColumns.add(time);
+        dataColumns.add(wt);
+        externalDataSets.add(dataSet);
+        
+        when(dataSet.getDataSet().getListOfColumnDefinition()).thenReturn(dataColumns);
+    }
+    
+    @Test
+    public void shouldReturnInputStatement() {
+        String inputStmt = inputStatement.getStatement();
+        assertNotNull("should return input statement",inputStmt);
+        
+    }
+    
 }

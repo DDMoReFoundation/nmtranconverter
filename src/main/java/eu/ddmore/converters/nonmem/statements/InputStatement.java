@@ -4,58 +4,37 @@
 package eu.ddmore.converters.nonmem.statements;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 import com.google.common.base.Preconditions;
 
-import crx.converter.engine.ScriptDefinition;
-import crx.converter.engine.parts.EstimationStep;
-import crx.converter.engine.parts.TabularDataset;
-import crx.converter.engine.parts.TrialDesignBlock;
 import eu.ddmore.converters.nonmem.ConversionContext;
 import eu.ddmore.converters.nonmem.utils.Formatter;
-import eu.ddmore.converters.nonmem.utils.ScriptDefinitionAccessor;
+import eu.ddmore.converters.nonmem.utils.Formatter.ReservedColumnConstant;
 import eu.ddmore.libpharmml.dom.commontypes.SymbolType;
 import eu.ddmore.libpharmml.dom.dataset.ColumnDefinition;
 import eu.ddmore.libpharmml.dom.dataset.ColumnType;
-import eu.ddmore.libpharmml.dom.modellingsteps.DatasetMapping;
-import eu.ddmore.libpharmml.dom.modellingsteps.Estimation;
 import eu.ddmore.libpharmml.dom.modellingsteps.ExternalDataSet;
 
 public class InputStatement {
 
+    private static final String DROP = "DROP";
     private final List<String> catCovTableColumns = new ArrayList<String>();
     private final List<String> contCovTableColumns = new ArrayList<String>();
-    private List<String> inputHeaders = new ArrayList<String>();
+    private List<InputHeader> inputHeaders = new ArrayList<InputHeader>();
     private String statement;
 
     public InputStatement(ConversionContext context) {
         Preconditions.checkNotNull(context, "Conversion Context cannot be null");
-
+        
         List<ExternalDataSet> dataFiles = context.retrieveExternalDataSets();
-
         if(dataFiles!=null && !dataFiles.isEmpty()){
-            computeEstHeadersforExternalDataSets(dataFiles);
+            getHeadersforExternalDataSets(dataFiles);
         }else{
-            computeEstHeadersforTabularDataSet(context.getScriptDefinition());
+            throw new IllegalArgumentException("data file should be present to get input headers");
         }
-
-
-    }
-
-    /**
-     * Computes estimation headers for tabular dataset retrieved from script definition.
-     * 
-     * @param scriptDefinition
-     */
-    private void computeEstHeadersforTabularDataSet(ScriptDefinition scriptDefinition) {
-        Preconditions.checkNotNull(scriptDefinition, "Script definition Context cannot be null");
-
-        TabularDataset tabularDataset = getObjectiveDatasetMap(ScriptDefinitionAccessor.getEstimationStep(scriptDefinition));
-        Preconditions.checkNotNull(scriptDefinition, "TabularDataset cannot be null");
-
-        computeEstimationHeaders(tabularDataset);
     }
 
     /**
@@ -63,46 +42,56 @@ public class InputStatement {
      * 
      * @param dataFiles
      */
-    private void computeEstHeadersforExternalDataSets(List<ExternalDataSet> dataFiles) {
+    private void getHeadersforExternalDataSets(List<ExternalDataSet> dataFiles) {
 
         Preconditions.checkNotNull(dataFiles, "External data set(s) cannot be null");
 
-        Iterator<ExternalDataSet> dsIterator = dataFiles.iterator();
-        Preconditions.checkState(dsIterator.hasNext(), "External data set(s) cannot be empty");
-
-        while (dsIterator.hasNext()) {
-            computeEstimationHeaders(dsIterator.next());
+        for(ExternalDataSet dataFile : dataFiles) {
+            getEstimationHeaders(dataFile);
         }
     }
 
-    private void computeEstimationHeaders(TabularDataset tabularDataset) {
-
-        List<String> dataColumns = tabularDataset.getColumnNames();
-
-        Preconditions.checkNotNull(dataColumns, "Objective data set has no columns");
-
-        for (String dataColumn: dataColumns) {
-            inputHeaders.add(dataColumn);
-        }
-    }
-
-    private void computeEstimationHeaders(ExternalDataSet externalDataSet) {
+    private void getEstimationHeaders(ExternalDataSet externalDataSet) {
 
         List<ColumnDefinition> dataColumns = externalDataSet.getDataSet().getListOfColumnDefinition();
         Preconditions.checkNotNull(dataColumns, "External data set has no columns");
 
-        for (ColumnDefinition dataColumn : dataColumns) {
-            String colId = dataColumn.getColumnId().toUpperCase();
-            ColumnType columnType = dataColumn.getColumnType();
-            SymbolType valueType =  dataColumn.getValueType();
+        Map<Long, InputHeader> orderedColumns = new TreeMap<Long, InputHeader>();
+        Long columnSequence= new Long(1);
 
-            if (inputHeaders.contains(colId)) {
-                throw new IllegalStateException("External data set contains duplicate columns for : "+colId);
-            } else {
-                inputHeaders.add(colId);
-                populateCovTableDetails(columnType,valueType,colId);
+        for (ColumnDefinition dataColumn : dataColumns) {
+            columnSequence = addToOrderedColumns(dataColumn, columnSequence, orderedColumns);
+        }
+        
+        inputHeaders = new ArrayList<InputHeader>(orderedColumns.values());
+    }
+
+    private Long addToOrderedColumns(ColumnDefinition dataColumn, Long columnSequence, Map<Long, InputHeader> orderedColumns) {
+        String columnId = dataColumn.getColumnId().toUpperCase();
+        Long columnNumber = dataColumn.getColumnNum().longValue();
+
+        if(columnNumber>columnSequence){
+            for(;columnSequence<columnNumber;columnSequence++){
+                if(!orderedColumns.containsKey(columnNumber)){
+                    InputHeader emptyColumn = new InputHeader(DROP, false, columnNumber);
+                    orderedColumns.put(columnSequence, emptyColumn);
+                }
             }
         }
+
+        if (orderedColumns.containsKey(columnNumber) && !orderedColumns.get(columnNumber).getColumnId().equals(DROP) ) {
+            throw new IllegalStateException("External data set contains duplicate columns for : "+columnId);
+        } else {
+            ColumnType columnType = dataColumn.getColumnType();
+            Boolean isDropped = (columnType.equals(ColumnType.UNDEFINED) && !ReservedColumnConstant.contains(columnId));
+
+            InputHeader inputHeader = new InputHeader(columnId, isDropped, columnNumber);
+            orderedColumns.put(columnNumber, inputHeader);
+            
+            populateCovTableDetails(columnType,dataColumn.getValueType(),columnId);
+            columnSequence++;
+        }
+        return columnSequence;
     }
 
     /**
@@ -112,7 +101,7 @@ public class InputStatement {
      * @param valueType
      * @param symbol
      */
-    public void populateCovTableDetails(ColumnType columnType, SymbolType valueType, String symbol){
+    private void populateCovTableDetails(ColumnType columnType, SymbolType valueType, String symbol){
         if(columnType.equals(ColumnType.COVARIATE)){
             if(valueType.equals(SymbolType.INT)){
                 catCovTableColumns.add(symbol.toUpperCase());	
@@ -131,42 +120,16 @@ public class InputStatement {
         if (null == statement) {
             StringBuilder stringBuilder = new StringBuilder(Formatter.input());
 
-            for (String nextColumn : getInputHeaders()) {
-                stringBuilder.append(" " + nextColumn);
+            for (InputHeader nextColumn : getInputHeaders()) {
+                stringBuilder.append(" " + nextColumn.getColumnId());
+                if(nextColumn.isDropped()){
+                    stringBuilder.append("="+DROP);
+                }
             }
-
             statement = stringBuilder.toString();
         }
 
         return statement;
-    }
-
-    private TabularDataset getObjectiveDatasetMap(EstimationStep estimateStep){
-        TabularDataset dataset = null;
-        if(estimateStep != null){
-            Estimation stepType = estimateStep.getStep();
-            if(stepType.getObjectiveDataSet()!=null){
-                for (DatasetMapping dsm : stepType.getObjectiveDataSet()) {
-                    //TODO: we return first occurrence of the element assuming that there is only one 
-                    //		but need to handle it in better way in future. 
-                    if (dsm != null) {
-                        dataset = estimateStep.getObjectivDatasetMap(dsm);
-                    }
-                }
-            }
-        }
-        return dataset;
-    }
-
-    public String getAllInputHeaders(EstimationStep estimateStep,TrialDesignBlock tdblock){
-        TabularDataset td = null;
-        if(estimateStep != null){
-            td = getObjectiveDatasetMap(estimateStep);
-            for (String columnName : td.getColumnNames()){
-                inputHeaders.add(columnName.toUpperCase() + " ");
-            }
-        }
-        return inputHeaders.toString().replaceAll("\\[|\\]|\\,", "");
     }
 
     public List<String> getCatCovTableColumns() {
@@ -177,8 +140,7 @@ public class InputStatement {
         return contCovTableColumns;
     }
 
-    public List<String> getInputHeaders() {
+    public List<InputHeader> getInputHeaders() {
         return inputHeaders;
     }
-
 }
