@@ -107,7 +107,8 @@ public class ConverterProvider extends Lexer {
         EstimationStatement estStatement = new EstimationStatement(context);
         if(!estStatement.getEstimationSteps().isEmpty()){
             fout.write(estStatement.getEstimationStatement().toString());
-            fout.write(estStatement.getCovStatement());	
+            fout.write(estStatement.getCovStatement());
+            fout.write(estStatement.addSimStatementForDiscrete());
         }
         TableStatement tableStatement = new TableStatement(context,inputStatement);
         fout.write(tableStatement.getStatements().toString());

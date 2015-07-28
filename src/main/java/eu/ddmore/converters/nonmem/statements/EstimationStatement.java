@@ -3,16 +3,14 @@
  ******************************************************************************/
 package eu.ddmore.converters.nonmem.statements;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import com.google.common.base.Preconditions;
 
-import crx.converter.engine.ScriptDefinition;
 import crx.converter.engine.parts.EstimationStep;
-import crx.converter.engine.parts.Part;
 import eu.ddmore.converters.nonmem.ConversionContext;
 import eu.ddmore.converters.nonmem.utils.Formatter;
+import eu.ddmore.converters.nonmem.utils.ScriptDefinitionAccessor;
 import eu.ddmore.libpharmml.dom.commontypes.BooleanValue;
 import eu.ddmore.libpharmml.dom.commontypes.TrueBoolean;
 import eu.ddmore.libpharmml.dom.maths.Equation;
@@ -37,7 +35,7 @@ public class EstimationStatement {
     public EstimationStatement(ConversionContext convContext){
         Preconditions.checkNotNull(convContext, "Conversion Context cannot be null");
         this.context = convContext;
-        estimationSteps = getEstimationSteps(context.getScriptDefinition());
+        estimationSteps = ScriptDefinitionAccessor.getEstimationSteps(context.getScriptDefinition());
     }
 
     private StringBuilder buildEstimationStatementFromAlgorithm(Algorithm algorithm) {
@@ -71,22 +69,6 @@ public class EstimationStatement {
     }
 
     /**
-     * Collects estimation steps from steps map
-     * @param scriptDefinition
-     * @return list of estimation steps
-     */
-    public List<EstimationStep> getEstimationSteps(ScriptDefinition scriptDefinition) {
-        Preconditions.checkNotNull(context.getScriptDefinition(), "Script definiton cannot be null");
-        List<EstimationStep> estSteps = new ArrayList<EstimationStep>();
-        for(Part nextStep : scriptDefinition.getStepsMap().values()) {
-            if (nextStep instanceof EstimationStep){
-                estSteps.add((EstimationStep) nextStep);
-            }
-        }
-        return estSteps;
-    }
-
-    /**
      * This method will create estimation statement for nonmem file from estimation steps collected from steps map.
      * 
      * @return estimation statement
@@ -94,14 +76,6 @@ public class EstimationStatement {
     public StringBuilder getEstimationStatement() {
         StringBuilder estStatement = new StringBuilder();
         estStatement.append(Formatter.endline());
-
-        String simCommentsForDiscrete = Formatter.endline(";Sim_start")
-                +Formatter.endline(";$SIM (12345) (12345 UNIFORM) ONLYSIM NOPREDICTION")
-                +Formatter.endline(";Sim_end");
-
-        if(context.getDiscreteHandler().isCountData()){
-            estStatement.append(Formatter.endline(simCommentsForDiscrete));
-        }
 
         estStatement.append(Formatter.est());
         if(estimationSteps!=null){
@@ -131,6 +105,24 @@ public class EstimationStatement {
     public String getCovStatement(){
         String covStatement = (isCovFound()) ? Formatter.cov(): "";
         return Formatter.endline()+covStatement;
+    }
+
+    /**
+     * This method add "sim" comments after Estimation and Cov statement for discrete models.
+     *  
+     * @return sim statement
+     */
+    public String addSimStatementForDiscrete(){
+        String simCommentsForDiscrete = 
+                Formatter.endline(";Sim_start")
+                +Formatter.endline(";$SIM (12345) (12345 UNIFORM) ONLYSIM NOPREDICTION")
+                +Formatter.endline(";Sim_end");
+
+        if(context.getDiscreteHandler().isDiscrete()){
+            return Formatter.endline(simCommentsForDiscrete);
+        }else {
+            return "";
+        }
     }
 
     /**
