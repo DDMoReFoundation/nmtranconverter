@@ -26,8 +26,8 @@ public class ParameterStatementHandler {
         StringBuilder statement = new StringBuilder();
         String description = param.getSymbId().toUpperCase();
 
-        ScalarRhs lowerBound = param.getLowerBound();
-        ScalarRhs upperBound= param.getUpperBound(); 
+        ScalarRhs lowerBound = (param.isFixed())?null:param.getLowerBound();
+        ScalarRhs upperBound= (param.isFixed())?null:param.getUpperBound(); 
         ScalarRhs initEstimate= param.getInitialEstimate();
         statement.append("(");
         statement.append(prepareParameterStatements(description, lowerBound, upperBound,initEstimate));
