@@ -90,18 +90,22 @@ public class TableStatement {
      * @return
      */
     private StringBuilder getStdTableStatement(){
+
         StringBuilder stdTable = new StringBuilder();
         stdTable.append(SPACE+ColumnConstant.TIME);
+
         if(!inputStatement.getInputHeaders().isEmpty()){
-            for(String inputHeader : inputStatement.getInputHeaders()){
+            for(InputHeader inputHeader : inputStatement.getInputHeaders()){
+                String columnId = inputHeader.getColumnId();
                 // Adding ID TIME at start and DV at the end hence skipping here.
-                if(inputHeader.equals(ColumnConstant.ID.toString()) || 
-                        inputHeader.equals(ColumnConstant.TIME.toString()) || inputHeader.equals(TableConstant.DV.toString())){
+                if(inputHeader.isDropped() || columnId.equals(ColumnConstant.ID.toString()) || 
+                        columnId.equals(ColumnConstant.TIME.toString()) || columnId.equals(TableConstant.DV.toString())){
                     continue;
                 }
-                stdTable.append(SPACE+inputHeader);
+                stdTable.append(SPACE+columnId);
             }
         }
+
         if(!context.getDiscreteHandler().isDiscrete()){
             stdTable.append(SPACE + TableConstant.PRED + SPACE + ErrorConstant.IPRED + SPACE +
                 TableConstant.RES + SPACE + ErrorConstant.IRES + SPACE + TableConstant.WRES + 
