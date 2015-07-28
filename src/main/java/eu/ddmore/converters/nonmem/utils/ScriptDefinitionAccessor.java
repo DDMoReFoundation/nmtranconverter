@@ -8,6 +8,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import com.google.common.base.Preconditions;
+
 import crx.converter.engine.ScriptDefinition;
 import crx.converter.engine.parts.EstimationStep;
 import crx.converter.engine.parts.ObservationBlock;
@@ -31,6 +33,7 @@ public class ScriptDefinitionAccessor {
      * @return
      */
     public static EstimationStep getEstimationStep(ScriptDefinition scriptDefinition) {
+        Preconditions.checkNotNull(scriptDefinition, "Script definition cannot be null");
         EstimationStep step = null;
         for (Part nextStep : scriptDefinition.getStepsMap().values()) {
             if (nextStep instanceof EstimationStep) {
@@ -45,9 +48,10 @@ public class ScriptDefinitionAccessor {
      * Get all estimation steps in steps map from script definition.
      * 
      * @param scriptDefinition
-     * @return
+     * @return list of estimation steps
      */
-    public static List<EstimationStep> filterOutEstimationSteps(ScriptDefinition scriptDefinition) {
+    public static List<EstimationStep> getEstimationSteps(ScriptDefinition scriptDefinition) {
+        Preconditions.checkNotNull(scriptDefinition, "Script definition cannot be null");
         List<EstimationStep> estSteps = new ArrayList<EstimationStep>(); 
         for(Part nextStep : scriptDefinition.getStepsMap().values()) {
             if (nextStep instanceof EstimationStep){
@@ -61,10 +65,11 @@ public class ScriptDefinitionAccessor {
      * Retrieve epsilon random variables with help of script definition.
      * 
      * @param scriptDefinition
-     * @return
+     * @return epsilon random variables
      */
     public static Set<ParameterRandomVariable> getEpsilonRandomVariables(ScriptDefinition scriptDefinition) {
-        Set<ParameterRandomVariable> epsilonRandomVariables = new HashSet<>();
+        Preconditions.checkNotNull(scriptDefinition, "Script definition cannot be null");
+        Set<ParameterRandomVariable> epsilonRandomVariables = new HashSet<ParameterRandomVariable>();
         List<ResidualError> residualErrors = retrieveResidualErrors(scriptDefinition);
 
         for(ParameterBlock paramBlock: scriptDefinition.getParameterBlocks()){
