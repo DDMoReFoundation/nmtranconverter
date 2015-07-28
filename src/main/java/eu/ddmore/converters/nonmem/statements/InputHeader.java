@@ -1,6 +1,11 @@
+/*******************************************************************************
+ * Copyright (C) 2015 Mango Solutions Ltd - All rights reserved.
+ ******************************************************************************/
 package eu.ddmore.converters.nonmem.statements;
 
-
+/**
+ * This class stores input header details.
+ */
 public class InputHeader {
     private String columnId;
     private boolean dropped;
