@@ -3,6 +3,7 @@
  ******************************************************************************/
 package eu.ddmore.converters.nonmem;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -10,6 +11,8 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import com.google.common.base.Preconditions;
 
 import crx.converter.engine.ScriptDefinition;
 import crx.converter.engine.parts.ObservationBlock;
@@ -21,6 +24,7 @@ import crx.converter.spi.IParser;
 import crx.converter.tree.BinaryTree;
 import eu.ddmore.converters.nonmem.utils.DiscreteHandler;
 import eu.ddmore.converters.nonmem.statements.ErrorStatement;
+import eu.ddmore.converters.nonmem.statements.InputColumnsProvider;
 import eu.ddmore.converters.nonmem.statements.PredStatement;
 import eu.ddmore.converters.nonmem.utils.Formatter;
 import eu.ddmore.converters.nonmem.utils.Formatter.Block;
@@ -54,8 +58,15 @@ public class ConversionContext {
     private final List<ErrorStatement> errorStatements = new ArrayList<ErrorStatement>();
     private final List<DerivativeVariable> derivativeVars = new ArrayList<DerivativeVariable>();
     private final Map<String, String> derivativeVarCompSequences = new HashMap<String, String>();
+    private final File srcFile;
+    private InputColumnsProvider inputColumns;
 
-    ConversionContext(IParser parser, ILexer lexer) throws IOException{
+    ConversionContext(File srcFile, IParser parser, ILexer lexer) throws IOException{
+        Preconditions.checkNotNull(srcFile, "source file cannot be null");
+        Preconditions.checkNotNull(parser, " common converter parser cannot be null");
+        Preconditions.checkNotNull(lexer, "common converter lexer cannot be null");
+        
+        this.srcFile = srcFile;
         this.parser = parser;
         this.lexer = lexer;
 
@@ -309,6 +320,10 @@ public class ConversionContext {
         return errorStatements;
     }
 
+    public File getSrcFile() {
+        return srcFile;
+    }
+
     public IParser getParser() {
         return parser;
     }
@@ -337,8 +352,15 @@ public class ConversionContext {
         return discreteHandler;
     }
 
-
     public OrderedEtasHandler getEtasHandler() {
         return etasHandler;
+    }
+
+    public InputColumnsProvider getInputColumnsProvider() {
+        return inputColumns;
+    }
+
+    public void setInputColumnsProvider(InputColumnsProvider inputColumn) {
+        this.inputColumns = inputColumn;
     }
 }

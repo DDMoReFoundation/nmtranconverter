@@ -3,7 +3,6 @@
  ******************************************************************************/
 package eu.ddmore.converters.nonmem.statements;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -21,20 +20,13 @@ import eu.ddmore.libpharmml.dom.modellingsteps.ExternalDataSet;
 public class InputStatement {
 
     private static final String DROP = "DROP";
-    private final List<String> catCovTableColumns = new ArrayList<String>();
-    private final List<String> contCovTableColumns = new ArrayList<String>();
-    private List<InputHeader> inputHeaders = new ArrayList<InputHeader>();
+    private InputColumnsProvider inputColumns = new InputColumnsProvider();
     private String statement;
+    private ConversionContext context;
 
-    public InputStatement(ConversionContext context) {
-        Preconditions.checkNotNull(context, "Conversion Context cannot be null");
-        
-        List<ExternalDataSet> dataFiles = context.retrieveExternalDataSets();
-        if(dataFiles!=null && !dataFiles.isEmpty()){
-            getHeadersforExternalDataSets(dataFiles);
-        }else{
-            throw new IllegalArgumentException("data file should be present to get input headers");
-        }
+    public InputStatement(ConversionContext convContext) {
+        Preconditions.checkNotNull(convContext, "Conversion Context cannot be null");
+        context = convContext;
     }
 
     /**
@@ -63,7 +55,7 @@ public class InputStatement {
             columnSequence = addToOrderedColumns(dataColumn, columnSequence, orderedColumns);
         }
         
-        inputHeaders = new ArrayList<InputHeader>(orderedColumns.values());
+        inputColumns.getInputHeaders().addAll(orderedColumns.values());
     }
 
     private Long addToOrderedColumns(ColumnDefinition dataColumn, Long columnSequence, Map<Long, InputHeader> orderedColumns) {
@@ -104,10 +96,10 @@ public class InputStatement {
     private void populateCovTableDetails(ColumnType columnType, SymbolType valueType, String symbol){
         if(columnType.equals(ColumnType.COVARIATE)){
             if(valueType.equals(SymbolType.INT)){
-                catCovTableColumns.add(symbol.toUpperCase());	
+                inputColumns.getCatCovTableColumns().add(symbol.toUpperCase());	
             }
             if(valueType.equals(SymbolType.REAL)){
-                contCovTableColumns.add(symbol.toUpperCase());
+                inputColumns.getContCovTableColumns().add(symbol.toUpperCase());
             }
         }
     }
@@ -116,11 +108,20 @@ public class InputStatement {
      * @return the printable version of this statement
      */
     public String getStatement() {
-
+        
+        List<ExternalDataSet> dataFiles = context.retrieveExternalDataSets();
+        if(dataFiles!=null && !dataFiles.isEmpty()){
+            getHeadersforExternalDataSets(dataFiles);
+        }else{
+            throw new IllegalArgumentException("data file should be present to get input headers");
+        }
+        
+        context.setInputColumnsProvider(inputColumns);
+        
         if (null == statement) {
             StringBuilder stringBuilder = new StringBuilder(Formatter.input());
 
-            for (InputHeader nextColumn : getInputHeaders()) {
+            for (InputHeader nextColumn : inputColumns.getInputHeaders()) {
                 stringBuilder.append(" " + nextColumn.getColumnId());
                 if(nextColumn.isDropped()){
                     stringBuilder.append("="+DROP);
@@ -130,17 +131,5 @@ public class InputStatement {
         }
 
         return statement;
-    }
-
-    public List<String> getCatCovTableColumns() {
-        return catCovTableColumns;
-    }
-
-    public List<String> getContCovTableColumns() {
-        return contCovTableColumns;
-    }
-
-    public List<InputHeader> getInputHeaders() {
-        return inputHeaders;
     }
 }

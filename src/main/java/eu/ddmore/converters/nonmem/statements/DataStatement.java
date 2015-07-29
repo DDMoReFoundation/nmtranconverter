@@ -28,6 +28,7 @@ public class DataStatement{
     private String statement;
     private String dataFileName = null;
     private File dataFile = null;
+    private final ConversionContext context;
 
     public File getDataFile() {
         return dataFile;
@@ -41,16 +42,18 @@ public class DataStatement{
         return dataFileName;
     }
 
-    public DataStatement(ConversionContext context, File srcFile) {
+    public DataStatement(ConversionContext convContext) {
+        Preconditions.checkNotNull(convContext, "conversion context cannot be null");
+        this.context = convContext;
+    }
 
-        Preconditions.checkNotNull(context, "conversion context cannot be null");
-
+    private void initialiseDataStatement() {
         List<ExternalDataSet> dataFiles = context.retrieveExternalDataSets();
         if(dataFiles!=null && !dataFiles.isEmpty()){
 
             for (ExternalDataSet extDataSet : dataFiles) {
                 if (extDataSet.getDataSet().getExternalFile().getPath() != null) {
-                    String dataLocation = srcFile.getAbsoluteFile().getParentFile().getAbsolutePath();
+                    String dataLocation = context.getSrcFile().getAbsoluteFile().getParentFile().getAbsolutePath();
                     dataFileName = extDataSet.getDataSet().getExternalFile().getPath();
                     File data = new File(dataLocation+File.separator+dataFileName);
                     if(data.exists()){
@@ -65,7 +68,7 @@ public class DataStatement{
 
             Preconditions.checkNotNull(td, "TabularDataset cannot be null");
 
-            dataFileName = generateDataFileName(srcFile.getAbsolutePath());
+            dataFileName = generateDataFileName(context.getSrcFile().getAbsolutePath());
         }
     }
 
@@ -82,6 +85,8 @@ public class DataStatement{
      * @throws IOException 
      */
     public String getStatement() throws IOException {
+        initialiseDataStatement();
+        
         if (null == statement) {
             StringBuilder stringBuilder = new StringBuilder(Formatter.data());
             stringBuilder.append("\"" + getDataFileName() + "\"");

@@ -82,7 +82,7 @@ public class ConverterProvider extends Lexer {
 
     private void createPKPDScript(PrintWriter fout, File src, File output_dir) throws IOException {
         if (fout == null || output_dir == null) return;
-        ConversionContext context = new ConversionContext(getParser(), this);
+        ConversionContext context = new ConversionContext(src, getParser(), this);
 
         ProblemStatement problemStatement = new ProblemStatement(getModelName());
         problemStatement.write(fout);
@@ -93,7 +93,7 @@ public class ConverterProvider extends Lexer {
         DataStatement dataStatement;
 
         inputStatement = new InputStatement(context);
-        dataStatement = new DataStatement(context,src);
+        dataStatement = new DataStatement(context);
         
         fout.write(Formatter.endline());
         fout.write(inputStatement.getStatement());
@@ -110,7 +110,7 @@ public class ConverterProvider extends Lexer {
             fout.write(estStatement.getCovStatement());
             fout.write(estStatement.addSimStatementForDiscrete());
         }
-        TableStatement tableStatement = new TableStatement(context,inputStatement);
+        TableStatement tableStatement = new TableStatement(context);
         fout.write(tableStatement.getStatements().toString());
     }
 

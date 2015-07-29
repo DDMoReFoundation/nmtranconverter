@@ -6,6 +6,8 @@ package eu.ddmore.converters.nonmem.statements;
 import java.util.List;
 import java.util.Set;
 
+import com.google.common.base.Preconditions;
+
 import crx.converter.engine.parts.ParameterBlock;
 import eu.ddmore.converters.nonmem.ConversionContext;
 import eu.ddmore.converters.nonmem.statements.ErrorStatement.ErrorConstant;
@@ -35,16 +37,18 @@ public class TableStatement {
         }
     }
     private final ConversionContext context;
-    private InputStatement inputStatement = null;
+    private InputColumnsProvider inputColumns;
 
 
-    public TableStatement(ConversionContext context, InputStatement inputStatement){
-        this.context = context;
-        if(inputStatement == null){
-            throw new IllegalStateException("Input statement cannot be null and needs to be populated.");
-        }else{
-            this.inputStatement = inputStatement;
-        }
+    public TableStatement(ConversionContext convContext){
+        Preconditions.checkNotNull(convContext, "Conversion Context cannot be null");
+        this.context = convContext;
+        inputColumns = context.getInputColumnsProvider(); 
+//        if(inputStatement == null){
+//            throw new IllegalStateException("Input statement cannot be null and needs to be populated.");
+//        }else{
+//            this.inputStatement = inputStatement;
+//        }
 
     }
 
@@ -57,10 +61,10 @@ public class TableStatement {
         StringBuilder allTables = new StringBuilder();
         allTables.append(createTableStatement(getStdTableStatement(),TableFile.STD_TABLE.getFileName()));
         allTables.append(createTableStatement(getParamTableStatement(),TableFile.PARAM_TABLE.getFileName()));
-        if(!inputStatement.getCatCovTableColumns().isEmpty()){
+        if(!inputColumns.getCatCovTableColumns().isEmpty()){
             allTables.append(createTableStatement(getCatCovTableStatement(),TableFile.CAT_COV_TABLE.getFileName()));
         }
-        if(!inputStatement.getContCovTableColumns().isEmpty()){
+        if(!inputColumns.getContCovTableColumns().isEmpty()){
             allTables.append(createTableStatement(getContCovTableStatement(),TableFile.CONT_COV_TABLE.getFileName()));
         }
 
@@ -94,8 +98,8 @@ public class TableStatement {
         StringBuilder stdTable = new StringBuilder();
         stdTable.append(SPACE+ColumnConstant.TIME);
 
-        if(!inputStatement.getInputHeaders().isEmpty()){
-            for(InputHeader inputHeader : inputStatement.getInputHeaders()){
+        if(!inputColumns.getInputHeaders().isEmpty()){
+            for(InputHeader inputHeader : inputColumns.getInputHeaders()){
                 String columnId = inputHeader.getColumnId();
                 // Adding ID TIME at start and DV at the end hence skipping here.
                 if(inputHeader.isDropped() || columnId.equals(ColumnConstant.ID.toString()) || 
@@ -147,7 +151,7 @@ public class TableStatement {
     private StringBuilder getCatCovTableStatement(){
         StringBuilder catCovTable = new StringBuilder();
 
-        for(String column : inputStatement.getCatCovTableColumns()){
+        for(String column : inputColumns.getCatCovTableColumns()){
             catCovTable.append(SPACE+column);	
         }
         return catCovTable;
@@ -163,7 +167,7 @@ public class TableStatement {
     public StringBuilder getContCovTableStatement(){
         StringBuilder contCovTable = new StringBuilder();
 
-        for(String column : inputStatement.getContCovTableColumns()){
+        for(String column : inputColumns.getContCovTableColumns()){
             contCovTable.append(SPACE+column);	
         }
         return contCovTable;

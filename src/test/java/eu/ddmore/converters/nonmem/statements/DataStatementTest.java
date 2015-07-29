@@ -42,7 +42,7 @@ public class DataStatementTest {
 	@Test(expected = NullPointerException.class)
 	public void shouldThrowExceptionNullNONMEMdataSet() {
 
-		new DataStatement((ConversionContext)null,null);
+		new DataStatement((ConversionContext)null);
 	}
 
 	private DataSet createDataSet() {
