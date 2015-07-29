@@ -52,7 +52,7 @@ public class DiscreteHandler {
      */
     private StringBuilder getDiscreteDetails(ScriptDefinition definition) {
         Preconditions.checkNotNull(definition.getObservationBlocks(), "Observation block cannot be null");
-        
+
         List<ObservationBlock> blocks = definition.getObservationBlocks();
         StringBuilder discreteStatement = new StringBuilder();
         for(ObservationBlock block :blocks){
@@ -61,7 +61,7 @@ public class DiscreteHandler {
                 setDiscrete(true);
                 if(block.getCountData()!=null){
                     setCountData(true);
-                        discreteStatement.append(getDiscreteStatements(block.getCountData()));
+                    discreteStatement.append(getDiscreteStatements(block.getCountData()));
                 } else if(block.getCategoricalData()!=null){
                     setCategoricalData(true);
                     //TODO : Categorical data
@@ -100,17 +100,17 @@ public class DiscreteHandler {
 
     private StringBuilder getCountDataStatement(CountPMF countPMF) {
         StringBuilder countDistStatement = new StringBuilder();
-        
+
         if(countPMF.getDistribution() instanceof PoissonDistribution){
             setPoissonDist(true);
-            
+
             PoissonDistribution poissonDist = (PoissonDistribution) countPMF.getDistribution();
             String poissonDistVar = getCountDataValue(poissonDist.getRate());
             countDistStatement.append(createPoissonStatements(poissonDistVar));
-            
+
         } else if (countPMF.getDistribution() instanceof NegativeBinomialDistribution){
             setNegativeBinomial(true);
-            
+
             NegativeBinomialDistribution negativeBinomialDist = (NegativeBinomialDistribution) countPMF.getDistribution();
             String numberOfFailures = getCountDataValue(negativeBinomialDist.getNumberOfFailures());
             String probability = getCountDataValue(negativeBinomialDist.getProbability());
@@ -118,7 +118,7 @@ public class DiscreteHandler {
         }
         return countDistStatement;
     }
-    
+
     private String getCountDataValue(PositiveRealValueType valueType){
         Preconditions.checkNotNull(valueType, "Rate value cannot be null for poisson data.");
         if(valueType.getVar()!=null){
@@ -129,7 +129,7 @@ public class DiscreteHandler {
             throw new IllegalArgumentException("The specified type doesn't have any value specified.");
         }
     }
-    
+
     private String getCountDataValue(NaturalNumberValueType valueType){
         Preconditions.checkNotNull(valueType, "Number of failures Value cannot be null for negative binomial");
         if(valueType.getVar()!=null){
@@ -208,7 +208,7 @@ public class DiscreteHandler {
      * @return
      */
     private StringBuilder createNegativeBinomialStatement(String numberOfFailures, String probability ){
-        
+
         StringBuilder stringToAdd = new StringBuilder();
 
         stringToAdd.append(Formatter.endline());
@@ -222,7 +222,7 @@ public class DiscreteHandler {
         appendLine(stringToAdd,"IF(DV.GT.0) FDV=SQRT(2*3.1415)*DV**(DV+0.5)*EXP(-DV)*(1+1/(12*DV))");
         appendLine(stringToAdd,"YY=(GAM1/(FDV*GAM2))*( "+probability+"**DV)*(1-"+probability+")**"+numberOfFailures);
         appendLine(stringToAdd,"Y=-2*LOG(YY)");
-        
+
         return stringToAdd;
     }
 
