@@ -43,13 +43,8 @@ public class TableStatement {
     public TableStatement(ConversionContext convContext){
         Preconditions.checkNotNull(convContext, "Conversion Context cannot be null");
         this.context = convContext;
+        Preconditions.checkNotNull(context.getInputColumnsProvider(), "input columns provider cannot be null.");
         inputColumns = context.getInputColumnsProvider(); 
-//        if(inputStatement == null){
-//            throw new IllegalStateException("Input statement cannot be null and needs to be populated.");
-//        }else{
-//            this.inputStatement = inputStatement;
-//        }
-
     }
 
     /**
