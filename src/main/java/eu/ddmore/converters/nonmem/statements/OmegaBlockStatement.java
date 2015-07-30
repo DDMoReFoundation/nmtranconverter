@@ -197,7 +197,7 @@ public class OmegaBlockStatement {
         Preconditions.checkNotNull(coeff, "coefficient value should not be null");
         if(coeff.getSymbRef()!=null){
             return paramHelper.getOmegaFromRandomVarName(coeff.getSymbRef().getSymbIdRef()); 
-        }else if(coeff.getScalar()!=null){
+        }else if(coeff.getScalar()!=null || coeff.getEquation()!=null){
             String firstVariable = RandomVariableHelper.getNameFromParamRandomVariable(firstVar);
             String secondVariable = RandomVariableHelper.getNameFromParamRandomVariable(secondVar);
             OmegaStatement omega = new OmegaStatement(firstVariable+"_"+secondVariable);
