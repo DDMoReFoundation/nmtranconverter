@@ -193,18 +193,20 @@ public class OmegaBlockStatement {
      * @param correlation
      * @return
      */
-    private OmegaStatement getOmegaForCoefficient(ScalarRhs coeff, ParameterRandomVariable firstVar, ParameterRandomVariable secondVar) {
+    private OmegaStatement getOmegaForCoefficient(ScalarRhs coeff, ParameterRandomVariable firstVariable, ParameterRandomVariable secondVariable) {
         Preconditions.checkNotNull(coeff, "coefficient value should not be null");
+        String firstVar = RandomVariableHelper.getNameFromParamRandomVariable(firstVariable);
+        String secondVar = RandomVariableHelper.getNameFromParamRandomVariable(secondVariable);
+        
         if(coeff.getSymbRef()!=null){
             return paramHelper.getOmegaFromRandomVarName(coeff.getSymbRef().getSymbIdRef()); 
         }else if(coeff.getScalar()!=null || coeff.getEquation()!=null){
-            String firstVariable = RandomVariableHelper.getNameFromParamRandomVariable(firstVar);
-            String secondVariable = RandomVariableHelper.getNameFromParamRandomVariable(secondVar);
-            OmegaStatement omega = new OmegaStatement(firstVariable+"_"+secondVariable);
+            OmegaStatement omega = new OmegaStatement(firstVar+"_"+secondVar);
             omega.setInitialEstimate(coeff);
             return omega;
         }else {
-            throw new IllegalArgumentException("The Scalarrhs coefficient should have either variable or scalar value specified. "); 
+            throw new IllegalArgumentException("The Scalarrhs coefficient related to variables "+firstVar+" and "+secondVar
+                +" should have either variable, scalar value or equation specified."); 
         }
     }
 
