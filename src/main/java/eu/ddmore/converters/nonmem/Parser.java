@@ -372,18 +372,20 @@ public class Parser extends BaseParser {
             if (piece == null) continue;
             else if (piece.equals(else_block)) continue;
 
-            if (!(conditional_stmts[i] != null && assignment_stmts[i] != null)) continue;	
-            String operator = "IF";
-            String format = Formatter.endline("%s (%s) THEN")+Formatter.endline(Formatter.indent("%s = %s"));
+            if (!(conditional_stmts[i] != null && assignment_stmts[i] != null)) continue;
+            
+            String format = Formatter.endline("%s (%s) "+Formatter.Operator.THEN)
+                    +Formatter.endline(Formatter.indent("%s = %s"));
             String conditionStatement = conditional_stmts[i].replaceAll("\\s+","");
-            block.append(String.format(format, operator, conditionStatement, field_tag, assignment_stmts[i]));
+            
+            block.append(String.format(format, Formatter.Operator.IF, conditionStatement, field_tag, assignment_stmts[i]));
 
             if (else_block != null && else_index >= 0) {
-                block.append(Formatter.endline("ELSE"));
+                block.append(Formatter.endline(Formatter.Operator.ELSE.toString()));
                 String elseformat = Formatter.endline(Formatter.indent("%s = %s"));
                 block.append(String.format(elseformat, field_tag, assignment_stmts[else_index]));
             }
-            block.append(Formatter.endline("ENDIF"));
+            block.append(Formatter.endline(Formatter.Operator.ENDIF.toString()));
         }
 
         if (assignmentCount == 0) throw new IllegalStateException("Piecewise statement assigned no conditional blocks.");

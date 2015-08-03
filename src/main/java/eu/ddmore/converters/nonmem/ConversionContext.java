@@ -17,15 +17,15 @@ import com.google.common.base.Preconditions;
 import crx.converter.engine.ScriptDefinition;
 import crx.converter.engine.parts.ObservationBlock;
 import crx.converter.engine.parts.ParameterBlock;
-import crx.converter.engine.parts.StructuralBlock;
 import crx.converter.engine.parts.ParameterBlock.Event;
+import crx.converter.engine.parts.StructuralBlock;
 import crx.converter.spi.ILexer;
 import crx.converter.spi.IParser;
 import crx.converter.tree.BinaryTree;
-import eu.ddmore.converters.nonmem.utils.DiscreteHandler;
 import eu.ddmore.converters.nonmem.statements.ErrorStatement;
 import eu.ddmore.converters.nonmem.statements.InputColumnsProvider;
 import eu.ddmore.converters.nonmem.statements.PredStatement;
+import eu.ddmore.converters.nonmem.utils.DiscreteHandler;
 import eu.ddmore.converters.nonmem.utils.Formatter;
 import eu.ddmore.converters.nonmem.utils.Formatter.Block;
 import eu.ddmore.converters.nonmem.utils.OrderedEtasHandler;
@@ -58,14 +58,16 @@ public class ConversionContext {
     private final List<ErrorStatement> errorStatements = new ArrayList<ErrorStatement>();
     private final List<DerivativeVariable> derivativeVars = new ArrayList<DerivativeVariable>();
     private final Map<String, String> derivativeVarCompSequences = new HashMap<String, String>();
-    private final File srcFile;
+    private final ConditionalEventBuilder conditionalEventBuilder;
     private InputColumnsProvider inputColumns;
+    private final File srcFile;
+
 
     ConversionContext(File srcFile, IParser parser, ILexer lexer) throws IOException{
         Preconditions.checkNotNull(srcFile, "source file cannot be null");
         Preconditions.checkNotNull(parser, " common converter parser cannot be null");
         Preconditions.checkNotNull(lexer, "common converter lexer cannot be null");
-        
+
         this.srcFile = srcFile;
         this.parser = parser;
         this.lexer = lexer;
@@ -74,6 +76,7 @@ public class ConversionContext {
         this.etasHandler = new OrderedEtasHandler(getScriptDefinition());
         this.discreteHandler = new DiscreteHandler(getScriptDefinition());
         this.parameterHelper = new ParametersHelper(getScriptDefinition(), etasHandler, orderedThetasHandler);
+        this.conditionalEventBuilder = new ConditionalEventBuilder(this);
         initialise();
     }
 
@@ -362,5 +365,9 @@ public class ConversionContext {
 
     public void setInputColumnsProvider(InputColumnsProvider inputColumn) {
         this.inputColumns = inputColumn;
+    }
+
+    public ConditionalEventBuilder getConditionalEventBuilder() {
+        return conditionalEventBuilder;
     }
 }

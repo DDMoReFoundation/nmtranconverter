@@ -3,15 +3,19 @@
  ******************************************************************************/
 package eu.ddmore.converters.nonmem.statements;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import crx.converter.engine.parts.ConditionalDoseEvent;
+import crx.converter.engine.parts.EstimationStep;
 import crx.converter.engine.parts.ParameterBlock;
 import eu.ddmore.converters.nonmem.ConversionContext;
 import eu.ddmore.converters.nonmem.IndividualDefinitionEmitter;
 import eu.ddmore.converters.nonmem.statements.PkMacroAnalyser.PkMacroDetails;
 import eu.ddmore.converters.nonmem.utils.Formatter;
 import eu.ddmore.converters.nonmem.utils.LocalVariableHandler;
+import eu.ddmore.converters.nonmem.utils.ScriptDefinitionAccessor;
 import eu.ddmore.libpharmml.dom.commontypes.DerivativeVariable;
 import eu.ddmore.libpharmml.dom.modeldefn.ContinuousCovariate;
 import eu.ddmore.libpharmml.dom.modeldefn.CovariateDefinition;
@@ -79,6 +83,7 @@ public class PredStatement {
      */
     private StringBuilder getPredCoreStatement() {
         StringBuilder predCoreBlock = new StringBuilder();
+        predCoreBlock.append(getConditionalDoseDetails());
         predCoreBlock.append(context.buildThetaAssignments()+Formatter.endline());
         predCoreBlock.append(context.buildEtaAssignments()+Formatter.endline());
         predCoreBlock.append(getTransformedCovStatement());
@@ -91,6 +96,7 @@ public class PredStatement {
         StringBuilder DerivativePredblock = new StringBuilder();
         DerivativePredblock.append(getModelStatement());
         //TODO : getAbbreviatedStatement();
+        
         DerivativePredblock.append(getPKStatement());
         DiffEquationStatementBuilder desBuilder = new DiffEquationStatementBuilder(context);
         DerivativePredblock.append(Formatter.des());
@@ -102,6 +108,20 @@ public class PredStatement {
         DerivativePredblock.append(getErrorStatement(desBuilder.getVarDefinitions()));
 
         return DerivativePredblock;
+    }
+
+    private String getConditionalDoseDetails() {
+        List<EstimationStep> estimationSteps =  ScriptDefinitionAccessor.getEstimationSteps(context.getScriptDefinition());
+        List<ConditionalDoseEvent> conditionalDoseEvents = new ArrayList<ConditionalDoseEvent>();
+        StringBuilder doseEvent = new StringBuilder();
+        for(EstimationStep estStep : estimationSteps){
+            conditionalDoseEvents.addAll(estStep.getConditionalDoseEvents());
+        }
+        
+        for(ConditionalDoseEvent event : conditionalDoseEvents){
+            doseEvent.append(context.getConditionalEventBuilder().parseConditionalDoseEvent(event));
+        }
+        return doseEvent.toString();
     }
 
     /**

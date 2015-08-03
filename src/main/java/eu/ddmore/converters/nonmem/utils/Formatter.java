@@ -42,6 +42,10 @@ public class Formatter {
         WRES, RES, PRED, NOPRINT, DV, NOAPPEND;
     }
 
+    public enum Operator{
+        IF, THEN, ELSE, ENDIF;
+    }
+
     public enum Symbol{
         BLOCK("$"), 
         COMMENT(";");
