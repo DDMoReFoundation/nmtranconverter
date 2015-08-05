@@ -169,9 +169,8 @@ public class PredStatement {
         StringBuilder errorBlock = new StringBuilder();
         if(parsedDefinitions != null){
             errorBlock.append(errorStatement.getDetailsForDES(parsedDefinitions,context.getDerivativeVarCompSequences()));
-        }else{
-            errorBlock.append(statementEmitter.getErrorStatementDetails());
         }
+        errorBlock.append(statementEmitter.getErrorStatementDetails());
         return errorBlock;
     }
 
