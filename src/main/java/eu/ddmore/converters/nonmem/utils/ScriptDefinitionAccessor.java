@@ -11,6 +11,8 @@ import java.util.Set;
 import com.google.common.base.Preconditions;
 
 import crx.converter.engine.ScriptDefinition;
+import crx.converter.engine.parts.BaseStep.MultipleDvRef;
+import crx.converter.engine.parts.ConditionalDoseEvent;
 import crx.converter.engine.parts.EstimationStep;
 import crx.converter.engine.parts.ObservationBlock;
 import crx.converter.engine.parts.ParameterBlock;
@@ -59,6 +61,36 @@ public class ScriptDefinitionAccessor {
             }
         }
         return estSteps;
+    }
+
+    /**
+     * Gets all conditional dose events from all the estimation steps.
+     * 
+     * @param scriptDefinition
+     * @return list of estimation steps
+     */
+    public static List<ConditionalDoseEvent> getAllConditionalDoseEvents(ScriptDefinition scriptDefinition){
+        List<ConditionalDoseEvent> conditionalDoseEvents = new ArrayList<ConditionalDoseEvent>();
+        for(EstimationStep estStep : getEstimationSteps(scriptDefinition)){
+            conditionalDoseEvents.addAll(estStep.getConditionalDoseEvents());
+        }
+
+        return conditionalDoseEvents;
+    }
+
+    /**
+     * Gets all multiple dv references from estimation steps.
+     * 
+     * @param scriptDefinition
+     * @return list of multiple dv references.
+     */
+    public static List<MultipleDvRef> getAllMultipleDvReferences(ScriptDefinition scriptDefinition){
+        List<MultipleDvRef> multipleDvRefs = new ArrayList<MultipleDvRef>();
+        for(EstimationStep estStep : getEstimationSteps(scriptDefinition)){
+            multipleDvRefs.addAll(estStep.getMultipleDvRefs());
+        }
+
+        return multipleDvRefs;
     }
 
     /**

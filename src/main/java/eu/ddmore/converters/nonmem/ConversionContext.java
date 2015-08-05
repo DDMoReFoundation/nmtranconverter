@@ -28,6 +28,7 @@ import eu.ddmore.converters.nonmem.statements.PredStatement;
 import eu.ddmore.converters.nonmem.utils.DiscreteHandler;
 import eu.ddmore.converters.nonmem.utils.Formatter;
 import eu.ddmore.converters.nonmem.utils.Formatter.Block;
+import eu.ddmore.converters.nonmem.utils.MuReferenceHandler;
 import eu.ddmore.converters.nonmem.utils.OrderedEtasHandler;
 import eu.ddmore.converters.nonmem.utils.OrderedThetasHandler;
 import eu.ddmore.converters.nonmem.utils.ParametersHelper;
@@ -55,10 +56,12 @@ public class ConversionContext {
     private final DiscreteHandler discreteHandler;
     private final OrderedEtasHandler etasHandler;
     private final List<String> thetas = new ArrayList<String>();
-    private final List<ErrorStatement> errorStatements = new ArrayList<ErrorStatement>();
+    private final Map<String,ErrorStatement> errorStatements = new HashMap<String,ErrorStatement>();
     private final List<DerivativeVariable> derivativeVars = new ArrayList<DerivativeVariable>();
     private final Map<String, String> derivativeVarCompSequences = new HashMap<String, String>();
     private final ConditionalEventBuilder conditionalEventBuilder;
+    private final MuReferenceHandler muReferenceHandler;
+
     private InputColumnsProvider inputColumns;
     private final File srcFile;
 
@@ -77,6 +80,7 @@ public class ConversionContext {
         this.discreteHandler = new DiscreteHandler(getScriptDefinition());
         this.parameterHelper = new ParametersHelper(getScriptDefinition(), etasHandler, orderedThetasHandler);
         this.conditionalEventBuilder = new ConditionalEventBuilder(this);
+        this.muReferenceHandler = new MuReferenceHandler(this);
         initialise();
     }
 
@@ -225,7 +229,7 @@ public class ConversionContext {
      * We need to prepare this list separately as we need to use it in DES block before writing out to ERROR block.
      * @return
      */
-    private List<ErrorStatement> prepareAllErrorStatements(){
+    private Map<String,ErrorStatement> prepareAllErrorStatements(){
 
         for(ObservationBlock block : lexer.getScriptDefinition().getObservationBlocks()){
             ObservationError errorType = block.getObservationError();
@@ -237,7 +241,7 @@ public class ConversionContext {
             if(errorType instanceof GaussianObsError){
                 GaussianObsError error = (GaussianObsError) errorType;
                 ErrorStatement errorStatement = prepareErrorStatement(error);
-                errorStatements.add(errorStatement);
+                errorStatements.put(error.getSymbId(), errorStatement);
             }else{
                 //              TODO : Check if there are any other types to encounter
             }
@@ -319,7 +323,7 @@ public class ConversionContext {
         return parameterHelper;
     }
 
-    public List<ErrorStatement> getErrorStatements() {
+    public Map<String,ErrorStatement> getErrorStatements() {
         return errorStatements;
     }
 
@@ -369,5 +373,9 @@ public class ConversionContext {
 
     public ConditionalEventBuilder getConditionalEventBuilder() {
         return conditionalEventBuilder;
+    }
+
+    public MuReferenceHandler getMuReferenceHandler() {
+        return muReferenceHandler;
     }
 }

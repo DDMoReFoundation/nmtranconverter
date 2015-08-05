@@ -26,7 +26,6 @@ import eu.ddmore.libpharmml.dom.modeldefn.IndividualParameter.GaussianModel.Line
  *  
  */
 public class OrderedThetasHandler {
-    private static final String MU = "MU_";
     private final TreeMap<Integer, String> orderedThetas = new TreeMap<Integer, String>();
     private final ScriptDefinition scriptDefinition;
 
@@ -58,19 +57,25 @@ public class OrderedThetasHandler {
             for(IndividualParameter parameterType: block.getIndividualParameters()){
                 final GaussianModel gaussianModel = parameterType.getGaussianModel();
                 if (gaussianModel != null) {
-                    String popSymbol = getPopSymbol(gaussianModel);
-                    List<ParameterRandomEffect> randomEffects = gaussianModel.getRandomEffects();
-                    for (ParameterRandomEffect randomEffect : randomEffects) {
-                        if (randomEffect == null) continue;
-                        String eta = randomEffect.getSymbRef().get(0).getSymbIdRef();
-                        if(orderedEtas.get(eta).equals(nextEtaOrder)){
-                            orderedThetas.put(nextEtaOrder, popSymbol);
-                            return;
-                        }
-                    }
+                    if(addPopSymbolToOrderedEtas(orderedEtas, nextEtaOrder, gaussianModel)) 
+                        return;
                 }
             }
         }
+    }
+
+    private boolean addPopSymbolToOrderedEtas(Map<String, Integer> orderedEtas, Integer nextEtaOrder, GaussianModel gaussianModel) {
+        String popSymbol = getPopSymbol(gaussianModel);
+        List<ParameterRandomEffect> randomEffects = gaussianModel.getRandomEffects();
+        for (ParameterRandomEffect randomEffect : randomEffects) {
+            if (randomEffect == null) continue;
+            String eta = randomEffect.getSymbRef().get(0).getSymbIdRef();
+            if(orderedEtas.get(eta).equals(nextEtaOrder)){
+                orderedThetas.put(nextEtaOrder, popSymbol);
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -109,21 +114,6 @@ public class OrderedThetasHandler {
         }else {
             throw new IllegalArgumentException("Variable symbol missing in assignment. The population parameter is not well formed.");
         }
-    }
-
-    /**
-     * Get MU symbol for population parameter symbol provided
-     * @param popSymbol
-     * @return respective MU symbol
-     */
-    public String getMUSymbol(String popSymbol){
-        Preconditions.checkArgument(!orderedThetas.isEmpty(), "Ordered thetas do not exist or not arranged yet.");
-        for(Integer thetaOrder: orderedThetas.keySet()){
-            if(popSymbol.equals(orderedThetas.get(thetaOrder))){
-                return new String(MU+thetaOrder);
-            }
-        }
-        return new String(); 
     }
 
     public Map<Integer, String> getOrderedThetas() {

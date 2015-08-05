@@ -3,12 +3,13 @@
  ******************************************************************************/
 package eu.ddmore.converters.nonmem.statements;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang.StringUtils;
+
+import crx.converter.engine.parts.BaseStep.MultipleDvRef;
 import crx.converter.engine.parts.ConditionalDoseEvent;
-import crx.converter.engine.parts.EstimationStep;
 import crx.converter.engine.parts.ParameterBlock;
 import eu.ddmore.converters.nonmem.ConversionContext;
 import eu.ddmore.converters.nonmem.IndividualDefinitionEmitter;
@@ -17,6 +18,7 @@ import eu.ddmore.converters.nonmem.utils.Formatter;
 import eu.ddmore.converters.nonmem.utils.LocalVariableHandler;
 import eu.ddmore.converters.nonmem.utils.ScriptDefinitionAccessor;
 import eu.ddmore.libpharmml.dom.commontypes.DerivativeVariable;
+import eu.ddmore.libpharmml.dom.commontypes.SymbolRef;
 import eu.ddmore.libpharmml.dom.modeldefn.ContinuousCovariate;
 import eu.ddmore.libpharmml.dom.modeldefn.CovariateDefinition;
 import eu.ddmore.libpharmml.dom.modeldefn.CovariateTransformation;
@@ -96,7 +98,7 @@ public class PredStatement {
         StringBuilder DerivativePredblock = new StringBuilder();
         DerivativePredblock.append(getModelStatement());
         //TODO : getAbbreviatedStatement();
-        
+
         DerivativePredblock.append(getPKStatement());
         DiffEquationStatementBuilder desBuilder = new DiffEquationStatementBuilder(context);
         DerivativePredblock.append(Formatter.des());
@@ -111,13 +113,10 @@ public class PredStatement {
     }
 
     private String getConditionalDoseDetails() {
-        List<EstimationStep> estimationSteps =  ScriptDefinitionAccessor.getEstimationSteps(context.getScriptDefinition());
-        List<ConditionalDoseEvent> conditionalDoseEvents = new ArrayList<ConditionalDoseEvent>();
+
+        List<ConditionalDoseEvent> conditionalDoseEvents = ScriptDefinitionAccessor.getAllConditionalDoseEvents(context.getScriptDefinition());
+
         StringBuilder doseEvent = new StringBuilder();
-        for(EstimationStep estStep : estimationSteps){
-            conditionalDoseEvents.addAll(estStep.getConditionalDoseEvents());
-        }
-        
         for(ConditionalDoseEvent event : conditionalDoseEvents){
             doseEvent.append(context.getConditionalEventBuilder().parseConditionalDoseEvent(event));
         }
@@ -134,21 +133,61 @@ public class PredStatement {
     }
 
     /**
-     * get Error statement for nonmem pred block
+     * Gets Error statement for nonmem pred block.
      * This block will rename function name if it is already defined in DES and also redefine it in ERROR block.
-     * @return 
      * 
+     * @param parsedDefinitions
+     * @return
      */
-    private String getErrorStatement(Map<String, String> definitionsParsingMap) {
+    private String getErrorStatement(Map<String, String> parsedDefinitions) {
+
+        List<MultipleDvRef> multipleDvReferences = ScriptDefinitionAccessor.getAllMultipleDvReferences(context.getScriptDefinition());
         StringBuilder errorBlock = new StringBuilder();
-        for(ErrorStatement errorStatement: context.getErrorStatements()){
-            if(definitionsParsingMap != null){
-                errorBlock.append(errorStatement.getDetailsForDES(definitionsParsingMap,context.getDerivativeVarCompSequences()));
-            }else{
-                errorBlock.append(errorStatement.getErrorStatementDetails());
+
+        for(MultipleDvRef dvReference : multipleDvReferences){
+            SymbolRef columnName = context.getConditionalEventBuilder().getDVColumnReference(dvReference);
+
+            if(columnName!=null && context.getErrorStatements().containsKey(columnName.getSymbIdRef())){
+                String condition = context.getConditionalEventBuilder().getMultipleDvCondition(dvReference);
+
+                ErrorStatement errorStatement = context.getErrorStatements().get(columnName.getSymbIdRef());
+                errorBlock.append(getErrorStatementForMultipleDv(parsedDefinitions, errorStatement, condition));
+            }
+        }
+
+        if(errorBlock.toString().isEmpty()){
+            for(ErrorStatement error : context.getErrorStatements().values()){
+                ErrorStatementEmitter statementEmitter = new ErrorStatementEmitter(error);
+                errorBlock.append(addErrorStatementDetails(parsedDefinitions, error, statementEmitter));
             }
         }
         return errorBlock.toString();
+    }
+
+    private StringBuilder addErrorStatementDetails(Map<String, String> parsedDefinitions,
+            ErrorStatement errorStatement, ErrorStatementEmitter statementEmitter) {
+        StringBuilder errorBlock = new StringBuilder();
+        if(parsedDefinitions != null){
+            errorBlock.append(errorStatement.getDetailsForDES(parsedDefinitions,context.getDerivativeVarCompSequences()));
+        }else{
+            errorBlock.append(statementEmitter.getErrorStatementDetails());
+        }
+        return errorBlock;
+    }
+
+    private StringBuilder getErrorStatementForMultipleDv(Map<String, String> parsedDefinitions, ErrorStatement errorStatement, String condition) {
+        StringBuilder errorBlock = new StringBuilder();
+        ErrorStatementEmitter statementEmitter = new ErrorStatementEmitter(errorStatement);
+
+        StringBuilder errorDetails = addErrorStatementDetails(parsedDefinitions, errorStatement, statementEmitter);
+
+        if(!StringUtils.isEmpty(condition)){
+            String statement = context.getConditionalEventBuilder().buildConditionalStatement(condition, errorDetails.toString());
+            errorBlock.append(statement);
+        }else{
+            errorBlock.append(errorDetails);
+        }
+        return errorBlock;
     }
 
     /**

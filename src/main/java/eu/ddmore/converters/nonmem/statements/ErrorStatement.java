@@ -30,9 +30,9 @@ public class ErrorStatement {
         }
     }
 
-    static String additive = new String();
-    static String proportional = new String();
-    static String functionRep = new String();
+    private String additive = new String();
+    private String proportional = new String();
+    private String functionRep = new String();
 
     private FunctionCallType functionCall = null;
     private String function = new String();
@@ -86,22 +86,6 @@ public class ErrorStatement {
     }
 
     /**
-     * Gets error statement details with help of error type specified.
-     *
-     * @return
-     */
-    public StringBuilder getErrorStatementDetails(){
-        StringBuilder errorBlock = new StringBuilder();
-        for(ErrorType error : ErrorType.values()){
-            if(errorType.equals(error.getErrorType())){
-                errorBlock.append(error.getErrorStatement());
-                break;
-            }
-        }
-        return errorBlock;
-    }
-
-    /**
      * Creates error statement details depending upon error type specified,
      * e.g. : 
      * if error type is CombinedError1 then,
@@ -118,7 +102,6 @@ public class ErrorStatement {
         StringBuilder errorBlock = new StringBuilder();
         //This could be null or empty in case of non-derivative
         errorBlock.append(getDerivativeVarDetails(functionDefEqMap, derivativeVarMap));
-        errorBlock.append(getErrorStatementDetails());
 
         return errorBlock;
     }
@@ -165,5 +148,25 @@ public class ErrorStatement {
 
     public String getFunction() {
         return function;
+    }
+
+    public String getAdditive() {
+        return additive;
+    }
+
+    public String getProportional() {
+        return proportional;
+    }
+
+    public String getFunctionRep() {
+        return functionRep;
+    }
+
+    public FunctionCallType getFunctionCall() {
+        return functionCall;
+    }
+    
+    public String getErrorType() {
+        return errorType;
     }
 }

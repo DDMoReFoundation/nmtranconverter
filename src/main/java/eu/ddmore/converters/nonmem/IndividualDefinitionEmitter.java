@@ -3,7 +3,11 @@
  ******************************************************************************/
 package eu.ddmore.converters.nonmem;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+
+import org.apache.commons.lang.StringUtils;
 
 import com.google.common.base.Preconditions;
 
@@ -27,6 +31,7 @@ import eu.ddmore.libpharmml.dom.modeldefn.ParameterRandomEffect;
  */
 public class IndividualDefinitionEmitter {
     private final ConversionContext context;
+    private final Set<String> definedPopSymbols = new HashSet<String>();
 
     public IndividualDefinitionEmitter(ConversionContext  context) {
         this.context = context;
@@ -37,7 +42,8 @@ public class IndividualDefinitionEmitter {
      * This method is used as part of pred core block.
      * 
      * @param param
-     * @return
+     * @param muReferences 
+     * @return individual definition statement
      */
     public String createIndividualDefinition(IndividualParameter param){
         StringBuilder statement = new StringBuilder();
@@ -50,32 +56,39 @@ public class IndividualDefinitionEmitter {
             GaussianModel gaussianModel = param.getGaussianModel();
 
             String pop_param_symbol = context.getOrderedThetasHandler().getPopSymbol(gaussianModel);
-            variableSymbol = (pop_param_symbol.isEmpty())?variableSymbol:context.getOrderedThetasHandler().getMUSymbol(pop_param_symbol);
+
+            if(!StringUtils.isEmpty(pop_param_symbol)){
+                variableSymbol = context.getMuReferenceHandler().getMUSymbol(pop_param_symbol);    
+            }
 
             String logType = identifyLogType(gaussianModel.getTransformation());
 
-            statement.append(String.format("%s = ", variableSymbol));
+            //To avoid multiple definitions of the already defined pop symbol.
+            if(!definedPopSymbols.contains(pop_param_symbol)){
+                statement.append(String.format("%s = ", variableSymbol));
 
-            if(gaussianModel.getLinearCovariate()!=null){
-                if (!pop_param_symbol.isEmpty()) {
-                    String format = (logType.equals(NmConstant.LOG.toString()))?(logType+"(%s)"):("%s");
-                    statement.append(String.format(format, Formatter.addPrefix(pop_param_symbol)));
-                }
-
-                List<CovariateRelation> covariates = gaussianModel.getLinearCovariate().getCovariate();
-                if (covariates != null) {
-                    for (CovariateRelation covRelation : covariates) {
-                        if (covRelation == null) continue;
-                        PharmMLRootType type = context.getLexer().getAccessor().fetchElement(covRelation.getSymbRef());
-                        statement.append(getCovariateForIndividualDefinition(covRelation, type));
+                if(gaussianModel.getLinearCovariate()!=null){
+                    if (!StringUtils.isEmpty(pop_param_symbol)) {
+                        String format = ((logType.equals(NmConstant.LOG.toString()))?(logType+"(%s)"):("%s"));
+                        statement.append(String.format(format, Formatter.addPrefix(pop_param_symbol)));
+                        definedPopSymbols.add(pop_param_symbol);
                     }
+
+                    List<CovariateRelation> covariates = gaussianModel.getLinearCovariate().getCovariate();
+                    if (covariates != null) {
+                        for (CovariateRelation covRelation : covariates) {
+                            if (covRelation == null) continue;
+                            PharmMLRootType type = context.getLexer().getAccessor().fetchElement(covRelation.getSymbRef());
+                            statement.append(getCovariateForIndividualDefinition(covRelation, type));
+                        }
+                    }
+                } else if (gaussianModel.getGeneralCovariate() != null) {
+                    GeneralCovariate generalCov = gaussianModel.getGeneralCovariate();
+                    String assignment = context.parse(generalCov);
+                    statement.append(assignment);
                 }
-            } else if (gaussianModel.getGeneralCovariate() != null) {
-                GeneralCovariate generalCov = gaussianModel.getGeneralCovariate(); 
-                String assignment = context.parse(generalCov);
-                statement.append(assignment);
+                statement.append(Formatter.endline(Symbol.COMMENT.toString()));
             }
-            statement.append(Formatter.endline(Symbol.COMMENT.toString()));
             statement.append(Formatter.endline(arrangeEquationStatement(param.getSymbId(), variableSymbol, gaussianModel, logType)));
         }
 
