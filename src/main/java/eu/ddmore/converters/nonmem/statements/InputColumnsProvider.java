@@ -1,8 +1,14 @@
+/*******************************************************************************
+ * Copyright (C) 2015 Mango Solutions Ltd - All rights reserved.
+ ******************************************************************************/
 package eu.ddmore.converters.nonmem.statements;
 
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * This class stores associated information retrieved from dataset and to be used by other statement blocks. 
+ */
 public class InputColumnsProvider {
 
     private List<String> catCovTableColumns = new ArrayList<String>();
