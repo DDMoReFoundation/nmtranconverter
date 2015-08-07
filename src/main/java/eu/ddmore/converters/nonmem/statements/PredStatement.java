@@ -113,12 +113,14 @@ public class PredStatement {
     }
 
     private String getConditionalDoseDetails() {
-
         List<ConditionalDoseEvent> conditionalDoseEvents = ScriptDefinitionAccessor.getAllConditionalDoseEvents(context.getScriptDefinition());
 
         StringBuilder doseEvent = new StringBuilder();
         for(ConditionalDoseEvent event : conditionalDoseEvents){
-            doseEvent.append(context.getConditionalEventBuilder().parseConditionalDoseEvent(event));
+            String statement = context.getConditionalEventBuilder().parseConditionalDoseEvent(event);
+            if(!StringUtils.isEmpty(statement)){
+                doseEvent.append(statement);
+            }
         }
         return doseEvent.toString();
     }

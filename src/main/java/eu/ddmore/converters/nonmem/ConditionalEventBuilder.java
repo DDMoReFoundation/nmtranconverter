@@ -40,6 +40,9 @@ public class ConditionalEventBuilder {
         StringBuilder eventBuilder = new StringBuilder();
 
         String conditionStatement = getConditionStatement(event.getAssignment(),event.getColumnName());
+        if(StringUtils.isEmpty(conditionStatement)){
+            return eventBuilder.toString();
+        }
         if(event.getCondition()!=null){
             String condition = parseCondition(event.getCondition(), event.getSource());
             if(!condition.isEmpty()){
@@ -60,7 +63,7 @@ public class ConditionalEventBuilder {
         Preconditions.checkNotNull(dvReference, "conditional dose event cannot be null.");
         StringBuilder eventBuilder = new StringBuilder();
 
-        String conditionStatement = "";//getConditionStatement(dvReference.getAssignment(),dvReference.getColumnName());
+        String conditionStatement = "";
         if(dvReference.getCondition()!=null){
             String condition = parseCondition(dvReference.getCondition(), dvReference.getSource());
             if(!condition.isEmpty()){
@@ -89,7 +92,7 @@ public class ConditionalEventBuilder {
                     +endIfStatement;
             return String.format(format, condition,conditionStatement);
         }else {
-            return condition;        
+            return condition;
         }
     }
 
@@ -112,9 +115,14 @@ public class ConditionalEventBuilder {
 
     private String getConditionStatement(ExpressionValue assignment, String columnName) {
         BinaryTree assignmentBinaryTree = context.getLexer().getTreeMaker().newInstance(assignment);
-        String assignmentVal = context.getParser().parse(assignment, assignmentBinaryTree);
+        String assignmentVal = context.getParser().parse(assignment, assignmentBinaryTree).trim();
 
-        String conditionStatement = assignmentVal +" = "+ columnName;
+        String conditionStatement = "";
+        if(context.getDerivativeVarCompSequences().keySet().contains(assignmentVal)){
+            return conditionStatement;
+        }
+
+        conditionStatement = assignmentVal +" = "+ columnName;
         return conditionStatement;
     }
 
