@@ -45,16 +45,16 @@ public class EstimationStatement {
         if (algorithm!=null) {
             String methodDefinition =algorithm.getDefinition().trim().toUpperCase();
             if (methodDefinition.equals(Method.FO.toString())) {
-                estStatement.append("ZERO MAXEVALS=9999 PRINT=10 NOABORT");
+                estStatement.append("ZERO NSIG=3 SIGL=9 MAXEVALS=9999 PRINT=10 NOABORT");
             }
             else if(methodDefinition.equals(Method.FOCE.toString())) {
-                estStatement.append("COND MAXEVALS=9999 PRINT=10 NOABORT");
+                estStatement.append("COND NSIG=3 SIGL=9 MAXEVALS=9999 PRINT=10 NOABORT");
                 if(context.getDiscreteHandler().isCountData()){
                     estStatement.append(" -2LL LAPLACE");
                 }
             }
             else if (methodDefinition.equals(Method.FOCEI.toString())) {
-                estStatement.append("COND INTER MAXEVALS=9999 PRINT=10 NOABORT");
+                estStatement.append("COND INTER NSIG=3 SIGL=9 MAXEVALS=9999 PRINT=10 NOABORT");
             }
             else if (methodDefinition.equals(Method.SAEM.toString())) {
                 estStatement.append("SAEM AUTO=1 PRINT=100"+Formatter.endline());
