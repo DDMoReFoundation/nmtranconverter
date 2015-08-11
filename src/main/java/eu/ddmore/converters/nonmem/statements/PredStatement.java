@@ -4,7 +4,6 @@
 package eu.ddmore.converters.nonmem.statements;
 
 import java.util.List;
-import java.util.Map;
 
 import org.apache.commons.lang.StringUtils;
 
@@ -101,13 +100,15 @@ public class PredStatement {
 
         DerivativePredblock.append(getPKStatement());
         DiffEquationStatementBuilder desBuilder = new DiffEquationStatementBuilder(context);
+        desBuilder.initialiseDiffEquationStatement();
+
         DerivativePredblock.append(Formatter.des());
         Formatter.setInDesBlock(true);
         DerivativePredblock.append(desBuilder.getDifferentialEquationsStatement());
         Formatter.setInDesBlock(false);
         //TODO: getAESStatement();
         DerivativePredblock.append(Formatter.endline()+Formatter.error());
-        DerivativePredblock.append(getErrorStatement(desBuilder.getVarDefinitions()));
+        DerivativePredblock.append(getErrorStatement(desBuilder));
 
         return DerivativePredblock;
     }
@@ -138,49 +139,42 @@ public class PredStatement {
      * Gets Error statement for nonmem pred block.
      * This block will rename function name if it is already defined in DES and also redefine it in ERROR block.
      * 
-     * @param parsedDefinitions
+     * @param desBuilder
      * @return
      */
-    private String getErrorStatement(Map<String, String> parsedDefinitions) {
+    private String getErrorStatement(DiffEquationStatementBuilder desBuilder) {
+
+        StringBuilder errorBlock = new StringBuilder();
+        if(Formatter.isInDesBlock() && desBuilder!=null){
+            errorBlock.append(desBuilder.getVariableDefinitionsStatement(desBuilder.getAllVarDefinitions()));
+        }
 
         List<MultipleDvRef> multipleDvReferences = ScriptDefinitionAccessor.getAllMultipleDvReferences(context.getScriptDefinition());
-        StringBuilder errorBlock = new StringBuilder();
-
         for(MultipleDvRef dvReference : multipleDvReferences){
             SymbolRef columnName = context.getConditionalEventBuilder().getDVColumnReference(dvReference);
 
             if(columnName!=null && context.getErrorStatements().containsKey(columnName.getSymbIdRef())){
-                String condition = context.getConditionalEventBuilder().getMultipleDvCondition(dvReference);
 
+                String condition = context.getConditionalEventBuilder().getMultipleDvCondition(dvReference);
                 ErrorStatement errorStatement = context.getErrorStatements().get(columnName.getSymbIdRef());
-                errorBlock.append(getErrorStatementForMultipleDv(parsedDefinitions, errorStatement, condition));
+                errorBlock.append(getErrorStatementForMultipleDv(errorStatement, condition));
             }
         }
 
         if(errorBlock.toString().isEmpty()){
             for(ErrorStatement error : context.getErrorStatements().values()){
                 ErrorStatementEmitter statementEmitter = new ErrorStatementEmitter(error);
-                errorBlock.append(addErrorStatementDetails(parsedDefinitions, error, statementEmitter));
+                errorBlock.append(statementEmitter.getErrorStatementDetails());
             }
         }
         return errorBlock.toString();
     }
 
-    private StringBuilder addErrorStatementDetails(Map<String, String> parsedDefinitions,
-            ErrorStatement errorStatement, ErrorStatementEmitter statementEmitter) {
-        StringBuilder errorBlock = new StringBuilder();
-        if(parsedDefinitions != null){
-            errorBlock.append(errorStatement.getDetailsForDES(parsedDefinitions,context.getDerivativeVarCompSequences()));
-        }
-        errorBlock.append(statementEmitter.getErrorStatementDetails());
-        return errorBlock;
-    }
-
-    private StringBuilder getErrorStatementForMultipleDv(Map<String, String> parsedDefinitions, ErrorStatement errorStatement, String condition) {
+    private StringBuilder getErrorStatementForMultipleDv(
+            ErrorStatement errorStatement, String condition) {
         StringBuilder errorBlock = new StringBuilder();
         ErrorStatementEmitter statementEmitter = new ErrorStatementEmitter(errorStatement);
-
-        StringBuilder errorDetails = addErrorStatementDetails(parsedDefinitions, errorStatement, statementEmitter);
+        StringBuilder errorDetails = statementEmitter.getErrorStatementDetails();
 
         if(!StringUtils.isEmpty(condition)){
             String statement = context.getConditionalEventBuilder().buildConditionalStatement(condition, errorDetails.toString());

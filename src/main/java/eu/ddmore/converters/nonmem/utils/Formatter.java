@@ -26,7 +26,7 @@ public class Formatter {
     }
 
     public enum ReservedColumnConstant{
-        EVID;
+        EVID, ID, TIME;
 
         public static boolean contains(String val){
             for (ReservedColumnConstant columnType : ReservedColumnConstant.values()) {
@@ -61,7 +61,6 @@ public class Formatter {
         }
     }
 
-    private static final String DES_VAR_SUFFIX = "_"+Block.DES.toString();
     private static boolean inDesBlock = false;
 
     public static boolean isInDesBlock() {
@@ -292,16 +291,5 @@ public class Formatter {
             varAmount = "A("+varAmount+")";
         }
         return varAmount;
-    }
-
-    /**
-     * This method will rename variable which is defined as Function variable in error model block.
-     * This will be used in DES statement.
-     * @param variable
-     * @return
-     */
-    public static String renameFunctionVariableForDES(String variable) {
-        variable = variable+DES_VAR_SUFFIX;
-        return variable; 
     }
 }

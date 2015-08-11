@@ -373,11 +373,11 @@ public class Parser extends BaseParser {
             else if (piece.equals(else_block)) continue;
 
             if (!(conditional_stmts[i] != null && assignment_stmts[i] != null)) continue;
-            
+
             String format = Formatter.endline("%s (%s) "+Formatter.Operator.THEN)
                     +Formatter.endline(Formatter.indent("%s = %s"));
             String conditionStatement = conditional_stmts[i].replaceAll("\\s+","");
-            
+
             block.append(String.format(format, Formatter.Operator.IF, conditionStatement, field_tag, assignment_stmts[i]));
 
             if (else_block != null && else_index >= 0) {
