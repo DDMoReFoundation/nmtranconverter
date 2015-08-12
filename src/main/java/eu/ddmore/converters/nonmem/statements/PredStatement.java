@@ -148,6 +148,21 @@ public class PredStatement {
             errorBlock.append(desBuilder.getVariableDefinitionsStatement(desBuilder.getAllVarDefinitions()));
         }
 
+        StringBuilder errorBlockWithMDV = getErrorBlockForMultipleDV();
+
+        if(!errorBlockWithMDV.toString().isEmpty()){
+            errorBlock.append(errorBlockWithMDV);
+        }else{
+            for(ErrorStatement error : context.getErrorStatements().values()){
+                ErrorStatementEmitter statementEmitter = new ErrorStatementEmitter(error);
+                errorBlock.append(statementEmitter.getErrorStatementDetails());
+            }
+        }
+        return errorBlock.toString();
+    }
+
+    private StringBuilder getErrorBlockForMultipleDV() {
+        StringBuilder errorBlockWithMDV = new StringBuilder();
         List<MultipleDvRef> multipleDvReferences = ScriptDefinitionAccessor.getAllMultipleDvReferences(context.getScriptDefinition());
         for(MultipleDvRef dvReference : multipleDvReferences){
             SymbolRef columnName = context.getConditionalEventBuilder().getDVColumnReference(dvReference);
@@ -156,17 +171,11 @@ public class PredStatement {
 
                 String condition = context.getConditionalEventBuilder().getMultipleDvCondition(dvReference);
                 ErrorStatement errorStatement = context.getErrorStatements().get(columnName.getSymbIdRef());
-                errorBlock.append(getErrorStatementForMultipleDv(errorStatement, condition));
+                errorBlockWithMDV.append(getErrorStatementForMultipleDv(errorStatement, condition));
             }
         }
 
-        if(errorBlock.toString().isEmpty()){
-            for(ErrorStatement error : context.getErrorStatements().values()){
-                ErrorStatementEmitter statementEmitter = new ErrorStatementEmitter(error);
-                errorBlock.append(statementEmitter.getErrorStatementDetails());
-            }
-        }
-        return errorBlock.toString();
+        return errorBlockWithMDV;
     }
 
     private StringBuilder getErrorStatementForMultipleDv(
