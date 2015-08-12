@@ -100,7 +100,6 @@ public class PredStatement {
 
         DerivativePredblock.append(getPKStatement());
         DiffEquationStatementBuilder desBuilder = new DiffEquationStatementBuilder(context);
-        desBuilder.initialiseDiffEquationStatement();
 
         DerivativePredblock.append(Formatter.des());
         Formatter.setInDesBlock(true);
@@ -145,7 +144,7 @@ public class PredStatement {
     private String getErrorStatement(DiffEquationStatementBuilder desBuilder) {
 
         StringBuilder errorBlock = new StringBuilder();
-        if(Formatter.isInDesBlock() && desBuilder!=null){
+        if(desBuilder!=null){
             errorBlock.append(desBuilder.getVariableDefinitionsStatement(desBuilder.getAllVarDefinitions()));
         }
 

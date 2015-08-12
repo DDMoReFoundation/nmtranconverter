@@ -3,10 +3,11 @@
  ******************************************************************************/
 package eu.ddmore.converters.nonmem.statements;
 
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.regex.Pattern;
+
+import com.google.common.base.Preconditions;
 
 import crx.converter.engine.parts.StructuralBlock;
 import eu.ddmore.converters.nonmem.ConversionContext;
@@ -15,83 +16,28 @@ import eu.ddmore.converters.nonmem.utils.Formatter.Block;
 import eu.ddmore.libpharmml.dom.commontypes.DerivativeVariable;
 import eu.ddmore.libpharmml.dom.commontypes.VariableDefinition;
 
+/**
+ * This class builds DES statement using derivative variables and variable definitions.
+ * 
+ */
 public class DiffEquationStatementBuilder {
     //it will hold definition types and its parsed equations which we will need to add in Error statement as well.
     private final Map<String, String> derivativeVarsInDES = new LinkedHashMap<String, String>();
-    private final Map<String, String> allVarDefinitions = new HashMap<String, String>();
+    private final Map<String, String> allVarDefinitions = new LinkedHashMap<String, String>();
     private final Map<String, String> dadtDefinitionsInDES = new LinkedHashMap<String, String>();
     private final ConversionContext context;
     private static final String DES_VAR_SUFFIX = "_"+Block.DES.toString();
 
     public DiffEquationStatementBuilder(ConversionContext context) {
+        Preconditions.checkNotNull(context, "Conversion context cannot be null.");
         this.context = context;
-    }
-
-    public void initialiseDiffEquationStatement() {
-
-        for (DerivativeVariable variableType : context.getDerivativeVars()){
-            String variable = Formatter.addPrefix(variableType.getSymbId());
-            String varAmount = Formatter.getVarAmountFromCompartment(variable, context.getDerivativeVarCompSequences());
-            if(!varAmount.isEmpty()){
-                derivativeVarsInDES.put(variable, varAmount);
-            }
-        }
-
-        for(StructuralBlock block : context.getScriptDefinition().getStructuralBlocks()){
-            addAllVarDefinitionTypes(block);
-            addDADTdefinitionsToDES(block);
-        }
-    }
-
-    private void addAllVarDefinitionTypes(StructuralBlock block) {
-        for (VariableDefinition definitionType: block.getLocalVariables()){
-            String variable = Formatter.addPrefix(definitionType.getSymbId());
-            String rhs = context.parse(definitionType);
-            allVarDefinitions.put(variable, rhs);
-        }
-    }
-
-    private Map<String, String> appendAllVarDefinitionsWithsuffix(Map<String, String> variableDefinitions){
-        Map<String, String> varDefinitionsWithsuffix = new HashMap<String, String>();
-
-        for(String variable : variableDefinitions.keySet()){
-            String varDefinition = new String();
-            if(varDefinitionsWithsuffix.containsKey(variable)){
-                varDefinition = format(varDefinitionsWithsuffix.get(variable));
-            }else {
-                varDefinition = format(variableDefinitions.get(variable));
-            }
-
-            for(String derivativeVar : derivativeVarsInDES.keySet()){
-                derivativeVar = format(derivativeVar);
-                if(varDefinition.contains(derivativeVar)){
-                    varDefinition = replaceVariable(derivativeVar, varDefinition);
-                    varDefinitionsWithsuffix.put(variable, varDefinition);
-                }
-            }
-
-            for(String derivativeVar : allVarDefinitions.keySet()){
-                if(format(varDefinition).contains(format(derivativeVar))){
-                    varDefinition = replaceVariable(derivativeVar, varDefinition);
-                    varDefinitionsWithsuffix.put(variable, varDefinition);
-                }
-            }
-        }
-        return varDefinitionsWithsuffix;
-    }
-
-    private String format(String variable){
-        return variable.trim().toUpperCase();
-    }
-
-    private String replaceVariable(String variableToReplace, String definition){
-        String variablePatternToReplace = "\\b"+Pattern.quote(variableToReplace)+"\\b";
-        return definition.replaceAll(variablePatternToReplace, renameVarForDES(variableToReplace));
+        initialiseDiffEquationStatement();
     }
 
     /**
-     * gets DES block for pred statement
+     * Gets DES statement for derivative pred block.
      * 
+     * @return differential equation statement
      */
     public StringBuilder getDifferentialEquationsStatement() {
         StringBuilder diffEqStatementBlock = new StringBuilder();
@@ -135,8 +81,31 @@ public class DiffEquationStatementBuilder {
         return diffEqStatementBlock;
     }
 
-    private void addDADTdefinitionsToDES(StructuralBlock block) {
+    private void initialiseDiffEquationStatement() {
 
+        for (DerivativeVariable variableType : context.getDerivativeVars()){
+            String variable = Formatter.addPrefix(variableType.getSymbId());
+            String varAmount = Formatter.getVarAmountFromCompartment(variable, context.getDerivativeVarCompSequences());
+            if(!varAmount.isEmpty()){
+                derivativeVarsInDES.put(variable, varAmount);
+            }
+        }
+
+        for(StructuralBlock block : context.getScriptDefinition().getStructuralBlocks()){
+            addAllVarDefinitionTypes(block);
+            addDADTdefinitionsToDES(block);
+        }
+    }
+
+    private void addAllVarDefinitionTypes(StructuralBlock block) {
+        for (VariableDefinition definitionType: block.getLocalVariables()){
+            String variable = Formatter.addPrefix(definitionType.getSymbId());
+            String rhs = context.parse(definitionType);
+            allVarDefinitions.put(variable, rhs);
+        }
+    }
+
+    private void addDADTdefinitionsToDES(StructuralBlock block) {
         for(DerivativeVariable variableType: block.getStateVariables()){
             String parsedDADT = context.parse(variableType).toUpperCase();
             String variable = Formatter.addPrefix(variableType.getSymbId());
@@ -149,17 +118,49 @@ public class DiffEquationStatementBuilder {
         }
     }
 
+    private Map<String, String> appendAllVarDefinitionsWithsuffix(Map<String, String> variableDefinitions){
+        Map<String, String> varDefinitionsWithsuffix = new LinkedHashMap<String, String>();
+
+        for(String variable : variableDefinitions.keySet()){
+            String varDefinition = new String();
+            if(varDefinitionsWithsuffix.containsKey(variable)){
+                varDefinition = format(varDefinitionsWithsuffix.get(variable));
+            }else {
+                varDefinition = format(variableDefinitions.get(variable));
+            }
+
+            for(String derivativeVar : derivativeVarsInDES.keySet()){
+                derivativeVar = format(derivativeVar);
+                if(varDefinition.contains(derivativeVar)){
+                    varDefinition = replaceVariable(derivativeVar, varDefinition);
+                    varDefinitionsWithsuffix.put(variable, varDefinition);
+                }
+            }
+
+            for(String derivativeVar : allVarDefinitions.keySet()){
+                if(format(varDefinition).contains(format(derivativeVar))){
+                    varDefinition = replaceVariable(derivativeVar, varDefinition);
+                    varDefinitionsWithsuffix.put(variable, varDefinition);
+                }
+            }
+        }
+        return varDefinitionsWithsuffix;
+    }
+
+    private String format(String variable){
+        return variable.trim().toUpperCase();
+    }
+
+    private String replaceVariable(String variableToReplace, String definition){
+        String variablePatternToReplace = "\\b"+Pattern.quote(variableToReplace)+"\\b";
+        return definition.replaceAll(variablePatternToReplace, renameVarForDES(variableToReplace));
+    }
+
     private boolean isDerivativeVariableHasAmount(String variable) {
         return context.getDerivativeVarCompSequences().containsKey(variable);
     }
 
-    /**
-     * This method will rename variable which is defined as part of DES block but also used in error model block.
-     * This will be used in DES statement.
-     * @param variable
-     * @return
-     */
-    public String renameVarForDES(String variable) {
+    private String renameVarForDES(String variable) {
         variable = variable+DES_VAR_SUFFIX;
         return variable; 
     }
