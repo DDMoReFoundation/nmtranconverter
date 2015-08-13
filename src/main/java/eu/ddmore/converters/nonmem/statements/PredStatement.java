@@ -97,14 +97,15 @@ public class PredStatement {
         StringBuilder DerivativePredblock = new StringBuilder();
         DerivativePredblock.append(getModelStatement());
         //TODO : getAbbreviatedStatement();
-
         DerivativePredblock.append(getPKStatement());
-        DiffEquationStatementBuilder desBuilder = new DiffEquationStatementBuilder(context);
 
         DerivativePredblock.append(Formatter.des());
+        
         Formatter.setInDesBlock(true);
+        DiffEquationStatementBuilder desBuilder = new DiffEquationStatementBuilder(context);
         DerivativePredblock.append(desBuilder.getDifferentialEquationsStatement());
         Formatter.setInDesBlock(false);
+        
         //TODO: getAESStatement();
         DerivativePredblock.append(Formatter.endline()+Formatter.error());
         DerivativePredblock.append(getErrorStatement(desBuilder));
