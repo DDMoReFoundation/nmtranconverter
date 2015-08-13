@@ -100,12 +100,12 @@ public class PredStatement {
         DerivativePredblock.append(getPKStatement());
 
         DerivativePredblock.append(Formatter.des());
-        
+
+        DiffEquationStatementBuilder desBuilder = new DiffEquationStatementBuilder(context);        
         Formatter.setInDesBlock(true);
-        DiffEquationStatementBuilder desBuilder = new DiffEquationStatementBuilder(context);
         DerivativePredblock.append(desBuilder.getDifferentialEquationsStatement());
         Formatter.setInDesBlock(false);
-        
+
         //TODO: getAESStatement();
         DerivativePredblock.append(Formatter.endline()+Formatter.error());
         DerivativePredblock.append(getErrorStatement(desBuilder));

@@ -153,7 +153,13 @@ public class DiffEquationStatementBuilder {
 
     private String replaceVariable(String variableToReplace, String definition){
         String variablePatternToReplace = "\\b"+Pattern.quote(variableToReplace)+"\\b";
-        return definition.replaceAll(variablePatternToReplace, renameVarForDES(variableToReplace));
+        definition = definition.replaceAll(variablePatternToReplace, renameVarForDES(variableToReplace));
+
+        if(Formatter.isInDesBlock()){
+            String varPatternToReplace = "\\b"+Pattern.quote(Formatter.ColumnConstant.TIME.toString())+"\\b";
+            definition = definition.replaceAll(varPatternToReplace, Formatter.NmConstant.T.toString());
+        }
+        return definition;
     }
 
     private boolean isDerivativeVariableHasAmount(String variable) {

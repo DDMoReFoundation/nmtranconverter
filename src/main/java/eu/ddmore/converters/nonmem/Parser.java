@@ -44,8 +44,6 @@ import crx.converter.engine.parts.ObservationBlock.ObservationParameter;
 import crx.converter.tree.BinaryTree;
 import crx.converter.tree.Node;
 import eu.ddmore.converters.nonmem.utils.Formatter;
-import eu.ddmore.converters.nonmem.utils.Formatter.ColumnConstant;
-import eu.ddmore.converters.nonmem.utils.Formatter.NmConstant;
 import eu.ddmore.converters.nonmem.utils.Formatter.Symbol;
 import eu.ddmore.libpharmml.dom.IndependentVariable;
 import eu.ddmore.libpharmml.dom.commontypes.PharmMLRootType;
@@ -161,12 +159,7 @@ public class Parser extends BaseParser {
      * @return String formatted symbol
      */
     private String getFormattedSymbol(String symbol) {
-        if (isTimeSymbol(symbol)){
-            symbol = Formatter.getTimeSymbol();
-        } else{
-            symbol = Formatter.addPrefix(symbol);
-        }
-        return symbol;
+        return Formatter.getFormattedSymbol(symbol);
     }
 
     /**
@@ -291,16 +284,6 @@ public class Parser extends BaseParser {
         String symbol = v.getSymbId().toUpperCase();
         symbol = getFormattedSymbol(symbol);
         return symbol;
-    }
-
-    /**
-     * Checks if current symbol is Time symbol represented as either T or TIME.
-     *  
-     * @param symbol
-     * @return boolean - whether symbol is symbol for time
-     */
-    private boolean isTimeSymbol(String symbol) {
-        return symbol.equals(ColumnConstant.TIME.toString()) || symbol.equals(NmConstant.T.toString());
     }
 
     @Override
