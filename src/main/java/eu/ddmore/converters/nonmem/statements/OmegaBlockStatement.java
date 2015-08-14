@@ -50,7 +50,6 @@ public class OmegaBlockStatement {
         setEtaToOmagas(orderedEtasHandler.getOrderedEtas());
     }
 
-
     /**
      * This method will create omega blocks if there are any.
      * We will need ordered etas and eta to omega map to determine order of the omega block elements.
@@ -69,6 +68,7 @@ public class OmegaBlockStatement {
                 Iterator<CorrelationRef> iterator = correlations.iterator();
 
                 while(iterator.hasNext()){
+
                     CorrelationRef correlation = iterator.next();
                     ParameterRandomVariable firstRandomVar = correlation.rnd1;
                     ParameterRandomVariable secondRandomVar = correlation.rnd2;
@@ -85,31 +85,66 @@ public class OmegaBlockStatement {
                         row = swap;
                     }
 
-                    createFirstMatrixRow(eta, firstRandomVar);
-                    List<OmegaStatement> omegas = omegaBlocks.get(secondRandomVar.getSymbId());
-                    // add random var to matrix at [i,i]
-                    if(omegas.get(row)==null){
-                        initialiseRowElements(row, omegas);
-                        String secondVariable = RandomVariableHelper.getNameFromParamRandomVariable(secondRandomVar);
-                        omegas.set(row, paramHelper.getOmegaFromRandomVarName(secondVariable));
-                    }
+                    createFirstCorrMatrixRow(eta, firstRandomVar);
 
-                    //add coefficient associated with random var1 and random var2 at [i,j] 
-                    //which is mirrored with [j,i] ([j,i] will be empty as its not required) 
-                    if(omegas.get(column)==null || omegas.get(column).getSymbId().equals(EMPTY_VARIABLE)){
-                        OmegaStatement omega = null ;
-                        if(correlation.isCorrelation()){
-                            omega = getOmegaForCoefficient(correlation.correlationCoefficient, firstRandomVar, secondRandomVar);
-                        }else if(correlation.isCovariance()){
-                            omega = getOmegaForCoefficient(correlation.covariance, firstRandomVar, secondRandomVar);
-                        }
-                        if(omega != null){
-                            omegas.set(column,omega);
-                        }
-                    }
+                    addVarToCorrMatrix(firstRandomVar, column);
+                    addVarToCorrMatrix(secondRandomVar, row);
+
+                    addCoefficientToCorrMatrix(correlation, firstRandomVar, secondRandomVar, column);
+
                     iterator.remove();
                 }
             }
+        }
+    }
+
+    /**
+     * Creates first matrix row which will have only first omega as element.
+     * 
+     * @param eta
+     * @param randomVar1
+     */
+    private void createFirstCorrMatrixRow(String eta, ParameterRandomVariable randomVar1) {
+        if(etaToOmagas.get(randomVar1.getSymbId())== 1 && eta.equals(randomVar1.getSymbId())){
+            List<OmegaStatement> matrixRow = new ArrayList<OmegaStatement>();
+            String firstVariable = RandomVariableHelper.getNameFromParamRandomVariable(randomVar1);
+            matrixRow.add(paramHelper.getOmegaFromRandomVarName(firstVariable));
+            omegaBlocks.put(randomVar1.getSymbId(), matrixRow);
+        }
+    }
+
+    /**
+     * This method adds coefficient associated with random var1 and random var2 at [i,j] 
+     * which is mirrored with [j,i] ([j,i] can be empty as its not required) from correlation or covariance provided.
+     * If nothing is specified then default value will be specified. 
+     * 
+     * @param corr
+     * @param firstRandomVar
+     * @param secondRandomVar
+     * @param column
+     */
+    private void addCoefficientToCorrMatrix(CorrelationRef corr, ParameterRandomVariable firstRandomVar,
+            ParameterRandomVariable secondRandomVar, int column) {
+        List<OmegaStatement> omegas = omegaBlocks.get(secondRandomVar.getSymbId());
+        if(omegas.get(column)==null || omegas.get(column).getSymbId().equals(EMPTY_VARIABLE)){
+            OmegaStatement omega = null ;
+            if(corr.isCorrelation()){
+                omega = getOmegaForCoefficient(corr.correlationCoefficient, firstRandomVar, secondRandomVar);
+            }else if(corr.isCovariance()){
+                omega = getOmegaForCoefficient(corr.covariance, firstRandomVar, secondRandomVar);
+            }
+            if(omega != null){
+                omegas.set(column,omega);
+            }
+        }
+    }
+
+    private void addVarToCorrMatrix(ParameterRandomVariable randomVar, int column) {
+        List<OmegaStatement> omegas = omegaBlocks.get(randomVar.getSymbId());
+        if(omegas.get(column)==null){
+            initialiseRowElements(column, omegas);
+            String secondVariable = RandomVariableHelper.getNameFromParamRandomVariable(randomVar);
+            omegas.set(column, paramHelper.getOmegaFromRandomVarName(secondVariable));
         }
     }
 
@@ -197,7 +232,7 @@ public class OmegaBlockStatement {
         Preconditions.checkNotNull(coeff, "coefficient value should not be null");
         String firstVar = RandomVariableHelper.getNameFromParamRandomVariable(firstVariable);
         String secondVar = RandomVariableHelper.getNameFromParamRandomVariable(secondVariable);
-        
+
         if(coeff.getSymbRef()!=null){
             return paramHelper.getOmegaFromRandomVarName(coeff.getSymbRef().getSymbIdRef()); 
         }else if(coeff.getScalar()!=null || coeff.getEquation()!=null){
@@ -265,25 +300,10 @@ public class OmegaBlockStatement {
         List<ParameterBlock> parameterBlocks = paramHelper.getScriptDefinition().getParameterBlocks();
         if(!parameterBlocks.isEmpty()){
             for(ParameterBlock block : parameterBlocks){
-                correlations.addAll(block.getCorrelations());				
+                correlations.addAll(block.getCorrelations());
             }
         }
         return correlations;
-    }
-
-    /**
-     * Creates first matrix row which will have only first omega as element.
-     * 
-     * @param eta
-     * @param randomVar1
-     */
-    private void createFirstMatrixRow(String eta, ParameterRandomVariable randomVar1) {
-        if(etaToOmagas.get(randomVar1.getSymbId())== 1 && eta.equals(randomVar1.getSymbId())){
-            List<OmegaStatement> matrixRow = new ArrayList<OmegaStatement>();
-            String firstVariable = RandomVariableHelper.getNameFromParamRandomVariable(randomVar1);
-            matrixRow.add(paramHelper.getOmegaFromRandomVarName(firstVariable));
-            omegaBlocks.put(randomVar1.getSymbId(), matrixRow);
-        }
     }
 
     /**
