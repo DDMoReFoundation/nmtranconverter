@@ -147,9 +147,23 @@ public class Parser extends BaseParser {
     @Override
     protected String doSymbolRef(SymbolRef symbRefType) {
 
-        String symbol = Formatter.getFormattedSymbol(symbRefType.getSymbIdRef());
+        String symbol = Formatter.getFormattedSymbol(symbRefType.getSymbIdRef()).toUpperCase();
+        symbol = replaceIfReservedVarible(symbol);
 
         return symbol;
+    }
+    
+    private String replaceIfReservedVarible(String variable) {
+        String varSymbol = variable.toUpperCase();
+        if (lexer.isFilterReservedWords()) {
+            if (getSymbolReader().isReservedWord(varSymbol)) {
+                varSymbol = getSymbolReader().replacement4ReservedWord(varSymbol);
+                if (varSymbol == null){
+                    throw new NullPointerException("Replacement symbol for reserved word ('" + varSymbol + "') undefined.");
+                }
+            }
+        }
+        return varSymbol;
     }
 
     /**

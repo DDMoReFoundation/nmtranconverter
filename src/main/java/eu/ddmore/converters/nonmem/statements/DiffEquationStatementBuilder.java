@@ -129,6 +129,13 @@ public class DiffEquationStatementBuilder {
                 varDefinition = format(variableDefinitions.get(variable));
             }
 
+            for(String revervedWord : context.getReservedWords().keySet()){
+                if(format(varDefinition).contains(format(revervedWord))){
+                    varDefinition = replaceVariable(context.getReservedWords().get(revervedWord), varDefinition);
+                    varDefinitionsWithsuffix.put(variable, varDefinition);
+                }
+            }
+
             for(String derivativeVar : derivativeVarsInDES.keySet()){
                 derivativeVar = format(derivativeVar);
                 if(varDefinition.contains(derivativeVar)){

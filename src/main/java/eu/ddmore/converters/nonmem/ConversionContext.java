@@ -75,6 +75,9 @@ public class ConversionContext {
         this.parser = parser;
         this.lexer = lexer;
 
+        lexer.setFilterReservedWords(true);
+        parser.getSymbolReader().loadReservedWords();
+
         this.orderedThetasHandler = new OrderedThetasHandler(getScriptDefinition());
         this.etasHandler = new OrderedEtasHandler(getScriptDefinition());
         this.discreteHandler = new DiscreteHandler(getScriptDefinition());
@@ -190,9 +193,24 @@ public class ConversionContext {
     public StringBuilder buildThetaAssignments() {
         StringBuilder thetaAssignmentBlock = new StringBuilder();  
         for(String theta : parameterHelper.getThetaParams().keySet()){
-            thetaAssignmentBlock.append(Formatter.endline(theta+ " = "+getThetaForSymbol(theta)));
+            String thetaSymbol = replaceIfReservedVarible(theta);
+            
+            thetaAssignmentBlock.append(Formatter.endline(thetaSymbol+ " = "+getThetaForSymbol(theta)));
         }
         return thetaAssignmentBlock;
+    }
+
+    private String replaceIfReservedVarible(String variable) {
+        String varSymbol = variable.toUpperCase();
+        if (lexer.isFilterReservedWords()) {
+            if (parser.getSymbolReader().isReservedWord(varSymbol)) {
+                varSymbol = parser.getSymbolReader().replacement4ReservedWord(varSymbol);
+                if (varSymbol == null){
+                    throw new NullPointerException("Replacement symbol for reserved word ('" + varSymbol + "') undefined.");
+                }
+            }
+        }
+        return varSymbol;
     }
 
     /**
@@ -302,6 +320,10 @@ public class ConversionContext {
      */
     public List<ExternalDataSet> retrieveExternalDataSets(){
         return getLexer().getDataFiles().getExternalDataSets();
+    }
+    
+    public Map<String, String> getReservedWords(){
+        return parser.getSymbolReader().getReservedWordMap();
     }
 
     /**
