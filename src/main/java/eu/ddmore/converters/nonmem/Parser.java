@@ -157,8 +157,10 @@ public class Parser extends BaseParser {
 
     private String getCategoryMappingFor(String modelSymbol){
         CategoryRef cref = (CategoryRef) lexer.getAccessor().fetchElement(modelSymbol.toLowerCase());
-        String data_symbol = cref.getDataSymbol();
-        return data_symbol;
+        if(cref != null){
+            modelSymbol = cref.getDataSymbol();
+        }
+        return modelSymbol;
     }
 
     private String replaceIfReservedVarible(String variable) {
@@ -401,7 +403,7 @@ public class Parser extends BaseParser {
 
     private String getConditionStatement(String conditionStatement) {
         conditionStatement = conditionStatement.replaceAll("\\s+","").toUpperCase();
-        
+
         if(conditionStatement.contains(SEX_COLUMN)){
             String[] conditionWords = conditionStatement.split("\\.");
             StringBuilder conditionblock = new StringBuilder();
