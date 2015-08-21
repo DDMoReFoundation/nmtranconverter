@@ -194,7 +194,7 @@ public class ConversionContext {
         StringBuilder thetaAssignmentBlock = new StringBuilder();  
         for(String theta : parameterHelper.getThetaParams().keySet()){
             String thetaSymbol = replaceIfReservedVarible(theta);
-            
+
             thetaAssignmentBlock.append(Formatter.endline(thetaSymbol+ " = "+getThetaForSymbol(theta)));
         }
         return thetaAssignmentBlock;
@@ -321,7 +321,7 @@ public class ConversionContext {
     public List<ExternalDataSet> retrieveExternalDataSets(){
         return getLexer().getDataFiles().getExternalDataSets();
     }
-    
+
     public Map<String, String> getReservedWords(){
         return parser.getSymbolReader().getReservedWordMap();
     }
