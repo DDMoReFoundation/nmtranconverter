@@ -39,6 +39,7 @@ import java.util.Properties;
 import javax.xml.bind.JAXBElement;
 
 import crx.converter.engine.BaseParser;
+import crx.converter.engine.CategoryRef;
 import crx.converter.engine.parts.EstimationStep.FixedParameter;
 import crx.converter.engine.parts.ObservationBlock.ObservationParameter;
 import crx.converter.tree.BinaryTree;
@@ -63,6 +64,7 @@ import eu.ddmore.libpharmml.dom.trialdesign.Activity;
 
 public class Parser extends BaseParser {
 
+    private static final String SEX_COLUMN = "SEX";
     private Properties binopProperties;
     private static final String equationFormat = "%s = %s";
     private static final String lineFormat = "%s ";
@@ -152,7 +154,13 @@ public class Parser extends BaseParser {
 
         return symbol;
     }
-    
+
+    private String getCategoryMappingFor(String modelSymbol){
+        CategoryRef cref = (CategoryRef) lexer.getAccessor().fetchElement(modelSymbol.toLowerCase());
+        String data_symbol = cref.getDataSymbol();
+        return data_symbol;
+    }
+
     private String replaceIfReservedVarible(String variable) {
         String varSymbol = variable.toUpperCase();
         if (lexer.isFilterReservedWords()) {
@@ -373,10 +381,10 @@ public class Parser extends BaseParser {
 
             String format = Formatter.endline("%s (%s) "+Formatter.Operator.THEN)
                     +Formatter.endline(Formatter.indent("%s = %s"));
-            String conditionStatement = conditional_stmts[i].replaceAll("\\s+","");
+
+            String conditionStatement = getConditionStatement(conditional_stmts[i]);
 
             block.append(String.format(format, Formatter.Operator.IF, conditionStatement, field_tag, assignment_stmts[i]));
-
             if (else_block != null && else_index >= 0) {
                 block.append(Formatter.endline(Formatter.Operator.ELSE.toString()));
                 String elseformat = Formatter.endline(Formatter.indent("%s = %s"));
@@ -389,6 +397,28 @@ public class Parser extends BaseParser {
         symbol = block.toString();
 
         return symbol;
+    }
+
+    private String getConditionStatement(String conditionStatement) {
+        conditionStatement = conditionStatement.replaceAll("\\s+","").toUpperCase();
+        
+        if(conditionStatement.contains(SEX_COLUMN)){
+            String[] conditionWords = conditionStatement.split("\\.");
+            StringBuilder conditionblock = new StringBuilder();
+
+            for(int count=0;count<conditionWords.length;count++){
+                String word = conditionWords[count];
+                if(word.equals(SEX_COLUMN)){
+                    String comparisonParam = conditionWords[count+2];
+                    String comparisonParamVal = getCategoryMappingFor(comparisonParam);
+                    conditionWords[count+2] = comparisonParamVal; 
+                }
+                conditionblock.append(conditionWords[count]);
+                conditionblock.append((count!=conditionWords.length-1)?".":"");
+            }
+            conditionStatement = conditionblock.toString();
+        }
+        return conditionStatement;
     }
 
     private BinaryTree getAssignmentTree(ExpressionValue expressionValue){
