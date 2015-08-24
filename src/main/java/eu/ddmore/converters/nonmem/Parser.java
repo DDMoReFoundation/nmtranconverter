@@ -402,10 +402,10 @@ public class Parser extends BaseParser {
     }
 
     private String getConditionStatement(String conditionStatement) {
-        conditionStatement = conditionStatement.replaceAll("\\s+","").toUpperCase();
+        String condition = conditionStatement.replaceAll("\\s+","").toUpperCase();
 
-        if(conditionStatement.contains(SEX_COLUMN)){
-            String[] conditionWords = conditionStatement.split("\\.");
+        if(condition.contains(SEX_COLUMN)){
+            String[] conditionWords = condition.split("\\.");
             StringBuilder conditionblock = new StringBuilder();
 
             for(int count=0;count<conditionWords.length;count++){
@@ -418,9 +418,9 @@ public class Parser extends BaseParser {
                 conditionblock.append(conditionWords[count]);
                 conditionblock.append((count!=conditionWords.length-1)?".":"");
             }
-            conditionStatement = conditionblock.toString();
+            condition = conditionblock.toString();
         }
-        return conditionStatement;
+        return condition;
     }
 
     private BinaryTree getAssignmentTree(ExpressionValue expressionValue){
