@@ -70,7 +70,7 @@ public class IndividualDefinitionEmitter {
                 if(gaussianModel.getLinearCovariate()!=null){
                     if (!StringUtils.isEmpty(pop_param_symbol)) {
                         String format = ((logType.equals(NmConstant.LOG.toString()))?(logType+"(%s)"):("%s"));
-                        statement.append(String.format(format, Formatter.addPrefix(pop_param_symbol)));
+                        statement.append(String.format(format, pop_param_symbol));
                         definedPopSymbols.add(pop_param_symbol);
                     }
 
@@ -110,22 +110,19 @@ public class IndividualDefinitionEmitter {
 
         if(type instanceof IndependentVariable){
             valueToAppend = doIndependentVariable((IndependentVariable)type);
-        } else if(type instanceof CovariateTransformation){
-            String covStatement = covRelation.getSymbRef().getSymbIdRef();
-            valueToAppend = addFixedEffectsStatementToIndivParamDef(covRelation, covStatement);
-        }
-        else if(type instanceof CovariateDefinition){
-            CovariateDefinition covDefinition = (CovariateDefinition) type;
-
-            if (covDefinition.getContinuous() != null) {
-                String covStatement = covDefinition.getSymbId();
-                valueToAppend = addFixedEffectsStatementToIndivParamDef(covRelation, covStatement);
-            } else if (covDefinition.getCategorical() != null) {
-                throw new UnsupportedOperationException("No categorical yet");
+        } else {
+            String covariateVar = new String();
+            if(type instanceof CovariateTransformation){
+                covariateVar = covRelation.getSymbRef().getSymbIdRef();
+            } else if(type instanceof CovariateDefinition){
+                CovariateDefinition covDefinition = (CovariateDefinition) type;
+                covariateVar = covDefinition.getSymbId();
             }
+            valueToAppend = addFixedEffectsStatementToIndivParamDef(covRelation, covariateVar);
         }
+
         if(!valueToAppend.isEmpty()){
-            statement.append("+"+valueToAppend);
+            statement.append(" + "+valueToAppend);
         }
         return statement;
     }
