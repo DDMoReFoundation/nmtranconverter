@@ -62,28 +62,16 @@ public class DataSetHandler {
         reader.close();
     }
 
-//    /**
-//     * Sets 
-//     * @param iovColumnUniqueValues
-//     * @throws IOException
-//     */
-//    public void setIovColumnUniqueValues(Map<String, List<Double>> iovColumnUniqueValues) throws IOException{
-//
-//        CsvReader reader = new CsvReader(getDataFile().getAbsolutePath());
-//        reader.readHeaders();
-//        while (reader.readRecord())
-//        {
-//            for(String columnName : iovColumnUniqueValues.keySet()){
-//                List<Double> uniqueValues = iovColumnUniqueValues.get(columnName);
-//                Double value = Double.parseDouble(reader.get(columnName));
-//                if(!uniqueValues.contains(value)){
-//                    uniqueValues.add(value);
-//                }
-//            }
-//        }
-//        reader.close();
-//    }
-
+    /**
+     * The ignore character is determined with help of first character of data file.
+     * If the first char is alpha-numeric then '@' is returned 
+     * or else the first char specified is returned as ignore character.
+     *  
+     * @param firstLine
+     * @return ignore character
+     * @throws FileNotFoundException
+     * @throws IOException
+     */
     private Character getIgnoreCharacter(String firstLine) throws FileNotFoundException,IOException {
         Character firstChar = IGNORE_CHAR;
         if(!StringUtils.isEmpty(firstLine)){
@@ -95,30 +83,6 @@ public class DataSetHandler {
         }
         return firstChar;
     }
-
-    /**
-     * The ignore character is determined with help of first character of data file.
-     * If the first char is alpha-numeric then '@' is returned 
-     * or else the first char specified is returned as ignore character. 
-     * @return
-     * @throws FileNotFoundException
-     * @throws IOException
-     */
-    //    public Character getIgnoreCharacter() throws FileNotFoundException,IOException {
-    //        Character firstChar = IGNORE_CHAR;
-    //        FileInputStream inputStream = new FileInputStream(getDataFile());
-    //        BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
-    //        String firstLine = reader.readLine();
-    //        if(firstLine!=null){
-    //            //We need only first character of first line.
-    //            firstChar= firstLine.toCharArray()[0];
-    //        }
-    //        if(Character.isLetterOrDigit(firstChar)){
-    //            firstChar = IGNORE_CHAR;
-    //        }
-    //        reader.close();
-    //        return firstChar;
-    //    }
 
     public File getDataFile() {
         return dataFile;
