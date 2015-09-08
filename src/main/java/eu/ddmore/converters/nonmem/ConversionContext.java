@@ -22,8 +22,10 @@ import crx.converter.engine.parts.StructuralBlock;
 import crx.converter.spi.ILexer;
 import crx.converter.spi.IParser;
 import crx.converter.tree.BinaryTree;
+import eu.ddmore.converters.nonmem.statements.DataSetHandler;
 import eu.ddmore.converters.nonmem.statements.ErrorStatement;
-import eu.ddmore.converters.nonmem.statements.InputColumnsProvider;
+import eu.ddmore.converters.nonmem.statements.InputColumnsHandler;
+import eu.ddmore.converters.nonmem.statements.InterOccVariabilityHandler;
 import eu.ddmore.converters.nonmem.statements.PredStatement;
 import eu.ddmore.converters.nonmem.utils.DiscreteHandler;
 import eu.ddmore.converters.nonmem.utils.Formatter;
@@ -61,8 +63,10 @@ public class ConversionContext {
     private final Map<String, String> derivativeVarCompSequences = new HashMap<String, String>();
     private final ConditionalEventBuilder conditionalEventBuilder;
     private final MuReferenceHandler muReferenceHandler;
+    private final InterOccVariabilityHandler iovHandler; 
+    private final InputColumnsHandler inputColumnsHandler;
+    private final DataSetHandler dataSetHandler;
 
-    private InputColumnsProvider inputColumns;
     private final File srcFile;
 
 
@@ -78,23 +82,35 @@ public class ConversionContext {
         lexer.setFilterReservedWords(true);
         parser.getSymbolReader().loadReservedWords();
 
+
+        //This sequence of initialisation is important for information availability.  
+        this.inputColumnsHandler = new InputColumnsHandler(retrieveExternalDataSets());
+        this.dataSetHandler = new DataSetHandler(retrieveExternalDataSets(), srcFile);
         this.orderedThetasHandler = new OrderedThetasHandler(getScriptDefinition());
         this.etasHandler = new OrderedEtasHandler(getScriptDefinition());
         this.discreteHandler = new DiscreteHandler(getScriptDefinition());
         this.parameterHelper = new ParametersHelper(getScriptDefinition(), etasHandler, orderedThetasHandler);
+
         this.conditionalEventBuilder = new ConditionalEventBuilder(this);
         this.muReferenceHandler = new MuReferenceHandler(this);
+        this.iovHandler = new InterOccVariabilityHandler(this);
         initialise();
     }
 
     /**
      * This method will initialise parameters, eta order, theta assignments and error statements, 
      * which will be required for nmtran block translations.
+     * @throws IOException 
      */
-    private void initialise(){
+    private void initialise() throws IOException{
+
         //initialise parameters
         if (lexer.getModelParameters().isEmpty()) {
             throw new IllegalArgumentException("Cannot find simple parameters for the pharmML file.");
+        }
+
+        if(dataSetHandler.getDataFile().exists()){
+            iovHandler.retrieveIovColumnUniqueValues(dataSetHandler.getDataFile());
         }
         orderedThetasHandler.createOrderedThetasToEta(retrieveOrderedEtas());
         parameterHelper.initialiseAllParameters(lexer.getModelParameters());
@@ -385,19 +401,23 @@ public class ConversionContext {
         return etasHandler;
     }
 
-    public InputColumnsProvider getInputColumnsProvider() {
-        return inputColumns;
-    }
-
-    public void setInputColumnsProvider(InputColumnsProvider inputColumn) {
-        this.inputColumns = inputColumn;
-    }
-
     public ConditionalEventBuilder getConditionalEventBuilder() {
         return conditionalEventBuilder;
     }
 
     public MuReferenceHandler getMuReferenceHandler() {
         return muReferenceHandler;
+    }
+
+    public InterOccVariabilityHandler getIovHandler() {
+        return iovHandler;
+    }
+
+    public InputColumnsHandler getInputColumnsHandler() {
+        return inputColumnsHandler;
+    }
+
+    public DataSetHandler getDataSetHandler() {
+        return dataSetHandler;
     }
 }

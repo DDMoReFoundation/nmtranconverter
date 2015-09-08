@@ -3,6 +3,8 @@
  ******************************************************************************/
 package eu.ddmore.converters.nonmem.statements;
 
+import eu.ddmore.libpharmml.dom.dataset.ColumnType;
+
 /**
  * This class stores input header details.
  */
@@ -10,11 +12,13 @@ public class InputHeader {
     private String columnId;
     private boolean dropped;
     private Long columnSequence;
+    private ColumnType columnType;
     
-    public InputHeader(String columnId, boolean isDropped, Long columnSeq){
+    public InputHeader(String columnId, boolean isDropped, Long columnSeq, ColumnType columnType){
         this.columnId = columnId;
         this.dropped = isDropped;
         this.columnSequence = columnSeq;
+        this.columnType = columnType;
     }
 
     public String getColumnId() {
@@ -39,5 +43,13 @@ public class InputHeader {
 
     public void setColumnSequence(Long columnSequence) {
         this.columnSequence = columnSequence;
+    }
+
+    public ColumnType getColumnType() {
+        return columnType;
+    }
+
+    public void setColumnType(ColumnType columnType) {
+        this.columnType = columnType;
     }
 }

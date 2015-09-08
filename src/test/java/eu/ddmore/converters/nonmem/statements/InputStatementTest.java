@@ -17,7 +17,6 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.powermock.modules.junit4.PowerMockRunner;
 
-import eu.ddmore.converters.nonmem.ConversionContext;
 import eu.ddmore.converters.nonmem.utils.Formatter.ColumnConstant;
 import eu.ddmore.libpharmml.dom.commontypes.SymbolType;
 import eu.ddmore.libpharmml.dom.dataset.ColumnDefinition;
@@ -29,7 +28,7 @@ import eu.ddmore.libpharmml.util.WrappedList;
 @RunWith(PowerMockRunner.class)
 public class InputStatementTest {
 
-    @Mock ConversionContext context;
+    @Mock InputColumnsHandler inputColumns;
     @Mock ExternalDataSet extDataSet;
     @Mock DataSet dataSet;
 
@@ -66,6 +65,8 @@ public class InputStatementTest {
     private static final ColumnDefinition EVID = new ColumnDefinition(COL_ID_5, COL_TYPE_5, COL_VALUE_5, COL_NUM_5);
 
     WrappedList<ColumnDefinition> dataColumns;
+    List<ExternalDataSet> externalDataSets = new ArrayList<ExternalDataSet>();
+
     @Before
     public void setUp() throws Exception {
         dataColumns = new WrappedList<ColumnDefinition>();
@@ -74,9 +75,7 @@ public class InputStatementTest {
         when(dataSet.getListOfColumnDefinition()).thenReturn(dataColumns);
 
         when(extDataSet.getDataSet()).thenReturn(dataSet);
-        List<ExternalDataSet> externalDataSets = new ArrayList<ExternalDataSet>();
         externalDataSets.add(extDataSet);
-        when(context.retrieveExternalDataSets()).thenReturn(externalDataSets);
     }
 
     @Test
@@ -84,8 +83,9 @@ public class InputStatementTest {
         dataColumns.add(WT);
         dataColumns.add(AMT);
         dataColumns.add(EVID);
+        inputColumns = new InputColumnsHandler(externalDataSets);
         
-        inputStatement = new InputStatement(context);
+        inputStatement = new InputStatement(inputColumns);
         String inputStmt = inputStatement.getStatement();
         assertNotNull("should return input statement",inputStmt);
     }
@@ -93,8 +93,9 @@ public class InputStatementTest {
     @Test
     public void shouldReturnInputStatementWithDrop() {
         dataColumns.add(EVID);
+        inputColumns = new InputColumnsHandler(externalDataSets);
         
-        inputStatement = new InputStatement(context);
+        inputStatement = new InputStatement(inputColumns);
         String inputStmt = inputStatement.getStatement();
         assertNotNull("should return input statement",inputStmt);
         assertTrue("should contain DROP for missing columns in order",inputStmt.contains("DROP"));
@@ -104,8 +105,9 @@ public class InputStatementTest {
     public void shouldMarkColumnDropped() {
         dataColumns.add(WT);
         dataColumns.add(EVID);
+        inputColumns = new InputColumnsHandler(externalDataSets);
         
-        inputStatement = new InputStatement(context);
+        inputStatement = new InputStatement(inputColumns);
         String inputStmt = inputStatement.getStatement();
         assertNotNull("should return input statement",inputStmt);
         //if column has columntype "UNDEFINED" then mark it as dropped

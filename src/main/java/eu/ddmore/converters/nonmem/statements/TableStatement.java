@@ -39,12 +39,12 @@ public class TableStatement {
     private final ConversionContext context;
     private InputColumnsProvider inputColumns;
 
-
     public TableStatement(ConversionContext convContext){
         Preconditions.checkNotNull(convContext, "Conversion Context cannot be null");
         this.context = convContext;
-        Preconditions.checkNotNull(context.getInputColumnsProvider(), "input columns provider cannot be null.");
-        inputColumns = context.getInputColumnsProvider(); 
+        Preconditions.checkNotNull(context.getInputColumnsHandler(), "input columns handler cannot be null.");
+        Preconditions.checkNotNull(context.getInputColumnsHandler().getInputColumns(), "input columns provider cannot be null.");
+        inputColumns = context.getInputColumnsHandler().getInputColumns(); 
     }
 
     /**

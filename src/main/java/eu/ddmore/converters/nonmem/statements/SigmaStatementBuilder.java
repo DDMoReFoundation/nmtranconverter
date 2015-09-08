@@ -123,7 +123,6 @@ public class SigmaStatementBuilder {
     /**
      * Gets random variables from observation as well as parameter block (if associated with residual error)
      * 
-     * @param context
      * @return set of random variables
      */
     private Set<ParameterRandomVariable> getRandomVariablesForSigma() {

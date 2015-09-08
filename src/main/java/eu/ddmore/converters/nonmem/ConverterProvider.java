@@ -92,8 +92,8 @@ public class ConverterProvider extends Lexer {
         InputStatement inputStatement;
         DataStatement dataStatement;
 
-        inputStatement = new InputStatement(context);
-        dataStatement = new DataStatement(context);
+        inputStatement = new InputStatement(context.getInputColumnsHandler());
+        dataStatement = new DataStatement(context.getDataSetHandler());
         
         fout.write(Formatter.endline());
         fout.write(inputStatement.getStatement());
