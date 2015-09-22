@@ -37,7 +37,10 @@ public class ErrorStatement {
     public ErrorStatement(FunctionCallType functionCallType, String output){
         if(functionCallType!=null){
             functionCall = functionCallType;
-            setParamsFunctionCall(output);
+            setParamsFunctionCall();
+            if(function.isEmpty()){
+                function = output;
+            }
             functionRep = function;
         }
     }
@@ -45,7 +48,7 @@ public class ErrorStatement {
     /**
      * This method will set additive, proportional and f values required to create error statement.	
      */
-    private void setParamsFunctionCall(String output){
+    private void setParamsFunctionCall(){
         errorType = functionCall.getSymbRef().getSymbIdRef();
         for(FunctionArgument arg : functionCall.getFunctionArgument()){
             String paramValue = fetchParamValue(arg);
@@ -58,7 +61,7 @@ public class ErrorStatement {
                     proportional = (paramValue.isEmpty())?proportional:paramValue;
                     
                 }else if(arg.getSymbId().equals(FunctionArg.FUNC.getDescription())){
-                    function = (paramValue.isEmpty())?output:paramValue;
+                    function = paramValue;
                 }
             }
         }
