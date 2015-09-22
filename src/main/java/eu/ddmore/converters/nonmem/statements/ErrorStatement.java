@@ -3,7 +3,6 @@
  ******************************************************************************/
 package eu.ddmore.converters.nonmem.statements;
 
-import eu.ddmore.converters.nonmem.utils.Formatter;
 import eu.ddmore.converters.nonmem.utils.ScalarValueHandler;
 import eu.ddmore.libpharmml.dom.maths.FunctionCallType;
 import eu.ddmore.libpharmml.dom.maths.FunctionCallType.FunctionArgument;
@@ -27,8 +26,8 @@ public class ErrorStatement {
         }
     }
 
-    private String additive = new String();
-    private String proportional = new String();
+    private String additive = new String("0.0");
+    private String proportional = new String("0.0");
     private String functionRep = new String();
 
     private FunctionCallType functionCall = null;
@@ -38,10 +37,7 @@ public class ErrorStatement {
     public ErrorStatement(FunctionCallType functionCallType, String output){
         if(functionCallType!=null){
             functionCall = functionCallType;
-            setParamsFunctionCall();
-            if(function.isEmpty()){
-                function = Formatter.addPrefix(output);
-            }
+            setParamsFunctionCall(output);
             functionRep = function;
         }
     }
@@ -49,17 +45,20 @@ public class ErrorStatement {
     /**
      * This method will set additive, proportional and f values required to create error statement.	
      */
-    private void setParamsFunctionCall(){
+    private void setParamsFunctionCall(String output){
         errorType = functionCall.getSymbRef().getSymbIdRef();
         for(FunctionArgument arg : functionCall.getFunctionArgument()){
             String paramValue = fetchParamValue(arg);
             if(arg.getSymbId()!=null && paramValue!=null){
+                
                 if(arg.getSymbId().equals(FunctionArg.ADDITIVE.getDescription())){
-                    additive = Formatter.addPrefix(paramValue);
+                    additive = (paramValue.isEmpty())?additive:paramValue;
+                    
                 }else if(arg.getSymbId().equals(FunctionArg.PROP.getDescription())){
-                    proportional = Formatter.addPrefix(paramValue);
-                }else if(arg.getSymbId().equals(FunctionArg.FUNC.getDescription())){					
-                    function = Formatter.addPrefix(paramValue);
+                    proportional = (paramValue.isEmpty())?proportional:paramValue;
+                    
+                }else if(arg.getSymbId().equals(FunctionArg.FUNC.getDescription())){
+                    function = (paramValue.isEmpty())?output:paramValue;
                 }
             }
         }
@@ -101,7 +100,7 @@ public class ErrorStatement {
     public FunctionCallType getFunctionCall() {
         return functionCall;
     }
-    
+
     public String getErrorType() {
         return errorType;
     }
