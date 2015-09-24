@@ -3,6 +3,8 @@
  ******************************************************************************/
 package eu.ddmore.converters.nonmem.statements;
 
+import com.google.common.base.Preconditions;
+
 import eu.ddmore.converters.nonmem.utils.ScalarValueHandler;
 import eu.ddmore.libpharmml.dom.maths.FunctionCallType;
 import eu.ddmore.libpharmml.dom.maths.FunctionCallType.FunctionArgument;
@@ -35,14 +37,14 @@ public class ErrorStatement {
     private String errorType = new String();
 
     public ErrorStatement(FunctionCallType functionCallType, String output){
-        if(functionCallType!=null){
-            functionCall = functionCallType;
-            setParamsFunctionCall();
-            if(function.isEmpty()){
-                function = output;
-            }
-            functionRep = function;
+        Preconditions.checkNotNull(functionCallType, "functional call type cannot be null");
+
+        functionCall = functionCallType;
+        setParamsFunctionCall();
+        if(function.isEmpty()){
+            function = output;
         }
+        functionRep = function;
     }
 
     /**
@@ -53,13 +55,13 @@ public class ErrorStatement {
         for(FunctionArgument arg : functionCall.getFunctionArgument()){
             String paramValue = fetchParamValue(arg);
             if(arg.getSymbId()!=null && paramValue!=null){
-                
+
                 if(arg.getSymbId().equals(FunctionArg.ADDITIVE.getDescription())){
                     additive = (paramValue.isEmpty())?additive:paramValue;
-                    
+
                 }else if(arg.getSymbId().equals(FunctionArg.PROP.getDescription())){
                     proportional = (paramValue.isEmpty())?proportional:paramValue;
-                    
+
                 }else if(arg.getSymbId().equals(FunctionArg.FUNC.getDescription())){
                     function = paramValue;
                 }
