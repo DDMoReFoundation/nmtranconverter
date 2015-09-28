@@ -113,7 +113,9 @@ public class Parser extends BaseParser {
             return subtraction(leftStatement, operator, rightStatement);
         }else if(op.equalsIgnoreCase(DIVIDE)) {
             return division(leftStatement, operator, rightStatement);
-        }else {
+        }else if (op.equalsIgnoreCase(POWER)) 
+            return power(leftStatement, operator, rightStatement);
+        else {
             return genericMathOperation(leftStatement, operator, rightStatement);
         }
     }
@@ -127,6 +129,11 @@ public class Parser extends BaseParser {
         String strToReturn =  "(" + addParenthesesIfNeeded(left) + operator + addParenthesesIfNeeded(right) +")";
         return strToReturn;
     }
+    
+    private String power(String left, String operator, String right) {
+        String strToReturn =  "(" + addParenthesesIfNeeded(left)+")" + operator + addParenthesesIfNeeded(right);
+        return strToReturn;
+    }
 
     private String division(String left, String operator, String right) {
         String strToReturn =  addParenthesesIfNeeded(left) + operator + addParenthesesIfNeeded(right);
@@ -134,12 +141,12 @@ public class Parser extends BaseParser {
     }
 
     private String genericMathOperation(String left, String operator, String right) {
-        String strToReturn =  addParenthesesIfNeeded(left) + operator + addParenthesesIfNeeded(right);
+        String strToReturn =  left + operator + right;
         return strToReturn;
     }
 
     private String addParenthesesIfNeeded(String operand) {
-        if ( (operand.contains(PLUS) || operand.contains(MINUS)) && !operand.startsWith("(")) {
+        if ( (operand.contains(getScriptBinaryOperator(PLUS)) || operand.contains(getScriptBinaryOperator(MINUS))) && !operand.startsWith("(")) {
             return "("+ operand +")";
         } else {
             return operand;
