@@ -22,44 +22,43 @@ public class DataSetHandler {
     private String dataFileName = null;
     private File dataFile = null;
     private final List<ExternalDataSet> extDataSets;
-    private final File srcFile;
     private Character ignoreChar;
 
-    public DataSetHandler(List<ExternalDataSet> extDataSets, File srcFile) throws IOException {
+    public DataSetHandler(List<ExternalDataSet> extDataSets, String dataLocation) throws IOException {
         Preconditions.checkNotNull(extDataSets, "External DataSet cannot be null");
         Preconditions.checkArgument(!extDataSets.isEmpty(), "External DataSet cannot be empty");
-        Preconditions.checkNotNull(srcFile, "source file cannot be null");
+        Preconditions.checkNotNull(dataLocation, "source file cannot be null");
         this.extDataSets= extDataSets;
-        this.srcFile = srcFile;
-        initialiseDataSetDetails();
+        initialiseDataSetDetails(dataLocation);
     }
 
-    private void initialiseDataSetDetails() throws IOException {
+    private void initialiseDataSetDetails(String dataLocation) throws IOException {
 
-        for (ExternalDataSet extDataSet : extDataSets) {
-            if (extDataSet.getDataSet().getExternalFile().getPath() != null) {
-                String dataLocation = srcFile.getAbsoluteFile().getParentFile().getAbsolutePath();
-                dataFileName = extDataSet.getDataSet().getExternalFile().getPath();
-                File data = new File(dataLocation+File.separator+dataFileName);
-                if(data.exists()){
-                    setDataFile(data);
-                }else{
-                    throw new IllegalStateException("external data file doesnt exist for path :"+data.getAbsolutePath()); 
-                }
+        if(extDataSets.size()>1){
+            throw new IllegalStateException("Multiple external datasets are not supported yet.");
+        }
+        ExternalDataSet extDataSet = extDataSets.get(0);
+        if (extDataSet.getDataSet().getExternalFile().getPath() != null) {
+            dataFileName = extDataSet.getDataSet().getExternalFile().getPath();
+            File data = new File(dataLocation+File.separator+dataFileName);
+            if(data.exists()){
+                setDataFile(data);
+            }else{
+                throw new IllegalStateException("external data file doesnt exist for path :"+data.getAbsolutePath()); 
             }
         }
 
         analyseDataSet();
     }
 
-    private void analyseDataSet() throws IOException{
-        FileInputStream inputStream = new FileInputStream(getDataFile());
-        BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
-
-        String firstLine = reader.readLine();
-        setIgnoreChar(getIgnoreCharacter(firstLine));
-
-        reader.close();
+    private void analyseDataSet() {
+        try(BufferedReader reader = new BufferedReader(
+            new InputStreamReader(new FileInputStream(getDataFile())));) {
+            String firstLine = reader.readLine();
+            setIgnoreChar(getIgnoreCharacter(firstLine));
+        } catch (IOException e) {
+            throw new IllegalStateException("Exception while accessing data file "+dataFile.getName()+" :"+ e);
+        }
     }
 
     /**
@@ -72,11 +71,11 @@ public class DataSetHandler {
      * @throws FileNotFoundException
      * @throws IOException
      */
-    private Character getIgnoreCharacter(String firstLine) throws FileNotFoundException,IOException {
+    private Character getIgnoreCharacter(String firstLine) {
         Character firstChar = IGNORE_CHAR;
         if(!StringUtils.isEmpty(firstLine)){
             //We need only first character of first line.
-            firstChar= firstLine.toCharArray()[0];
+            firstChar= new Character(firstLine.charAt(0));
         }
         if(Character.isLetterOrDigit(firstChar)){
             firstChar = IGNORE_CHAR;

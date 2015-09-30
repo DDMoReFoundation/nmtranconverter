@@ -67,15 +67,11 @@ public class ConversionContext {
     private final InputColumnsHandler inputColumnsHandler;
     private final DataSetHandler dataSetHandler;
 
-    private final File srcFile;
-
-
     ConversionContext(File srcFile, IParser parser, ILexer lexer) throws IOException{
         Preconditions.checkNotNull(srcFile, "source file cannot be null");
         Preconditions.checkNotNull(parser, " common converter parser cannot be null");
         Preconditions.checkNotNull(lexer, "common converter lexer cannot be null");
 
-        this.srcFile = srcFile;
         this.parser = parser;
         this.lexer = lexer;
 
@@ -85,7 +81,8 @@ public class ConversionContext {
 
         //This sequence of initialisation is important for information availability.  
         this.inputColumnsHandler = new InputColumnsHandler(retrieveExternalDataSets());
-        this.dataSetHandler = new DataSetHandler(retrieveExternalDataSets(), srcFile);
+        String dataLocation = srcFile.getAbsoluteFile().getParentFile().getAbsolutePath();
+        this.dataSetHandler = new DataSetHandler(retrieveExternalDataSets(), dataLocation);
         this.orderedThetasHandler = new OrderedThetasHandler(getScriptDefinition());
         this.etasHandler = new OrderedEtasHandler(getScriptDefinition());
         this.discreteHandler = new DiscreteHandler(getScriptDefinition());
@@ -363,10 +360,6 @@ public class ConversionContext {
 
     public Map<String,ErrorStatement> getErrorStatements() {
         return errorStatements;
-    }
-
-    public File getSrcFile() {
-        return srcFile;
     }
 
     public IParser getParser() {
