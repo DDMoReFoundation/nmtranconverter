@@ -24,7 +24,7 @@ public class DataSetHandler {
     private final List<ExternalDataSet> extDataSets;
     private Character ignoreChar;
 
-    public DataSetHandler(List<ExternalDataSet> extDataSets, String dataLocation) throws IOException {
+    public DataSetHandler(List<ExternalDataSet> extDataSets, String dataLocation) {
         Preconditions.checkNotNull(extDataSets, "External DataSet cannot be null");
         Preconditions.checkArgument(!extDataSets.isEmpty(), "External DataSet cannot be empty");
         Preconditions.checkNotNull(dataLocation, "source file cannot be null");
@@ -32,7 +32,7 @@ public class DataSetHandler {
         initialiseDataSetDetails(dataLocation);
     }
 
-    private void initialiseDataSetDetails(String dataLocation) throws IOException {
+    private void initialiseDataSetDetails(String dataLocation) {
 
         if(extDataSets.size()>1){
             throw new IllegalStateException("Multiple external datasets are not supported yet.");

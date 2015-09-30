@@ -3,10 +3,12 @@
  ******************************************************************************/
 package eu.ddmore.converters.nonmem.statements;
 
-import java.io.IOException;
 import com.google.common.base.Preconditions;
 import eu.ddmore.converters.nonmem.utils.Formatter;
 
+/**
+ * This class creates data statement block for nmtran
+ */
 public class DataStatement{
 
     private String statement;
@@ -19,14 +21,12 @@ public class DataStatement{
     }
 
     /**
-     * This method will return the data statement.
+     * This method returns the data statement.
      * The data file name is retrieved from nonmem dataset 
-     * and ignore character is determined with help of first character of data file.
      * 
      * @return the printable version of this statement
-     * @throws IOException 
      */
-    public String getStatement() throws IOException {
+    public String getStatement() {
 
         StringBuilder stringBuilder = new StringBuilder(Formatter.data());
         stringBuilder.append("\"" + dataSetHandler.getDataFileName() + "\"");
