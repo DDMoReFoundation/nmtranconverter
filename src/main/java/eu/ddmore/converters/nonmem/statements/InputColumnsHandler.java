@@ -15,11 +15,13 @@ import eu.ddmore.libpharmml.dom.dataset.ColumnDefinition;
 import eu.ddmore.libpharmml.dom.dataset.ColumnType;
 import eu.ddmore.libpharmml.dom.modellingsteps.ExternalDataSet;
 
-
+/**
+ * This class handles input columns operations and facilitates input columns provider for access to columns.
+ */
 public class InputColumnsHandler {
 
     private static final String DROP = "DROP";
-    private InputColumnsProvider inputColumns = new InputColumnsProvider();
+    private InputColumnsProvider inputColumnsProvider = new InputColumnsProvider();
 
     public InputColumnsHandler(final List<ExternalDataSet> dataSets) {
         Preconditions.checkNotNull(dataSets, "conversion context cannot be null");
@@ -60,7 +62,7 @@ public class InputColumnsHandler {
             columnSequence = addToOrderedColumns(dataColumn, columnSequence, orderedColumns);
         }
 
-        inputColumns.getInputHeaders().addAll(orderedColumns.values());
+        inputColumnsProvider.getInputHeaders().addAll(orderedColumns.values());
     }
 
     private Long addToOrderedColumns(ColumnDefinition dataColumn, Long columnSequence, Map<Long, InputHeader> orderedColumns) {
@@ -101,20 +103,20 @@ public class InputColumnsHandler {
     private void populateCovTableDetails(ColumnType columnType, SymbolType valueType, String symbol){
         if(columnType.equals(ColumnType.COVARIATE)){
             if(valueType.equals(SymbolType.INT)){
-                inputColumns.getCatCovTableColumns().add(symbol.toUpperCase()); 
+                inputColumnsProvider.getCatCovTableColumns().add(symbol.toUpperCase()); 
             }
             if(valueType.equals(SymbolType.REAL)){
-                inputColumns.getContCovTableColumns().add(symbol.toUpperCase());
+                inputColumnsProvider.getContCovTableColumns().add(symbol.toUpperCase());
             }
         }
     }
 
-    public InputColumnsProvider getInputColumns() {
-        return inputColumns;
+    public InputColumnsProvider getInputColumnsProvider() {
+        return inputColumnsProvider;
     }
 
-    public void setInputColumns(InputColumnsProvider inputColumns) {
-        this.inputColumns = inputColumns;
+    public void setInputColumnsProvider(InputColumnsProvider inputColumnsProvider) {
+        this.inputColumnsProvider = inputColumnsProvider;
     }
 
 }

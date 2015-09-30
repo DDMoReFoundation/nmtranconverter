@@ -31,10 +31,10 @@ public class InterOccVariabilityHandler {
 
     public InterOccVariabilityHandler(ConversionContext context) throws IOException {
         Preconditions.checkNotNull(context, "Conversion Context cannot be null");
-        Preconditions.checkNotNull(context.getInputColumnsHandler().getInputColumns().getInputHeaders(), "columns list cannot be null");
+        Preconditions.checkNotNull(context.getInputColumnsHandler().getInputColumnsProvider().getInputHeaders(), "columns list cannot be null");
 
         this.context = context;
-        columns = context.getInputColumnsHandler().getInputColumns().getInputHeaders();
+        columns = context.getInputColumnsHandler().getInputColumnsProvider().getInputHeaders();
         initialise();
     }
 
