@@ -84,7 +84,7 @@ public class DiffEquationStatementBuilder {
     private void initialiseDiffEquationStatement() {
 
         for (DerivativeVariable variableType : context.getDerivativeVars()){
-            String variable = Formatter.addPrefix(variableType.getSymbId());
+            String variable = variableType.getSymbId().toUpperCase();
             String varAmount = Formatter.getVarAmountFromCompartment(variable, context.getDerivativeVarCompSequences());
             if(!varAmount.isEmpty()){
                 derivativeVarsInDES.put(variable, varAmount);
@@ -99,7 +99,7 @@ public class DiffEquationStatementBuilder {
 
     private void addAllVarDefinitionTypes(StructuralBlock block) {
         for (VariableDefinition definitionType: block.getLocalVariables()){
-            String variable = Formatter.addPrefix(definitionType.getSymbId());
+            String variable = definitionType.getSymbId().toUpperCase();
             String rhs = context.parse(definitionType);
             allVarDefinitions.put(variable, rhs);
         }
@@ -108,7 +108,7 @@ public class DiffEquationStatementBuilder {
     private void addDADTdefinitionsToDES(StructuralBlock block) {
         for(DerivativeVariable variableType: block.getStateVariables()){
             String parsedDADT = context.parse(variableType).toUpperCase();
-            String variable = Formatter.addPrefix(variableType.getSymbId());
+            String variable = variableType.getSymbId().toUpperCase();
 
             if(isDerivativeVariableHasAmount(variable)){
                 String index = context.getDerivativeVarCompSequences().get(variable);

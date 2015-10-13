@@ -298,7 +298,7 @@ public class ConversionContext {
     private Map<String, String> setDerivativeVarCompartmentSequence(){
         int i=1;
         for (DerivativeVariable variableType : derivativeVars){
-            String variable = Formatter.addPrefix(variableType.getSymbId());
+            String variable = variableType.getSymbId().toUpperCase();
             derivativeVarCompSequences.put(variable, Integer.toString(i++));
         }
         return derivativeVarCompSequences;

@@ -5,6 +5,7 @@ package eu.ddmore.converters.nonmem;
 
 import static crx.converter.engine.PharmMLTypeChecker.isActivity;
 import static crx.converter.engine.PharmMLTypeChecker.isBinaryOperation;
+import static crx.converter.engine.PharmMLTypeChecker.isUnaryOperation;
 import static crx.converter.engine.PharmMLTypeChecker.isConstant;
 import static crx.converter.engine.PharmMLTypeChecker.isContinuousCovariate;
 import static crx.converter.engine.PharmMLTypeChecker.isCorrelation;
@@ -56,6 +57,7 @@ import eu.ddmore.libpharmml.dom.maths.ExpressionValue;
 import eu.ddmore.libpharmml.dom.maths.FunctionCallType;
 import eu.ddmore.libpharmml.dom.maths.Piece;
 import eu.ddmore.libpharmml.dom.maths.Piecewise;
+import eu.ddmore.libpharmml.dom.maths.Uniop;
 import eu.ddmore.libpharmml.dom.modeldefn.CovariateDefinition;
 import eu.ddmore.libpharmml.dom.modeldefn.CovariateTransformation;
 import eu.ddmore.libpharmml.dom.modeldefn.ParameterRandomVariable;
@@ -65,7 +67,6 @@ import eu.ddmore.libpharmml.dom.trialdesign.Activity;
 public class Parser extends BaseParser {
 
     private static final String SEX_COLUMN = "SEX";
-    private Properties binopProperties;
     private static final String equationFormat = "%s = %s";
     private static final String lineFormat = "%s ";
 
@@ -80,79 +81,77 @@ public class Parser extends BaseParser {
 
         Properties props = new Properties();
         props.load(getClass().getResourceAsStream("Parser.properties"));
-
-        binopProperties = loadBinopProperties();
     }
 
     //TODO: remove this code once it is agreed and confirmed to go with BaseParser implementation.
-//    @Override
-//    protected String doBinaryOperation(Binop binopType, String leftStatement, String rightStatement) {
-//
-//        String operator = convertBinoperator(binopType);
-//        if (operator.equals(LOGX)) 
-//            return String.format(getLogXFormat(), leftStatement, rightStatement);
-//        else if (operator.equals(ROOT)) 
-//            return String.format(getRootFormat(), leftStatement, rightStatement);
-//        else if (operator.equals(MIN)) 
-//            return String.format(getMinFormat(), leftStatement, rightStatement);
-//        else if (operator.equals(MAX)) 
-//            return String.format(getMaxFormat(), leftStatement, rightStatement);
-//        else if (operator.equals(REM)) 
-//            return String.format(getRemFormat(), leftStatement, rightStatement);
-//        else{
-//            return getBinaryOperatorFormat(operator,leftStatement, rightStatement);
-//        }
-//    }
-//
-//    private String getBinaryOperatorFormat(String op, String leftStatement, String rightStatement){
-//
-//        String operator = getScriptBinaryOperator(op);
-//
-//        if(op.equalsIgnoreCase(PLUS)){
-//            return sum(leftStatement, operator, rightStatement);
-//        }else if(op.equalsIgnoreCase(MINUS)) {
-//            return subtraction(leftStatement, operator, rightStatement);
-//        }else if(op.equalsIgnoreCase(DIVIDE)) {
-//            return division(leftStatement, operator, rightStatement);
-//        }else if (op.equalsIgnoreCase(POWER)) 
-//            return power(leftStatement, operator, rightStatement);
-//        else {
-//            return genericMathOperation(leftStatement, operator, rightStatement);
-//        }
-//    }
-//
-//    private String sum(String left, String operator, String right) {
-//        String strToReturn = "("+left + operator + right+")"; 
-//        return strToReturn;
-//    }
-//
-//    private String subtraction(String left, String operator, String right) {
-//        String strToReturn =  "(" + addParenthesesIfNeeded(left) + operator + addParenthesesIfNeeded(right) +")";
-//        return strToReturn;
-//    }
-//    
-//    private String power(String left, String operator, String right) {
-//        String strToReturn =  "(" + addParenthesesIfNeeded(left)+")" + operator + addParenthesesIfNeeded(right);
-//        return strToReturn;
-//    }
-//
-//    private String division(String left, String operator, String right) {
-//        String strToReturn =  addParenthesesIfNeeded(left) + operator + addParenthesesIfNeeded(right);
-//        return strToReturn;
-//    }
-//
-//    private String genericMathOperation(String left, String operator, String right) {
-//        String strToReturn =  left + operator + right;
-//        return strToReturn;
-//    }
-//
-//    private String addParenthesesIfNeeded(String operand) {
-//        if ( (operand.contains(getScriptBinaryOperator(PLUS)) || operand.contains(getScriptBinaryOperator(MINUS))) && !operand.startsWith("(")) {
-//            return "("+ operand +")";
-//        } else {
-//            return operand;
-//        }
-//    }
+    //    @Override
+    //    protected String doBinaryOperation(Binop binopType, String leftStatement, String rightStatement) {
+    //
+    //        String operator = convertBinoperator(binopType);
+    //        if (operator.equals(LOGX)) 
+    //            return String.format(getLogXFormat(), leftStatement, rightStatement);
+    //        else if (operator.equals(ROOT)) 
+    //            return String.format(getRootFormat(), leftStatement, rightStatement);
+    //        else if (operator.equals(MIN)) 
+    //            return String.format(getMinFormat(), leftStatement, rightStatement);
+    //        else if (operator.equals(MAX)) 
+    //            return String.format(getMaxFormat(), leftStatement, rightStatement);
+    //        else if (operator.equals(REM)) 
+    //            return String.format(getRemFormat(), leftStatement, rightStatement);
+    //        else{
+    //            return getBinaryOperatorFormat(operator,leftStatement, rightStatement);
+    //        }
+    //    }
+    //
+    //    private String getBinaryOperatorFormat(String op, String leftStatement, String rightStatement){
+    //
+    //        String operator = getScriptBinaryOperator(op);
+    //
+    //        if(op.equalsIgnoreCase(PLUS)){
+    //            return sum(leftStatement, operator, rightStatement);
+    //        }else if(op.equalsIgnoreCase(MINUS)) {
+    //            return subtraction(leftStatement, operator, rightStatement);
+    //        }else if(op.equalsIgnoreCase(DIVIDE)) {
+    //            return division(leftStatement, operator, rightStatement);
+    //        }else if (op.equalsIgnoreCase(POWER)) 
+    //            return power(leftStatement, operator, rightStatement);
+    //        else {
+    //            return genericMathOperation(leftStatement, operator, rightStatement);
+    //        }
+    //    }
+    //
+    //    private String sum(String left, String operator, String right) {
+    //        String strToReturn = "("+left + operator + right+")"; 
+    //        return strToReturn;
+    //    }
+    //
+    //    private String subtraction(String left, String operator, String right) {
+    //        String strToReturn =  "(" + addParenthesesIfNeeded(left) + operator + addParenthesesIfNeeded(right) +")";
+    //        return strToReturn;
+    //    }
+    //    
+    //    private String power(String left, String operator, String right) {
+    //        String strToReturn =  "(" + addParenthesesIfNeeded(left)+")" + operator + addParenthesesIfNeeded(right);
+    //        return strToReturn;
+    //    }
+    //
+    //    private String division(String left, String operator, String right) {
+    //        String strToReturn =  addParenthesesIfNeeded(left) + operator + addParenthesesIfNeeded(right);
+    //        return strToReturn;
+    //    }
+    //
+    //    private String genericMathOperation(String left, String operator, String right) {
+    //        String strToReturn =  left + operator + right;
+    //        return strToReturn;
+    //    }
+    //
+    //    private String addParenthesesIfNeeded(String operand) {
+    //        if ( (operand.contains(getScriptBinaryOperator(PLUS)) || operand.contains(getScriptBinaryOperator(MINUS))) && !operand.startsWith("(")) {
+    //            return "("+ operand +")";
+    //        } else {
+    //            return operand;
+    //        }
+    //    }
 
     @Override
     protected String doSymbolRef(SymbolRef symbRefType) {
@@ -202,26 +201,7 @@ public class Parser extends BaseParser {
      */
     @Override
     protected String getScriptBinaryOperator(String symbol) {
-        symbol = symbol.toLowerCase();
-        if(binopProperties!=null && binopProperties.stringPropertyNames().contains(symbol)){
-            return binopProperties.getProperty(symbol);
-        }else{
-            throw new IllegalStateException("Binary Operation not recognised : "+ symbol);
-        }
-    }
-
-    /**
-     * Loads binary operator properties from properties file. 
-     * @return
-     */
-    private Properties loadBinopProperties() {
-        Properties binopProperties = new Properties();
-        try {
-            binopProperties.load(Parser.class.getResourceAsStream("binary_operator.properties"));
-        } catch (IOException e) {
-            throw new IllegalStateException("Binary Operation not recognised : "+ e);
-        }
-        return binopProperties;
+        return Formatter.propertyHandler.getBinopPropertyFor(symbol);
     }
 
     /**
@@ -246,7 +226,7 @@ public class Parser extends BaseParser {
             if (!isString_(leaf.data)) leaf.data = getSymbol(leaf.data);
             String current_value = "", current_symbol = "";
             if(isLocalVariable(context)){
-                current_symbol = Formatter.addPrefix(getSymbol(context));
+                current_symbol = getSymbol(context).toUpperCase();
                 current_value = getValueWhenPiecewise(leaf, inPiecewise, current_symbol);
             }else if (isDerivative(context) || isParameter(context)) {
                 current_symbol = getSymbol(context);
@@ -258,7 +238,7 @@ public class Parser extends BaseParser {
             } else if (isPiece(context)) {
                 current_value = String.format(lineFormat, (String) leaf.data);
             } else if (isContinuousCovariate(context)) {
-                current_symbol = Formatter.addPrefix(getSymbol(context));
+                current_symbol = getSymbol(context).toUpperCase();
                 current_value = Formatter.endline(String.format(equationFormat, current_symbol, leaf.data));
             } else if (isActivity(context)) {
                 current_value = getSymbol(new ActivityDoseAmountBlock((Activity) context, (String) leaf.data));
@@ -436,7 +416,9 @@ public class Parser extends BaseParser {
 
         if (isBinaryOperation(expressionValue)) {
             assignmentTree = lexer.getTreeMaker().newInstance(getEquation((Binop) expressionValue));
-        } else if (isFunctionCall(expressionValue)) {
+        }else if (isUnaryOperation(expressionValue)) {
+            assignmentTree = lexer.getTreeMaker().newInstance(getEquation((Uniop) expressionValue));
+        }else if (isFunctionCall(expressionValue)) {
             assignmentTree = lexer.getTreeMaker().newInstance(getEquation((FunctionCallType) expressionValue));
         } else if (isJAXBElement(expressionValue)) {
             assignmentTree = lexer.getTreeMaker().newInstance(getEquation((JAXBElement<?>) expressionValue));

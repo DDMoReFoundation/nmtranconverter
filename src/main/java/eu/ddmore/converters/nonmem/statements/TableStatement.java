@@ -96,12 +96,13 @@ public class TableStatement {
         if(!inputColumns.getInputHeaders().isEmpty()){
             for(InputHeader inputHeader : inputColumns.getInputHeaders()){
                 String columnId = inputHeader.getColumnId();
+                boolean isDV = columnId.equals(Formatter.getReservedParam(TableConstant.DV.toString()));
                 // Adding ID TIME at start and DV at the end hence skipping here.
                 if(inputHeader.isDropped() || columnId.equals(ColumnConstant.ID.toString()) || 
-                        columnId.equals(ColumnConstant.TIME.toString()) || columnId.equals(TableConstant.DV.toString())){
+                        columnId.equals(ColumnConstant.TIME.toString()) || isDV){
                     continue;
                 }
-                stdTable.append(SPACE+columnId);
+                stdTable.append(SPACE+Formatter.getReservedParam(columnId));
             }
         }
 
@@ -126,12 +127,12 @@ public class TableStatement {
         for(ParameterBlock block : blocks){
             List<IndividualParameter> indivParamTypes = block.getIndividualParameters();
             for(IndividualParameter parameterType: indivParamTypes){
-                paramTable.append(SPACE+parameterType.getSymbId());
+                paramTable.append(SPACE+Formatter.getReservedParam(parameterType.getSymbId()));
             }
         }
         Set<String> orderedEtas = context.retrieveOrderedEtas().keySet();
         for(String eta : orderedEtas){
-            paramTable.append(SPACE+eta.toUpperCase());
+            paramTable.append(SPACE+Formatter.getReservedParam(eta));
         }
         return paramTable;
     }
@@ -147,7 +148,7 @@ public class TableStatement {
         StringBuilder catCovTable = new StringBuilder();
 
         for(String column : inputColumns.getCatCovTableColumns()){
-            catCovTable.append(SPACE+column);	
+            catCovTable.append(SPACE+Formatter.getReservedParam(column));	
         }
         return catCovTable;
     }
@@ -163,7 +164,7 @@ public class TableStatement {
         StringBuilder contCovTable = new StringBuilder();
 
         for(String column : inputColumns.getContCovTableColumns()){
-            contCovTable.append(SPACE+column);	
+            contCovTable.append(SPACE+Formatter.getReservedParam(column));	
         }
         return contCovTable;
     }

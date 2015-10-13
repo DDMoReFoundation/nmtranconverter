@@ -9,6 +9,7 @@ import java.util.TreeMap;
 
 import com.google.common.base.Preconditions;
 
+import eu.ddmore.converters.nonmem.utils.Formatter;
 import eu.ddmore.converters.nonmem.utils.Formatter.ReservedColumnConstant;
 import eu.ddmore.libpharmml.dom.commontypes.SymbolType;
 import eu.ddmore.libpharmml.dom.dataset.ColumnDefinition;
@@ -25,12 +26,9 @@ public class InputColumnsHandler {
 
     public InputColumnsHandler(final List<ExternalDataSet> dataSets) {
         Preconditions.checkNotNull(dataSets, "conversion context cannot be null");
-        initialise(dataSets);
-    }
 
-    private void initialise(List<ExternalDataSet> dataSets){
-        if(dataSets!=null && !dataSets.isEmpty()){
-            getHeadersforExternalDataSets(dataSets);
+        if(!dataSets.isEmpty()){
+            populateColumnsWithHeadersforDataSets(dataSets);
         }else{
             throw new IllegalArgumentException("data file should be present to get input headers");
         }
@@ -41,16 +39,14 @@ public class InputColumnsHandler {
      * 
      * @param dataFiles
      */
-    private void getHeadersforExternalDataSets(List<ExternalDataSet> dataFiles) {
-
-        Preconditions.checkNotNull(dataFiles, "External data set(s) cannot be null");
+    private void populateColumnsWithHeadersforDataSets(List<ExternalDataSet> dataFiles) {
 
         for(ExternalDataSet dataFile : dataFiles) {
-            getEstimationHeaders(dataFile);
+            populateColumnsWithEstHeaders(dataFile);
         }
     }
 
-    private void getEstimationHeaders(ExternalDataSet externalDataSet) {
+    private void populateColumnsWithEstHeaders(ExternalDataSet externalDataSet) {
 
         List<ColumnDefinition> dataColumns = externalDataSet.getDataSet().getListOfColumnDefinition();
         Preconditions.checkNotNull(dataColumns, "External data set has no columns");
@@ -84,10 +80,11 @@ public class InputColumnsHandler {
             ColumnType columnType = dataColumn.getColumnType();
             Boolean isDropped = (columnType.equals(ColumnType.UNDEFINED) && !ReservedColumnConstant.contains(columnId));
 
-            InputHeader inputHeader = new InputHeader(columnId, isDropped, columnNumber, columnType);
+            String formattedColumnId =Formatter.getReservedParam(columnId);
+            InputHeader inputHeader = new InputHeader(formattedColumnId, isDropped, columnNumber, columnType);
             orderedColumns.put(columnNumber, inputHeader);
 
-            populateCovTableDetails(columnType,dataColumn.getValueType(),columnId);
+            populateCovTableDetails(columnType,dataColumn.getValueType(),formattedColumnId);
             columnSequence++;
         }
         return columnSequence;

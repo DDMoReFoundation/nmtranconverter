@@ -46,7 +46,7 @@ public class ErrorStatementEmitter {
             String iPred = "LOG("+error.getFunctionRep()+")";
             String weight = "SQRT("+error.getProportional()+"**2"+
                     " + ("+error.getAdditive()+"/"+error.getFunctionRep()+")**2)";
-            return createErrorStatement(iPred, weight, null, null, null);
+            return createErrorStatement(iPred, weight);
 
         }else if(errorType.equals(ErrorType.ADDITIVE_ERROR.getErrorType())){
             String weight = error.getAdditive();
@@ -78,7 +78,7 @@ public class ErrorStatementEmitter {
      * @return
      */
     private StringBuilder createErrorStatement(String weight){
-        return createErrorStatement(null, weight, null, null, null);
+        return createErrorStatement(null, weight);
     }
 
     /**
@@ -87,20 +87,18 @@ public class ErrorStatementEmitter {
      * It returns collective error model function definitions.
      * @param iPred
      * @param weight
-     * @param yStatement
-     * @param iRes
-     * @param iWRes
-     * @return
+     * @return error model
      */
-    private StringBuilder createErrorStatement(String iPred, String weight, 
-            String yStatement, String iRes, String iWRes){
+    private StringBuilder createErrorStatement(String iPred, String weight){
         StringBuilder errorModel = new StringBuilder();
-
+        iPred = ((iPred!=null))?Formatter.getReservedParam(iPred):Formatter.getReservedParam(error.getFunctionRep());
+        weight = ((weight!=null))?Formatter.getReservedParam(weight):weight;
+        
         errorModel.append(ErrorConstant.IPRED   +" = "+ addStatement(iPred,error.getFunctionRep()));
         errorModel.append(ErrorConstant.W       +" = "+ addStatement(weight,DEFAULT_WEIGHT));
-        errorModel.append(ErrorConstant.Y       +" = "+ addStatement(yStatement,DEFAULT_Y));
-        errorModel.append(ErrorConstant.IRES    +" = "+ addStatement(iRes,DEFAULT_IRES));
-        errorModel.append(ErrorConstant.IWRES   +" = "+ addStatement(iWRes,DEFAULT_IWRES));
+        errorModel.append(ErrorConstant.Y       +" = "+ Formatter.endline(DEFAULT_Y));
+        errorModel.append(ErrorConstant.IRES    +" = "+ Formatter.endline(DEFAULT_IRES));
+        errorModel.append(ErrorConstant.IWRES   +" = "+ Formatter.endline(DEFAULT_IWRES));
 
         return errorModel;
     }

@@ -136,7 +136,7 @@ public class IndividualDefinitionEmitter {
     private String addFixedEffectsStatementToIndivParamDef(CovariateRelation covariate, String covStatement) {
         FixedEffectRelation fixedEffect = covariate.getFixedEffect();
         if (fixedEffect != null) {
-            String  fixedEffectStatement = Formatter.addPrefix(fixedEffect.getSymbRef().getSymbIdRef());
+            String  fixedEffectStatement = fixedEffect.getSymbRef().getSymbIdRef();
             if(fixedEffectStatement.isEmpty())
                 fixedEffectStatement = context.parse(fixedEffect);
             covStatement = fixedEffectStatement + " * " + covStatement;
@@ -161,16 +161,16 @@ public class IndividualDefinitionEmitter {
         if(!logType.isEmpty()){
             if (logType.equals(NmConstant.LOG.toString())) {
                 String format = Formatter.endline("%s = EXP(%s %s);");
-                statement.append(String.format(format, Formatter.addPrefix(paramId), variableSymbol,etas));
+                statement.append(String.format(format, paramId, variableSymbol,etas));
             } else if (logType.equals(NmConstant.LOGIT.toString())) {
                 String format = Formatter.endline("%s = 1./(1 + exp(-%s));");
-                statement.append(String.format(format, Formatter.addPrefix(paramId), variableSymbol));
+                statement.append(String.format(format, paramId, variableSymbol));
             }
         }else{
             String format = Formatter.endline("%s = %s %s"+Symbol.COMMENT);
-            statement.append(String.format(format, Formatter.addPrefix(paramId), variableSymbol,etas));
+            statement.append(String.format(format, paramId, variableSymbol,etas));
         }
-        return statement.toString();
+        return statement.toString().toUpperCase();
     }
 
     /**

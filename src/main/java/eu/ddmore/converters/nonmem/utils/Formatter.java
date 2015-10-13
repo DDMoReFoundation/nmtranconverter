@@ -5,6 +5,8 @@ package eu.ddmore.converters.nonmem.utils;
 
 import java.util.Map;
 
+import eu.ddmore.converters.nonmem.handlers.PropertiesHandler;
+
 /**
  * Formatter for nmtran conversion from pharmML
  * 
@@ -61,6 +63,9 @@ public class Formatter {
         }
     }
 
+    public static final PropertiesHandler propertyHandler = new PropertiesHandler();
+
+    //DES block 
     private static boolean inDesBlock = false;
 
     public static boolean isInDesBlock() {
@@ -75,7 +80,6 @@ public class Formatter {
         return (inDesBlock)?NmConstant.T.toString():ColumnConstant.TIME.toString();
     }
 
-    private static final String PREFIX = "";//"NM_";
     private static final String NEW_LINE = System.getProperty("line.separator");
 
     private static final String newLineBlockTitle = "%s%s "+NEW_LINE;
@@ -227,13 +231,14 @@ public class Formatter {
         return String.format(newLineBlockTitle,Symbol.BLOCK,Block.SIGMA);
     }
     /**
-     * Add specified prefix to parameter name provided.
+     * gets parameter name with prefix as replacement for the parameter name if its reserved word.
      * 
      * @return parameter name with prefix
      */
-    public static String addPrefix(String paramName){
-        return (!paramName.contains(PREFIX))?PREFIX + paramName.toUpperCase():paramName.toUpperCase();
+    public static String getReservedParam(String paramName){
+        return propertyHandler.getReservedWordFor(paramName).toUpperCase();
     }
+
     /**
      * Add indentation before the text provided. 
      * 
@@ -268,10 +273,8 @@ public class Formatter {
     public static String getFormattedSymbol(String symbol) {
         if (symbol.equals(ColumnConstant.TIME.toString()) || symbol.equals(NmConstant.T.toString())){
             symbol = Formatter.getTimeSymbol();
-        } else{
-            symbol = Formatter.addPrefix(symbol);
         }
-        return symbol;
+        return symbol.toUpperCase();
     }
 
     public static String addComment(String comment) {

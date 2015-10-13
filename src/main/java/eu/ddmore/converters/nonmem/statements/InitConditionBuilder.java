@@ -97,8 +97,7 @@ public class InitConditionBuilder {
         if(derivativeVarCount==0 || initConditionVar.getSymbIdRef() == null){
             throw new IllegalStateException("Could not get initial condition for The derivative variable");
         }
-        return Formatter.endline("A_0("+derivativeVarCount+") = "
-                +Formatter.addPrefix(initConditionVar.getSymbIdRef().toUpperCase()));
+        return Formatter.endline("A_0("+derivativeVarCount+") = "+initConditionVar.getSymbIdRef().toUpperCase());
     }
 
     /**
@@ -118,8 +117,7 @@ public class InitConditionBuilder {
         } else if(value instanceof IntValue){
             initialCondition = ((IntValue)value).getValue().toString();
         }
-        return Formatter.endline("A_0("+derivativeVarCount+") = "
-                +Formatter.addPrefix(initialCondition.toUpperCase()));
+        return Formatter.endline("A_0("+derivativeVarCount+") = "+initialCondition.toUpperCase());
     }
 
 
