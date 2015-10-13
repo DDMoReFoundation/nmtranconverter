@@ -94,36 +94,36 @@ public class PredStatement {
     }
 
     private StringBuilder getDerivativePredStatement() {
-        StringBuilder DerivativePredblock = new StringBuilder();
-        DerivativePredblock.append(getModelStatement());
+        StringBuilder derivativePredblock = new StringBuilder();
+        derivativePredblock.append(getModelStatement());
         //TODO : getAbbreviatedStatement();
-        DerivativePredblock.append(getPKStatement());
+        derivativePredblock.append(getPKStatement());
 
-        DerivativePredblock.append(Formatter.des());
+        derivativePredblock.append(Formatter.des());
 
         DiffEquationStatementBuilder desBuilder = new DiffEquationStatementBuilder(context);        
         Formatter.setInDesBlock(true);
-        DerivativePredblock.append(desBuilder.getDifferentialEquationsStatement());
+        derivativePredblock.append(desBuilder.getDifferentialEquationsStatement());
         Formatter.setInDesBlock(false);
 
         //TODO: getAESStatement();
-        DerivativePredblock.append(Formatter.endline()+Formatter.error());
-        DerivativePredblock.append(getErrorStatement(desBuilder));
+        derivativePredblock.append(Formatter.endline()+Formatter.error());
+        derivativePredblock.append(getErrorStatement(desBuilder));
 
-        return DerivativePredblock;
+        return derivativePredblock;
     }
 
     private String getConditionalDoseDetails() {
         List<ConditionalDoseEvent> conditionalDoseEvents = ScriptDefinitionAccessor.getAllConditionalDoseEvents(context.getScriptDefinition());
 
-        StringBuilder doseEvent = new StringBuilder();
+        StringBuilder doseEvents = new StringBuilder();
         for(ConditionalDoseEvent event : conditionalDoseEvents){
-            String statement = context.getConditionalEventBuilder().parseConditionalDoseEvent(event);
+            String statement = context.getConditionalEventHandler().parseConditionalDoseEvent(event);
             if(!StringUtils.isEmpty(statement)){
-                doseEvent.append(statement);
+                doseEvents.append(statement);
             }
         }
-        return doseEvent.toString();
+        return doseEvents.toString();
     }
 
     /**
@@ -166,11 +166,11 @@ public class PredStatement {
         StringBuilder errorBlockWithMDV = new StringBuilder();
         List<MultipleDvRef> multipleDvReferences = ScriptDefinitionAccessor.getAllMultipleDvReferences(context.getScriptDefinition());
         for(MultipleDvRef dvReference : multipleDvReferences){
-            SymbolRef columnName = context.getConditionalEventBuilder().getDVColumnReference(dvReference);
+            SymbolRef columnName = context.getConditionalEventHandler().getDVColumnReference(dvReference);
 
             if(columnName!=null && context.getErrorStatements().containsKey(columnName.getSymbIdRef())){
 
-                String condition = context.getConditionalEventBuilder().getMultipleDvCondition(dvReference);
+                String condition = context.getConditionalEventHandler().getMultipleDvCondition(dvReference);
                 ErrorStatement errorStatement = context.getErrorStatements().get(columnName.getSymbIdRef());
                 errorBlockWithMDV.append(getErrorStatementForMultipleDv(errorStatement, condition));
             }
@@ -186,7 +186,7 @@ public class PredStatement {
         StringBuilder errorDetails = statementEmitter.getErrorStatementDetails();
 
         if(!StringUtils.isEmpty(condition)){
-            String statement = context.getConditionalEventBuilder().buildConditionalStatement(condition, errorDetails.toString());
+            String statement = context.getConditionalEventHandler().buildConditionalStatement(condition, errorDetails.toString());
             errorBlock.append(statement);
         }else{
             errorBlock.append(errorDetails);

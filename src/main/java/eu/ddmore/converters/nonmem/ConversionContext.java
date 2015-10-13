@@ -61,7 +61,7 @@ public class ConversionContext {
     private final Map<String,ErrorStatement> errorStatements = new HashMap<String,ErrorStatement>();
     private final List<DerivativeVariable> derivativeVars = new ArrayList<DerivativeVariable>();
     private final Map<String, String> derivativeVarCompSequences = new HashMap<String, String>();
-    private final ConditionalEventBuilder conditionalEventBuilder;
+    private final ConditionalEventHandler conditionalEventHandler;
     private final MuReferenceHandler muReferenceHandler;
     private final InterOccVariabilityHandler iovHandler; 
     private final InputColumnsHandler inputColumnsHandler;
@@ -88,7 +88,7 @@ public class ConversionContext {
         this.discreteHandler = new DiscreteHandler(getScriptDefinition());
         this.parameterHelper = new ParametersHelper(getScriptDefinition(), etasHandler, orderedThetasHandler);
 
-        this.conditionalEventBuilder = new ConditionalEventBuilder(this);
+        this.conditionalEventHandler = new ConditionalEventHandler(this);
         this.muReferenceHandler = new MuReferenceHandler(this);
         this.iovHandler = new InterOccVariabilityHandler(this);
         initialise();
@@ -394,8 +394,8 @@ public class ConversionContext {
         return etasHandler;
     }
 
-    public ConditionalEventBuilder getConditionalEventBuilder() {
-        return conditionalEventBuilder;
+    public ConditionalEventHandler getConditionalEventHandler() {
+        return conditionalEventHandler;
     }
 
     public MuReferenceHandler getMuReferenceHandler() {

@@ -22,10 +22,10 @@ import eu.ddmore.libpharmml.dom.maths.Piece;
  * Conditional event builder helps to build conditional events 
  * for column mapping as well as for multiple dv mapping.
  */
-public class ConditionalEventBuilder {
+public class ConditionalEventHandler {
     private final ConversionContext context;
 
-    public ConditionalEventBuilder(ConversionContext context){
+    public ConditionalEventHandler(ConversionContext context){
         this.context = context; 
     }
 

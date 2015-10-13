@@ -7,7 +7,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * This class stores associated information retrieved from dataset and to be used by other statement blocks. 
+ * This class stores associated information retrieved from dataset and to be used by other statement blocks.
+ * TODO: suggested change: moving the methods that populate instances of InputColumnsProvider from InputStatement to here. 
  */
 public class InputColumnsProvider {
 
