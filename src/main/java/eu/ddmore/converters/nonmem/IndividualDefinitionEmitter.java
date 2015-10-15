@@ -22,7 +22,6 @@ import eu.ddmore.libpharmml.dom.modeldefn.CovariateTransformation;
 import eu.ddmore.libpharmml.dom.modeldefn.FixedEffectRelation;
 import eu.ddmore.libpharmml.dom.modeldefn.IndividualParameter;
 import eu.ddmore.libpharmml.dom.modeldefn.IndividualParameter.GaussianModel;
-import eu.ddmore.libpharmml.dom.modeldefn.IndividualParameter.GaussianModel.GeneralCovariate;
 import eu.ddmore.libpharmml.dom.modeldefn.LhsTransformation;
 import eu.ddmore.libpharmml.dom.modeldefn.ParameterRandomEffect;
 
@@ -65,14 +64,14 @@ public class IndividualDefinitionEmitter {
 
             //To avoid multiple definitions of the already defined pop symbol.
             if(!definedPopSymbols.contains(pop_param_symbol)){
-                statement.append(String.format("%s = ", variableSymbol));
+
+                String format = ((logType.equals(NmConstant.LOG.toString()))?("%s = "+logType+"(%s)"):("%s = %s"));
+                if (!StringUtils.isEmpty(pop_param_symbol)) {                    
+                    statement.append(String.format(format, variableSymbol, pop_param_symbol));
+                    definedPopSymbols.add(pop_param_symbol);
+                }
 
                 if(gaussianModel.getLinearCovariate()!=null){
-                    if (!StringUtils.isEmpty(pop_param_symbol)) {
-                        String format = ((logType.equals(NmConstant.LOG.toString()))?(logType+"(%s)"):("%s"));
-                        statement.append(String.format(format, pop_param_symbol));
-                        definedPopSymbols.add(pop_param_symbol);
-                    }
 
                     List<CovariateRelation> covariates = gaussianModel.getLinearCovariate().getCovariate();
                     if (covariates != null) {
@@ -83,9 +82,10 @@ public class IndividualDefinitionEmitter {
                         }
                     }
                 } else if (gaussianModel.getGeneralCovariate() != null) {
-                    GeneralCovariate generalCov = gaussianModel.getGeneralCovariate();
-                    String assignment = context.parse(generalCov);
-                    statement.append(assignment);
+                    //TODO : need details if we need to have any further handling with respect to general cov.
+                    //GeneralCovariate generalCov = gaussianModel.getGeneralCovariate();
+                    //String assignment = context.parse(generalCov);
+                    //statement.append(assignment);
                 }
                 statement.append(Formatter.endline(Symbol.COMMENT.toString()));
             }
@@ -182,9 +182,8 @@ public class IndividualDefinitionEmitter {
     private StringBuilder getIndivDefinitionForAssign(IndividualParameter ip) {
         StringBuilder statement = new StringBuilder();
         if (ip.getAssign() != null) {
-            statement.append(String.format("%s = ", ip.getSymbId()));
-            String assignment = context.parse(new Object(), context.getLexer().getStatement(ip.getAssign()));
-            statement.append(Formatter.endline(assignment+Symbol.COMMENT));
+            String assignment = context.parse(ip, context.getLexer().getStatement(ip.getAssign()));
+            statement.append(Formatter.endline(assignment));
         }
         return statement;
     }

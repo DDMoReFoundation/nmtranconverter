@@ -60,6 +60,7 @@ import eu.ddmore.libpharmml.dom.maths.Piecewise;
 import eu.ddmore.libpharmml.dom.maths.Uniop;
 import eu.ddmore.libpharmml.dom.modeldefn.CovariateDefinition;
 import eu.ddmore.libpharmml.dom.modeldefn.CovariateTransformation;
+import eu.ddmore.libpharmml.dom.modeldefn.IndividualParameter;
 import eu.ddmore.libpharmml.dom.modeldefn.ParameterRandomVariable;
 import eu.ddmore.libpharmml.dom.modeldefn.SimpleParameter;
 import eu.ddmore.libpharmml.dom.trialdesign.Activity;
@@ -242,8 +243,9 @@ public class Parser extends BaseParser {
                 current_value = Formatter.endline(String.format(equationFormat, current_symbol, leaf.data));
             } else if (isActivity(context)) {
                 current_value = getSymbol(new ActivityDoseAmountBlock((Activity) context, (String) leaf.data));
-            } else if (isIndividualParameter(context)) { 
-                current_value = (String) leaf.data;
+            } else if (isIndividualParameter(context)) {
+                current_symbol = ((IndividualParameter)context).getSymbId();
+                current_value = getValueWhenPiecewise(leaf, inPiecewise, current_symbol);
             } else if (isRandomVariable(context)) {
                 ParameterRandomVariable rv = (ParameterRandomVariable) context;
                 current_value = Formatter.endline(String.format(equationFormat, rv.getSymbId(), (String) leaf.data));
