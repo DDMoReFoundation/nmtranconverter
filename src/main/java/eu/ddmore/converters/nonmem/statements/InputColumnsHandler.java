@@ -14,6 +14,9 @@ import eu.ddmore.converters.nonmem.utils.Formatter.ReservedColumnConstant;
 import eu.ddmore.libpharmml.dom.commontypes.SymbolType;
 import eu.ddmore.libpharmml.dom.dataset.ColumnDefinition;
 import eu.ddmore.libpharmml.dom.dataset.ColumnType;
+import eu.ddmore.libpharmml.dom.modeldefn.ContinuousCovariate;
+import eu.ddmore.libpharmml.dom.modeldefn.CovariateDefinition;
+import eu.ddmore.libpharmml.dom.modeldefn.CovariateTransformation;
 import eu.ddmore.libpharmml.dom.modellingsteps.ExternalDataSet;
 
 /**
@@ -24,13 +27,33 @@ public class InputColumnsHandler {
     private static final String DROP = "DROP";
     private InputColumnsProvider inputColumnsProvider = new InputColumnsProvider();
 
-    public InputColumnsHandler(final List<ExternalDataSet> dataSets) {
-        Preconditions.checkNotNull(dataSets, "conversion context cannot be null");
+    public InputColumnsHandler(final List<ExternalDataSet> dataSets, List<CovariateDefinition> covDefinitions) {
+        Preconditions.checkNotNull(dataSets, "Datasets cannot be null");
 
         if(!dataSets.isEmpty()){
             populateColumnsWithHeadersforDataSets(dataSets);
         }else{
             throw new IllegalArgumentException("data file should be present to get input headers");
+        }
+        //These are optional to have and will be added only if they are available.
+        if(covDefinitions!=null && !covDefinitions.isEmpty()){
+            populateColumnsFromTransformedCov(covDefinitions);
+        }
+    }
+
+    private void populateColumnsFromTransformedCov(List<CovariateDefinition> covDefinitions) {
+
+        for(CovariateDefinition covDef : covDefinitions){
+            if(covDef.getContinuous()!=null){
+                ContinuousCovariate contCov = covDef.getContinuous();
+                for(CovariateTransformation transformation : contCov.getListOfTransformation()){
+                    String transCovId = transformation.getTransformedCovariate().getSymbId();
+
+                    if(transCovId!=null && !transCovId.isEmpty()){
+                        inputColumnsProvider.addContCovTableColumn(transCovId);
+                    }
+                }
+            }
         }
     }
 
@@ -100,10 +123,10 @@ public class InputColumnsHandler {
     private void populateCovTableDetails(ColumnType columnType, SymbolType valueType, String symbol){
         if(columnType.equals(ColumnType.COVARIATE)){
             if(valueType.equals(SymbolType.INT)){
-                inputColumnsProvider.getCatCovTableColumns().add(symbol.toUpperCase()); 
+                inputColumnsProvider.addCatCovTableColumn(symbol.toUpperCase()); 
             }
             if(valueType.equals(SymbolType.REAL)){
-                inputColumnsProvider.getContCovTableColumns().add(symbol.toUpperCase());
+                inputColumnsProvider.addContCovTableColumn(symbol.toUpperCase());
             }
         }
     }

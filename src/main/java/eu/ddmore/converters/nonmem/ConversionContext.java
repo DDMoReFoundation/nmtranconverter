@@ -80,7 +80,7 @@ public class ConversionContext {
 
 
         //This sequence of initialisation is important for information availability.  
-        this.inputColumnsHandler = new InputColumnsHandler(retrieveExternalDataSets());
+        this.inputColumnsHandler = new InputColumnsHandler(retrieveExternalDataSets(),lexer.getCovariates());
         String dataLocation = srcFile.getAbsoluteFile().getParentFile().getAbsolutePath();
         this.dataSetHandler = new DataSetHandler(retrieveExternalDataSets(), dataLocation);
         this.orderedThetasHandler = new OrderedThetasHandler(getScriptDefinition());
