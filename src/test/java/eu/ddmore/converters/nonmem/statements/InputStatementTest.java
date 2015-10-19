@@ -22,6 +22,7 @@ import eu.ddmore.libpharmml.dom.commontypes.SymbolType;
 import eu.ddmore.libpharmml.dom.dataset.ColumnDefinition;
 import eu.ddmore.libpharmml.dom.dataset.ColumnType;
 import eu.ddmore.libpharmml.dom.dataset.DataSet;
+import eu.ddmore.libpharmml.dom.modeldefn.CovariateDefinition;
 import eu.ddmore.libpharmml.dom.modellingsteps.ExternalDataSet;
 import eu.ddmore.libpharmml.util.WrappedList;
 
@@ -66,6 +67,7 @@ public class InputStatementTest {
 
     WrappedList<ColumnDefinition> dataColumns;
     List<ExternalDataSet> externalDataSets = new ArrayList<ExternalDataSet>();
+    List<CovariateDefinition> covDefinitions = new ArrayList<CovariateDefinition>();
 
     @Before
     public void setUp() throws Exception {
@@ -83,7 +85,7 @@ public class InputStatementTest {
         dataColumns.add(WT);
         dataColumns.add(AMT);
         dataColumns.add(EVID);
-        inputColumns = new InputColumnsHandler(externalDataSets);
+        inputColumns = new InputColumnsHandler(externalDataSets,covDefinitions);
         
         inputStatement = new InputStatement(inputColumns);
         String inputStmt = inputStatement.getStatement();
@@ -93,7 +95,7 @@ public class InputStatementTest {
     @Test
     public void shouldReturnInputStatementWithDrop() {
         dataColumns.add(EVID);
-        inputColumns = new InputColumnsHandler(externalDataSets);
+        inputColumns = new InputColumnsHandler(externalDataSets, covDefinitions);
         
         inputStatement = new InputStatement(inputColumns);
         String inputStmt = inputStatement.getStatement();
@@ -105,7 +107,7 @@ public class InputStatementTest {
     public void shouldMarkColumnDropped() {
         dataColumns.add(WT);
         dataColumns.add(EVID);
-        inputColumns = new InputColumnsHandler(externalDataSets);
+        inputColumns = new InputColumnsHandler(externalDataSets, covDefinitions);
         
         inputStatement = new InputStatement(inputColumns);
         String inputStmt = inputStatement.getStatement();
