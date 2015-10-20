@@ -41,57 +41,26 @@ public class IndividualDefinitionEmitter {
      * This method is used as part of pred core block.
      * 
      * @param param
-     * @param muReferences 
-     * @return individual definition statement
+     * @return
      */
     public String createIndividualDefinition(IndividualParameter param){
+
         StringBuilder statement = new StringBuilder();
 
-        String variableSymbol = param.getSymbId();     
         if (param.getAssign() != null) {
             statement = getIndivDefinitionForAssign(param);
-        }else if (param.getGaussianModel() != null) {
-
+        } else if (param.getGaussianModel() != null) {
             GaussianModel gaussianModel = param.getGaussianModel();
-
-            String pop_param_symbol = context.getOrderedThetasHandler().getPopSymbol(gaussianModel);
-
-            if(!StringUtils.isEmpty(pop_param_symbol)){
-                variableSymbol = context.getMuReferenceHandler().getMUSymbol(pop_param_symbol);    
-            }
-
-            String logType = identifyLogType(gaussianModel.getTransformation());
+            String popSymbol = context.getOrderedThetasHandler().getPopSymbol(gaussianModel);
 
             //To avoid multiple definitions of the already defined pop symbol.
-            if(!definedPopSymbols.contains(pop_param_symbol)){
+            if(!definedPopSymbols.contains(popSymbol)){
+                String indivDefinitionFromCov = getIndivDefinitionFromCov(gaussianModel).toString();
 
-                String format = ((logType.equals(NmConstant.LOG.toString()))?("%s = "+logType+"(%s)"):("%s = %s"));
-                if (!StringUtils.isEmpty(pop_param_symbol)) {                    
-                    statement.append(String.format(format, variableSymbol, pop_param_symbol));
-                    definedPopSymbols.add(pop_param_symbol);
-                }
-
-                if(gaussianModel.getLinearCovariate()!=null){
-
-                    List<CovariateRelation> covariates = gaussianModel.getLinearCovariate().getCovariate();
-                    if (covariates != null) {
-                        for (CovariateRelation covRelation : covariates) {
-                            if (covRelation == null) continue;
-                            PharmMLRootType type = context.getLexer().getAccessor().fetchElement(covRelation.getSymbRef());
-                            statement.append(getCovariateForIndividualDefinition(covRelation, type));
-                        }
-                    }
-                } else if (gaussianModel.getGeneralCovariate() != null) {
-                    //TODO : need details if we need to have any further handling with respect to general cov.
-                    //GeneralCovariate generalCov = gaussianModel.getGeneralCovariate();
-                    //String assignment = context.parse(generalCov);
-                    //statement.append(assignment);
-                }
-                statement.append(Formatter.endline(Symbol.COMMENT.toString()));
+                statement.append(arrangeEquationStatement(gaussianModel, param.getSymbId(), popSymbol, indivDefinitionFromCov));
+                definedPopSymbols.add(popSymbol);
             }
-            statement.append(Formatter.endline(arrangeEquationStatement(param.getSymbId(), variableSymbol, gaussianModel, logType)));
         }
-
         return statement.toString();
     }
 
@@ -103,9 +72,8 @@ public class IndividualDefinitionEmitter {
      * @param type
      * @return
      */
-    private StringBuilder getCovariateForIndividualDefinition(CovariateRelation covRelation, PharmMLRootType type) {
+    private String getCovariateForIndividualDefinition(CovariateRelation covRelation, PharmMLRootType type) {
         Preconditions.checkNotNull(type, "Covariate type associated with covariate relation cannot be null. ");
-        StringBuilder statement = new StringBuilder();
         String valueToAppend = new String();
 
         if(type instanceof IndependentVariable){
@@ -122,9 +90,9 @@ public class IndividualDefinitionEmitter {
         }
 
         if(!valueToAppend.isEmpty()){
-            statement.append(" + "+valueToAppend);
+            return " + "+valueToAppend;
         }
-        return statement;
+        return valueToAppend;
     }
 
     /**
@@ -148,29 +116,71 @@ public class IndividualDefinitionEmitter {
      * Arrange resulting equation statement in the way we would want to add it to nmtran.
      * TODO: Verify with Henrik : If it is logarithmic then exponential and other cases will have it without exponential.
      * 
-     * @param paramId
-     * @param variableSymbol
      * @param gaussianModel
-     * @param logType 
+     * @param paramId
+     * @param indivDefinitionFromCov
      * @return
      */
-    private String arrangeEquationStatement(String paramId, String variableSymbol, GaussianModel gaussianModel, String logType) {
+    private StringBuilder arrangeEquationStatement(GaussianModel gaussianModel,String paramId, String popSymbol, String indivDefinitionFromCov){
         StringBuilder statement = new StringBuilder();
         String etas = addEtasStatementsToIndivParamDef(gaussianModel.getRandomEffects());
+        LhsTransformation transform = gaussianModel.getTransformation();
 
-        if(!logType.isEmpty()){
-            if (logType.equals(NmConstant.LOG.toString())) {
-                String format = Formatter.endline("%s = EXP(%s %s);");
-                statement.append(String.format(format, paramId, variableSymbol,etas));
-            } else if (logType.equals(NmConstant.LOGIT.toString())) {
-                String format = Formatter.endline("%s = 1./(1 + exp(-%s));");
-                statement.append(String.format(format, paramId, variableSymbol));
-            }
-        }else{
-            String format = Formatter.endline("%s = %s %s"+Symbol.COMMENT);
-            statement.append(String.format(format, paramId, variableSymbol,etas));
+        String variableSymbol = paramId;
+        if(!StringUtils.isEmpty(popSymbol)){
+            variableSymbol = context.getMuReferenceHandler().getMUSymbol(popSymbol);
         }
-        return statement.toString().toUpperCase();
+
+        String format = "%s = ";
+        if(transform == null){
+            //MU_1 = POP_CL
+            format = format+ " %s ";
+            statement.append(String.format(format, variableSymbol, popSymbol));
+            statement.append(Formatter.endline(indivDefinitionFromCov));
+        }else if (LhsTransformation.LOG.equals(transform)) {
+            //MU_1=LOG(POP_CL);
+            String muFormat = format+NmConstant.LOG+"(%s)";
+            String expFormat = Formatter.endline(format + " EXP(%s %s) "+Symbol.COMMENT);
+
+            statement.append(String.format(muFormat, variableSymbol, popSymbol));
+            statement.append(Formatter.endline(indivDefinitionFromCov));
+
+            statement.append(String.format(expFormat, paramId, variableSymbol,etas));
+        } else if (LhsTransformation.LOGIT.equals(transform)) {
+            //MU_5=LOG(THETA(5)/(1-THETA(5)))
+            String logitEquation = paramId+"_"+NmConstant.LOGIT;
+
+            String muFormat = format + NmConstant.LOG+"( %s/(1-%s) )";
+            String logitEqFormat = Formatter.endline(format+" %s %s");
+            String expFormat = Formatter.endline(format+" 1/(1 + EXP(-%s)) "+Symbol.COMMENT);
+
+            statement.append(String.format(muFormat, variableSymbol, popSymbol, popSymbol));
+            statement.append(Formatter.endline(indivDefinitionFromCov));
+
+            statement.append(String.format(logitEqFormat, logitEquation, variableSymbol, etas));
+            statement.append(String.format(expFormat, paramId, logitEquation));
+        } else {
+            throw new  UnsupportedOperationException("Tranformation type "+transform.name()+" not yet supported");
+        }
+        return statement.append(Formatter.endline());
+    }
+
+    private StringBuilder getIndivDefinitionFromCov(GaussianModel gaussianModel) {
+        StringBuilder statement = new StringBuilder();
+        if(gaussianModel.getLinearCovariate()!=null){
+
+            List<CovariateRelation> covariates = gaussianModel.getLinearCovariate().getCovariate();
+            if (covariates != null && !covariates.isEmpty()) {
+                for (CovariateRelation covRelation : covariates) {
+                    if (covRelation == null) continue;
+                    PharmMLRootType type = context.getLexer().getAccessor().fetchElement(covRelation.getSymbRef());
+                    statement.append(getCovariateForIndividualDefinition(covRelation, type));  
+                }
+            }
+        } else if (gaussianModel.getGeneralCovariate() != null) {
+            //TODO : need details if we need to have any further handling with respect to general cov.
+        }
+        return statement;
     }
 
     /**
@@ -186,25 +196,6 @@ public class IndividualDefinitionEmitter {
             statement.append(Formatter.endline(assignment));
         }
         return statement;
-    }
-
-    /**
-     * Identifies and sets log type in constant format depending on transformation type
-     * This method is mainly used to help creation of individual parameter definitions.
-     * 
-     * @param transform
-     * @return
-     */
-    private String identifyLogType(LhsTransformation transform) {
-        if(transform == null){
-            return new String();
-        }else if (transform == LhsTransformation.LOG){
-            return NmConstant.LOG.toString();
-        }else if (transform == LhsTransformation.LOGIT){
-            return NmConstant.LOGIT.toString();
-        }else{
-            throw new  UnsupportedOperationException("Tranformation type "+transform.name()+" not yet supported");
-        }
     }
 
     /**
