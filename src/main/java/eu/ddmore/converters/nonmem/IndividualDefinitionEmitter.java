@@ -54,12 +54,9 @@ public class IndividualDefinitionEmitter {
             String popSymbol = context.getOrderedThetasHandler().getPopSymbol(gaussianModel);
 
             //To avoid multiple definitions of the already defined pop symbol.
-            if(!definedPopSymbols.contains(popSymbol)){
-                String indivDefinitionFromCov = getIndivDefinitionFromCov(gaussianModel).toString();
 
-                statement.append(arrangeEquationStatement(gaussianModel, param.getSymbId(), popSymbol, indivDefinitionFromCov));
-                definedPopSymbols.add(popSymbol);
-            }
+            statement.append(arrangeEquationStatement(gaussianModel, param.getSymbId(), popSymbol));
+            definedPopSymbols.add(popSymbol);
         }
         return statement.toString();
     }
@@ -121,17 +118,31 @@ public class IndividualDefinitionEmitter {
      * @param indivDefinitionFromCov
      * @return
      */
-    private StringBuilder arrangeEquationStatement(GaussianModel gaussianModel,String paramId, String popSymbol, String indivDefinitionFromCov){
+    private StringBuilder arrangeEquationStatement(GaussianModel gaussianModel, String paramId, String popSymbol){
         StringBuilder statement = new StringBuilder();
         String etas = addEtasStatementsToIndivParamDef(gaussianModel.getRandomEffects());
-        LhsTransformation transform = gaussianModel.getTransformation();
 
         String variableSymbol = paramId;
         if(!StringUtils.isEmpty(popSymbol)){
             variableSymbol = context.getMuReferenceHandler().getMUSymbol(popSymbol);
         }
 
+        if(!definedPopSymbols.contains(popSymbol)){
+            statement = definePopSymbolEquation(gaussianModel, paramId, popSymbol, variableSymbol, etas);
+        }else {
+            String format = Formatter.endline("%s = %s %s"+Symbol.COMMENT);
+            statement.append(String.format(format, paramId, variableSymbol,etas));
+        }
+        return statement.append(Formatter.endline());
+    }
+
+    private StringBuilder definePopSymbolEquation(GaussianModel gaussianModel, String paramId, 
+            String popSymbol, String variableSymbol, String etas) {
+        StringBuilder statement = new StringBuilder();
         String format = "%s = ";
+        String indivDefinitionFromCov = getIndivDefinitionFromCov(gaussianModel).toString();
+        LhsTransformation transform = gaussianModel.getTransformation();
+
         if(transform == null){
             //MU_1 = POP_CL
             String muFormat = format+ " %s ";
@@ -151,7 +162,6 @@ public class IndividualDefinitionEmitter {
         } else if (LhsTransformation.LOGIT.equals(transform)) {
             //MU_5=LOG(THETA(5)/(1-THETA(5)))
             String logitEquation = paramId+"_"+NmConstant.LOGIT;
-
             String muFormat = format + NmConstant.LOG+"( %s/(1-%s) )";
             String logitEqFormat = Formatter.endline(format+" %s %s");
             String expFormat = Formatter.endline(format+" 1/(1 + EXP(-%s)) "+Symbol.COMMENT);
@@ -163,7 +173,7 @@ public class IndividualDefinitionEmitter {
         } else {
             throw new  UnsupportedOperationException("Tranformation type "+transform.name()+" not yet supported");
         }
-        return statement.append(Formatter.endline());
+        return statement;
     }
 
     private StringBuilder getIndivDefinitionFromCov(GaussianModel gaussianModel) {
@@ -175,7 +185,7 @@ public class IndividualDefinitionEmitter {
                 for (CovariateRelation covRelation : covariates) {
                     if (covRelation == null) continue;
                     PharmMLRootType type = context.getLexer().getAccessor().fetchElement(covRelation.getSymbRef());
-                    statement.append(getCovariateForIndividualDefinition(covRelation, type));  
+                    statement.append(getCovariateForIndividualDefinition(covRelation, type));
                 }
             }
         } else if (gaussianModel.getGeneralCovariate() != null) {
