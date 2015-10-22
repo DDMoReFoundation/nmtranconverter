@@ -132,21 +132,18 @@ public class IndividualDefinitionEmitter {
         }
 
         String format = "%s = ";
-        if(transform == null){
+        if(transform == null || LhsTransformation.LOG.equals(transform)){
             //MU_1 = POP_CL
-            format = format+ " %s ";
-            statement.append(String.format(format, variableSymbol, popSymbol));
-            statement.append(Formatter.endline(indivDefinitionFromCov));
-        }else if (LhsTransformation.LOG.equals(transform)) {
-            //MU_1=LOG(POP_CL);
-            String muFormat = format+NmConstant.LOG+"(%s)";
-            String expFormat = Formatter.endline(format + " EXP(%s %s) "+Symbol.COMMENT);
+            String muFormat = format+ " %s ";
+            String rhsEqFormat = (transform==null)?" %s %s ":" EXP(%s %s) ";
+
+            String eqFormat = Formatter.endline(format+ rhsEqFormat +Symbol.COMMENT);
 
             statement.append(String.format(muFormat, variableSymbol, popSymbol));
             statement.append(Formatter.endline(indivDefinitionFromCov));
-
-            statement.append(String.format(expFormat, paramId, variableSymbol,etas));
-        } else if (LhsTransformation.LOGIT.equals(transform)) {
+            statement.append(String.format(eqFormat, paramId, variableSymbol,etas));
+        }
+        else if (LhsTransformation.LOGIT.equals(transform)) {
             //MU_5=LOG(THETA(5)/(1-THETA(5)))
             String logitEquation = paramId+"_"+NmConstant.LOGIT;
 
@@ -156,7 +153,6 @@ public class IndividualDefinitionEmitter {
 
             statement.append(String.format(muFormat, variableSymbol, popSymbol, popSymbol));
             statement.append(Formatter.endline(indivDefinitionFromCov));
-
             statement.append(String.format(logitEqFormat, logitEquation, variableSymbol, etas));
             statement.append(String.format(expFormat, paramId, logitEquation));
         } else {
