@@ -31,4 +31,6 @@ abs abs
 ceiling ceil
 logistic logistic_cdf
 logit LOGIT
+log10 LOG10
+sqrt SQRT
 probit PROBIT
