@@ -151,7 +151,7 @@ public class IndividualDefinitionEmitter {
             statement.append(String.format(muFormat, variableSymbol, popSymbol));
             statement.append(Formatter.endline(indivDefinitionFromCov));
             statement.append(String.format(eqFormat, paramId, variableSymbol,etas));
-        }else if (LhsTransformation.LOG.equals(transform)) {
+        } else if (LhsTransformation.LOG.equals(transform)) {
             //MU_1=LOG(POP_CL);
             String muFormat = format+NmConstant.LOG+"(%s)";
             String expFormat = Formatter.endline(format + " EXP(%s %s) "+Symbol.COMMENT);
@@ -188,8 +188,6 @@ public class IndividualDefinitionEmitter {
                     statement.append(getCovariateForIndividualDefinition(covRelation, type));
                 }
             }
-        } else if (gaussianModel.getGeneralCovariate() != null) {
-            //TODO : need details if we need to have any further handling with respect to general cov.
         }
         return statement;
     }
