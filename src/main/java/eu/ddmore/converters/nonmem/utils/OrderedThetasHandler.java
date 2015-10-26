@@ -13,6 +13,8 @@ import com.google.common.base.Preconditions;
 
 import crx.converter.engine.ScriptDefinition;
 import crx.converter.engine.parts.ParameterBlock;
+import crx.converter.tree.BinaryTree;
+import eu.ddmore.converters.nonmem.ConversionContext;
 import eu.ddmore.libpharmml.dom.commontypes.Rhs;
 import eu.ddmore.libpharmml.dom.maths.Equation;
 import eu.ddmore.libpharmml.dom.modeldefn.IndividualParameter;
@@ -27,11 +29,15 @@ import eu.ddmore.libpharmml.dom.modeldefn.IndividualParameter.GaussianModel.Line
  */
 public class OrderedThetasHandler {
     private final TreeMap<Integer, String> orderedThetas = new TreeMap<Integer, String>();
-    private final ScriptDefinition scriptDefinition;
+    private final ConversionContext context;
+    private ScriptDefinition scriptDefinition;
 
-    public OrderedThetasHandler(ScriptDefinition scriptDefinition){
-        Preconditions.checkNotNull(scriptDefinition, "Script definition Context cannot be null");
-        this.scriptDefinition = scriptDefinition;
+    public OrderedThetasHandler(ConversionContext conversionContext){
+        Preconditions.checkNotNull(conversionContext, "Conversion Context cannot be null");
+        Preconditions.checkNotNull(conversionContext.getScriptDefinition(), "Script definition cannot be null");
+
+        this.context = conversionContext;
+        scriptDefinition = context.getScriptDefinition();
     }
 
     /**
@@ -109,11 +115,19 @@ public class OrderedThetasHandler {
         Equation eq = assign.getEquation();
         if(assign.getSymbRef()!=null){
             return assign.getSymbRef().getSymbIdRef();
-        }else if(eq!=null && eq.getSymbRef()!=null){
-            return eq.getSymbRef().getSymbIdRef();
+        }else if(eq!=null){
+            BinaryTree bt = context.getLexer().getTreeMaker().newInstance(eq);
+            if(eq.getSymbRef()!=null){
+                return eq.getSymbRef().getSymbIdRef();
+            }else if(eq.getUniop()!=null){
+                return context.parse(eq.getUniop(),bt);
+            }else if(eq.getBinop()!=null){
+                return context.parse(eq.getBinop(), bt);
+            } 
         }else {
             throw new IllegalArgumentException("Variable symbol missing in assignment. The population parameter is not well formed.");
         }
+        return null;
     }
 
     public Map<Integer, String> getOrderedThetas() {

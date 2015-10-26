@@ -83,7 +83,7 @@ public class ConversionContext {
         this.inputColumnsHandler = new InputColumnsHandler(retrieveExternalDataSets(),lexer.getCovariates());
         String dataLocation = srcFile.getAbsoluteFile().getParentFile().getAbsolutePath();
         this.dataSetHandler = new DataSetHandler(retrieveExternalDataSets(), dataLocation);
-        this.orderedThetasHandler = new OrderedThetasHandler(getScriptDefinition());
+        this.orderedThetasHandler = new OrderedThetasHandler(this);
         this.etasHandler = new OrderedEtasHandler(getScriptDefinition());
         this.discreteHandler = new DiscreteHandler(getScriptDefinition());
         this.parameterHelper = new ParametersHelper(getScriptDefinition(), etasHandler, orderedThetasHandler);
