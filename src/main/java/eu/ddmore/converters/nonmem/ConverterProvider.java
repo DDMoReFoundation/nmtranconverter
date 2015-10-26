@@ -33,13 +33,13 @@ public class ConverterProvider extends Lexer {
         setParser(p);
         p.setLexer(this);
 
-        VersionImpl source_version = new VersionImpl(0, 6, 0);
+        VersionImpl source_version = new VersionImpl(0, 6, 1);
         source = new LanguageVersionImpl("PharmML", source_version);
 
         VersionImpl target_version = new VersionImpl(7, 3, 0);
         target = new LanguageVersionImpl("NMTRAN", target_version);
 
-        converterVersion = new VersionImpl(0, 1, 0);
+        converterVersion = new VersionImpl(0, 3, 0);
     }
 
     @Override
