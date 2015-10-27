@@ -117,6 +117,8 @@ public class PredStatement {
         if(desBuilder!=null){
             tteBlock.append(desBuilder.getVariableDefinitionsStatement(desBuilder.getAllVarDefinitions()));
         }
+        tteBlock.append(Formatter.endline("CUMHAZ=A(1)        ; CUMHAZ since last event"));
+        tteBlock.append(Formatter.endline("HAZARD_FUNC = "+context.getDiscreteHandler().getHazardFunction()));
         tteBlock.append(context.getDiscreteHandler().getDiscreteStatement());
 
         tteBlock.append(getErrorStatement());
