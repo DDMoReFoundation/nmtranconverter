@@ -12,7 +12,6 @@ import com.google.common.base.Preconditions;
 import crx.converter.engine.parts.StructuralBlock;
 import eu.ddmore.converters.nonmem.ConversionContext;
 import eu.ddmore.converters.nonmem.utils.Formatter;
-import eu.ddmore.converters.nonmem.utils.Formatter.Block;
 import eu.ddmore.libpharmml.dom.commontypes.DerivativeVariable;
 import eu.ddmore.libpharmml.dom.commontypes.VariableDefinition;
 
@@ -26,7 +25,6 @@ public class DiffEquationStatementBuilder {
     private final Map<String, String> allVarDefinitions = new LinkedHashMap<String, String>();
     private final Map<String, String> dadtDefinitionsInDES = new LinkedHashMap<String, String>();
     private final ConversionContext context;
-    private static final String DES_VAR_SUFFIX = "_"+Block.DES.toString();
 
     public DiffEquationStatementBuilder(ConversionContext context) {
         Preconditions.checkNotNull(context, "Conversion context cannot be null.");
@@ -67,7 +65,7 @@ public class DiffEquationStatementBuilder {
         StringBuilder diffEqStatementBlock = new StringBuilder();
 
         for(String var : derivativeVarsInDES.keySet()){
-            String variable = (Formatter.isInDesBlock())?renameVarForDES(var):var;
+            String variable = (Formatter.isInDesBlock())? Formatter.renameVarForDES(var):var;
             String derivativeVarStatement = variable+" = "+derivativeVarsInDES.get(var);
             diffEqStatementBlock.append(Formatter.endline(derivativeVarStatement));
         }
@@ -160,7 +158,7 @@ public class DiffEquationStatementBuilder {
 
     private String replaceVariable(String variableToReplace, String definition){
         String variablePatternToReplace = "\\b"+Pattern.quote(variableToReplace)+"\\b";
-        definition = definition.replaceAll(variablePatternToReplace, renameVarForDES(variableToReplace));
+        definition = definition.replaceAll(variablePatternToReplace, Formatter.renameVarForDES(variableToReplace));
 
         if(Formatter.isInDesBlock()){
             String varPatternToReplace = "\\b"+Pattern.quote(Formatter.ColumnConstant.TIME.toString())+"\\b";
@@ -173,15 +171,9 @@ public class DiffEquationStatementBuilder {
         return context.getDerivativeVarCompSequences().containsKey(variable);
     }
 
-    private String renameVarForDES(String variable) {
-        variable = variable+DES_VAR_SUFFIX;
-        return variable; 
-    }
-
     public Map<String, String> getDerivativeVarsInDES() {
         return derivativeVarsInDES;
     }
-
 
     public Map<String, String> getAllVarDefinitions() {
         return allVarDefinitions;

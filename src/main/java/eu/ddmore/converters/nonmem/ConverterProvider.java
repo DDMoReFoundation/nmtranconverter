@@ -94,7 +94,7 @@ public class ConverterProvider extends Lexer {
 
         inputStatement = new InputStatement(context.getInputColumnsHandler());
         dataStatement = new DataStatement(context.getDataSetHandler());
-        
+
         fout.write(Formatter.endline());
         fout.write(inputStatement.getStatement());
         fout.write(Formatter.endline());
@@ -105,11 +105,8 @@ public class ConverterProvider extends Lexer {
         fout.write(context.getParameterStatement().toString());
 
         EstimationStatement estStatement = new EstimationStatement(context);
-        if(!estStatement.getEstimationSteps().isEmpty()){
-            fout.write(estStatement.getEstimationStatement().toString());
-            fout.write(estStatement.getCovStatement());
-            fout.write(estStatement.addSimStatementForDiscrete());
-        }
+        fout.write(estStatement.getStatementsWithEstimationDetails().toString());
+
         TableStatement tableStatement = new TableStatement(context);
         fout.write(tableStatement.getStatements().toString());
     }

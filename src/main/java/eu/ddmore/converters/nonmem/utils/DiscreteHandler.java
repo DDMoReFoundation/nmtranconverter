@@ -33,6 +33,7 @@ public class DiscreteHandler {
     private boolean isCategoricalData = false;
     private boolean isTimeToEventData = false;
 
+    private String hazardFunction = new String();
     private StringBuilder discreteStatement;
 
     public DiscreteHandler(ScriptDefinition definition){
@@ -92,6 +93,7 @@ public class DiscreteHandler {
         }else if(obsModel instanceof TimeToEventData){
             TimeToEventData tteData = (TimeToEventData) obsModel;
             for(TTEFunction tteFunction : tteData.getListOfHazardFunction()){
+                setHazardFunction(tteFunction.getSymbId());
                 statement.append(createTimeToEventDataStatements(tteFunction.getSymbId()));
             }
         }
@@ -160,10 +162,16 @@ public class DiscreteHandler {
      */
     private StringBuilder createTimeToEventDataStatements(String tteVar) {
         StringBuilder stringToAdd = new StringBuilder();
+        //Adds parts of Error statement at this moment
+
         stringToAdd.append(Formatter.endline());
-        appendLine(stringToAdd,"IF (ICALL.EQ.4) THEN");
-        appendLine(stringToAdd,Formatter.indent(Formatter.indent(" ; ADD TTE DETAILS FOR "+tteVar)));
+        appendLine(stringToAdd,"IF (DV.EQ.0) THEN");
+        appendLine(stringToAdd,Formatter.indent(Formatter.indent(" Y=EXP(-CUMHAZ) ; likelihood of censored event")));
         appendLine(stringToAdd,"ENDIF");
+        appendLine(stringToAdd,"IF (DV.EQ.1) THEN");
+        appendLine(stringToAdd,Formatter.indent(Formatter.indent(" Y=HAZARD_FUNC*EXP(-CUMHAZ)   ; likelihood of event at exact time")));
+        appendLine(stringToAdd,"ENDIF");
+
         return stringToAdd;
     }
 
@@ -241,51 +249,41 @@ public class DiscreteHandler {
         this.isDiscrete = isDiscrete;
     }
 
-
     public boolean isCountData() {
         return isCountData;
     }
-
 
     public void setCountData(boolean isCountData) {
         this.isCountData = isCountData;
     }
 
-
     public boolean isPoissonDist() {
         return isPoissonDist;
     }
-
 
     public void setPoissonDist(boolean isPoissonDist) {
         this.isPoissonDist = isPoissonDist;
     }
 
-
     public boolean isNegativeBinomial() {
         return isNegativeBinomial;
     }
-
 
     public void setNegativeBinomial(boolean isNegativeBinomial) {
         this.isNegativeBinomial = isNegativeBinomial;
     }
 
-
     public boolean isCategoricalData() {
         return isCategoricalData;
     }
-
 
     public void setCategoricalData(boolean isCategoricalData) {
         this.isCategoricalData = isCategoricalData;
     }
 
-
     public boolean isTimeToEventData() {
         return isTimeToEventData;
     }
-
 
     public void setTimeToEventData(boolean isTimeToEventData) {
         this.isTimeToEventData = isTimeToEventData;
@@ -297,5 +295,13 @@ public class DiscreteHandler {
 
     public void setDiscreteStatement(StringBuilder discreteStatement) {
         this.discreteStatement = discreteStatement;
+    }
+
+    public String getHazardFunction() {
+        return hazardFunction;
+    }
+
+    public void setHazardFunction(String hazardFunction) {
+        this.hazardFunction = hazardFunction;
     }
 }

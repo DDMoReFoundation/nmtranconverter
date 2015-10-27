@@ -31,11 +31,33 @@ public class EstimationStatement {
     private final List<EstimationStep> estimationSteps;
     private final ConversionContext context;
     private Boolean covFound = false;
+    private final String simStart = Formatter.endline(";Sim_start");
+    private final String simContentEnd = Formatter.endline(";$SIM (12345) (12345 UNIFORM) ONLYSIM NOPREDICTION")
+            +Formatter.endline(";Sim_end");
 
     public EstimationStatement(ConversionContext convContext){
         Preconditions.checkNotNull(convContext, "Conversion Context cannot be null");
         this.context = convContext;
         estimationSteps = ScriptDefinitionAccessor.getEstimationSteps(context.getScriptDefinition());
+    }
+
+    /**
+     * Get estimation related statements and associated details as output.  
+     * @return all the associated statements
+     */
+    public StringBuilder getStatementsWithEstimationDetails(){
+        StringBuilder statement = new StringBuilder();
+
+        if(!getEstimationSteps().isEmpty()){
+            statement.append(Formatter.endline());
+            statement.append(addSimContentForDiscrete(simStart));
+
+            statement.append(getEstimationStatement());
+            statement.append(getCovStatement());
+
+            statement.append(addSimContentForDiscrete(simContentEnd));
+        }
+        return statement;
     }
 
     private StringBuilder buildEstimationStatementFromAlgorithm(Algorithm algorithm) {
@@ -80,7 +102,6 @@ public class EstimationStatement {
         estStatement.append(Formatter.est());
         if(estimationSteps!=null){
             for(EstimationStep estStep : estimationSteps){
-
                 for(EstimationOperation operationType :estStep.getOperations()){
                     String optType = operationType.getOpType();
                     covFound = checkForCovariateStatement(operationType);
@@ -108,21 +129,12 @@ public class EstimationStatement {
     }
 
     /**
-     * This method add "sim" comments after Estimation and Cov statement for discrete models.
+     * Formats "sim" content associated with estimation for discrete models.
      *  
-     * @return sim statement
+     * @return sim content if applicable
      */
-    public String addSimStatementForDiscrete(){
-        String simCommentsForDiscrete = 
-                Formatter.endline(";Sim_start")
-                +Formatter.endline(";$SIM (12345) (12345 UNIFORM) ONLYSIM NOPREDICTION")
-                +Formatter.endline(";Sim_end");
-
-        if(context.getDiscreteHandler().isDiscrete()){
-            return Formatter.endline(simCommentsForDiscrete);
-        }else {
-            return "";
-        }
+    private String addSimContentForDiscrete(String simContent){
+        return (context.getDiscreteHandler().isDiscrete())?simContent:"";
     }
 
     /**
@@ -143,7 +155,7 @@ public class EstimationStatement {
             for(OperationProperty property : operationType.getProperty()){
                 if(property.getName().equals("cov") && property.getAssign()!=null){
                     if(property.getAssign().getScalar()!=null){
-                        return isCovPropertyForEstOperation(property.getAssign().getScalar().getValue());	
+                        return isCovPropertyForEstOperation(property.getAssign().getScalar().getValue());
                     }else if(property.getAssign().getEquation()!=null){
                         Equation equation = property.getAssign().getEquation();
                         return isCovPropertyForEstOperation(equation.getScalar().getValue());

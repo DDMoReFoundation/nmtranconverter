@@ -42,7 +42,19 @@ public class PredStatement {
         PkMacroDetails pkMacroDetails = analyser.analyse(context);
         String advanType = pkMacroDetails.getMacroAdvanType();
 
-        if(!context.getDerivativeVars().isEmpty()){
+        if(context.getDiscreteHandler().isDiscrete()){
+            //Discrete
+            if(context.getDiscreteHandler().isCountData()){
+                getModelStatementForCountData(statementName, predStatement);
+            }
+            else if(context.getDiscreteHandler().isTimeToEventData()){
+                getModelStatementForTTE(predStatement);
+            }
+            else if(context.getDiscreteHandler().isCategoricalData()){
+                //TODO: add support for categorical data
+            }
+        }else if(!context.getDerivativeVars().isEmpty()){
+            //DES
             if(advanType.isEmpty()){
                 statementName = Formatter.endline()+Formatter.sub();
                 predStatement.append(Formatter.endline()+Formatter.endline(Formatter.subs()+"ADVAN13 TOL=9"));
@@ -55,11 +67,60 @@ public class PredStatement {
                 predStatement.append(getErrorStatement());
             }
         }else{
-            //non derivative pred block
+            //PRED
             predStatement.append(Formatter.endline()+statementName);
             predStatement.append(getNonDerivativePredStatement());
         }
         return new StringBuilder(predStatement.toString().toUpperCase());
+    }
+
+    private void getModelStatementForCountData(String statementName, StringBuilder predStatement) {
+        StringBuilder countDataBlock = new StringBuilder();
+        LocalVariableHandler variableHandler = new LocalVariableHandler(context);
+
+        countDataBlock.append(Formatter.endline()+statementName);
+        countDataBlock.append(getPredCoreStatement());
+        countDataBlock.append(getAllIndividualParamAssignments());
+        countDataBlock.append(variableHandler.getVarDefinitionTypesForNonDES()+Formatter.endline());
+        countDataBlock.append(context.getDiscreteHandler().getDiscreteStatement());
+        countDataBlock.append(getErrorStatement());
+
+        predStatement.append(countDataBlock);
+    }
+
+    private void getModelStatementForTTE(StringBuilder predStatement) {
+        StringBuilder tteBlock = new StringBuilder();
+        tteBlock.append(Formatter.endline());
+        //$SUBS
+        tteBlock.append(Formatter.endline(Formatter.subs()+"ADVAN13 TOL=9"));
+        //$MODEL
+        tteBlock.append(Formatter.endline());
+        String modelStatement = Formatter.endline("$MODEL"+ "\n\t; One hardcoded compartment " +
+                Formatter.endline(Formatter.indent("COMP=COMP1")));
+        tteBlock.append(modelStatement);
+        //$PK                
+        tteBlock.append(Formatter.endline()+Formatter.pk()); 
+        tteBlock.append(getPredCoreStatement());
+        tteBlock.append(getAllIndividualParamAssignments());
+        //$DES
+        tteBlock.append(Formatter.endline()+Formatter.des());
+        DiffEquationStatementBuilder desBuilder = new DiffEquationStatementBuilder(context);        
+        Formatter.setInDesBlock(true);
+        tteBlock.append(desBuilder.getDifferentialEquationsStatement());
+        Formatter.setInDesBlock(false);
+        String HAZARD_FUNC_DES = Formatter.renameVarForDES(context.getDiscreteHandler().getHazardFunction());
+        tteBlock.append(Formatter.endline("HAZARD_FUNC_DES = "+HAZARD_FUNC_DES));
+        tteBlock.append(Formatter.endline("DADT(1) = HAZARD_FUNC_DES"));
+        //Customised ERROR
+        //$ERROR
+        tteBlock.append(Formatter.endline()+Formatter.error());
+        if(desBuilder!=null){
+            tteBlock.append(desBuilder.getVariableDefinitionsStatement(desBuilder.getAllVarDefinitions()));
+        }
+        tteBlock.append(context.getDiscreteHandler().getDiscreteStatement());
+
+        tteBlock.append(getErrorStatement());
+        predStatement.append(tteBlock);
     }
 
     /**
@@ -73,7 +134,6 @@ public class PredStatement {
         nonDerivativePredBlock.append(getPredCoreStatement());
         nonDerivativePredBlock.append(getAllIndividualParamAssignments());
         nonDerivativePredBlock.append(variableHandler.getVarDefinitionTypesForNonDES()+Formatter.endline());
-        nonDerivativePredBlock.append(context.getDiscreteHandler().getDiscreteStatement());
         nonDerivativePredBlock.append(getErrorStatement());
 
         return nonDerivativePredBlock;

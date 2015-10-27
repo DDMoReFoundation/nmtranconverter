@@ -76,6 +76,13 @@ public class Formatter {
         Formatter.inDesBlock = inDesBlock;
     }
 
+    private static final String DES_VAR_SUFFIX = "_"+Block.DES.toString();
+
+    public static String renameVarForDES(String variable) {
+        variable = variable+DES_VAR_SUFFIX;
+        return variable; 
+    }
+
     public static String getTimeSymbol(){
         return (inDesBlock)?NmConstant.T.toString():ColumnConstant.TIME.toString();
     }
