@@ -95,8 +95,8 @@ public class PredStatement {
         tteBlock.append(Formatter.endline(Formatter.subs()+"ADVAN13 TOL=9"));
         //$MODEL
         tteBlock.append(Formatter.endline());
-        String modelStatement = Formatter.endline("$MODEL"+ "\n\t; One hardcoded compartment " +
-                Formatter.endline(Formatter.indent("COMP=COMP1")));
+        String modelStatement = Formatter.endline("$MODEL"+ "\n\t; One hardcoded compartment ") +
+                Formatter.endline(Formatter.indent("COMP=COMP1"));
         tteBlock.append(modelStatement);
         //$PK                
         tteBlock.append(Formatter.endline()+Formatter.pk()); 
