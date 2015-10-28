@@ -14,6 +14,7 @@ import eu.ddmore.converters.nonmem.utils.Formatter.ReservedColumnConstant;
 import eu.ddmore.libpharmml.dom.commontypes.SymbolType;
 import eu.ddmore.libpharmml.dom.dataset.ColumnDefinition;
 import eu.ddmore.libpharmml.dom.dataset.ColumnType;
+import eu.ddmore.libpharmml.dom.dataset.HeaderColumnsDefinition;
 import eu.ddmore.libpharmml.dom.modeldefn.ContinuousCovariate;
 import eu.ddmore.libpharmml.dom.modeldefn.CovariateDefinition;
 import eu.ddmore.libpharmml.dom.modeldefn.CovariateTransformation;
@@ -71,8 +72,10 @@ public class InputColumnsHandler {
 
     private void populateColumnsWithEstHeaders(ExternalDataSet externalDataSet) {
 
-        List<ColumnDefinition> dataColumns = externalDataSet.getDataSet().getListOfColumnDefinition();
-        Preconditions.checkNotNull(dataColumns, "External data set has no columns");
+        HeaderColumnsDefinition headerColumns = externalDataSet.getDataSet().getDefinition();
+        Preconditions.checkNotNull(headerColumns, "Header columns definition has no columns");
+
+        List<ColumnDefinition> dataColumns = headerColumns.getListOfColumn();
 
         Map<Long, InputHeader> orderedColumns = new TreeMap<Long, InputHeader>();
         Long columnSequence= new Long(1);
