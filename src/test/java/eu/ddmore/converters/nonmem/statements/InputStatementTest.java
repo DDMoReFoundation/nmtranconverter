@@ -22,6 +22,7 @@ import eu.ddmore.libpharmml.dom.commontypes.SymbolType;
 import eu.ddmore.libpharmml.dom.dataset.ColumnDefinition;
 import eu.ddmore.libpharmml.dom.dataset.ColumnType;
 import eu.ddmore.libpharmml.dom.dataset.DataSet;
+import eu.ddmore.libpharmml.dom.dataset.HeaderColumnsDefinition;
 import eu.ddmore.libpharmml.dom.modeldefn.CovariateDefinition;
 import eu.ddmore.libpharmml.dom.modellingsteps.ExternalDataSet;
 import eu.ddmore.libpharmml.util.WrappedList;
@@ -31,6 +32,7 @@ public class InputStatementTest {
 
     @Mock InputColumnsHandler inputColumns;
     @Mock ExternalDataSet extDataSet;
+    @Mock HeaderColumnsDefinition headerColumnDef;
     @Mock DataSet dataSet;
 
     InputStatement inputStatement;
@@ -74,7 +76,8 @@ public class InputStatementTest {
         dataColumns = new WrappedList<ColumnDefinition>();
         dataColumns.add(ID);
         dataColumns.add(TIME);
-        when(dataSet.getListOfColumnDefinition()).thenReturn(dataColumns);
+        when(headerColumnDef.getListOfColumn()).thenReturn(dataColumns);
+        when(dataSet.getDefinition()).thenReturn(headerColumnDef);
 
         when(extDataSet.getDataSet()).thenReturn(dataSet);
         externalDataSets.add(extDataSet);
