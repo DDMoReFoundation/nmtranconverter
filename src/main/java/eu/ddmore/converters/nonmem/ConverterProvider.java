@@ -104,8 +104,8 @@ public class ConverterProvider extends Lexer {
         fout.write(context.buildPredStatement().toString());
         fout.write(context.getParameterStatement().toString());
 
-        EstimationStatement estStatement = new EstimationStatement(context);
-        fout.write(estStatement.getStatementsWithEstimationDetails().toString());
+        EstimationStatement estStatement = new EstimationStatement(context.getEstimationEmitter());
+        fout.write(estStatement.getStatementsWithEstimationDetails());
 
         TableStatement tableStatement = new TableStatement(context);
         fout.write(tableStatement.getStatements().toString());

@@ -57,7 +57,8 @@ public class PredStatement {
             //DES
             if(advanType.isEmpty()){
                 statementName = Formatter.endline()+Formatter.sub();
-                predStatement.append(Formatter.endline()+Formatter.endline(Formatter.subs()+"ADVAN13 TOL=9"));
+                int tolValue = (context.getEstimationEmitter().isSAEM())? 6:9;
+                predStatement.append(Formatter.endline()+Formatter.endline(Formatter.subs()+"ADVAN13 TOL="+tolValue));
                 predStatement.append(getDerivativePredStatement().toString());
             }else{
                 //Advan PK macros

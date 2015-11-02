@@ -24,6 +24,7 @@ import crx.converter.spi.IParser;
 import crx.converter.tree.BinaryTree;
 import eu.ddmore.converters.nonmem.statements.DataSetHandler;
 import eu.ddmore.converters.nonmem.statements.ErrorStatement;
+import eu.ddmore.converters.nonmem.statements.EstimationDetailsEmitter;
 import eu.ddmore.converters.nonmem.statements.InputColumnsHandler;
 import eu.ddmore.converters.nonmem.statements.InterOccVariabilityHandler;
 import eu.ddmore.converters.nonmem.statements.PredStatement;
@@ -63,6 +64,7 @@ public class ConversionContext {
     private final Map<String, String> derivativeVarCompSequences = new HashMap<String, String>();
     private final ConditionalEventHandler conditionalEventHandler;
     private final MuReferenceHandler muReferenceHandler;
+    private final EstimationDetailsEmitter estimationEmitter;
     private final InterOccVariabilityHandler iovHandler; 
     private final InputColumnsHandler inputColumnsHandler;
     private final DataSetHandler dataSetHandler;
@@ -86,6 +88,9 @@ public class ConversionContext {
         this.orderedThetasHandler = new OrderedThetasHandler(this);
         this.etasHandler = new OrderedEtasHandler(getScriptDefinition());
         this.discreteHandler = new DiscreteHandler(getScriptDefinition());
+        //Refers to discrete handler
+        this.estimationEmitter = new EstimationDetailsEmitter(getScriptDefinition(), discreteHandler);
+        estimationEmitter.processEstimationStatement();
         this.parameterHelper = new ParametersHelper(getScriptDefinition(), etasHandler, orderedThetasHandler);
 
         this.conditionalEventHandler = new ConditionalEventHandler(this);
@@ -412,5 +417,9 @@ public class ConversionContext {
 
     public DataSetHandler getDataSetHandler() {
         return dataSetHandler;
+    }
+
+    public EstimationDetailsEmitter getEstimationEmitter() {
+        return estimationEmitter;
     }
 }
