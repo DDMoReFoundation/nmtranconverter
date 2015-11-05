@@ -28,7 +28,7 @@ public class RandomVariableHelper {
         Preconditions.checkNotNull(rv, "Parameter random variable cannot be null.");
         String symbId = null;
         if (getDistributionTypeStdDev(rv) != null) {
-            symbId = getDistributionTypeStdDev(rv).getVar().getVarId();                 
+            symbId = getDistributionTypeStdDev(rv).getVar().getVarId();
         } else if (getDistributionTypeVariance(rv) != null) {
             if(getDistributionTypeVariance(rv).getVar()!=null){
                 symbId = getDistributionTypeVariance(rv).getVar().getVarId();

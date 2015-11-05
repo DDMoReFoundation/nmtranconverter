@@ -84,76 +84,6 @@ public class Parser extends BaseParser {
         props.load(getClass().getResourceAsStream("Parser.properties"));
     }
 
-    //TODO: remove this code once it is agreed and confirmed to go with BaseParser implementation.
-    //    @Override
-    //    protected String doBinaryOperation(Binop binopType, String leftStatement, String rightStatement) {
-    //
-    //        String operator = convertBinoperator(binopType);
-    //        if (operator.equals(LOGX)) 
-    //            return String.format(getLogXFormat(), leftStatement, rightStatement);
-    //        else if (operator.equals(ROOT)) 
-    //            return String.format(getRootFormat(), leftStatement, rightStatement);
-    //        else if (operator.equals(MIN)) 
-    //            return String.format(getMinFormat(), leftStatement, rightStatement);
-    //        else if (operator.equals(MAX)) 
-    //            return String.format(getMaxFormat(), leftStatement, rightStatement);
-    //        else if (operator.equals(REM)) 
-    //            return String.format(getRemFormat(), leftStatement, rightStatement);
-    //        else{
-    //            return getBinaryOperatorFormat(operator,leftStatement, rightStatement);
-    //        }
-    //    }
-    //
-    //    private String getBinaryOperatorFormat(String op, String leftStatement, String rightStatement){
-    //
-    //        String operator = getScriptBinaryOperator(op);
-    //
-    //        if(op.equalsIgnoreCase(PLUS)){
-    //            return sum(leftStatement, operator, rightStatement);
-    //        }else if(op.equalsIgnoreCase(MINUS)) {
-    //            return subtraction(leftStatement, operator, rightStatement);
-    //        }else if(op.equalsIgnoreCase(DIVIDE)) {
-    //            return division(leftStatement, operator, rightStatement);
-    //        }else if (op.equalsIgnoreCase(POWER)) 
-    //            return power(leftStatement, operator, rightStatement);
-    //        else {
-    //            return genericMathOperation(leftStatement, operator, rightStatement);
-    //        }
-    //    }
-    //
-    //    private String sum(String left, String operator, String right) {
-    //        String strToReturn = "("+left + operator + right+")"; 
-    //        return strToReturn;
-    //    }
-    //
-    //    private String subtraction(String left, String operator, String right) {
-    //        String strToReturn =  "(" + addParenthesesIfNeeded(left) + operator + addParenthesesIfNeeded(right) +")";
-    //        return strToReturn;
-    //    }
-    //    
-    //    private String power(String left, String operator, String right) {
-    //        String strToReturn =  "(" + addParenthesesIfNeeded(left)+")" + operator + addParenthesesIfNeeded(right);
-    //        return strToReturn;
-    //    }
-    //
-    //    private String division(String left, String operator, String right) {
-    //        String strToReturn =  addParenthesesIfNeeded(left) + operator + addParenthesesIfNeeded(right);
-    //        return strToReturn;
-    //    }
-    //
-    //    private String genericMathOperation(String left, String operator, String right) {
-    //        String strToReturn =  left + operator + right;
-    //        return strToReturn;
-    //    }
-    //
-    //    private String addParenthesesIfNeeded(String operand) {
-    //        if ( (operand.contains(getScriptBinaryOperator(PLUS)) || operand.contains(getScriptBinaryOperator(MINUS))) && !operand.startsWith("(")) {
-    //            return "("+ operand +")";
-    //        } else {
-    //            return operand;
-    //        }
-    //    }
-
     @Override
     protected String doSymbolRef(SymbolRef symbRefType) {
 
@@ -354,7 +284,7 @@ public class Parser extends BaseParser {
         for (int i = 0; i < pieces.size(); i++) {
             Piece piece = pieces.get(i);
 
-            if (conditional_trees[i] != null && assignment_trees[i] != null) {			
+            if (conditional_trees[i] != null && assignment_trees[i] != null) {
                 // Logical condition
                 if (!piece.equals(else_block)) conditional_stmts[i] = parse(piece, conditional_trees[i]);
 

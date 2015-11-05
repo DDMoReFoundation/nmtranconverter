@@ -179,6 +179,7 @@ public class ParametersHelper {
     private boolean validateParamName(String paramName) {
         return !(paramName== null ||  omegaStatements.containsKey(paramName) || 
                 orderedEtasHandler.getEtasToOmegasInCorrelation().values().contains(paramName) ||
+                orderedEtasHandler.getEtasToOmegasInIOV().values().contains(paramName) ||
                 verifiedSigmas.contains(paramName) || thetaStatements.containsKey(paramName));
     }
 
@@ -366,12 +367,12 @@ public class ParametersHelper {
      */
     public StringBuilder getOmegaStatementBlock() {
         StringBuilder omegaStatement = new StringBuilder();
-        Map<String, List<OmegaStatement>> omegaBlocks = omegaBlockStatement.getOmegaBlocks();
+        Map<String, List<OmegaStatement>> omegaBlocksInNonIOV = omegaBlockStatement.getOmegaBlocksInNonIOV();
 
-        if(!omegaBlocks.isEmpty()){
-            omegaStatement.append(Formatter.endline(omegaBlockStatement.getOmegaBlockTitle()));
-            for(String eta : omegaBlockStatement.getOmegaOrderToEtas().values()){
-                for(OmegaStatement omega : omegaBlocks.get(eta)){
+        if(!omegaBlocksInNonIOV.isEmpty()){
+            omegaStatement.append(Formatter.endline(omegaBlockStatement.getOmegaBlockTitleInNonIOV()));
+            for(String eta : omegaBlockStatement.getOmegaOrderToEtasInNonIOV().values()){
+                for(OmegaStatement omega : omegaBlocksInNonIOV.get(eta)){
                     omegaStatement.append(ParameterStatementHandler.addParameter(omega));
                 }
             }
@@ -382,6 +383,20 @@ public class ParametersHelper {
             omegaStatement.append(Formatter.endline(Formatter.omega()));
             for (final String omegaVar : omegaStatements.keySet()) {
                 omegaStatement.append(ParameterStatementHandler.addParameter(omegaStatements.get(omegaVar)));
+            }
+        }
+        return omegaStatement;
+    }
+
+    public StringBuilder getOmegaStatementBlockForIOV(){
+        StringBuilder omegaStatement = new StringBuilder();
+        Map<String, List<OmegaStatement>> omegaBlocksInIOV = omegaBlockStatement.getOmegaBlocksInIOV();
+        if(!omegaBlocksInIOV.isEmpty()){
+            omegaStatement.append(Formatter.endline(omegaBlockStatement.getOmegaBlockTitleInIOV()));
+            for(String eta : omegaBlockStatement.getOmegaOrderToEtasInIOV().values()){
+                for(OmegaStatement omega : omegaBlocksInIOV.get(eta)){
+                    omegaStatement.append(ParameterStatementHandler.addParameter(omega));
+                }
             }
         }
         return omegaStatement;

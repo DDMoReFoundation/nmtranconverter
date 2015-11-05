@@ -14,9 +14,9 @@ import eu.ddmore.converters.nonmem.handlers.PropertiesHandler;
 public class Formatter {
 
     public enum Block{
-        PK, ERROR, DES, MODEL, PRED, DATA, EST, 
+        ABBR, PK, ERROR, DES, MODEL, PRED, DATA, EST, 
         PROBLEM, SIM, TABLE, INPUT, SUBS, SUB, 
-        COV, THETA, OMEGA, SIGMA, BLOCK;
+        COV, THETA, OMEGA, SIGMA, BLOCK, SAME;
     }
 
     public enum NmConstant{
@@ -132,6 +132,22 @@ public class Formatter {
     public static String omegaBlock(Integer blocksCount) {
         return String.format("%s%s %s(%s)",Symbol.BLOCK, Block.OMEGA, Block.BLOCK, blocksCount);
     }
+
+    /**
+     * Add <code>Omega SAME</code> block title and then continue appending on the same line
+     * 
+     * @return block title
+     */
+    public static String omegaSameBlock(Integer blockCount, Integer uniqueValueCount) {
+        StringBuilder sameBlockStatement = new StringBuilder();
+        String sameBlock = String.format("%s%s %s(%s) %s",Symbol.BLOCK, Block.OMEGA, Block.BLOCK, blockCount, Block.SAME);
+
+        for(int i=1;i<uniqueValueCount;i++){
+            sameBlockStatement.append(endline(sameBlock));
+        }
+        return sameBlockStatement.toString();
+    }
+
     /**
      * Add <code>Est</code> block title and then continue appending on the same line
      * 
@@ -221,6 +237,16 @@ public class Formatter {
     public static String pred() {
         return String.format(newLineBlockTitle,Symbol.BLOCK,Block.PRED);
     }
+
+    /**
+     * Add <code>Abbr</code> title and then continue appending on the new line
+     * 
+     * @return block title
+     */
+    public static String abbr() {
+        return String.format(inLineBlockTitle,Symbol.BLOCK,Block.ABBR);
+    }
+
     /**
      * Add <code>Theta</code> title and then continue appending on the new line
      * 

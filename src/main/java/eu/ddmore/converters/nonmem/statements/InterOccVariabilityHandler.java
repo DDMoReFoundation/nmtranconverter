@@ -6,7 +6,6 @@ package eu.ddmore.converters.nonmem.statements;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -20,14 +19,17 @@ import eu.ddmore.libpharmml.dom.commontypes.LevelReference;
 import eu.ddmore.libpharmml.dom.dataset.ColumnType;
 import eu.ddmore.libpharmml.dom.modeldefn.ParameterRandomVariable;
 
-
+/**
+ * This class handled Inter Occasion Variability in nmtran 
+ */
 public class InterOccVariabilityHandler {
     public static final String OCCASION_COL_TYPE = "occasion";
     private ConversionContext context;
     private final List<InputHeader> columns;
-    private final Map<String, InputHeader> columnsWithOcc = new HashMap<String, InputHeader>();
-    private final Map<Integer, OccRandomVariable> randomVarsWithOcc = new TreeMap<Integer, OccRandomVariable>();
-    private final Map<String, List<Double>> iovColumnUniqueValues = new HashMap<String, List<Double>>();
+    private InputHeader columnWithOcc;
+    private final Map<Integer, OccRandomVariable> orderedOccRandomVars = new TreeMap<Integer, OccRandomVariable>();
+    private final List<String> occasionRandomVariables = new ArrayList<String>();
+    private final List<Double> iovColumnUniqueValues = new ArrayList<Double>();
 
     public InterOccVariabilityHandler(ConversionContext context) throws IOException {
         Preconditions.checkNotNull(context, "Conversion Context cannot be null");
@@ -48,14 +50,16 @@ public class InterOccVariabilityHandler {
             for(ParameterRandomVariable variable : block.getRandomVariables()){
                 count = addOccVariabilityRef(variable, count);
             }
+            for(ParameterRandomVariable variable : block.getLinkedRandomVariables()){
+                count = addOccVariabilityRef(variable, count);
+            }
         }
     }
 
     private void getOccColumns(){
         for(InputHeader column : columns){
             if(column.getColumnType().name().equalsIgnoreCase(OCCASION_COL_TYPE)){
-                columnsWithOcc.put(column.getColumnId(),column);
-                iovColumnUniqueValues.put(column.getColumnId(), new ArrayList<Double>());
+                columnWithOcc = column;
             }
         }
     }
@@ -66,11 +70,11 @@ public class InterOccVariabilityHandler {
             if(levelRef.getSymbRef().getSymbIdRef()!=null){
                 String variabilityRef = levelRef.getSymbRef().getSymbIdRef();
 
-                if(columnsWithOcc.keySet().contains(variabilityRef)){
-                    InputHeader column = columnsWithOcc.get(variabilityRef);  
-                    OccRandomVariable occRandomVariable = new OccRandomVariable(count, column.getColumnType(), variable);
-                    randomVarsWithOcc.put(count,occRandomVariable);
+                if(columnWithOcc!=null && columnWithOcc.getColumnId().equals(variabilityRef)){
+                    OccRandomVariable occRandomVariable = new OccRandomVariable(count, columnWithOcc.getColumnType(), variable);
+                    orderedOccRandomVars.put(count,occRandomVariable);
                     count++;
+                    occasionRandomVariables.add(variable.getSymbId());
                 }
             }
         }
@@ -83,17 +87,14 @@ public class InterOccVariabilityHandler {
      * @throws IOException
      */
     public void retrieveIovColumnUniqueValues(File dataFile) throws IOException{
-        if(!iovColumnUniqueValues.isEmpty()){
+        if(iovColumnUniqueValues.isEmpty()){
             CsvReader reader = new CsvReader(dataFile.getAbsolutePath());
             reader.readHeaders();
             while (reader.readRecord())
             {
-                for(String columnName : iovColumnUniqueValues.keySet()){
-                    List<Double> uniqueValues = iovColumnUniqueValues.get(columnName);
-                    Double value = Double.parseDouble(reader.get(columnName));
-                    if(!uniqueValues.contains(value)){
-                        uniqueValues.add(value);
-                    }
+                Double value = Double.parseDouble(reader.get(columnWithOcc.getColumnId()));
+                if(!iovColumnUniqueValues.contains(value)){
+                    iovColumnUniqueValues.add(value);
                 }
             }
             reader.close();
@@ -101,15 +102,19 @@ public class InterOccVariabilityHandler {
     }
 
     public Map<Integer, OccRandomVariable> getRandomVarsWithOccasion() {
-        return randomVarsWithOcc;
+        return orderedOccRandomVars;
     }
 
-    public Map<String, InputHeader> getColumnsWithOcc() {
-        return columnsWithOcc;
+    public InputHeader getColumnWithOcc() {
+        return columnWithOcc;
     }
 
-    public Map<String, List<Double>> getIovColumnUniqueValues() {
+    public List<Double> getIovColumnUniqueValues() {
         return iovColumnUniqueValues;
+    }
+
+    public List<String> getOccasionRandomVariables() {
+        return occasionRandomVariables;
     }
 
     public class OccRandomVariable{

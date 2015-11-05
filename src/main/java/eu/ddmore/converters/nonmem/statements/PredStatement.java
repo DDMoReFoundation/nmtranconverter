@@ -37,7 +37,6 @@ public class PredStatement {
     }
 
     public StringBuilder getPredStatement(){
-        String statementName = Formatter.endline()+Formatter.pred();
         StringBuilder predStatement = new StringBuilder();
         PkMacroDetails pkMacroDetails = analyser.analyse(context);
         String advanType = pkMacroDetails.getMacroAdvanType();
@@ -45,10 +44,10 @@ public class PredStatement {
         if(context.getDiscreteHandler().isDiscrete()){
             //Discrete
             if(context.getDiscreteHandler().isCountData()){
-                getModelStatementForCountData(statementName, predStatement);
+                predStatement.append(getModelStatementForCountData());
             }
             else if(context.getDiscreteHandler().isTimeToEventData()){
-                getModelStatementForTTE(predStatement);
+                predStatement.append(getModelStatementForTTE());
             }
             else if(context.getDiscreteHandler().isCategoricalData()){
                 //TODO: add support for categorical data
@@ -56,7 +55,6 @@ public class PredStatement {
         }else if(!context.getDerivativeVars().isEmpty()){
             //DES
             if(advanType.isEmpty()){
-                statementName = Formatter.endline()+Formatter.sub();
                 int tolValue = (context.getEstimationEmitter().isSAEM())? 6:9;
                 predStatement.append(Formatter.endline()+Formatter.endline(Formatter.subs()+"ADVAN13 TOL="+tolValue));
                 predStatement.append(getDerivativePredStatement().toString());
@@ -69,27 +67,27 @@ public class PredStatement {
             }
         }else{
             //PRED
-            predStatement.append(Formatter.endline()+statementName);
+            predStatement.append(Formatter.endline()+Formatter.endline()+Formatter.pred());
             predStatement.append(getNonDerivativePredStatement());
         }
         return new StringBuilder(predStatement.toString().toUpperCase());
     }
 
-    private void getModelStatementForCountData(String statementName, StringBuilder predStatement) {
+    private StringBuilder getModelStatementForCountData() {
         StringBuilder countDataBlock = new StringBuilder();
         LocalVariableHandler variableHandler = new LocalVariableHandler(context);
-
-        countDataBlock.append(Formatter.endline()+statementName);
+        //PRED
+        countDataBlock.append(Formatter.endline()+Formatter.endline()+Formatter.pred());
         countDataBlock.append(getPredCoreStatement());
         countDataBlock.append(getAllIndividualParamAssignments());
         countDataBlock.append(variableHandler.getVarDefinitionTypesForNonDES()+Formatter.endline());
         countDataBlock.append(context.getDiscreteHandler().getDiscreteStatement());
         countDataBlock.append(getErrorStatement());
 
-        predStatement.append(countDataBlock);
+        return countDataBlock;
     }
 
-    private void getModelStatementForTTE(StringBuilder predStatement) {
+    private StringBuilder getModelStatementForTTE() {
         StringBuilder tteBlock = new StringBuilder();
         tteBlock.append(Formatter.endline());
         //$SUBS
@@ -123,7 +121,7 @@ public class PredStatement {
         tteBlock.append(context.getDiscreteHandler().getDiscreteStatement());
 
         tteBlock.append(getErrorStatement());
-        predStatement.append(tteBlock);
+        return tteBlock;
     }
 
     /**
@@ -160,11 +158,12 @@ public class PredStatement {
         StringBuilder derivativePredblock = new StringBuilder();
         derivativePredblock.append(getModelStatement());
         //TODO : getAbbreviatedStatement();
+        derivativePredblock.append(getAbbreviatedStatement());
         derivativePredblock.append(getPKStatement());
 
         derivativePredblock.append(Formatter.des());
 
-        DiffEquationStatementBuilder desBuilder = new DiffEquationStatementBuilder(context);        
+        DiffEquationStatementBuilder desBuilder = new DiffEquationStatementBuilder(context);
         Formatter.setInDesBlock(true);
         derivativePredblock.append(desBuilder.getDifferentialEquationsStatement());
         Formatter.setInDesBlock(false);
@@ -174,6 +173,17 @@ public class PredStatement {
         derivativePredblock.append(getErrorStatement(desBuilder));
 
         return derivativePredblock;
+    }
+
+    private StringBuilder getAbbreviatedStatement() {
+        StringBuilder abbrStatement = new StringBuilder();
+
+        InputHeader iovColumn = context.getIovHandler().getColumnWithOcc();
+        for(String occRandomVars : context.getIovHandler().getOccasionRandomVariables()){
+            String nextAbbr = Formatter.endline()+Formatter.abbr()+"REPLACE ETA("+iovColumn.getColumnId()+"_"+occRandomVars+")";
+            abbrStatement.append(nextAbbr+"="+"(1, 2) ; Temp statements placed");
+        }
+        return abbrStatement;
     }
 
     private String getConditionalDoseDetails() {

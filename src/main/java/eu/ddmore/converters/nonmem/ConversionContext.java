@@ -86,7 +86,8 @@ public class ConversionContext {
         String dataLocation = srcFile.getAbsoluteFile().getParentFile().getAbsolutePath();
         this.dataSetHandler = new DataSetHandler(retrieveExternalDataSets(), dataLocation);
         this.orderedThetasHandler = new OrderedThetasHandler(this);
-        this.etasHandler = new OrderedEtasHandler(getScriptDefinition());
+        this.iovHandler = new InterOccVariabilityHandler(this);
+        this.etasHandler = new OrderedEtasHandler(this);
         this.discreteHandler = new DiscreteHandler(getScriptDefinition());
         //Refers to discrete handler
         this.estimationEmitter = new EstimationDetailsEmitter(getScriptDefinition(), discreteHandler);
@@ -95,7 +96,7 @@ public class ConversionContext {
 
         this.conditionalEventHandler = new ConditionalEventHandler(this);
         this.muReferenceHandler = new MuReferenceHandler(this);
-        this.iovHandler = new InterOccVariabilityHandler(this);
+
         initialise();
     }
 
@@ -148,10 +149,20 @@ public class ConversionContext {
         StringBuilder omegaStatement = parameterHelper.getOmegaStatementBlock();
         parameterStatement.append(omegaStatement);
 
+        StringBuilder omegaStatementForIOV = parameterHelper.getOmegaStatementBlockForIOV();
+        parameterStatement.append(omegaStatementForIOV+createOmegaSameBlockTitle());
+
         StringBuilder sigmaStatement = parameterHelper.getSigmaStatementBlock();
         parameterStatement.append(sigmaStatement);
 
         return parameterStatement;
+    }
+
+    private String createOmegaSameBlockTitle() {
+        Integer uniqueValueCount = getIovHandler().getIovColumnUniqueValues().size();
+        Integer blockCount = getEtasHandler().getOrderedEtasInIOV().size();
+        String title = String.format(Formatter.endline()+"%s", Formatter.omegaSameBlock(blockCount, uniqueValueCount));
+        return title;
     }
 
     /**
@@ -380,7 +391,7 @@ public class ConversionContext {
     }
 
     public Map<String, Integer> retrieveOrderedEtas() {
-        return etasHandler.getOrderedEtas();
+        return etasHandler.getAllOrderedEtas();
     }
 
     public List<DerivativeVariable> getDerivativeVars() {
