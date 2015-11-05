@@ -87,7 +87,7 @@ public class InterOccVariabilityHandler {
      * @throws IOException
      */
     public void retrieveIovColumnUniqueValues(File dataFile) throws IOException{
-        if(iovColumnUniqueValues.isEmpty()){
+        if(iovColumnUniqueValues.isEmpty() && columnWithOcc!=null){
             CsvReader reader = new CsvReader(dataFile.getAbsolutePath());
             reader.readHeaders();
             while (reader.readRecord())
