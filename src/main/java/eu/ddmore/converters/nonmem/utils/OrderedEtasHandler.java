@@ -101,7 +101,7 @@ public class OrderedEtasHandler {
                     iovEta.setOrder(++etaCount);
                     iovEta.setOrderInCorr(++iovEtaCount);
                     iovEta.setVarLevel(VarLevel.IOV);
-                    String etaSymbolForIOV = context.getIovHandler().getColumnWithOcc().getColumnId()+"_"+iovEta.getEtaSymbol();
+                    String etaSymbolForIOV = context.getIovHandler().getColumnWithOcc().getColumnId()+"_"+iovEta.getOmegaName();
                     iovEta.setEtaSymbolForIOV(etaSymbolForIOV);
                     allOrderedEtas.add(iovEta);
                     orderedEtasInIOV.add(iovEta);

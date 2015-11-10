@@ -248,15 +248,6 @@ public class Formatter {
     }
 
     /**
-     * Add <code>size</code> title and then continue appending on the new line
-     * 
-     * @return block title
-     */
-    public static String size() {
-        return String.format(inLineBlockTitle,Symbol.BLOCK,Block.SIZE);
-    }
-
-    /**
      * Add <code>Theta</code> title and then continue appending on the new line
      * 
      * @return block title
@@ -264,6 +255,7 @@ public class Formatter {
     public static String theta() {
         return String.format(newLineBlockTitle,Symbol.BLOCK,Block.THETA);
     }
+
     /**
      * Add <code>Sigma</code> title and then continue appending on the new line
      * 
@@ -272,6 +264,7 @@ public class Formatter {
     public static String sigma() {
         return String.format(newLineBlockTitle,Symbol.BLOCK,Block.SIGMA);
     }
+
     /**
      * gets parameter name with prefix as replacement for the parameter name if its reserved word.
      * 
