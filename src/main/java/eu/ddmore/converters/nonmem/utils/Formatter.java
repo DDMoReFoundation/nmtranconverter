@@ -148,6 +148,11 @@ public class Formatter {
         return sameBlockStatement.toString();
     }
 
+    private static final String DUMMY_ETA = "DUMMY = ETA(1)";
+    public static String getDummyEtaStatement() {
+        return Formatter.endline(DUMMY_ETA);
+    }
+
     /**
      * Add <code>Est</code> block title and then continue appending on the same line
      * 
