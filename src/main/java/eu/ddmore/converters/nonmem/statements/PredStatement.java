@@ -12,6 +12,7 @@ import crx.converter.engine.parts.ConditionalDoseEvent;
 import crx.converter.engine.parts.ParameterBlock;
 import eu.ddmore.converters.nonmem.ConversionContext;
 import eu.ddmore.converters.nonmem.IndividualDefinitionEmitter;
+import eu.ddmore.converters.nonmem.eta.Eta;
 import eu.ddmore.converters.nonmem.statements.PkMacroAnalyser.PkMacroDetails;
 import eu.ddmore.converters.nonmem.utils.Formatter;
 import eu.ddmore.converters.nonmem.utils.LocalVariableHandler;
@@ -177,13 +178,33 @@ public class PredStatement {
 
     private StringBuilder getAbbreviatedStatement() {
         StringBuilder abbrStatement = new StringBuilder();
+        abbrStatement.append(Formatter.endline());
+        int uniqueOccValuesCount = context.getIovHandler().getIovColumnUniqueValues().size();
+        int iovEtasCount = context.getEtasHandler().getOrderedEtasInIOV().size();
 
-        InputHeader iovColumn = context.getIovHandler().getColumnWithOcc();
-        for(String occRandomVars : context.getIovHandler().getOccasionRandomVariables()){
-            String nextAbbr = Formatter.endline()+Formatter.abbr()+"REPLACE ETA("+iovColumn.getColumnId()+"_"+occRandomVars+")";
-            abbrStatement.append(nextAbbr+"="+"(1, 2) ; Temp statements placed");
+        for(Eta iovEta :context.getEtasHandler().getOrderedEtasInIOV()){
+
+            String etaValue = getIovEtaValueForAbbr(iovEta.getOrder(), uniqueOccValuesCount, iovEtasCount);
+
+            String nextAbbr = Formatter.abbr()+"REPLACE "+Formatter.etaFor(iovEta.getEtaOrderSymbol());
+            abbrStatement.append(Formatter.endline(nextAbbr+"="+Formatter.etaFor(etaValue)));
         }
         return abbrStatement;
+    }
+
+    //(<eta_order>, 1*<no_of_etas>+<eta_order>, 2*<no_of_etas>+<eta_order>, ... , <no_of_unique_occ_values>*<no_of_etas>+<eta_order>);
+    private String getIovEtaValueForAbbr(int etaOrder, int uniqueOccValuesCount, int iovEtasCount) {
+
+        StringBuilder etaValues = new StringBuilder();
+
+        for(int i=0;i<uniqueOccValuesCount;i++){
+            int etaVal = i*iovEtasCount+etaOrder;
+            etaValues.append(etaVal);
+            if(i != uniqueOccValuesCount-1){
+                etaValues.append(", ");
+            }
+        }
+        return etaValues.toString();
     }
 
     private String getConditionalDoseDetails() {

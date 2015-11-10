@@ -22,6 +22,7 @@ import crx.converter.engine.parts.StructuralBlock;
 import crx.converter.spi.ILexer;
 import crx.converter.spi.IParser;
 import crx.converter.tree.BinaryTree;
+import eu.ddmore.converters.nonmem.eta.Eta;
 import eu.ddmore.converters.nonmem.statements.DataSetHandler;
 import eu.ddmore.converters.nonmem.statements.ErrorStatement;
 import eu.ddmore.converters.nonmem.statements.EstimationDetailsEmitter;
@@ -264,9 +265,9 @@ public class ConversionContext {
      */
     public StringBuilder buildEtaAssignments() {
         StringBuilder etaAssignment = new StringBuilder();
-        Map<String, Integer> orderedThetas = retrieveOrderedEtas();
-        for(String eta : orderedThetas.keySet()){
-            etaAssignment.append(Formatter.endline(eta+ " = ETA("+orderedThetas.get(eta)+")"));
+        Set<Eta> orderedThetas = retrieveOrderedEtas();
+        for(Eta eta : orderedThetas){
+            etaAssignment.append(Formatter.endline(eta.getEtaSymbol()+ " = "+Formatter.etaFor(eta.getEtaOrderSymbol())));
         }
         return etaAssignment;
     }
@@ -390,7 +391,7 @@ public class ConversionContext {
         return orderedThetasHandler;
     }
 
-    public Map<String, Integer> retrieveOrderedEtas() {
+    public Set<Eta> retrieveOrderedEtas() {
         return etasHandler.getAllOrderedEtas();
     }
 

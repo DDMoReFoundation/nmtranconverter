@@ -5,9 +5,8 @@ package eu.ddmore.converters.nonmem.utils;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
-
-import org.apache.commons.lang.StringUtils;
 
 import com.google.common.base.Preconditions;
 
@@ -15,6 +14,7 @@ import crx.converter.engine.ScriptDefinition;
 import crx.converter.engine.parts.ParameterBlock;
 import crx.converter.tree.BinaryTree;
 import eu.ddmore.converters.nonmem.ConversionContext;
+import eu.ddmore.converters.nonmem.eta.Eta;
 import eu.ddmore.libpharmml.dom.commontypes.Rhs;
 import eu.ddmore.libpharmml.dom.maths.Equation;
 import eu.ddmore.libpharmml.dom.modeldefn.IndividualParameter;
@@ -44,12 +44,10 @@ public class OrderedThetasHandler {
      * Create ordered thetas to eta map from ordered etas map.
      * The order is used to add Thetas in order of thetas.
      */
-    public void createOrderedThetasToEta(Map<String, Integer> orderedEtas){ 
+    public void createOrderedThetasToEta(Set<Eta> orderedEtas){ 
         Preconditions.checkNotNull(orderedEtas, "Ordered etas cannot be null.");
-        for(Integer nextEtaOrder : orderedEtas.values()){
-            if(StringUtils.isEmpty(orderedThetas.get(nextEtaOrder))){
-                addToThetasOrderMap(orderedEtas, nextEtaOrder);
-            }
+        for(Eta eta : orderedEtas){
+            addToThetasOrderMap(eta);
         }
     }
 
@@ -58,26 +56,26 @@ public class OrderedThetasHandler {
      * @param orderedEtas
      * @param nextEtaOrder
      */
-    private void addToThetasOrderMap(Map<String, Integer> orderedEtas, Integer nextEtaOrder) {
+    private void addToThetasOrderMap(Eta eta) {
         for(ParameterBlock block : scriptDefinition.getParameterBlocks()){
             for(IndividualParameter parameterType: block.getIndividualParameters()){
                 final GaussianModel gaussianModel = parameterType.getGaussianModel();
                 if (gaussianModel != null) {
-                    if(addPopSymbolToOrderedEtas(orderedEtas, nextEtaOrder, gaussianModel)) 
+                    if(addPopSymbolToOrderedEtas(eta, gaussianModel)) 
                         return;
                 }
             }
         }
     }
 
-    private boolean addPopSymbolToOrderedEtas(Map<String, Integer> orderedEtas, Integer nextEtaOrder, GaussianModel gaussianModel) {
+    private boolean addPopSymbolToOrderedEtas(Eta eta, GaussianModel gaussianModel) {
         String popSymbol = getPopSymbol(gaussianModel);
         List<ParameterRandomEffect> randomEffects = gaussianModel.getRandomEffects();
         for (ParameterRandomEffect randomEffect : randomEffects) {
             if (randomEffect == null) continue;
-            String eta = randomEffect.getSymbRef().get(0).getSymbIdRef();
-            if(orderedEtas.get(eta).equals(nextEtaOrder)){
-                orderedThetas.put(nextEtaOrder, popSymbol);
+            String etaToAdd = randomEffect.getSymbRef().get(0).getSymbIdRef();
+            if(eta.getEtaSymbol().equals(etaToAdd)){
+                orderedThetas.put(eta.getOrder(), popSymbol);
                 return true;
             }
         }

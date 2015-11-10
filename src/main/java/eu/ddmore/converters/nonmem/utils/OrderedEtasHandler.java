@@ -7,8 +7,11 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 
 import com.google.common.base.Preconditions;
 
@@ -19,6 +22,8 @@ import eu.ddmore.converters.nonmem.ConversionContext;
 import eu.ddmore.libpharmml.dom.commontypes.ScalarRhs;
 import eu.ddmore.libpharmml.dom.modeldefn.IndividualParameter;
 import eu.ddmore.libpharmml.dom.modeldefn.ParameterRandomEffect;
+import eu.ddmore.converters.nonmem.eta.Eta;
+import eu.ddmore.converters.nonmem.eta.VarLevel;
 import eu.ddmore.libpharmml.dom.modeldefn.ParameterRandomVariable;
 
 /**
@@ -27,13 +32,18 @@ import eu.ddmore.libpharmml.dom.modeldefn.ParameterRandomVariable;
  */
 public class OrderedEtasHandler {
 
-    private final List<String> allEtas = new ArrayList<String>();
-    private final Map<String, Integer> allOrderedEtas = new LinkedHashMap<String, Integer>();
-    private final Map<String, Integer> orderedEtasInNonIOV = new LinkedHashMap<String, Integer>();
-    private final Map<String, Integer> orderedEtasInIOV = new LinkedHashMap<String, Integer>();
-    private final List<CorrelationRef> correlations = new ArrayList<CorrelationRef>();
-    private final Map<String, String> etasToOmegasInCorrelation;
-    private final Map<String, String> etasToOmegasInIOV;
+    private final Set<Eta> allEtas = new LinkedHashSet<Eta>();
+    private final Set<Eta> allOrderedEtas = new TreeSet<Eta>();
+
+    private final Set<Eta> orderedEtasInNonIOV = new TreeSet<Eta>();
+    private final Set<Eta> orderedEtasInIOV = new TreeSet<Eta>();
+
+    private final List<CorrelationRef> iovCorrelations = new ArrayList<CorrelationRef>();
+    private final List<CorrelationRef> nonIovCorrelations = new ArrayList<CorrelationRef>();
+
+    //We need to have it as linked hash map so that order in which correlations are added to map will be retained.
+    private Map<Eta, String> etasToOmegasInCorrelation = new LinkedHashMap<Eta, String>();
+    private Map<Eta, String> etasToOmegasInIOV = new LinkedHashMap<Eta, String>();
     private final ScriptDefinition scriptDefinition;
     private final ConversionContext context;
 
@@ -42,71 +52,63 @@ public class OrderedEtasHandler {
         this.context = context;
         Preconditions.checkNotNull(context.getScriptDefinition(), "Script definition cannot be null");
         this.scriptDefinition = context.getScriptDefinition();
-        addAllCorrelations();
-        etasToOmegasInIOV = addEtasFromIOV();
-        etasToOmegasInCorrelation = addCorrelationValuesToMap();
-        retrieveAllEtas(scriptDefinition);
-        createOrderedEtasMap();
+        initialise();
     }
 
-    /**
-     * Checks the order of Etas and use this order while arranging Omega blocks.
-     * This method will create map for EtaOrder which will be order for respective Omegas as well.
-     * @return 
-     */
-    private Map<String, Integer> createOrderedEtasMap(){
+    private void initialise(){
+        arrangeAllCorrelations();
+        addcorrelationEtas(getIovCorrelations(), etasToOmegasInIOV, VarLevel.IOV);
+        addcorrelationEtas(getNonIovCorrelations(), etasToOmegasInCorrelation, VarLevel.IIV);
+        retrieveAllEtas(scriptDefinition);
+        createAllOrderedEtasMap();
+    }
 
-        //We need to have this as list as this will retains order of etas
-        List<String> etasOrder = getAllEtas();
+    private void addcorrelationEtas(List<CorrelationRef>  correlations, Map<Eta, String> etaToOmegas, VarLevel varLevel){
+        for(CorrelationRef correlation : correlations){
+            addCorrelationEtas(etaToOmegas, varLevel, correlation);
+        }        
+    }
 
-        if(!etasOrder.isEmpty()){
-            Integer etaCount = 0;
+    private Set<Eta> createAllOrderedEtasMap(){
 
-            List<String> nonOmegaBlockEtas = new ArrayList<String>();
+        if(!allEtas.isEmpty()){
+            int etaCount = 0;
 
-            //order etas map
-            for(String eta : etasOrder) {
+            int corrEtaCount = 0;
+            for(Eta eta : allEtas) {
+
                 //no correlations so no Omega block
-                if(!etasToOmegasInIOV.keySet().contains(eta)){
-                    if(etasToOmegasInCorrelation.keySet().contains(eta)){
-                        ++etaCount;
-                        allOrderedEtas.put(eta,etaCount);
-                        orderedEtasInNonIOV.put(eta, etaCount);
-                    }else{
-                        nonOmegaBlockEtas.add(eta);
+                if(etasToOmegasInCorrelation.keySet().contains(eta)){
+                    for(Eta nonIovEta : etasToOmegasInCorrelation.keySet()){
+                        if(eta.getEtaSymbol().equals(nonIovEta.getEtaSymbol()) ){
+                            nonIovEta.setOrder(++etaCount);
+                            nonIovEta.setOrderInCorr(++corrEtaCount);
+                            nonIovEta.setVarLevel(VarLevel.IIV);
+                            allOrderedEtas.add(nonIovEta);
+                            orderedEtasInNonIOV.add(nonIovEta);
+                        }
                     }
+                }else if(!etasToOmegasInIOV.keySet().contains(eta)){
+                    eta.setOrder(++etaCount);
+                    eta.setVarLevel(VarLevel.IIV);
+                    allOrderedEtas.add(eta);
                 }
             }
 
-            for(String nonOmegaEta : nonOmegaBlockEtas){
-                allOrderedEtas.put(nonOmegaEta, ++etaCount);
-            }
-
             int iovEtaCount = 0;
-            for(String iovEta : etasToOmegasInIOV.keySet()){
-                if(etasOrder.contains(iovEta)){
-                    allOrderedEtas.put(iovEta, ++etaCount);
-                    orderedEtasInIOV.put(iovEta, ++iovEtaCount);
+            for(Eta iovEta : etasToOmegasInIOV.keySet()){
+                if(iovEta.getVarLevel().equals(VarLevel.IOV)){
+                    iovEta.setOrder(++etaCount);
+                    iovEta.setOrderInCorr(++iovEtaCount);
+                    iovEta.setVarLevel(VarLevel.IOV);
+                    String etaSymbolForIOV = context.getIovHandler().getColumnWithOcc().getColumnId()+"_"+iovEta.getEtaSymbol();
+                    iovEta.setEtaSymbolForIOV(etaSymbolForIOV);
+                    allOrderedEtas.add(iovEta);
+                    orderedEtasInIOV.add(iovEta);
                 }
             }
         }
         return allOrderedEtas;
-    }
-
-    private Map<String, String> addEtasFromIOV() {
-        LinkedHashMap<String, String> etaToIOV = new LinkedHashMap<String, String>();
-        List<String> occRandomVars = context.getIovHandler().getOccasionRandomVariables();
-        
-        Iterator<CorrelationRef> itr = getCorrelations().iterator();
-        while(itr.hasNext()){
-            CorrelationRef correlation = itr.next();
-            if(occRandomVars.contains(correlation.rnd1.getSymbId()) 
-                    || occRandomVars.contains(correlation.rnd2.getSymbId())){
-                addCorrelationToMap(etaToIOV,correlation);
-                itr.remove();
-            }
-        }
-        return etaToIOV;
     }
 
     /**
@@ -115,8 +117,7 @@ public class OrderedEtasHandler {
      * @param etaToCorrelations
      * @param correlation
      */
-    private void addCorrelationToMap(Map<String, String> etaToCorrelations, CorrelationRef correlation) {
-        Preconditions.checkNotNull(etaToCorrelations, "eta to correlations map cannot be null");
+    private void addCorrelationEtas(Map<Eta, String> etaToCorrelations, VarLevel level, CorrelationRef correlation) {
         Preconditions.checkNotNull(correlation, "Correlation reference cannot be null");
 
         String firstVar = correlation.rnd1.getSymbId();
@@ -127,10 +128,24 @@ public class OrderedEtasHandler {
         }else if(correlation.isCovariance()){
             coefficient = getVariableOrValueFromScalarRhs(correlation.covariance).toString();
         }
-        //add to correlations map
-        etaToCorrelations.put(firstVar,RandomVariableHelper.getNameFromParamRandomVariable(correlation.rnd1));
-        etaToCorrelations.put(secondVar,RandomVariableHelper.getNameFromParamRandomVariable(correlation.rnd2));
-        etaToCorrelations.put(coefficient,coefficient);
+        //add to correlations
+        Eta firstEta = new Eta(firstVar);
+        firstEta.setVarLevel(level);
+        firstEta.setCorrelationRelated(true);
+        firstEta.setOmegaName(RandomVariableHelper.getNameFromParamRandomVariable(correlation.rnd1));
+
+        Eta secondEta = new Eta(secondVar);
+        secondEta.setVarLevel(level);
+        secondEta.setCorrelationRelated(true);
+        secondEta.setOmegaName(RandomVariableHelper.getNameFromParamRandomVariable(correlation.rnd2));
+
+        Eta coeffEta = new Eta(coefficient);
+        coeffEta.setOmegaName(coefficient);
+        coeffEta.setVarLevel(VarLevel.NONE);
+
+        etaToCorrelations.put(firstEta,RandomVariableHelper.getNameFromParamRandomVariable(correlation.rnd1));
+        etaToCorrelations.put(secondEta,RandomVariableHelper.getNameFromParamRandomVariable(correlation.rnd2));
+        etaToCorrelations.put(coeffEta,coefficient);
     }
 
     /**
@@ -154,7 +169,7 @@ public class OrderedEtasHandler {
      * Creates ordered Etas map which gets all etas list from individual parameters and parameter block. 
      * @return
      */
-    private List<String> retrieveAllEtas(ScriptDefinition scriptDefinition) {
+    private Set<Eta> retrieveAllEtas(ScriptDefinition scriptDefinition) {
         List<ParameterBlock> blocks = scriptDefinition.getParameterBlocks();
         for(ParameterBlock block : blocks ){
             for(IndividualParameter parameterType: block.getIndividualParameters()){
@@ -182,24 +197,11 @@ public class OrderedEtasHandler {
         return allEtas;
     }
 
-    private void addRandomVarToAllEtas(String eta) {
+    private void addRandomVarToAllEtas(String etaSymbol) {
+        Eta eta = new Eta(etaSymbol);
         if(!allEtas.contains(eta)){
             allEtas.add(eta);
         }
-    }
-
-    /**
-     * Adds correlation values to eta to correlations map
-     * @param correlations
-     * @return
-     */
-    private Map<String, String> addCorrelationValuesToMap() {
-        //We need to have it as linked hash map so that order in which correlations are added to map will be retained.
-        LinkedHashMap<String, String> etaTocorrelations = new LinkedHashMap<String, String>();
-        for(CorrelationRef correlation : getCorrelations()){
-            addCorrelationToMap(etaTocorrelations,correlation);
-        }
-        return etaTocorrelations;
     }
 
     /**
@@ -207,43 +209,74 @@ public class OrderedEtasHandler {
      * 
      * @return
      */
-    private void addAllCorrelations() {
+//    private void addAllCorrelations() {
+//        List<ParameterBlock> parameterBlocks = scriptDefinition.getParameterBlocks();
+//        if(!parameterBlocks.isEmpty()){
+//            for(ParameterBlock block : parameterBlocks){
+//                correlations.addAll(block.getCorrelations());
+//            }
+//        }
+//    }
+    
+    /**
+     * Collects correlations from all the prameter blocks. 
+     * 
+     * @return
+     */
+    private void arrangeAllCorrelations() {
         List<ParameterBlock> parameterBlocks = scriptDefinition.getParameterBlocks();
+        List<String> occRandomVars = context.getIovHandler().getOccasionRandomVariables();
+
         if(!parameterBlocks.isEmpty()){
             for(ParameterBlock block : parameterBlocks){
-                correlations.addAll(block.getCorrelations());
+                Iterator<CorrelationRef> itr = block.getCorrelations().iterator();
+                while(itr.hasNext()){
+                    CorrelationRef correlation = itr.next();
+                    boolean isIOV = false;
+                    if(occRandomVars.contains(correlation.rnd1.getSymbId()) 
+                            || occRandomVars.contains(correlation.rnd2.getSymbId())){
+                            iovCorrelations.add(correlation);
+                            isIOV = true;
+                        }
+                    if(!isIOV){
+                        nonIovCorrelations.add(correlation);
+                    }
+                }
             }
         }
     }
 
-    public List<String> getAllEtas() {
-        return allEtas;
-    }
-
-    public Map<String, Integer> getAllOrderedEtas() {
+    public Set<Eta> getAllOrderedEtas() {
         return allOrderedEtas;
     }
 
-    public Map<String, String> getEtasToOmegasInCorrelation() {
+    public Map<Eta, String> getEtasToOmegasInCorrelation() {
         return etasToOmegasInCorrelation;
     }
 
-    public Map<String, String> getEtasToOmegasInIOV() {
+    public Map<Eta, String> getEtasToOmegasInIOV() {
         return etasToOmegasInIOV;
     }
 
-    public List<CorrelationRef> getCorrelations() {
-        return correlations;
-    }
+//    public List<CorrelationRef> getCorrelations() {
+//        return correlations;
+//    }
 
-    
-    public Map<String, Integer> getOrderedEtasInIOV() {
+    public Set<Eta> getOrderedEtasInIOV() {
         return orderedEtasInIOV;
     }
 
-    
-    public Map<String, Integer> getOrderedEtasInNonIOV() {
+    public Set<Eta> getOrderedEtasInNonIOV() {
         return orderedEtasInNonIOV;
     }
 
+    
+    public List<CorrelationRef> getIovCorrelations() {
+        return iovCorrelations;
+    }
+
+    
+    public List<CorrelationRef> getNonIovCorrelations() {
+        return nonIovCorrelations;
+    }
 }

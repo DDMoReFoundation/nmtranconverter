@@ -10,6 +10,7 @@ import com.google.common.base.Preconditions;
 
 import crx.converter.engine.parts.ParameterBlock;
 import eu.ddmore.converters.nonmem.ConversionContext;
+import eu.ddmore.converters.nonmem.eta.Eta;
 import eu.ddmore.converters.nonmem.statements.ErrorStatement.ErrorConstant;
 import eu.ddmore.converters.nonmem.utils.Formatter;
 import eu.ddmore.converters.nonmem.utils.Formatter.ColumnConstant;
@@ -130,9 +131,9 @@ public class TableStatement {
                 paramTable.append(SPACE+Formatter.getReservedParam(parameterType.getSymbId()));
             }
         }
-        Set<String> orderedEtas = context.retrieveOrderedEtas().keySet();
-        for(String eta : orderedEtas){
-            paramTable.append(SPACE+Formatter.getReservedParam(eta));
+        Set<Eta> orderedEtas = context.retrieveOrderedEtas();
+        for(Eta eta : orderedEtas){
+            paramTable.append(SPACE+Formatter.getReservedParam(eta.getEtaSymbol()));
         }
         return paramTable;
     }

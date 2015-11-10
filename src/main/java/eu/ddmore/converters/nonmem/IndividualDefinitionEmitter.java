@@ -11,6 +11,7 @@ import org.apache.commons.lang.StringUtils;
 
 import com.google.common.base.Preconditions;
 
+import eu.ddmore.converters.nonmem.eta.Eta;
 import eu.ddmore.converters.nonmem.utils.Formatter;
 import eu.ddmore.converters.nonmem.utils.Formatter.NmConstant;
 import eu.ddmore.converters.nonmem.utils.Formatter.Symbol;
@@ -218,7 +219,12 @@ public class IndividualDefinitionEmitter {
             for (ParameterRandomEffect random_effect : random_effects) {
                 if (random_effect == null) continue;
                 etas.append("+ ");
-                etas.append("ETA("+context.retrieveOrderedEtas().get(random_effect.getSymbRef().get(0).getSymbIdRef())+")");
+                for(Eta eta : context.retrieveOrderedEtas()){
+                    if(eta.getEtaSymbol().equals(random_effect.getSymbRef().get(0).getSymbIdRef())){
+                        etas.append(Formatter.etaFor(eta.getEtaOrderSymbol()));
+                        break;
+                    }
+                }
             }
         }
         return etas.toString();

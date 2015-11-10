@@ -16,7 +16,7 @@ public class Formatter {
     public enum Block{
         ABBR, PK, ERROR, DES, MODEL, PRED, DATA, EST, 
         PROBLEM, SIM, TABLE, INPUT, SUBS, SUB, 
-        COV, THETA, OMEGA, SIGMA, BLOCK, SAME;
+        COV, THETA, OMEGA, SIGMA, BLOCK, SAME, SIZE;
     }
 
     public enum NmConstant{
@@ -248,6 +248,15 @@ public class Formatter {
     }
 
     /**
+     * Add <code>size</code> title and then continue appending on the new line
+     * 
+     * @return block title
+     */
+    public static String size() {
+        return String.format(inLineBlockTitle,Symbol.BLOCK,Block.SIZE);
+    }
+
+    /**
      * Add <code>Theta</code> title and then continue appending on the new line
      * 
      * @return block title
@@ -297,6 +306,9 @@ public class Formatter {
         return NEW_LINE;
     }
 
+    public static String etaFor(String etaVal){
+        return " ETA("+etaVal+")";
+    }
     /**
      * Return the formatted symbol and also gets appropriate time symbol if its TIME symbol.
      * 

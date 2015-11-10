@@ -19,6 +19,7 @@ import crx.converter.engine.ScriptDefinition;
 import crx.converter.engine.parts.EstimationStep;
 import crx.converter.engine.parts.EstimationStep.FixedParameter;
 import crx.converter.engine.parts.ParameterBlock;
+import eu.ddmore.converters.nonmem.eta.Eta;
 import eu.ddmore.converters.nonmem.statements.OmegaBlockStatement;
 import eu.ddmore.converters.nonmem.statements.OmegaStatement;
 import eu.ddmore.converters.nonmem.statements.SigmaStatementBuilder;
@@ -371,8 +372,8 @@ public class ParametersHelper {
 
         if(!omegaBlocksInNonIOV.isEmpty()){
             omegaStatement.append(Formatter.endline(omegaBlockStatement.getOmegaBlockTitleInNonIOV()));
-            for(String eta : omegaBlockStatement.getOmegaOrderToEtasInNonIOV().values()){
-                for(OmegaStatement omega : omegaBlocksInNonIOV.get(eta)){
+            for(Eta eta : omegaBlockStatement.getOmegaOrderToEtasInNonIOV()){
+                for(OmegaStatement omega : omegaBlocksInNonIOV.get(eta.getEtaSymbol())){
                     omegaStatement.append(ParameterStatementHandler.addParameter(omega));
                 }
             }
@@ -393,8 +394,8 @@ public class ParametersHelper {
         Map<String, List<OmegaStatement>> omegaBlocksInIOV = omegaBlockStatement.getOmegaBlocksInIOV();
         if(!omegaBlocksInIOV.isEmpty()){
             omegaStatement.append(Formatter.endline(omegaBlockStatement.getOmegaBlockTitleInIOV()));
-            for(String eta : omegaBlockStatement.getOmegaOrderToEtasInIOV().values()){
-                for(OmegaStatement omega : omegaBlocksInIOV.get(eta)){
+            for(Eta eta : omegaBlockStatement.getOmegaOrderToEtasInIOV()){
+                for(OmegaStatement omega : omegaBlocksInIOV.get(eta.getEtaSymbol())){
                     omegaStatement.append(ParameterStatementHandler.addParameter(omega));
                 }
             }
