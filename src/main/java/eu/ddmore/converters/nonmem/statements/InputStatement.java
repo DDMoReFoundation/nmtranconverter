@@ -6,6 +6,8 @@ package eu.ddmore.converters.nonmem.statements;
 import com.google.common.base.Preconditions;
 
 import eu.ddmore.converters.nonmem.utils.Formatter;
+import eu.ddmore.converters.nonmem.utils.Formatter.ColumnConstant;
+import eu.ddmore.libpharmml.dom.dataset.ColumnType;
 
 public class InputStatement {
 
@@ -22,7 +24,7 @@ public class InputStatement {
      * @return the printable version of this statement
      */
     public String getStatement() {
-        
+
         if (null == statement) {
             StringBuilder stringBuilder = new StringBuilder(Formatter.input());
 
@@ -31,6 +33,11 @@ public class InputStatement {
                 if(nextColumn.isDropped()){
                     stringBuilder.append("="+DROP);
                 }
+
+                if(nextColumn.getColumnType().equals(ColumnType.IDV)){
+                    stringBuilder.append("="+ColumnConstant.TIME);
+                }
+
             }
             statement = stringBuilder.toString();
         }

@@ -28,7 +28,7 @@ public class Formatter {
     }
 
     public enum ReservedColumnConstant{
-        EVID, ID, TIME;
+        EVID, ID;
 
         public static boolean contains(String val){
             for (ReservedColumnConstant columnType : ReservedColumnConstant.values()) {
