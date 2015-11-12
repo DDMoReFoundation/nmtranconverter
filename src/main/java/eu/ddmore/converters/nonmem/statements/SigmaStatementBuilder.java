@@ -40,14 +40,11 @@ public class SigmaStatementBuilder {
         StringBuilder sigmaStatement = new StringBuilder();
         List<String> sigmaStatements = getSigmaStatements();
 
-        //adding default Omega if omega block is absent  
-        if(paramHelper.omegaDoesNotExist()){
-            sigmaStatement.append(Formatter.endline());
-            sigmaStatement.append(Formatter.endline(Formatter.omega()+"0 "+NmConstant.FIX));
-        }
-        sigmaStatement.append(Formatter.endline()+Formatter.sigma());
-        for (final String sigmaVar: sigmaStatements) {
-            sigmaStatement.append(sigmaVar);
+        if(!sigmaStatements.isEmpty()){
+            sigmaStatement.append(Formatter.endline()+Formatter.sigma());
+            for (final String sigmaVar: sigmaStatements) {
+                sigmaStatement.append(sigmaVar);
+            }
         }
         return sigmaStatement;
     }

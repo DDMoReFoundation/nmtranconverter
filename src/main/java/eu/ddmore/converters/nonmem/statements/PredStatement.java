@@ -148,10 +148,10 @@ public class PredStatement {
         StringBuilder predCoreBlock = new StringBuilder();
         predCoreBlock.append(getConditionalDoseDetails());
         predCoreBlock.append(context.buildThetaAssignments()+Formatter.endline());
-        if(context.getParameterHelper().getSigmaStatementBlock().toString().isEmpty()){
-            if(context.getParameterHelper().omegaDoesNotExist()){
+
+        if(!(context.isSigmaPresent() 
+                || context.isOmegaForIIVPresent() || context.isOmegaForIOVPresent())){
                 predCoreBlock.append(Formatter.getDummyEtaStatement());
-            }
         }else{
             predCoreBlock.append(context.buildEtaAssignments()+Formatter.endline());
         }

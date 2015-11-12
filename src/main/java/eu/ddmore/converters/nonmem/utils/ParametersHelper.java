@@ -342,15 +342,15 @@ public class ParametersHelper {
             verifiedSigmas.add(sigmaVar);
     }
 
-    public StringBuilder getSigmaStatementBlock() {
-        return sigmaStatement;
+    public String getSigmaStatementBlock() {
+        return sigmaStatement.toString();
     }
     /**
      * Prepares theta statement for thetas if present.
      *  
      * @return omega statement
      */
-    public StringBuilder getThetaStatementBlock(){
+    public String getThetaStatementBlock(){
         StringBuilder thetaStatement = new StringBuilder();
         if (!thetaStatements.isEmpty()) {
             thetaStatement.append(Formatter.endline()+Formatter.theta());
@@ -358,7 +358,7 @@ public class ParametersHelper {
                 thetaStatement.append(ParameterStatementHandler.addParameter(thetaStatements.get(thetaVar)));
             }
         }
-        return thetaStatement;
+        return thetaStatement.toString();
     }
 
     /**
@@ -366,7 +366,7 @@ public class ParametersHelper {
      *  
      * @return omega statement
      */
-    public StringBuilder getOmegaStatementBlock() {
+    public String getOmegaStatementBlock() {
         StringBuilder omegaStatement = new StringBuilder();
         Map<String, List<OmegaStatement>> omegaBlocksInNonIOV = omegaBlockStatement.getOmegaBlocksInNonIOV();
 
@@ -386,10 +386,10 @@ public class ParametersHelper {
                 omegaStatement.append(ParameterStatementHandler.addParameter(omegaStatements.get(omegaVar)));
             }
         }
-        return omegaStatement;
+        return omegaStatement.toString();
     }
 
-    public StringBuilder getOmegaStatementBlockForIOV(){
+    public String getOmegaStatementBlockForIOV(){
         StringBuilder omegaStatement = new StringBuilder();
         Map<String, List<OmegaStatement>> omegaBlocksInIOV = omegaBlockStatement.getOmegaBlocksInIOV();
         if(!omegaBlocksInIOV.isEmpty()){
@@ -400,7 +400,7 @@ public class ParametersHelper {
                 }
             }
         }
-        return omegaStatement;
+        return omegaStatement.toString();
     }
 
     /**

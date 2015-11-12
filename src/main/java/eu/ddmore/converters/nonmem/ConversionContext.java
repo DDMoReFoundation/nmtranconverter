@@ -32,6 +32,7 @@ import eu.ddmore.converters.nonmem.statements.PredStatement;
 import eu.ddmore.converters.nonmem.utils.DiscreteHandler;
 import eu.ddmore.converters.nonmem.utils.Formatter;
 import eu.ddmore.converters.nonmem.utils.Formatter.Block;
+import eu.ddmore.converters.nonmem.utils.Formatter.NmConstant;
 import eu.ddmore.converters.nonmem.utils.MuReferenceHandler;
 import eu.ddmore.converters.nonmem.utils.OrderedEtasHandler;
 import eu.ddmore.converters.nonmem.utils.OrderedThetasHandler;
@@ -144,19 +145,53 @@ public class ConversionContext {
     public StringBuilder getParameterStatement() {
         StringBuilder parameterStatement = new StringBuilder();
 
-        StringBuilder thetaStatement = parameterHelper.getThetaStatementBlock();
+        String thetaStatement = parameterHelper.getThetaStatementBlock();
         parameterStatement.append(thetaStatement);
 
-        StringBuilder omegaStatement = parameterHelper.getOmegaStatementBlock();
-        parameterStatement.append(omegaStatement);
+        String omegaStatement = parameterHelper.getOmegaStatementBlock();
+        if(!omegaStatement.isEmpty()){
+            parameterStatement.append(omegaStatement);
+        }
 
-        StringBuilder omegaStatementForIOV = parameterHelper.getOmegaStatementBlockForIOV();
-        parameterStatement.append(omegaStatementForIOV+createOmegaSameBlockTitle());
+        String omegaStatementForIOV = parameterHelper.getOmegaStatementBlockForIOV();
+        if(!omegaStatementForIOV.isEmpty()){
+            parameterStatement.append(omegaStatementForIOV+createOmegaSameBlockTitle());
+        }
 
-        StringBuilder sigmaStatement = parameterHelper.getSigmaStatementBlock();
+        //adding default Omega if omega block is absent  
+        if(!(isOmegaForIIVPresent() || isOmegaForIOVPresent())){
+            parameterStatement.append(Formatter.endline());
+            parameterStatement.append(Formatter.endline(Formatter.omega()+"0 "+NmConstant.FIX));
+        }
+
+        String sigmaStatement = parameterHelper.getSigmaStatementBlock();
         parameterStatement.append(sigmaStatement);
 
         return parameterStatement;
+    }
+
+    /**
+     * Check and returns true if sigma statement is present
+     * @return 
+     */
+    public boolean isSigmaPresent(){
+        return !parameterHelper.getSigmaStatementBlock().trim().isEmpty();
+    }
+
+    /**
+     * Check and returns true if omega statement for IIV is present
+     * @return
+     */
+    public boolean isOmegaForIIVPresent(){
+        return !parameterHelper.getOmegaStatementBlock().trim().isEmpty();
+    }
+
+    /**
+     * Check and returns true if omega statement for IOV is present
+     * @return
+     */
+    public boolean isOmegaForIOVPresent(){
+        return !parameterHelper.getOmegaStatementBlockForIOV().trim().isEmpty();
     }
 
     private String createOmegaSameBlockTitle() {
