@@ -34,7 +34,7 @@ public class InputStatement {
                     stringBuilder.append("="+DROP);
                 }
 
-                if(nextColumn.getColumnType().equals(ColumnType.IDV)){
+                if(nextColumn.getColumnType().equals(ColumnType.IDV) && nextColumn.getColumnId()!=ColumnConstant.TIME.toString()){
                     stringBuilder.append("="+ColumnConstant.TIME);
                 }
 
