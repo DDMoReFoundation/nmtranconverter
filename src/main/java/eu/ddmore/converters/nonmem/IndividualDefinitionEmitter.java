@@ -124,6 +124,7 @@ public class IndividualDefinitionEmitter {
         String etas = addEtasStatementsToIndivParamDef(gaussianModel.getRandomEffects());
 
         String variableSymbol = paramId;
+        paramId = Formatter.getReservedParam(paramId);
         if(!StringUtils.isEmpty(popSymbol)){
             variableSymbol = context.getMuReferenceHandler().getMUSymbol(popSymbol);
         }

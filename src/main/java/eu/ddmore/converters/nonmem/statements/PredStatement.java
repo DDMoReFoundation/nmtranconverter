@@ -13,16 +13,20 @@ import crx.converter.engine.parts.ParameterBlock;
 import eu.ddmore.converters.nonmem.ConversionContext;
 import eu.ddmore.converters.nonmem.IndividualDefinitionEmitter;
 import eu.ddmore.converters.nonmem.eta.Eta;
+import eu.ddmore.converters.nonmem.statements.PkMacroAnalyser.PkMacroAttribute;
 import eu.ddmore.converters.nonmem.statements.PkMacroAnalyser.PkMacroDetails;
 import eu.ddmore.converters.nonmem.utils.Formatter;
 import eu.ddmore.converters.nonmem.utils.LocalVariableHandler;
 import eu.ddmore.converters.nonmem.utils.ScriptDefinitionAccessor;
 import eu.ddmore.libpharmml.dom.commontypes.DerivativeVariable;
 import eu.ddmore.libpharmml.dom.commontypes.SymbolRef;
+import eu.ddmore.libpharmml.dom.maths.Equation;
 import eu.ddmore.libpharmml.dom.modeldefn.ContinuousCovariate;
 import eu.ddmore.libpharmml.dom.modeldefn.CovariateDefinition;
 import eu.ddmore.libpharmml.dom.modeldefn.CovariateTransformation;
 import eu.ddmore.libpharmml.dom.modeldefn.IndividualParameter;
+import eu.ddmore.libpharmml.dom.modeldefn.pkmacro.AbsorptionOralMacro;
+import eu.ddmore.libpharmml.dom.modeldefn.pkmacro.MacroValue;
 
 /**
  * Creates and adds estimation statement to nonmem file from script definition.
@@ -40,7 +44,6 @@ public class PredStatement {
     public StringBuilder getPredStatement(){
         StringBuilder predStatement = new StringBuilder();
         PkMacroDetails pkMacroDetails = analyser.analyse(context);
-        String advanType = pkMacroDetails.getMacroAdvanType();
 
         if(context.getDiscreteHandler().isDiscrete()){
             //Discrete
@@ -55,23 +58,69 @@ public class PredStatement {
             }
         }else if(!context.getDerivativeVars().isEmpty()){
             //DES
-            if(advanType.isEmpty()){
-                int tolValue = (context.getEstimationEmitter().isSAEM())? 6:9;
-                predStatement.append(Formatter.endline()+Formatter.endline(Formatter.subs()+"ADVAN13 TOL="+tolValue));
-                predStatement.append(getDerivativePredStatement().toString());
-            }else{
-                //Advan PK macros
-                predStatement.append(Formatter.endline()+Formatter.endline(Formatter.subs()+advanType+" TRANS=1"));
-                predStatement.append(getPKStatement());
-                predStatement.append(Formatter.error());
-                predStatement.append(getErrorStatement());
-            }
+            //TODO: Handle specific types of advans. Currently everything goes through default advan type.
+            //if(pkMacroDetails.getMacroAdvanType().isEmpty()){
+            int tolValue = (context.getEstimationEmitter().isSAEM())? 6:9;
+            predStatement.append(Formatter.endline()+Formatter.endline(Formatter.subs()+"ADVAN13 TOL="+tolValue));
+            predStatement.append(getDerivativePredStatement(pkMacroDetails));
+            //}else{
+            //     //Advan PK macros
+            //     predStatement.append(Formatter.endline()+Formatter.endline(Formatter.subs()+advanType+" TRANS=1"));
+            //     predStatement.append(getPKStatement());
+            //     predStatement.append(Formatter.error());
+            //     predStatement.append(getErrorStatement());
+            // }
         }else{
             //PRED
             predStatement.append(Formatter.endline()+Formatter.endline()+Formatter.pred());
             predStatement.append(getNonDerivativePredStatement());
         }
         return new StringBuilder(predStatement.toString().toUpperCase());
+    }
+
+    private DiffEquationStatementBuilder getDiffEquationStatement(StringBuilder statement) {
+        statement.append(Formatter.des());
+
+        DiffEquationStatementBuilder desBuilder = new DiffEquationStatementBuilder(context);
+        Formatter.setInDesBlock(true);
+        statement.append(desBuilder.getDifferentialEquationsStatement());
+        Formatter.setInDesBlock(false);
+
+        return desBuilder;
+    }
+
+    private StringBuilder getPkMacroEquations(PkMacroDetails pkMacroDetails) {
+        // TODO Auto-generated method stub
+        StringBuilder builder = new StringBuilder();
+
+        if(!pkMacroDetails.getAbsorptionOrals().isEmpty()){
+            for(AbsorptionOralMacro oralMacro : pkMacroDetails.getAbsorptionOrals()){
+                for(MacroValue value : oralMacro.getListOfValue()){
+                    String macroEquation = getAbsOralMacroEquation(pkMacroDetails, value);
+                    if(!macroEquation.isEmpty()){
+                        builder.append(Formatter.endline(macroEquation));
+                    }
+                }
+            }
+            builder.append(Formatter.endline());
+        }
+
+        return builder;
+    }
+
+    private String getAbsOralMacroEquation(PkMacroDetails pkMacroDetails, MacroValue value) {
+        String macroEquation = new String();
+        String valueArgument = value.getArgument().toUpperCase().trim();
+
+        if(StringUtils.isNotEmpty(valueArgument) && !valueArgument.equals(PkMacroAttribute.KA.name())) {
+
+            if(value.getAssign().getEquation()!=null){
+                PkMacroAttribute attribute= PkMacroAttribute.valueOf(valueArgument);
+                Equation equation = value.getAssign().getEquation();
+                macroEquation = attribute.getValue()+ pkMacroDetails.getAbsOralCompNumber()+ " = "+ context.getParser().getSymbol(equation);
+            }
+        }
+        return macroEquation;
     }
 
     private StringBuilder getModelStatementForCountData() {
@@ -104,10 +153,7 @@ public class PredStatement {
         tteBlock.append(getAllIndividualParamAssignments());
         //$DES
         tteBlock.append(Formatter.endline()+Formatter.des());
-        DiffEquationStatementBuilder desBuilder = new DiffEquationStatementBuilder(context);        
-        Formatter.setInDesBlock(true);
-        tteBlock.append(desBuilder.getDifferentialEquationsStatement());
-        Formatter.setInDesBlock(false);
+        DiffEquationStatementBuilder desBuilder = getDiffEquationStatement(tteBlock);
         String HAZARD_FUNC_DES = Formatter.renameVarForDES(context.getDiscreteHandler().getHazardFunction());
         tteBlock.append(Formatter.endline("HAZARD_FUNC_DES = "+HAZARD_FUNC_DES));
         tteBlock.append(Formatter.endline("DADT(1) = HAZARD_FUNC_DES"));
@@ -151,7 +197,7 @@ public class PredStatement {
 
         if(!(context.isSigmaPresent() 
                 || context.isOmegaForIIVPresent() || context.isOmegaForIOVPresent())){
-                predCoreBlock.append(Formatter.getDummyEtaStatement());
+            predCoreBlock.append(Formatter.getDummyEtaStatement());
         }else{
             predCoreBlock.append(context.buildEtaAssignments()+Formatter.endline());
         }
@@ -161,25 +207,26 @@ public class PredStatement {
         return predCoreBlock;
     }
 
-    private StringBuilder getDerivativePredStatement() {
+    private StringBuilder getDerivativePredStatement(PkMacroDetails pkMacroDetails){
+
         StringBuilder derivativePredblock = new StringBuilder();
         derivativePredblock.append(getModelStatement());
-        //TODO : getAbbreviatedStatement();
         derivativePredblock.append(getAbbreviatedStatement());
         derivativePredblock.append(getPKStatement());
 
-        derivativePredblock.append(Formatter.des());
+        if(pkMacroDetails!=null && !pkMacroDetails.isEmpty()){
+            derivativePredblock.append(getPkMacroEquations(pkMacroDetails));
+        }
+        derivativePredblock.append(getDifferentialInitialConditions());
 
-        DiffEquationStatementBuilder desBuilder = new DiffEquationStatementBuilder(context);
-        Formatter.setInDesBlock(true);
-        derivativePredblock.append(desBuilder.getDifferentialEquationsStatement());
-        Formatter.setInDesBlock(false);
+        DiffEquationStatementBuilder desBuilder = getDiffEquationStatement(derivativePredblock);
 
         //TODO: getAESStatement();
         derivativePredblock.append(Formatter.endline()+Formatter.error());
         derivativePredblock.append(getErrorStatement(desBuilder));
 
         return derivativePredblock;
+
     }
 
     private StringBuilder getAbbreviatedStatement() {
@@ -303,7 +350,6 @@ public class PredStatement {
         pkStatementBlock.append(Formatter.pk());
         pkStatementBlock.append(getPredCoreStatement());
         pkStatementBlock.append(getAllIndividualParamAssignments());
-        pkStatementBlock.append(getDifferentialInitialConditions());
         return new StringBuilder(pkStatementBlock.toString().toUpperCase());
     }
 

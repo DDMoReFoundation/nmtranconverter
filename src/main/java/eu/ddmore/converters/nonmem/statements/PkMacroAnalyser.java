@@ -12,11 +12,11 @@ import com.google.common.base.Preconditions;
 import crx.converter.engine.ScriptDefinition;
 import crx.converter.engine.parts.StructuralBlock;
 import eu.ddmore.converters.nonmem.ConversionContext;
+import eu.ddmore.libpharmml.dom.modeldefn.pkmacro.AbsorptionOralMacro;
 import eu.ddmore.libpharmml.dom.modeldefn.pkmacro.CompartmentMacro;
 import eu.ddmore.libpharmml.dom.modeldefn.pkmacro.EliminationMacro;
 import eu.ddmore.libpharmml.dom.modeldefn.pkmacro.IVMacro;
 import eu.ddmore.libpharmml.dom.modeldefn.pkmacro.MacroValue;
-import eu.ddmore.libpharmml.dom.modeldefn.pkmacro.OralMacro;
 import eu.ddmore.libpharmml.dom.modeldefn.pkmacro.PKMacro;
 import eu.ddmore.libpharmml.dom.modeldefn.pkmacro.PeripheralMacro;
 
@@ -25,6 +25,25 @@ import eu.ddmore.libpharmml.dom.modeldefn.pkmacro.PeripheralMacro;
  * and perform required analysis to add pk macro related changes to nmtran. 
  */
 public class PkMacroAnalyser {
+
+    /**
+     * Enum with pk macro attributes and respective values for these attributes.
+     * More elements might be added over the time to make more inclusive. 
+     */
+    enum PkMacroAttribute{
+        P("F"), TLAG("ALAG"), KA("KA"), V("V");
+
+        private String value;
+
+        private PkMacroAttribute(String value) {
+            this.value = value;
+        }
+
+        public String getValue(){
+            return value;
+        }
+
+    }
 
     enum AdvanType{
         ADVAN1,ADVAN2,ADVAN3,ADVAN4,ADVAN10,ADVAN11,ADVAN12;
@@ -38,8 +57,7 @@ public class PkMacroAnalyser {
      */
     public PkMacroDetails analyse(ConversionContext context) {
         Preconditions.checkNotNull(context, "Conversion Context cannot be null");
-        
-        PkMacroDetails details = processPkMacros(context.getScriptDefinition());        
+        PkMacroDetails details = processPkMacros(context.getScriptDefinition());
         if(!details.isEmpty()){
             details.setMacroAdvanType(captureAdvanType(details));
         }
@@ -54,7 +72,7 @@ public class PkMacroAnalyser {
      */
     private PkMacroDetails processPkMacros(ScriptDefinition scriptDefinition){
         Preconditions.checkNotNull(scriptDefinition, "Script definition cannot be null");
-        
+
         PkMacroDetails details = new PkMacroDetails();
         List<PKMacro> allPkMacros = new ArrayList<PKMacro>();
         for(StructuralBlock block : scriptDefinition.getStructuralBlocks()){
@@ -63,15 +81,20 @@ public class PkMacroAnalyser {
             }
         }
 
+        int compCount=0;
         for(PKMacro pkMacro : allPkMacros){
             if(pkMacro instanceof CompartmentMacro){
                 details.getCompartments().add((CompartmentMacro) pkMacro);
+                //add compartment number depending upon order of occurrence.
+                details.setCompartmentCompNumber(++compCount);
             }else if(pkMacro instanceof EliminationMacro){
                 details.getEliminations().add((EliminationMacro) pkMacro);
             }else if(pkMacro instanceof IVMacro){
                 details.getIvs().add((IVMacro) pkMacro);
-            }else if(pkMacro instanceof OralMacro){
-                details.getOrals().add((OralMacro) pkMacro);
+            }else if(pkMacro instanceof AbsorptionOralMacro){
+                details.getAbsorptionOrals().add((AbsorptionOralMacro) pkMacro);
+                //add absorption compartment number depending upon order of occurrence.
+                details.setAbsOralCompNumber(++compCount);
             }else if(pkMacro instanceof PeripheralMacro){
                 details.getPeripherals().add((PeripheralMacro) pkMacro);
             }
@@ -166,7 +189,7 @@ public class PkMacroAnalyser {
      * @return
      */
     private boolean isIV(PkMacroDetails details){
-        if(!details.getIvs().isEmpty() && details.getOrals().isEmpty()){
+        if(!details.getIvs().isEmpty() && details.getAbsorptionOrals().isEmpty()){
             if(details.getIvs().size()==1){
                 return true;
             }
@@ -179,8 +202,8 @@ public class PkMacroAnalyser {
      * @return
      */
     private boolean isOral(PkMacroDetails details){
-        if(details.getIvs().isEmpty() && !details.getOrals().isEmpty()){
-            if(details.getOrals().size()==1){
+        if(details.getIvs().isEmpty() && !details.getAbsorptionOrals().isEmpty()){
+            if(details.getAbsorptionOrals().size()==1){
                 return true;
             }
         }
@@ -195,8 +218,10 @@ public class PkMacroAnalyser {
         private final List<CompartmentMacro> compartments = new ArrayList<CompartmentMacro>();
         private final List<EliminationMacro> eliminations = new ArrayList<EliminationMacro>();
         private final List<IVMacro> ivs = new ArrayList<IVMacro>();
-        private final List<OralMacro> orals = new ArrayList<OralMacro>();
+        private final List<AbsorptionOralMacro> orals = new ArrayList<AbsorptionOralMacro>();
         private final List<PeripheralMacro> peripherals = new ArrayList<PeripheralMacro>();
+        private int absOralCompNumber=0;
+        private int cmtCompNumber=0;
 
         private String macroAdvanType = new String();
 
@@ -220,7 +245,7 @@ public class PkMacroAnalyser {
             return ivs;
         }
 
-        public List<OralMacro> getOrals() {
+        public List<AbsorptionOralMacro> getAbsorptionOrals() {
             return orals;
         }
 
@@ -228,12 +253,28 @@ public class PkMacroAnalyser {
             return peripherals;
         }
 
+        public int getAbsOralCompNumber() {
+            return absOralCompNumber;
+        }
+
+        public void setAbsOralCompNumber(int absOralCompNumber) {
+            this.absOralCompNumber = absOralCompNumber;
+        }
+
+        public int getCompartmentCompNumber() {
+            return cmtCompNumber;
+        }
+
+        public void setCompartmentCompNumber(int cmtCompNumber) {
+            this.cmtCompNumber = cmtCompNumber;
+        }
+
         public boolean isEmpty(){
 
             return (getCompartments().isEmpty() 
                     && getEliminations().isEmpty() 
                     && getIvs().isEmpty() 
-                    && getOrals().isEmpty() 
+                    && getAbsorptionOrals().isEmpty() 
                     && getPeripherals().isEmpty());
         }
     }

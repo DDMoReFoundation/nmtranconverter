@@ -17,6 +17,7 @@ import crx.converter.engine.ScriptDefinition;
 import crx.converter.engine.parts.StructuralBlock;
 import eu.ddmore.converters.nonmem.ConversionContext;
 import eu.ddmore.converters.nonmem.statements.PkMacroAnalyser.PkMacroDetails;
+import eu.ddmore.libpharmml.dom.modeldefn.pkmacro.AbsorptionOralMacro;
 import eu.ddmore.libpharmml.dom.modeldefn.pkmacro.CompartmentMacro;
 import eu.ddmore.libpharmml.dom.modeldefn.pkmacro.EliminationMacro;
 import eu.ddmore.libpharmml.dom.modeldefn.pkmacro.IVMacro;
@@ -36,7 +37,7 @@ public class PkMacroAnalyserTest {
     private List<CompartmentMacro> cmtMacros = new  ArrayList<CompartmentMacro>();
     private List<EliminationMacro> eliminationMacros = new  ArrayList<EliminationMacro>();
     private List<IVMacro> ivMacros = new  ArrayList<IVMacro>();
-    private List<OralMacro> oralMacros = new  ArrayList<OralMacro>();
+    private List<AbsorptionOralMacro> oralMacros = new  ArrayList<AbsorptionOralMacro>();
     private List<PeripheralMacro> peripheralMacros = new  ArrayList<PeripheralMacro>();
 
     @Before
@@ -49,7 +50,7 @@ public class PkMacroAnalyserTest {
         when(details.getCompartments()).thenReturn(cmtMacros);
         when(details.getEliminations()).thenReturn(eliminationMacros);
         when(details.getIvs()).thenReturn(ivMacros);
-        when(details.getOrals()).thenReturn(oralMacros);
+        when(details.getAbsorptionOrals()).thenReturn(oralMacros);
         when(details.getPeripherals()).thenReturn(peripheralMacros);
     }
 
@@ -117,7 +118,7 @@ public class PkMacroAnalyserTest {
         peripheralMacros.add(new PeripheralMacro());
         peripheralMacros.add(new PeripheralMacro());
 
-        String capturedAdvanType = analyser.captureAdvanType(details);        
+        String capturedAdvanType = analyser.captureAdvanType(details);
         verifyAdvanType(PkMacroAnalyser.AdvanType.ADVAN11.toString(), capturedAdvanType);
     }
 
@@ -129,7 +130,7 @@ public class PkMacroAnalyserTest {
         peripheralMacros.add(new PeripheralMacro());
         peripheralMacros.add(new PeripheralMacro());
 
-        String capturedAdvanType = analyser.captureAdvanType(details);        
+        String capturedAdvanType = analyser.captureAdvanType(details);
         verifyAdvanType(PkMacroAnalyser.AdvanType.ADVAN12.toString(), capturedAdvanType);
     }
 

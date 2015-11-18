@@ -38,6 +38,7 @@ public class OmegaBlockStatement {
     private String omegaBlockTitleInIOV;
     private String omegaBlockTitleInNonIOV;
     private Boolean isOmegaBlockFromStdDev = false;
+    private Boolean isCorrelation = false;
     private final ParametersHelper paramHelper;
 
     private Set<Eta> etaToOmagasInIOV = new TreeSet<Eta>();
@@ -82,35 +83,31 @@ public class OmegaBlockStatement {
     }
 
     private void generateOmegaBlocksForIOV() {
-        setOmegaBlockTitleInIOV(createOmegaBlockTitle(iovCorrelations, etaToOmagasInIOV));
         initialiseOmegaBlocks(iovCorrelations, omegaBlocksInIOV, etaToOmagasInIOV, etasInIOV);
         createOmegaBlocks(iovCorrelations, omegaBlocksInIOV,etaToOmagasInIOV, etasInIOV);
+        setOmegaBlockTitleInIOV(createOmegaBlockTitle(etaToOmagasInIOV.size()));
     }
 
     private void generateOmegaBlocksForIIV() {
-        setOmegaBlockTitleInNonIOV(createOmegaBlockTitle(nonIovCorrelations, etaToOmagasInNonIOV));
         initialiseOmegaBlocks(nonIovCorrelations, omegaBlocksInNonIOV, etaToOmagasInNonIOV, etasInCorrelation);
         createOmegaBlocks(nonIovCorrelations, omegaBlocksInNonIOV, etaToOmagasInNonIOV, etasInCorrelation);
+        setOmegaBlockTitleInNonIOV(createOmegaBlockTitle(etaToOmagasInNonIOV.size()));
     }
 
     private void createOmegaBlocks(List<CorrelationRef> correlations, Map<String, List<OmegaStatement>> omegaBlocks, 
             Set<Eta> etaToOmagas, Set<Eta> etas){
 
         if(!correlations.isEmpty()){
-
             for(Eta eta : etaToOmagas){
                 Iterator<CorrelationRef> iterator = correlations.iterator();
 
                 while(iterator.hasNext()){
-
                     CorrelationRef correlation = iterator.next();
                     ParameterRandomVariable firstRandomVar = correlation.rnd1;
                     ParameterRandomVariable secondRandomVar = correlation.rnd2;
-
                     // row = i column = j
                     int column = getOrderedEtaIndex(firstRandomVar.getSymbId(), etaToOmagas);
                     int row = getOrderedEtaIndex(secondRandomVar.getSymbId(), etaToOmagas);
-
                     if(column > row){
                         firstRandomVar = correlation.rnd2;
                         secondRandomVar = correlation.rnd1;
@@ -274,35 +271,17 @@ public class OmegaBlockStatement {
      * Currently it gets block count for BLOCK(n) and identify in correlations are used.
      * This will be updated for matrix types in future.
      * 
-     * @param correlations
-     * @param etaToOmagasInNonIOV
-     * @return
+     * @param isCorrelation
+     * @param blocksCount
+     * @return omega block title
      */
-    private String createOmegaBlockTitle(List<CorrelationRef> correlations, Set<Eta> etaToOmagasInNonIOV) {
-        Integer blocksCount = etaToOmagasInNonIOV.size();
+    private String createOmegaBlockTitle(int blocksCount) {
         StringBuilder description = new StringBuilder();
         //This will change in case of 0.4 as it will need to deal with matrix types as well.
-        description.append((isCorrelation(correlations))?NmConstant.CORRELATION:" ");
+        description.append((isCorrelation())?NmConstant.CORRELATION:" ");
         description.append((isOmegaBlockFromStdDev)?" "+NmConstant.SD:"");
         String title = String.format(Formatter.endline()+"%s %s", Formatter.omegaBlock(blocksCount),description);
         return title;
-    }
-
-    /**
-     * Checks if correlation exists and returns the result.
-     * 
-     * @param correlations
-     * @return
-     */
-    private Boolean isCorrelation(List<CorrelationRef> correlations) {
-        if(correlations!=null && !correlations.isEmpty()){
-            for(CorrelationRef correlation : correlations){
-                if(correlation.isCorrelation()){
-                    return true;
-                }
-            }
-        }
-        return false;
     }
 
     /**
@@ -330,11 +309,17 @@ public class OmegaBlockStatement {
      */
     private void initialiseOmegaBlocks(List<CorrelationRef> correlations, 
             Map<String, List<OmegaStatement>> omegaBlocks, Set<Eta> etaToOmagas, Set<Eta> etasInCorrelation){
-        omegaBlocks.clear();
 
-        for(CorrelationRef correlation : correlations){
-            //Need to set SD attribute for whole block if even a single value is from std dev
-            setStdDevAttributeForOmegaBlock(correlation);
+        omegaBlocks.clear();
+        isCorrelation = false;
+        isOmegaBlockFromStdDev = false;
+
+        if(correlations!=null && !correlations.isEmpty()){
+            for(CorrelationRef correlation : correlations){
+                //Need to set SD attribute for whole block if even a single value is from std dev
+                setStdDevAttributeForOmegaBlock(correlation);
+                setCorrAttributeForOmegaBlock(correlation);
+            }
         }
 
         for(Iterator<Eta> it = etaToOmagas.iterator();it.hasNext();){
@@ -357,6 +342,13 @@ public class OmegaBlockStatement {
         }
     }
 
+    private void setCorrAttributeForOmegaBlock(CorrelationRef correlation){
+        if(!isCorrelation){
+            if(correlation.isCorrelation()){
+                setIsCorrelation(true);
+            }
+        }
+    }
     public void setEtaToOmagasInIOV(Set<Eta> etaToOmagasInIOV) {
         this.etaToOmagasInIOV = new TreeSet<Eta>(etaToOmagasInIOV);
     }
@@ -405,5 +397,13 @@ public class OmegaBlockStatement {
 
     public void setOmegaBlockTitleInNonIOV(String omegaBlockTitleInNonIOV) {
         this.omegaBlockTitleInNonIOV = omegaBlockTitleInNonIOV;
+    }
+
+    public Boolean isCorrelation() {
+        return isCorrelation;
+    }
+
+    public void setIsCorrelation(Boolean isCorrelation) {
+        this.isCorrelation = isCorrelation;
     }
 }

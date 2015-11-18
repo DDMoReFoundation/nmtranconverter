@@ -77,9 +77,10 @@ public class Formatter {
     }
 
     private static final String DES_VAR_SUFFIX = "_"+Block.DES.toString();
+    private static final String RESERVED_WORD_PREFIX = "NM_";
 
     public static String renameVarForDES(String variable) {
-        variable = variable+DES_VAR_SUFFIX;
+        variable = (variable.startsWith(RESERVED_WORD_PREFIX))?variable:variable+DES_VAR_SUFFIX;
         return variable; 
     }
 
