@@ -149,7 +149,6 @@ public class PredStatement {
         tteBlock.append(getPredCoreStatement());
         tteBlock.append(getAllIndividualParamAssignments());
         //$DES
-        tteBlock.append(Formatter.endline()+Formatter.des());
         DiffEquationStatementBuilder desBuilder = getDiffEquationStatement(tteBlock);
         String HAZARD_FUNC_DES = Formatter.renameVarForDES(context.getDiscreteHandler().getHazardFunction());
         tteBlock.append(Formatter.endline("HAZARD_FUNC_DES = "+HAZARD_FUNC_DES));
