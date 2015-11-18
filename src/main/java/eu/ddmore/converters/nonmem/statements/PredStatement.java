@@ -97,7 +97,7 @@ public class PredStatement {
             for(AbsorptionOralMacro oralMacro : pkMacroDetails.getAbsorptionOrals()){
                 for(MacroValue value : oralMacro.getListOfValue()){
                     String macroEquation = getAbsOralMacroEquation(pkMacroDetails, value);
-                    if(!macroEquation.isEmpty()){
+                    if(StringUtils.isNotEmpty(macroEquation)){
                         builder.append(Formatter.endline(macroEquation));
                     }
                 }
@@ -109,18 +109,15 @@ public class PredStatement {
     }
 
     private String getAbsOralMacroEquation(PkMacroDetails pkMacroDetails, MacroValue value) {
-        String macroEquation = new String();
         String valueArgument = value.getArgument().toUpperCase().trim();
+        if(StringUtils.isNotEmpty(valueArgument) 
+                && !valueArgument.equals(PkMacroAttribute.KA.name()) && value.getAssign().getEquation()!=null) {
 
-        if(StringUtils.isNotEmpty(valueArgument) && !valueArgument.equals(PkMacroAttribute.KA.name())) {
-
-            if(value.getAssign().getEquation()!=null){
-                PkMacroAttribute attribute= PkMacroAttribute.valueOf(valueArgument);
-                Equation equation = value.getAssign().getEquation();
-                macroEquation = attribute.getValue()+ pkMacroDetails.getAbsOralCompNumber()+ " = "+ context.getParser().getSymbol(equation);
-            }
+            PkMacroAttribute attribute= PkMacroAttribute.valueOf(valueArgument);
+            Equation equation = value.getAssign().getEquation();
+            return attribute.getValue()+ pkMacroDetails.getAbsOralCompNumber()+ " = "+ context.getParser().getSymbol(equation);
         }
-        return macroEquation;
+        return "";
     }
 
     private StringBuilder getModelStatementForCountData() {

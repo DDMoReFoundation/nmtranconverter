@@ -124,16 +124,16 @@ public class IndividualDefinitionEmitter {
         String etas = addEtasStatementsToIndivParamDef(gaussianModel.getRandomEffects());
 
         String variableSymbol = paramId;
-        paramId = Formatter.getReservedParam(paramId);
+        String paramSymbol = Formatter.getReservedParam(paramId);
         if(!StringUtils.isEmpty(popSymbol)){
             variableSymbol = context.getMuReferenceHandler().getMUSymbol(popSymbol);
         }
 
         if(!definedPopSymbols.contains(popSymbol)){
-            statement = definePopSymbolEquation(gaussianModel, paramId, popSymbol, variableSymbol, etas);
+            statement = definePopSymbolEquation(gaussianModel, paramSymbol, popSymbol, variableSymbol, etas);
         }else {
             String format = Formatter.endline("%s = %s %s"+Symbol.COMMENT);
-            statement.append(String.format(format, paramId, variableSymbol,etas));
+            statement.append(String.format(format, paramSymbol, variableSymbol,etas));
         }
         return statement.append(Formatter.endline());
     }

@@ -343,10 +343,8 @@ public class OmegaBlockStatement {
     }
 
     private void setCorrAttributeForOmegaBlock(CorrelationRef correlation){
-        if(!isCorrelation){
-            if(correlation.isCorrelation()){
-                setIsCorrelation(true);
-            }
+        if(!isCorrelation && correlation.isCorrelation()){
+            setIsCorrelation(true);
         }
     }
     public void setEtaToOmagasInIOV(Set<Eta> etaToOmagasInIOV) {
