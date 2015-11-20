@@ -62,22 +62,32 @@ public class EstimationDetailsEmitter {
             }
             else if(methodDefinition.equals(Method.FOCE.toString())) {
                 statement.append(EstConstant.FOCE_STATEMENT.getStatement());
-                if(discreteHandler.isCountData()){
-                    statement.append(" -2LL LAPLACE");
-                }
+                statement.append(appendDiscreteEstOptions());
             }
             else if (methodDefinition.equals(Method.FOCEI.toString())) {
                 statement.append(EstConstant.FOCEI_STATEMENT.getStatement());
+                statement.append(appendDiscreteEstOptions());
             }
             else if (methodDefinition.equals(Method.SAEM.toString())) {
                 isSAEM = true;
                 statement.append(Formatter.endline(EstConstant.SAEM_STATEMENT.getStatement()));
+                statement.append(appendDiscreteEstOptions());
             }
             else {
                 statement.append(methodDefinition);
             }
         } else {
             statement.append(EstConstant.DEFAULT_COND_STATEMENT.getStatement());
+        }
+        return statement;
+    }
+
+    private StringBuilder appendDiscreteEstOptions() {
+        StringBuilder statement = new StringBuilder();
+        if(discreteHandler.isCountData()){
+            statement.append(" -2LL LAPLACE NOINTERACTION");
+        }else if(discreteHandler.isTimeToEventData()){
+            statement.append(" LIKELIHOOD LAPLACE NUMERICAL NOINTERACTION");
         }
         return statement;
     }
