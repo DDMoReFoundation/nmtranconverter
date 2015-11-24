@@ -276,7 +276,7 @@ public class PredStatement {
             }
         }
 
-        if(!teDoseEvents.isEmpty()){
+        if(teDoseEvents.isEmpty()){
             for(TemporalDoseEvent event : teDoseEvents){
                 String statement = context.getConditionalEventHandler().parseTemporalDoseEvent(event);
                 if(!StringUtils.isEmpty(statement)){

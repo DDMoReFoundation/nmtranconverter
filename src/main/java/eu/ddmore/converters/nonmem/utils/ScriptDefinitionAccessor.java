@@ -89,7 +89,9 @@ public class ScriptDefinitionAccessor {
     public static List<TemporalDoseEvent> getAllTemporalDoseEvent(ScriptDefinition scriptDefinition){
         List<TemporalDoseEvent> conditionalDoseEvents = new ArrayList<TemporalDoseEvent>();
         for(EstimationStep estStep : getEstimationSteps(scriptDefinition)){
-            conditionalDoseEvents.add(estStep.getTemporalDoseEvent());
+            if(estStep.getTemporalDoseEvent()!=null){
+                conditionalDoseEvents.add(estStep.getTemporalDoseEvent());
+            }
         }
 
         return conditionalDoseEvents;
