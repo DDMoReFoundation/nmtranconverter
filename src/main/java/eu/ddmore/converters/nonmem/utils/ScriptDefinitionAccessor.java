@@ -17,6 +17,7 @@ import crx.converter.engine.parts.EstimationStep;
 import crx.converter.engine.parts.ObservationBlock;
 import crx.converter.engine.parts.ParameterBlock;
 import crx.converter.engine.parts.Part;
+import crx.converter.engine.parts.TemporalDoseEvent;
 import eu.ddmore.libpharmml.dom.modeldefn.GaussianObsError;
 import eu.ddmore.libpharmml.dom.modeldefn.ObservationError;
 import eu.ddmore.libpharmml.dom.modeldefn.ParameterRandomVariable;
@@ -73,6 +74,22 @@ public class ScriptDefinitionAccessor {
         List<ConditionalDoseEvent> conditionalDoseEvents = new ArrayList<ConditionalDoseEvent>();
         for(EstimationStep estStep : getEstimationSteps(scriptDefinition)){
             conditionalDoseEvents.addAll(estStep.getConditionalDoseEvents());
+        }
+
+        return conditionalDoseEvents;
+    }
+
+    /**
+     * Gets all conditional dose events associated with TIME/IDV column type from all the estimation steps.
+     * This support is needed with respect to common converter changes.
+     * 
+     * @param scriptDefinition
+     * @return list of estimation steps
+     */
+    public static List<TemporalDoseEvent> getAllTemporalDoseEvent(ScriptDefinition scriptDefinition){
+        List<TemporalDoseEvent> conditionalDoseEvents = new ArrayList<TemporalDoseEvent>();
+        for(EstimationStep estStep : getEstimationSteps(scriptDefinition)){
+            conditionalDoseEvents.add(estStep.getTemporalDoseEvent());
         }
 
         return conditionalDoseEvents;

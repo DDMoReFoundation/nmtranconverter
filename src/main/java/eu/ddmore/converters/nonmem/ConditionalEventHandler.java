@@ -11,6 +11,7 @@ import com.google.common.base.Preconditions;
 
 import crx.converter.engine.parts.BaseStep.MultipleDvRef;
 import crx.converter.engine.parts.ConditionalDoseEvent;
+import crx.converter.engine.parts.TemporalDoseEvent;
 import crx.converter.tree.BinaryTree;
 import eu.ddmore.converters.nonmem.utils.Formatter;
 import eu.ddmore.libpharmml.dom.commontypes.SymbolRef;
@@ -27,6 +28,30 @@ public class ConditionalEventHandler {
 
     public ConditionalEventHandler(ConversionContext context){
         this.context = context; 
+    }
+
+    /**
+     * This method parses the conditions event for dose column mapping when column type is idv/time.
+     * 
+     * @param event
+     * @return
+     */
+    public String parseTemporalDoseEvent(TemporalDoseEvent event){
+        Preconditions.checkNotNull(event, "conditional dose event cannot be null.");
+        StringBuilder eventBuilder = new StringBuilder();
+
+        String conditionStatement = getConditionStatement(event.getAssignment(),event.getColumnName());
+        if(StringUtils.isEmpty(conditionStatement)){
+            return eventBuilder.toString();
+        }
+        if(event.getCondition()!=null){
+            String condition = parseCondition(event.getCondition(), event.getSource());
+            if(!condition.isEmpty()){
+                conditionStatement = buildConditionalStatement(condition, conditionStatement);
+            }
+        }
+        eventBuilder.append(conditionStatement);
+        return eventBuilder.toString();
     }
 
     /**

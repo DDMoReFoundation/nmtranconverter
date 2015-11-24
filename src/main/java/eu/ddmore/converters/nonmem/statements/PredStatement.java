@@ -3,6 +3,7 @@
  ******************************************************************************/
 package eu.ddmore.converters.nonmem.statements;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.lang.StringUtils;
@@ -10,6 +11,7 @@ import org.apache.commons.lang.StringUtils;
 import crx.converter.engine.parts.BaseStep.MultipleDvRef;
 import crx.converter.engine.parts.ConditionalDoseEvent;
 import crx.converter.engine.parts.ParameterBlock;
+import crx.converter.engine.parts.TemporalDoseEvent;
 import eu.ddmore.converters.nonmem.ConversionContext;
 import eu.ddmore.converters.nonmem.IndividualDefinitionEmitter;
 import eu.ddmore.converters.nonmem.eta.Eta;
@@ -229,9 +231,15 @@ public class PredStatement {
         StringBuilder abbrStatement = new StringBuilder();
         abbrStatement.append(Formatter.endline());
         int uniqueOccValuesCount = context.getIovHandler().getIovColumnUniqueValues().size();
-        int iovEtasCount = context.getEtasHandler().getOrderedEtasInIOV().size();
+        List<Eta> orderedEtasWithIOV = new ArrayList<Eta>();
+        for(Eta eta : context.getEtasHandler().getAllOrderedEtas()){
+            if(eta.isIOV()){
+                orderedEtasWithIOV.add(eta);
+            }
+        }
+        int iovEtasCount = orderedEtasWithIOV.size();
 
-        for(Eta iovEta :context.getEtasHandler().getOrderedEtasInIOV()){
+        for(Eta iovEta :orderedEtasWithIOV){
 
             String etaValue = getIovEtaValueForAbbr(iovEta.getOrder(), uniqueOccValuesCount, iovEtasCount);
 
@@ -258,12 +266,22 @@ public class PredStatement {
 
     private String getConditionalDoseDetails() {
         List<ConditionalDoseEvent> conditionalDoseEvents = ScriptDefinitionAccessor.getAllConditionalDoseEvents(context.getScriptDefinition());
+        List<TemporalDoseEvent> teDoseEvents = ScriptDefinitionAccessor.getAllTemporalDoseEvent(context.getScriptDefinition());
 
         StringBuilder doseEvents = new StringBuilder();
         for(ConditionalDoseEvent event : conditionalDoseEvents){
             String statement = context.getConditionalEventHandler().parseConditionalDoseEvent(event);
             if(!StringUtils.isEmpty(statement)){
                 doseEvents.append(statement);
+            }
+        }
+
+        if(teDoseEvents.isEmpty()){
+            for(TemporalDoseEvent event : teDoseEvents){
+                String statement = context.getConditionalEventHandler().parseTemporalDoseEvent(event);
+                if(!StringUtils.isEmpty(statement)){
+                    doseEvents.append(statement);
+                }
             }
         }
         return doseEvents.toString();
