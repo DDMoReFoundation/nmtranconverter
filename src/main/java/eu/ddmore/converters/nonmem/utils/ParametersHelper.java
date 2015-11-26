@@ -19,7 +19,10 @@ import crx.converter.engine.ScriptDefinition;
 import crx.converter.engine.parts.EstimationStep;
 import crx.converter.engine.parts.EstimationStep.FixedParameter;
 import crx.converter.engine.parts.ParameterBlock;
+import eu.ddmore.converters.nonmem.ConversionContext;
 import eu.ddmore.converters.nonmem.eta.Eta;
+import eu.ddmore.converters.nonmem.statements.InterOccVariabilityHandler;
+import eu.ddmore.converters.nonmem.statements.OmegaBlock;
 import eu.ddmore.converters.nonmem.statements.OmegaBlockStatement;
 import eu.ddmore.converters.nonmem.statements.OmegaStatement;
 import eu.ddmore.converters.nonmem.statements.SigmaStatementBuilder;
@@ -50,23 +53,25 @@ public class ParametersHelper {
     private final OmegaBlockStatement omegaBlockStatement;
     private final List<String> verifiedSigmas = new ArrayList<String>();
     private final Set<ParameterRandomVariable> epsilonVars;
-    private final OrderedEtasHandler orderedEtasHandler;
+    private final CorrelationHandler correlationHandler;
     private List<ParameterEstimate> parametersToEstimate;
     private List<FixedParameter> fixedParameters;
     private StringBuilder sigmaStatement;
+    InterOccVariabilityHandler iovHandler;
 
     /**
      * Constructor expects script definition which contains all the blocks populated as part of common converter. 
      *   
      * @param scriptDefinition
      */
-    public ParametersHelper(ScriptDefinition scriptDefinition,OrderedEtasHandler orderedEtasHandler, OrderedThetasHandler thetasHandler){
-        this.scriptDefinition = scriptDefinition;
-        this.orderedEtasHandler = orderedEtasHandler;
+    public ParametersHelper(ConversionContext context){
+        this.scriptDefinition = context.getScriptDefinition();
+        this.correlationHandler = context.getCorrelationHandler();
+        this.iovHandler = context.getIovHandler();
         epsilonVars = ScriptDefinitionAccessor.getEpsilonRandomVariables(getScriptDefinition());
-        thetasToEtaOrder = thetasHandler.getOrderedThetas();
+        thetasToEtaOrder = context.getOrderedThetasHandler().getOrderedThetas();
 
-        omegaBlockStatement = new OmegaBlockStatement(this, orderedEtasHandler);
+        omegaBlockStatement = new OmegaBlockStatement(this, correlationHandler, iovHandler);
     }
 
     /**
@@ -178,10 +183,22 @@ public class ParametersHelper {
      * @return
      */
     private boolean validateParamName(String paramName) {
-        return !(paramName== null ||  omegaStatements.containsKey(paramName) || 
-                orderedEtasHandler.getEtasToOmegasInCorrelation().values().contains(paramName) ||
-                orderedEtasHandler.getEtasToOmegasInIOV().values().contains(paramName) ||
-                verifiedSigmas.contains(paramName) || thetaStatements.containsKey(paramName));
+        boolean isValid = true;
+        if(paramName== null ||  omegaStatements.containsKey(paramName) 
+                || verifiedSigmas.contains(paramName) || thetaStatements.containsKey(paramName)
+                || validateThetaParamForCorrOmegas(paramName, correlationHandler.getOmegaBlocksInIOV()) 
+                || validateThetaParamForCorrOmegas(paramName, correlationHandler.getOmegaBlocksInNonIOV())){
+            isValid = false;
+        }
+
+        return isValid;
+    }
+
+    private boolean validateThetaParamForCorrOmegas(String paramName, List<OmegaBlock> omegaBlocks) {
+        for(OmegaBlock omegaBlock :omegaBlocks){
+            return omegaBlock.getEtasToOmegas().values().contains(paramName);
+        }
+        return false;
     }
 
     /**
@@ -249,20 +266,22 @@ public class ParametersHelper {
     private void setOmegaParameters(){
         for (ParameterRandomVariable rv : getRandomVarsFromParameterBlock()) {
 
-            String symbId = RandomVariableHelper.getNameFromParamRandomVariable(rv);
-            OmegaStatement omegaStatement = getOmegaFromRandomVarName(symbId);
-            if(omegaStatement!=null){
-                for(Iterator<FixedParameter> it= fixedParameters.iterator();it.hasNext();){
-                    String paramName = it.next().pe.getSymbRef().getSymbIdRef();
-                    if(paramName.equals(symbId)){
-                        omegaStatement.setFixed(true);
-                        it.remove();
+            if(!iovHandler.isRandomVarIOV(rv)){
+                String symbId = RandomVariableHelper.getNameFromParamRandomVariable(rv);
+                OmegaStatement omegaStatement = getOmegaFromRandomVarName(symbId);
+                if(omegaStatement!=null){
+                    for(Iterator<FixedParameter> it= fixedParameters.iterator();it.hasNext();){
+                        String paramName = it.next().pe.getSymbRef().getSymbIdRef();
+                        if(paramName.equals(symbId)){
+                            omegaStatement.setFixed(true);
+                            it.remove();
+                        }
                     }
+                    if(RandomVariableHelper.isParamFromStdDev(rv)){
+                        omegaStatement.setStdDev(true);
+                    }
+                    omegaStatements.put(symbId, omegaStatement);
                 }
-                if(RandomVariableHelper.isParamFromStdDev(rv)){
-                    omegaStatement.setStdDev(true);
-                }
-                omegaStatements.put(symbId, omegaStatement);
             }
         }
     }
@@ -368,15 +387,10 @@ public class ParametersHelper {
      */
     public String getOmegaStatementBlock() {
         StringBuilder omegaStatement = new StringBuilder();
-        Map<String, List<OmegaStatement>> omegaBlocksInNonIOV = omegaBlockStatement.getOmegaBlocksInNonIOV();
+        List<OmegaBlock> omegaBlocks = omegaBlockStatement.getOmegaBlocksInNonIOV();
 
-        if(!omegaBlocksInNonIOV.isEmpty()){
-            omegaStatement.append(Formatter.endline(omegaBlockStatement.getOmegaBlockTitleInNonIOV()));
-            for(Eta eta : omegaBlockStatement.getOmegaOrderToEtasInNonIOV()){
-                for(OmegaStatement omega : omegaBlocksInNonIOV.get(eta.getEtaSymbol())){
-                    omegaStatement.append(ParameterStatementHandler.addParameter(omega));
-                }
-            }
+        if(!omegaBlocks.isEmpty()){
+            omegaStatement.append(appendOmegaBlocks(omegaBlocks));
         }
 
         if (!omegaDoesNotExist()) {
@@ -389,18 +403,39 @@ public class ParametersHelper {
         return omegaStatement.toString();
     }
 
+    /**
+     * Prepares omega statement for IOV omega blocks if present.
+     *  
+     * @return omega statement
+     */
     public String getOmegaStatementBlockForIOV(){
         StringBuilder omegaStatement = new StringBuilder();
-        Map<String, List<OmegaStatement>> omegaBlocksInIOV = omegaBlockStatement.getOmegaBlocksInIOV();
-        if(!omegaBlocksInIOV.isEmpty()){
-            omegaStatement.append(Formatter.endline(omegaBlockStatement.getOmegaBlockTitleInIOV()));
-            for(Eta eta : omegaBlockStatement.getOmegaOrderToEtasInIOV()){
-                for(OmegaStatement omega : omegaBlocksInIOV.get(eta.getEtaSymbol())){
-                    omegaStatement.append(ParameterStatementHandler.addParameter(omega));
+        List<OmegaBlock> omegaBlocks = omegaBlockStatement.getOmegaBlocksInIOV();
+        if(!omegaBlocks.isEmpty()){
+            omegaStatement.append(appendOmegaBlocks(omegaBlocks));
+        }
+
+        return omegaStatement.toString();
+    }
+
+    private StringBuilder appendOmegaBlocks(List<OmegaBlock> omegaBlocks) {
+        StringBuilder omegaStatement = new StringBuilder();
+        for(OmegaBlock omegaBlock : omegaBlocks){
+            if(omegaBlock.getOrderedEtas().size()>0){
+                omegaStatement.append(Formatter.endline(omegaBlock.getOmegaBlockTitle()));
+                for(Eta eta : omegaBlock.getOrderedEtas()){
+                    for(OmegaStatement omega : omegaBlock.getOmegaStatements().get(eta)){
+                        if(omega!=null){
+                            omegaStatement.append(ParameterStatementHandler.addParameter(omega));
+                        }
+                    }
+                }
+                if(omegaBlock.isIOV()){
+                    omegaStatement.append(Formatter.endline(omegaBlock.getOmegaBlockSameTitle()));
                 }
             }
         }
-        return omegaStatement.toString();
+        return omegaStatement;
     }
 
     /**

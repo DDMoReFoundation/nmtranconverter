@@ -15,7 +15,7 @@ import eu.ddmore.libpharmml.dom.uncertml.PositiveRealValueType;
  *  
  */
 public class RandomVariableHelper {
-    
+
     /**
      * Returns parameter name from parameter random variable. 
      * The name can be obtained from either standard deviation or variance.

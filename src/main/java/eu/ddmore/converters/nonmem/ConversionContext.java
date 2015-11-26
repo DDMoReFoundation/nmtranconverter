@@ -34,7 +34,7 @@ import eu.ddmore.converters.nonmem.utils.Formatter;
 import eu.ddmore.converters.nonmem.utils.Formatter.Block;
 import eu.ddmore.converters.nonmem.utils.Formatter.NmConstant;
 import eu.ddmore.converters.nonmem.utils.MuReferenceHandler;
-import eu.ddmore.converters.nonmem.utils.OrderedEtasHandler;
+import eu.ddmore.converters.nonmem.utils.CorrelationHandler;
 import eu.ddmore.converters.nonmem.utils.OrderedThetasHandler;
 import eu.ddmore.converters.nonmem.utils.ParametersHelper;
 import eu.ddmore.libpharmml.dom.commontypes.DerivativeVariable;
@@ -59,7 +59,7 @@ public class ConversionContext {
     private final ParametersHelper parameterHelper;
     private final OrderedThetasHandler orderedThetasHandler;
     private final DiscreteHandler discreteHandler;
-    private final OrderedEtasHandler etasHandler;
+    private final CorrelationHandler correlationHandler;
     private final List<String> thetas = new ArrayList<String>();
     private final Map<String,ErrorStatement> errorStatements = new HashMap<String,ErrorStatement>();
     private final List<DerivativeVariable> derivativeVars = new ArrayList<DerivativeVariable>();
@@ -80,6 +80,9 @@ public class ConversionContext {
         this.lexer = lexer;
 
         lexer.setFilterReservedWords(true);
+        lexer.setSortParameterModel(true);
+        lexer.setSortStructuralModel(true);
+
         parser.getSymbolReader().loadReservedWords();
 
 
@@ -89,12 +92,12 @@ public class ConversionContext {
         this.dataSetHandler = new DataSetHandler(retrieveExternalDataSets(), dataLocation);
         this.orderedThetasHandler = new OrderedThetasHandler(this);
         this.iovHandler = new InterOccVariabilityHandler(this);
-        this.etasHandler = new OrderedEtasHandler(this);
+        this.correlationHandler = new CorrelationHandler(this);
         this.discreteHandler = new DiscreteHandler(getScriptDefinition());
         //Refers to discrete handler
         this.estimationEmitter = new EstimationDetailsEmitter(getScriptDefinition(), discreteHandler);
         estimationEmitter.processEstimationStatement();
-        this.parameterHelper = new ParametersHelper(getScriptDefinition(), etasHandler, orderedThetasHandler);
+        this.parameterHelper = new ParametersHelper(this);
 
         this.conditionalEventHandler = new ConditionalEventHandler(this);
         this.muReferenceHandler = new MuReferenceHandler(this);
@@ -155,7 +158,7 @@ public class ConversionContext {
 
         String omegaStatementForIOV = parameterHelper.getOmegaStatementBlockForIOV();
         if(!omegaStatementForIOV.isEmpty()){
-            parameterStatement.append(omegaStatementForIOV+createOmegaSameBlockTitle());
+            parameterStatement.append(omegaStatementForIOV);
         }
 
         //adding default Omega if omega block is absent  
@@ -192,13 +195,6 @@ public class ConversionContext {
      */
     public boolean isOmegaForIOVPresent(){
         return !parameterHelper.getOmegaStatementBlockForIOV().trim().isEmpty();
-    }
-
-    private String createOmegaSameBlockTitle() {
-        Integer uniqueValueCount = getIovHandler().getIovColumnUniqueValues().size();
-        Integer blockCount = getEtasHandler().getOrderedEtasInIOV().size();
-        String title = String.format(Formatter.endline()+"%s", Formatter.omegaSameBlock(blockCount, uniqueValueCount));
-        return title;
     }
 
     /**
@@ -427,7 +423,7 @@ public class ConversionContext {
     }
 
     public Set<Eta> retrieveOrderedEtas() {
-        return etasHandler.getAllOrderedEtas();
+        return correlationHandler.getAllOrderedEtas();
     }
 
     public List<DerivativeVariable> getDerivativeVars() {
@@ -442,8 +438,8 @@ public class ConversionContext {
         return discreteHandler;
     }
 
-    public OrderedEtasHandler getEtasHandler() {
-        return etasHandler;
+    public CorrelationHandler getCorrelationHandler() {
+        return correlationHandler;
     }
 
     public ConditionalEventHandler getConditionalEventHandler() {

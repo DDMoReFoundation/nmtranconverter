@@ -3,8 +3,8 @@
  ******************************************************************************/
 package eu.ddmore.converters.nonmem.statements;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import org.apache.commons.lang.StringUtils;
 
@@ -230,39 +230,55 @@ public class PredStatement {
     private StringBuilder getAbbreviatedStatement() {
         StringBuilder abbrStatement = new StringBuilder();
         abbrStatement.append(Formatter.endline());
-        int uniqueOccValuesCount = context.getIovHandler().getIovColumnUniqueValues().size();
-        List<Eta> orderedEtasWithIOV = new ArrayList<Eta>();
-        for(Eta eta : context.getEtasHandler().getAllOrderedEtas()){
-            if(eta.isIOV()){
-                orderedEtasWithIOV.add(eta);
+        int prevBlockValue = 0;
+
+        for(OmegaBlock omegaBlock : context.getCorrelationHandler().getOmegaBlocksInIOV()){
+            abbrStatement.append(Formatter.endline());
+            Set<Eta> etas =  omegaBlock.getOrderedEtas();
+            int iovEtasCount = etas.size();
+            boolean isFirstBlock = (prevBlockValue == 0);
+
+            for(Eta iovEta :etas){
+                int etaOrder = (isFirstBlock)?iovEta.getOrder():++prevBlockValue;
+
+                StringBuilder etaValues = new StringBuilder();
+                prevBlockValue = getIovEtaValueForAbbr(iovEtasCount, etaOrder, etaValues);
+
+                String nextAbbr = Formatter.abbr()+"REPLACE "+Formatter.etaFor(iovEta.getEtaOrderSymbol());
+                abbrStatement.append(Formatter.endline(nextAbbr+"="+Formatter.etaFor(etaValues.toString())));
             }
-        }
-        int iovEtasCount = orderedEtasWithIOV.size();
-
-        for(Eta iovEta :orderedEtasWithIOV){
-
-            String etaValue = getIovEtaValueForAbbr(iovEta.getOrder(), uniqueOccValuesCount, iovEtasCount);
-
-            String nextAbbr = Formatter.abbr()+"REPLACE "+Formatter.etaFor(iovEta.getEtaOrderSymbol());
-            abbrStatement.append(Formatter.endline(nextAbbr+"="+Formatter.etaFor(etaValue)));
         }
         return abbrStatement;
     }
 
     //(<eta_order>, 1*<no_of_etas>+<eta_order>, 2*<no_of_etas>+<eta_order>, ... , <no_of_unique_occ_values>*<no_of_etas>+<eta_order>);
-    private String getIovEtaValueForAbbr(int etaOrder, int uniqueOccValuesCount, int iovEtasCount) {
-
-        StringBuilder etaValues = new StringBuilder();
-
+    private int getIovEtaValueForAbbr(int iovEtasCount, int etaOrder, StringBuilder etaValues) {
+        int etaVal = 0;
+        int uniqueOccValuesCount = context.getIovHandler().getIovColumnUniqueValues().size();
         for(int i=0;i<uniqueOccValuesCount;i++){
-            int etaVal = i*iovEtasCount+etaOrder;
+            etaVal = i*iovEtasCount+etaOrder;
             etaValues.append(etaVal);
             if(i != uniqueOccValuesCount-1){
                 etaValues.append(", ");
             }
         }
-        return etaValues.toString();
+        return etaVal;
     }
+
+    //(<eta_order>, 1*<no_of_etas>+<eta_order>, 2*<no_of_etas>+<eta_order>, ... , <no_of_unique_occ_values>*<no_of_etas>+<eta_order>);
+    //    private String getIovEtaValueForAbbr(int etaOrder, int uniqueOccValuesCount, int iovEtasCount) {
+    //        StringBuilder etaValues = new StringBuilder();
+    //
+    //        for(int i=0;i<uniqueOccValuesCount;i++){
+    //            int etaVal = i*iovEtasCount+etaOrder;
+    //            etaValues.append(etaVal);
+    //            if(i != uniqueOccValuesCount-1){
+    //                etaValues.append(", ");
+    //            }
+    //            
+    //        }
+    //        return etaValues.toString();
+    //    }
 
     private String getConditionalDoseDetails() {
         List<ConditionalDoseEvent> conditionalDoseEvents = ScriptDefinitionAccessor.getAllConditionalDoseEvents(context.getScriptDefinition());

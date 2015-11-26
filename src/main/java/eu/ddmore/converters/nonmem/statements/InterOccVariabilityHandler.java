@@ -15,6 +15,8 @@ import com.google.common.base.Preconditions;
 
 import crx.converter.engine.parts.ParameterBlock;
 import eu.ddmore.converters.nonmem.ConversionContext;
+import eu.ddmore.converters.nonmem.eta.Eta;
+import eu.ddmore.converters.nonmem.utils.RandomVariableHelper;
 import eu.ddmore.libpharmml.dom.commontypes.LevelReference;
 import eu.ddmore.libpharmml.dom.dataset.ColumnType;
 import eu.ddmore.libpharmml.dom.modeldefn.ParameterRandomVariable;
@@ -65,23 +67,41 @@ public class InterOccVariabilityHandler {
     }
 
     private Integer addOccVariabilityRef(ParameterRandomVariable variable, Integer count) {
+        if(isRandomVarIOV(variable)){
+            Eta eta = new Eta(variable.getSymbId());
+            String omegaName = RandomVariableHelper.getNameFromParamRandomVariable(variable);
+            eta.setOmegaName(omegaName);
+            eta.setOrderInCorr(count);
+            OccRandomVariable occRandomVariable = new OccRandomVariable(columnWithOcc.getColumnType(), variable, eta);
+            orderedOccRandomVars.put(count,occRandomVariable);
+            count++;
+            occasionRandomVariables.add(variable.getSymbId());
+        }
+        return count;
+    }
+
+    /**
+     * Checks if random variable is with occasional variability level .
+     * @param variable
+     * @return
+     */
+    public boolean isRandomVarIOV(ParameterRandomVariable variable){
+        boolean isIOV = false;
         if(variable.getVariabilityReference()!=null){
             LevelReference levelRef = variable.getVariabilityReference();
             if(levelRef.getSymbRef().getSymbIdRef()!=null){
                 String variabilityRef = levelRef.getSymbRef().getSymbIdRef();
 
                 if(columnWithOcc!=null && columnWithOcc.getColumnId().equals(variabilityRef)){
-                    OccRandomVariable occRandomVariable = new OccRandomVariable(count, columnWithOcc.getColumnType(), variable);
-                    orderedOccRandomVars.put(count,occRandomVariable);
-                    count++;
-                    occasionRandomVariables.add(variable.getSymbId());
+                    isIOV = true;
                 }
             }
         }
-        return count;
+        return isIOV;
     }
 
     /**
+     *  gets unique values from iov related columns.
      *  
      * @param iovColumnUniqueValues
      * @throws IOException
@@ -118,18 +138,14 @@ public class InterOccVariabilityHandler {
     }
 
     public class OccRandomVariable{
-        private final Integer order;
         private final ParameterRandomVariable variable;
+        private final Eta eta;
         private final ColumnType relatedColumn;
 
-        public OccRandomVariable(Integer order, ColumnType columnType, ParameterRandomVariable variable) {
-            this.order = order;
+        public OccRandomVariable(ColumnType columnType, ParameterRandomVariable variable, Eta eta) {
             this.variable = variable;
             this.relatedColumn = columnType;
-        }
-
-        public Integer getOrder() {
-            return order;
+            this.eta = eta;
         }
 
         public ParameterRandomVariable getVariable() {
@@ -138,6 +154,10 @@ public class InterOccVariabilityHandler {
 
         public ColumnType getRelatedColumn() {
             return relatedColumn;
+        }
+
+        public Eta getEta() {
+            return eta;
         }
     }
 }

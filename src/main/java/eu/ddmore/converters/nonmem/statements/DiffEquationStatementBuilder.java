@@ -127,8 +127,8 @@ public class DiffEquationStatementBuilder {
                 varDefinition = format(variableDefinitions.get(variable));
             }
 
-            for(String revervedWord : context.getReservedWords().keySet()){
-                if(format(varDefinition).contains(format(revervedWord))){
+            if(context.getReservedWords().keySet().contains(format(varDefinition))){
+                for(String revervedWord : context.getReservedWords().keySet()){
                     varDefinition = replaceVariable(context.getReservedWords().get(revervedWord), varDefinition);
                     varDefinitionsWithsuffix.put(variable, varDefinition);
                 }
