@@ -279,7 +279,6 @@ public class Parser extends BaseParser {
 
         if (assignmentCount == 0) throw new IllegalStateException("A piecewise block has no assignment statements.");
 
-
         for (int i = 0; i < pieces.size(); i++) {
             Piece piece = pieces.get(i);
 
@@ -292,29 +291,32 @@ public class Parser extends BaseParser {
             }
         }
 
+        StringBuilder ifBlock = new StringBuilder();
         StringBuilder block = new StringBuilder();
         for (int i = 0; i < pieces.size(); i++) {
             Piece piece = pieces.get(i);
+
             if (piece == null) continue;
             else if (piece.equals(else_block)) continue;
-
             if (!(conditional_stmts[i] != null && assignment_stmts[i] != null)) continue;
 
             String format = Formatter.endline("%s (%s) "+Formatter.Operator.THEN)
                     +Formatter.endline(Formatter.indent("%s = %s"));
 
             String conditionStatement = getConditionStatement(conditional_stmts[i]);
+            ifBlock.append(String.format(format, Formatter.Operator.IF, conditionStatement, field_tag, assignment_stmts[i]));
+            ifBlock.append(Formatter.endline(Formatter.Operator.ENDIF.toString()));
+        }
 
-            block.append(String.format(format, Formatter.Operator.IF, conditionStatement, field_tag, assignment_stmts[i]));
-            if (else_block != null && else_index >= 0) {
-                block.append(Formatter.endline(Formatter.Operator.ELSE.toString()));
-                String elseformat = Formatter.endline(Formatter.indent("%s = %s"));
-                block.append(String.format(elseformat, field_tag, assignment_stmts[else_index]));
-            }
-            block.append(Formatter.endline(Formatter.Operator.ENDIF.toString()));
+        //ELSE block content is defined before IF block instead of ELSE block.
+        if (else_block != null && else_index >= 0) {
+            String elseformat = Formatter.endline(Formatter.endline()+("%s = %s"));
+            block.append(String.format(elseformat, field_tag, assignment_stmts[else_index]));
         }
 
         if (assignmentCount == 0) throw new IllegalStateException("Piecewise statement assigned no conditional blocks.");
+
+        block.append(ifBlock+Formatter.endline());
         symbol = block.toString();
 
         return symbol;
