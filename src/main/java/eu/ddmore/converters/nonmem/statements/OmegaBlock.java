@@ -12,7 +12,10 @@ import crx.converter.engine.parts.BaseRandomVariableBlock.CorrelationRef;
 
 import eu.ddmore.converters.nonmem.eta.Eta;
 
-
+/**
+ * Omega block which stores information related to omega statement block.
+ * 
+ */
 public class OmegaBlock {
 
     private List<CorrelationRef> correlations = new ArrayList<>();
@@ -36,7 +39,7 @@ public class OmegaBlock {
     public void addToEtaToOmegas(Eta eta, String omega) {
         etasToOmegas.put(eta, omega);
     }
-    
+
     public void addToEtaToOmegaStatement(Eta eta, List<OmegaStatement> omega) {
         omegaStatements.put(eta, omega);
     }

@@ -25,7 +25,7 @@ import eu.ddmore.libpharmml.dom.commontypes.SymbolRef;
 import eu.ddmore.libpharmml.dom.modeldefn.ParameterRandomVariable;
 
 /**
- * 
+ * this initialises creates omega block and omega title as well as same block title for IOV.
  */
 public class OmegaBlockCreator {
     private static final String EMPTY_VARIABLE = "Empty Variable";
@@ -40,11 +40,9 @@ public class OmegaBlockCreator {
     }
 
     /**
+     * Creates omega statements for omega block provided.
      * 
-     * @param correlations
-     * @param omegaBlocks
-     * @param etaToOmagas
-     * @param etas
+     * @param omegaBlock
      */
     public void createOmegaBlocks(OmegaBlock omegaBlock){
 
@@ -94,7 +92,7 @@ public class OmegaBlockCreator {
     }
 
     /**
-     * This method will return index from ordered eta map for random var name provided. 
+     * This method will return index from ordered eta map for random var name provided.
      * 
      * @param randomVariable
      * @param etaToOmagas
@@ -123,7 +121,6 @@ public class OmegaBlockCreator {
      * @param eta
      * @param randomVar1
      * @param omegaBlocks
-     * @param etaToOmagas
      */
     private void createFirstCorrMatrixRow(Eta eta, ParameterRandomVariable randomVar1, 
             Map<Eta, List<OmegaStatement>> omegaBlocks) {
@@ -186,6 +183,7 @@ public class OmegaBlockCreator {
             }
         }
     }
+
     /**
      * We set omega blocks matrix using omegas with empty scalar (i.e. value '0') so that 
      * if there is no coefficient value set for a random value pair in matrix, it will use this default value. 
@@ -254,11 +252,9 @@ public class OmegaBlockCreator {
         }
     }
 
-
     /**
      * Initialise omega blocks maps and also update ordered eta to omegas from correlations map.
      * 
-     * @param correlations
      * @param omegaBlock
      */
     public void initialiseOmegaBlocks(OmegaBlock omegaBlock){
@@ -331,7 +327,6 @@ public class OmegaBlockCreator {
     public Set<Eta> getEtaToOmagas() {
         return etaToOmagas;
     }
-
 
     public void setEtaToOmagas(Set<Eta> etaToOmagas) {
         this.etaToOmagas = new TreeSet<Eta>(etaToOmagas);

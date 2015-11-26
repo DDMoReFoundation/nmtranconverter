@@ -265,21 +265,6 @@ public class PredStatement {
         return etaVal;
     }
 
-    //(<eta_order>, 1*<no_of_etas>+<eta_order>, 2*<no_of_etas>+<eta_order>, ... , <no_of_unique_occ_values>*<no_of_etas>+<eta_order>);
-    //    private String getIovEtaValueForAbbr(int etaOrder, int uniqueOccValuesCount, int iovEtasCount) {
-    //        StringBuilder etaValues = new StringBuilder();
-    //
-    //        for(int i=0;i<uniqueOccValuesCount;i++){
-    //            int etaVal = i*iovEtasCount+etaOrder;
-    //            etaValues.append(etaVal);
-    //            if(i != uniqueOccValuesCount-1){
-    //                etaValues.append(", ");
-    //            }
-    //            
-    //        }
-    //        return etaValues.toString();
-    //    }
-
     private String getConditionalDoseDetails() {
         List<ConditionalDoseEvent> conditionalDoseEvents = ScriptDefinitionAccessor.getAllConditionalDoseEvents(context.getScriptDefinition());
         List<TemporalDoseEvent> teDoseEvents = ScriptDefinitionAccessor.getAllTemporalDoseEvent(context.getScriptDefinition());
