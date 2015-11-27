@@ -6,6 +6,8 @@ package eu.ddmore.converters.nonmem.statements;
 import java.util.List;
 import java.util.Set;
 
+import org.apache.commons.lang.StringUtils;
+
 import com.google.common.base.Preconditions;
 
 import crx.converter.engine.parts.ParameterBlock;
@@ -124,6 +126,12 @@ public class TableStatement {
     private StringBuilder getParamTableStatement(){
         List<ParameterBlock> blocks =  context.getScriptDefinition().getParameterBlocks();
         StringBuilder paramTable = new StringBuilder();
+
+        InputHeader occColumn = context.getIovHandler().getColumnWithOcc();
+        
+        if(occColumn!=null && StringUtils.isNotEmpty(occColumn.getColumnId())){
+            paramTable.append(SPACE+Formatter.getReservedParam(occColumn.getColumnId()));
+        }
 
         for(ParameterBlock block : blocks){
             List<IndividualParameter> indivParamTypes = block.getIndividualParameters();
