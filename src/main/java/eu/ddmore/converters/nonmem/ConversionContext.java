@@ -80,8 +80,6 @@ public class ConversionContext {
         this.lexer = lexer;
 
         lexer.setFilterReservedWords(true);
-        lexer.setSortParameterModel(true);
-        lexer.setSortStructuralModel(true);
 
         parser.getSymbolReader().loadReservedWords();
 
