@@ -24,39 +24,43 @@ public class ErrorStatementEmitter {
     /**
      * Gets error statement details with help of error type specified.
      *
-     * @return
+     * @return {@link StringBuilder} containing the text for the error statement block
      */
-    public StringBuilder getErrorStatementDetails(){
-        StringBuilder errorBlock = new StringBuilder();
-        String errorType = error.getErrorType();
+    public StringBuilder getErrorStatementDetails() {
+        final ErrorType errorType = ErrorType.fromErrorType(error.getErrorType());
+        switch (errorType) {
+        
+            case COMBINED_ERROR_1 :
+                return createErrorStatement(
+                    error.getAdditive() + "+" + error.getProportional() + "*" + ErrorConstant.IPRED
+                );
+                
+            case COMBINED_ERROR_2 :
+            {
+                final String weight = "SQRT(("+error.getAdditive() + "*" +
+                    error.getAdditive() + ")" + "+ (" + error.getProportional() + "*" +
+                    error.getProportional() + "*" + ErrorConstant.IPRED + "*" + ErrorConstant.IPRED+"))";
+                return createErrorStatement(weight);
+            }
+            
+            case COMBINED_ERROR_3 :
+            case COMBINED_ERROR_2_LOG :
+            {
+                final String iPred = "LOG(" + error.getFunctionRep() + ")";
+                final String weight = "SQRT(" + error.getProportional() + "**2" +
+                        " + (" + error.getAdditive() + "/" + error.getFunctionRep() + ")**2)";
+                return createErrorStatement(iPred, weight);
+            }
+            
+            case ADDITIVE_ERROR :
+                return createErrorStatement(error.getAdditive());
+                
+            case PROPORTIONAL_ERROR :
+                return createErrorStatement(error.getProportional() + "*" + ErrorConstant.IPRED);
 
-        if(errorType.equals(ErrorType.COMBINED_ERROR_1.getErrorType())){
-            String weight = error.getAdditive()+
-                    "+"+error.getProportional()+"*"+ErrorConstant.IPRED;
-            return createErrorStatement(weight);
-
-        }else if(errorType.equals(ErrorType.COMBINED_ERROR_2.getErrorType())){
-            String weight = "SQRT(("+error.getAdditive()+"*"+
-                    error.getAdditive()+")"+"+ ("+error.getProportional()+"*"+
-                    error.getProportional()+"*"+ErrorConstant.IPRED+"*"+ErrorConstant.IPRED+"))";
-            return createErrorStatement(weight);
-
-        }else if(errorType.equals(ErrorType.COMBINED_ERROR_3.getErrorType()) 
-                || errorType.equals(ErrorType.COMBINED_ERROR_2_LOG.getErrorType())){
-            String iPred = "LOG("+error.getFunctionRep()+")";
-            String weight = "SQRT("+error.getProportional()+"**2"+
-                    " + ("+error.getAdditive()+"/"+error.getFunctionRep()+")**2)";
-            return createErrorStatement(iPred, weight);
-
-        }else if(errorType.equals(ErrorType.ADDITIVE_ERROR.getErrorType())){
-            String weight = error.getAdditive();
-            return createErrorStatement(weight);
-
-        }else if(errorType.equals(ErrorType.PROPORTIONAL_ERROR.getErrorType())){
-            String weight = error.getProportional()+"*"+ErrorConstant.IPRED;
-            return createErrorStatement(weight);
+            default :
+                throw new UnsupportedOperationException("Unhandled ErrorType encountered in ErrorStatementEmitter");
         }
-        return errorBlock;
     }
 
     /**

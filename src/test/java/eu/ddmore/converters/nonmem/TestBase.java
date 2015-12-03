@@ -20,7 +20,7 @@ public abstract class TestBase {
     protected File dir = null, f = null;
 
     final static String TEST_DATA_DIR = "/test-models/PharmML/";
-    final static String WORKING_DIR = "target/MainTest_Working_Dir";
+    final static String WORKING_DIR = "target/MainTest_Working_Dir/";
     final static String V_0_3_SUBDIR = "0.3.0/";
     final static String V_0_3_1_SUBDIR = "0.3.1/";
     final static String V_0_4_SUBDIR = "0.4.0/";
@@ -42,8 +42,9 @@ public abstract class TestBase {
     }
 
     protected void init(String InputFile, String version) throws NullPointerException, IOException {
-
-        f = getFile(InputFile,version);
+    
+        f = getFile(InputFile, version);
+        dir = new File(WORKING_DIR, version);
 
         c = new ConverterProvider();
         ConverterProvider.getManager().setFixedRunId(fixedRunId);
