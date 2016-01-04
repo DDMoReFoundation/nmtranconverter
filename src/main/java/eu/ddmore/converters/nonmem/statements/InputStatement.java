@@ -3,11 +3,11 @@
  ******************************************************************************/
 package eu.ddmore.converters.nonmem.statements;
 
+import org.apache.commons.lang.StringUtils;
+
 import com.google.common.base.Preconditions;
 
 import eu.ddmore.converters.nonmem.utils.Formatter;
-import eu.ddmore.converters.nonmem.utils.Formatter.ColumnConstant;
-import eu.ddmore.libpharmml.dom.dataset.ColumnType;
 
 public class InputStatement {
 
@@ -34,8 +34,11 @@ public class InputStatement {
                     stringBuilder.append("="+DROP);
                 }
 
-                if(nextColumn.getColumnType().equals(ColumnType.IDV) && nextColumn.getColumnId()!=ColumnConstant.TIME.toString()){
-                    stringBuilder.append("="+ColumnConstant.TIME);
+                String newColumnName = Formatter.propertyHandler.getColumnNameForColumnType(nextColumn.getColumnType().toString());
+
+                if(StringUtils.isNotEmpty(newColumnName) 
+                        && !Formatter.propertyHandler.isReservedColumnName(nextColumn.getColumnId())){
+                    stringBuilder.append("="+newColumnName);
                 }
 
             }
