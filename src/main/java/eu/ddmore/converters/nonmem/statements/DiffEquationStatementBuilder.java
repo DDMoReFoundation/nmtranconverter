@@ -41,16 +41,16 @@ public class DiffEquationStatementBuilder {
         StringBuilder diffEqStatementBlock = new StringBuilder();
 
         Map<String, String> varDefinitions = allVarDefinitions;
-        Map<String, String> derivatibeVarDefs = dadtDefinitionsInDES;
+        Map<String, String> derivativeVarDefs = dadtDefinitionsInDES;
         if(Formatter.isInDesBlock()){
-            varDefinitions = appendAllVarDefinitionsWithsuffix(allVarDefinitions);
-            derivatibeVarDefs = appendAllVarDefinitionsWithsuffix(dadtDefinitionsInDES);
+            varDefinitions = appendAllVarDefinitionsWithSuffix(allVarDefinitions);
+            derivativeVarDefs = appendAllVarDefinitionsWithSuffix(dadtDefinitionsInDES);
         }
 
         diffEqStatementBlock.append(getVariableDefinitionsStatement(varDefinitions));
 
-        for(String var : derivatibeVarDefs.keySet()){
-            diffEqStatementBlock.append(Formatter.endline(derivatibeVarDefs.get(var)));
+        for(String var : derivativeVarDefs.keySet()){
+            diffEqStatementBlock.append(Formatter.endline(derivativeVarDefs.get(var)));
         }
         return diffEqStatementBlock;
     }
@@ -116,7 +116,7 @@ public class DiffEquationStatementBuilder {
         }
     }
 
-    private Map<String, String> appendAllVarDefinitionsWithsuffix(Map<String, String> variableDefinitions){
+    private Map<String, String> appendAllVarDefinitionsWithSuffix(Map<String, String> variableDefinitions){
         Map<String, String> varDefinitionsWithsuffix = new LinkedHashMap<String, String>();
 
         for(String variable : variableDefinitions.keySet()){

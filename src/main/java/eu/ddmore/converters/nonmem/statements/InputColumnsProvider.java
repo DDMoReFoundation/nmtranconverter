@@ -15,7 +15,7 @@ public class InputColumnsProvider {
 
     private final List<String> catCovTableColumns = new ArrayList<String>();
     private final List<String> contCovTableColumns = new ArrayList<String>();
-    private final List<InputHeader> inputHeaders = new ArrayList<InputHeader>();
+    private final List<InputColumn> inputHeaders = new ArrayList<InputColumn>();
 
     /**
      * This method is to add continuous covariate table column to cotab table columns list.
@@ -37,7 +37,7 @@ public class InputColumnsProvider {
      * This method adds input header column to input header columns list.
      * @param inputHeader input header column
      */
-    public void addInputHeaders(InputHeader inputHeader){
+    public void addInputHeaders(InputColumn inputHeader){
        inputHeaders.add(inputHeader);
     }
 
@@ -49,7 +49,7 @@ public class InputColumnsProvider {
         return contCovTableColumns;
     }
 
-    public List<InputHeader> getInputHeaders() {
+    public List<InputColumn> getInputHeaders() {
         return inputHeaders;
     }
     

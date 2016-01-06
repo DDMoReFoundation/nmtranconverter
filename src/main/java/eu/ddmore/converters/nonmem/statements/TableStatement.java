@@ -97,7 +97,7 @@ public class TableStatement {
         stdTable.append(SPACE+ColumnConstant.TIME);
 
         if(!inputColumns.getInputHeaders().isEmpty()){
-            for(InputHeader inputHeader : inputColumns.getInputHeaders()){
+            for(InputColumn inputHeader : inputColumns.getInputHeaders()){
                 String columnId = inputHeader.getColumnId();
                 boolean isDV = columnId.equals(Formatter.getReservedParam(TableConstant.DV.toString()));
                 // Adding ID TIME at start and DV at the end hence skipping here.
@@ -127,7 +127,7 @@ public class TableStatement {
         List<ParameterBlock> blocks =  context.getScriptDefinition().getParameterBlocks();
         StringBuilder paramTable = new StringBuilder();
 
-        InputHeader occColumn = context.getIovHandler().getColumnWithOcc();
+        InputColumn occColumn = context.getIovHandler().getColumnWithOcc();
         
         if(occColumn!=null && StringUtils.isNotEmpty(occColumn.getColumnId())){
             paramTable.append(SPACE+Formatter.getReservedParam(occColumn.getColumnId()));

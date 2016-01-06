@@ -28,7 +28,7 @@ public class InputStatement {
         if (null == statement) {
             StringBuilder stringBuilder = new StringBuilder(Formatter.input());
 
-            for (InputHeader nextColumn : columnsHandler.getInputColumnsProvider().getInputHeaders()) {
+            for (InputColumn nextColumn : columnsHandler.getInputColumnsProvider().getInputHeaders()) {
                 stringBuilder.append(" " + nextColumn.getColumnId());
                 if(nextColumn.isDropped()){
                     stringBuilder.append("="+DROP);

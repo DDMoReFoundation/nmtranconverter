@@ -30,10 +30,10 @@ public class ErrorStatement {
 
     private String additive = new String("0.0");
     private String proportional = new String("0.0");
-    private String functionRep = new String();
+    private String functionRepresentation = new String();
 
     private FunctionCallType functionCall = null;
-    private String function = new String();
+    private String functionName = new String();
     private String errorType = new String();
 
     public ErrorStatement(FunctionCallType functionCallType, String output){
@@ -41,10 +41,10 @@ public class ErrorStatement {
 
         functionCall = functionCallType;
         setParamsFunctionCall();
-        if(function.isEmpty()){
-            function = output;
+        if(functionName.isEmpty()){
+            functionName = output;
         }
-        functionRep = function;
+        functionRepresentation = functionName;
     }
 
     /**
@@ -63,14 +63,14 @@ public class ErrorStatement {
                     proportional = (paramValue.isEmpty())?proportional:paramValue;
 
                 }else if(arg.getSymbId().equals(FunctionArg.FUNC.getDescription())){
-                    function = paramValue;
+                    functionName = paramValue;
                 }
             }
         }
     }
 
     /**
-     * We need to determine parameter value from function argument to be added to nmtran. 
+     * We need to determine parameter value from functionName argument to be added to nmtran. 
      * It could be either variable name or value provided.
      * 
      * @param arg
@@ -86,8 +86,8 @@ public class ErrorStatement {
         return paramValue;
     }
 
-    public String getFunction() {
-        return function;
+    public String getFunctionName() {
+        return functionName;
     }
 
     public String getAdditive() {
@@ -99,7 +99,7 @@ public class ErrorStatement {
     }
 
     public String getFunctionRep() {
-        return functionRep;
+        return functionRepresentation;
     }
 
     public FunctionCallType getFunctionCall() {

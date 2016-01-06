@@ -8,13 +8,13 @@ import eu.ddmore.libpharmml.dom.dataset.ColumnType;
 /**
  * This class stores input header details.
  */
-public class InputHeader {
+public class InputColumn {
     private String columnId;
     private boolean dropped;
-    private Long columnSequence;
+    private Integer columnSequence;
     private ColumnType columnType;
     
-    public InputHeader(String columnId, boolean isDropped, Long columnSeq, ColumnType columnType){
+    public InputColumn(String columnId, boolean isDropped, Integer columnSeq, ColumnType columnType){
         this.columnId = columnId;
         this.dropped = isDropped;
         this.columnSequence = columnSeq;
@@ -37,11 +37,11 @@ public class InputHeader {
         this.dropped = dropped;
     }
 
-    public Long getColumnSequence() {
+    public Integer getColumnSequence() {
         return columnSequence;
     }
 
-    public void setColumnSequence(Long columnSequence) {
+    public void setColumnSequence(Integer columnSequence) {
         this.columnSequence = columnSequence;
     }
 

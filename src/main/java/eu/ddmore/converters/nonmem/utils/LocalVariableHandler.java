@@ -47,7 +47,7 @@ public class LocalVariableHandler {
      */
     public Boolean isVarFromErrorFunction(String variable){
         for(ErrorStatement errorStatement : context.getErrorStatements().values()){
-            if(errorStatement.getFunction().equals(variable)){
+            if(errorStatement.getFunctionName().equals(variable)){
                 return true;
             }
         }

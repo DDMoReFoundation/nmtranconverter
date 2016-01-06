@@ -45,7 +45,7 @@ public class IndividualDefinitionEmitter {
      * @return
      */
     public String createIndividualDefinition(IndividualParameter param){
-
+        Preconditions.checkNotNull(param, "Individual parameter provided cannot be null.");
         StringBuilder statement = new StringBuilder();
 
         if (param.getAssign() != null) {
@@ -63,7 +63,7 @@ public class IndividualDefinitionEmitter {
     }
 
     /**
-     * This method will retrieve details of parameter type passed depending upon 
+     * This method retrieves details of parameter type passed depending upon 
      * whether it is IDV or Covariate Definition.
      * 
      * @param covRelation

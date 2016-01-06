@@ -15,7 +15,7 @@ public class MuReferenceHandler {
     
     private final ConversionContext context;
     private static final String MU = "MU_";
-    private Integer MU_ORDER = 0;
+    private Integer muOrder = 0;
     private final Map<Integer,String> muReferences = new TreeMap<Integer,String>();
     
     public MuReferenceHandler(ConversionContext context){
@@ -33,13 +33,13 @@ public class MuReferenceHandler {
         if(orderedThetas.containsValue(popSymbol)){
             for(Integer thetaOrder: orderedThetas.keySet()){
                 if(popSymbol.equals(orderedThetas.get(thetaOrder)) && !muReferences.containsValue(popSymbol)){
-                    muReferences.put(++MU_ORDER, popSymbol);
+                    muReferences.put(++muOrder, popSymbol);
                 }
             }
         }else if(!muReferences.containsValue(popSymbol)) {
-            muReferences.put(++MU_ORDER, popSymbol);
+            muReferences.put(++muOrder, popSymbol);
         }
-        return new String(MU + MU_ORDER);
+        return new String(MU + muOrder);
     }
 
 }

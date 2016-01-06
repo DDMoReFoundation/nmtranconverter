@@ -77,8 +77,8 @@ public class InputColumnsHandler {
 
         List<ColumnDefinition> dataColumns = headerColumns.getListOfColumn();
 
-        Map<Long, InputHeader> orderedColumns = new TreeMap<Long, InputHeader>();
-        Long columnSequence= new Long(1);
+        Map<Integer, InputColumn> orderedColumns = new TreeMap<Integer, InputColumn>();
+        Integer columnSequence= new Integer(1);
 
         for (ColumnDefinition dataColumn : dataColumns) {
             columnSequence = addToOrderedColumns(dataColumn, columnSequence, orderedColumns);
@@ -87,14 +87,14 @@ public class InputColumnsHandler {
         inputColumnsProvider.getInputHeaders().addAll(orderedColumns.values());
     }
 
-    private Long addToOrderedColumns(ColumnDefinition dataColumn, Long columnSequence, Map<Long, InputHeader> orderedColumns) {
+    private Integer addToOrderedColumns(ColumnDefinition dataColumn, Integer columnSequence, Map<Integer, InputColumn> orderedColumns) {
         String columnId = dataColumn.getColumnId().toUpperCase();
-        Long columnNumber = dataColumn.getColumnNum().longValue();
+        Integer columnNumber = dataColumn.getColumnNum().intValue();
 
         if(columnNumber>columnSequence){
             for(;columnSequence<columnNumber;columnSequence++){
                 if(!orderedColumns.containsKey(columnNumber)){
-                    InputHeader emptyColumn = new InputHeader(DROP, false, columnNumber, dataColumn.getColumnType());
+                    InputColumn emptyColumn = new InputColumn(DROP, false, columnNumber, dataColumn.getColumnType());
                     orderedColumns.put(columnSequence, emptyColumn);
                 }
             }
@@ -107,7 +107,7 @@ public class InputColumnsHandler {
             Boolean isDropped = (columnType.equals(ColumnType.UNDEFINED) && !ReservedColumnConstant.contains(columnId));
 
             String formattedColumnId =Formatter.getReservedParam(columnId);
-            InputHeader inputHeader = new InputHeader(formattedColumnId, isDropped, columnNumber, columnType);
+            InputColumn inputHeader = new InputColumn(formattedColumnId, isDropped, columnNumber, columnType);
             orderedColumns.put(columnNumber, inputHeader);
 
             populateCovTableDetails(columnType,dataColumn.getValueType(),formattedColumnId);

@@ -8,9 +8,11 @@ import com.google.common.base.Preconditions;
 import eu.ddmore.converters.nonmem.statements.ErrorStatement.ErrorConstant;
 import eu.ddmore.converters.nonmem.utils.Formatter;
 
-
+/**
+ * Error statement emmitter uses error statement properties and create error statement for error type specified.
+ */
 public class ErrorStatementEmitter {
-    ErrorStatement error;
+    private final ErrorStatement error;
     private final String DEFAULT_Y = ErrorConstant.IPRED+"+"+ErrorConstant.W+"*EPS(1)";
     private final String DEFAULT_WEIGHT = " "+ErrorConstant.W;
     private final String DEFAULT_IRES = ErrorConstant.DV+" - "+ErrorConstant.IPRED;
