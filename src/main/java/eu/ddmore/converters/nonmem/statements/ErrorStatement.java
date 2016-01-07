@@ -30,29 +30,24 @@ public class ErrorStatement {
 
     private String additive = new String("0.0");
     private String proportional = new String("0.0");
-    private String functionRepresentation = new String();
 
-    private FunctionCallType functionCall = null;
+    private FunctionCallType functionCallType = null;
     private String functionName = new String();
     private String errorType = new String();
 
     public ErrorStatement(FunctionCallType functionCallType, String output){
         Preconditions.checkNotNull(functionCallType, "functional call type cannot be null");
 
-        functionCall = functionCallType;
-        setParamsFunctionCall();
-        if(functionName.isEmpty()){
-            functionName = output;
-        }
-        functionRepresentation = functionName;
+        this.functionCallType = functionCallType;
+        initParamsFromFunctionDetails(output);
     }
 
     /**
      * This method will set additive, proportional and f values required to create error statement.	
      */
-    private void setParamsFunctionCall(){
-        errorType = functionCall.getSymbRef().getSymbIdRef();
-        for(FunctionArgument arg : functionCall.getFunctionArgument()){
+    private void initParamsFromFunctionDetails(String output){
+        errorType = functionCallType.getSymbRef().getSymbIdRef();
+        for(FunctionArgument arg : functionCallType.getFunctionArgument()){
             String paramValue = fetchParamValue(arg);
             if(arg.getSymbId()!=null && paramValue!=null){
 
@@ -66,6 +61,9 @@ public class ErrorStatement {
                     functionName = paramValue;
                 }
             }
+        }
+        if(functionName.isEmpty()){
+            functionName = output;
         }
     }
 
@@ -98,12 +96,8 @@ public class ErrorStatement {
         return proportional;
     }
 
-    public String getFunctionRep() {
-        return functionRepresentation;
-    }
-
-    public FunctionCallType getFunctionCall() {
-        return functionCall;
+    public FunctionCallType getFunctionCallType() {
+        return functionCallType;
     }
 
     public String getErrorType() {

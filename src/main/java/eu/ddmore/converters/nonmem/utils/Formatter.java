@@ -65,7 +65,6 @@ public class Formatter {
 
     public static final PropertiesHandler propertyHandler = new PropertiesHandler();
 
-    //DES block 
     private static boolean inDesBlock = false;
 
     public static boolean isInDesBlock() {

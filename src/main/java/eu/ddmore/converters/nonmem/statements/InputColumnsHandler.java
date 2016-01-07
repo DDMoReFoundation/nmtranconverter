@@ -30,12 +30,9 @@ public class InputColumnsHandler {
 
     public InputColumnsHandler(final List<ExternalDataSet> dataSets, List<CovariateDefinition> covDefinitions) {
         Preconditions.checkNotNull(dataSets, "Datasets cannot be null");
+        Preconditions.checkArgument(!dataSets.isEmpty(), "data file should be present to get input headers");
 
-        if(!dataSets.isEmpty()){
-            populateColumnsWithHeadersforDataSets(dataSets);
-        }else{
-            throw new IllegalArgumentException("data file should be present to get input headers");
-        }
+        populateColumnsWithHeadersforDataSets(dataSets);
         //These are optional to have and will be added only if they are available.
         if(covDefinitions!=null && !covDefinitions.isEmpty()){
             populateColumnsFromTransformedCov(covDefinitions);

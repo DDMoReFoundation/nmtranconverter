@@ -8,17 +8,27 @@ import java.util.Properties;
 
 import org.apache.commons.lang.StringUtils;
 
+import com.google.common.base.Preconditions;
+
 import eu.ddmore.converters.nonmem.Parser;
 
 /**
  * This class loads properties and provides access to property values for users.
  */
 public class PropertiesHandler {
+    private static final String COLUMN_TYPE_PROPERTIES_FILE_NAME = "column_type.properties";
+    private static final String RESERVED_WORDS__FILE_NAME = "reserved_words.txt";
+    private static final String BINOP_PROPERTIES_FILE_NAME = "binary_operator.properties";
+
     private static final Properties binopProperties = new Properties();
     private static final Properties reservedWordsProperties = new Properties();
     private static final Properties columnTypeProperties = new Properties();
 
     public PropertiesHandler(){
+        initialise();
+    }
+
+    private void initialise(){
         loadBinopProperties();
         loadReservedWordsProperties();
         loadColumnTypeProperties();
@@ -26,14 +36,13 @@ public class PropertiesHandler {
 
     /**
      * Loads binary operator properties from properties file. 
-     * @return
      */
     private void loadColumnTypeProperties() {
 
         try {
-            columnTypeProperties.load(Parser.class.getResourceAsStream("column_type.properties"));
+            columnTypeProperties.load(Parser.class.getResourceAsStream(COLUMN_TYPE_PROPERTIES_FILE_NAME));
         } catch (IOException e) {
-            throw new IllegalStateException("Binary properties are not accesible : "+ e);
+            throw new IllegalStateException("Binary properties are not accesible : ", e);
         }
     }
 
@@ -41,7 +50,7 @@ public class PropertiesHandler {
      * Returns reserved word replacement for symbol provided. 
      * If symbol provided is not on the reserved words list, then throws IllegalStateException.
      * @param symbol
-     * @return
+     * @return column name
      */
     public String getColumnNameForColumnType(String columnType) {
         String param = columnType.toUpperCase();
@@ -51,7 +60,7 @@ public class PropertiesHandler {
     /**
      * Checks if column name is in the reserved columns list.
      * @param columnName
-     * @return
+     * @return boolean flag if column is reserved 
      */
     public boolean isReservedColumnName(String columnName){
         return columnTypeProperties.containsValue(columnName);
@@ -59,14 +68,13 @@ public class PropertiesHandler {
 
     /**
      * Loads binary operator properties from properties file. 
-     * @return
      */
     private void loadBinopProperties() {
 
         try {
-            binopProperties.load(Parser.class.getResourceAsStream("binary_operator.properties"));
+            binopProperties.load(Parser.class.getResourceAsStream(BINOP_PROPERTIES_FILE_NAME));
         } catch (IOException e) {
-            throw new IllegalStateException("Binary properties are not accesible : "+ e);
+            throw new IllegalStateException("Binary properties are not accesible : ", e);
         }
     }
 
@@ -74,9 +82,10 @@ public class PropertiesHandler {
      * Returns binary operator property for symbol provided. 
      * If property value doesn't exist for the symbol, then throws IllegalStateException.
      * @param symbol
-     * @return
+     * @return binop property
      */
     public String getBinopPropertyFor(String symbol) {
+        Preconditions.checkNotNull(symbol, "symbol cannot be null");
         String param = symbol.toLowerCase();
         String binop = getPropertyFor(binopProperties, param);
         if(StringUtils.isEmpty(binop)){
@@ -88,14 +97,13 @@ public class PropertiesHandler {
 
     /**
      * Loads binary operator properties from properties file. 
-     * @return
      */
     private void loadReservedWordsProperties() {
 
         try {
-            reservedWordsProperties.load(Parser.class.getResourceAsStream("reserved_words.txt"));
+            reservedWordsProperties.load(Parser.class.getResourceAsStream(RESERVED_WORDS__FILE_NAME));
         } catch (IOException e) {
-            throw new IllegalStateException("Binary properties are not accesible : "+ e);
+            throw new IllegalStateException("Binary properties are not accesible : ", e);
         }
     }
 
@@ -103,9 +111,10 @@ public class PropertiesHandler {
      * Returns reserved word replacement for symbol provided. 
      * If symbol provided is not on the reserved words list, then throws IllegalStateException.
      * @param symbol
-     * @return
+     * @return reserved word for symbol
      */
     public String getReservedWordFor(String symbol) {
+        Preconditions.checkNotNull(symbol, "symbol cannot be null");
         String param = symbol.toUpperCase();
         String reservedWord = getPropertyFor(reservedWordsProperties, param);
 
@@ -113,7 +122,9 @@ public class PropertiesHandler {
     }
 
     private String getPropertyFor(Properties properties, String symbol){
-        if(properties!=null && properties.stringPropertyNames().contains(symbol)){
+        Preconditions.checkNotNull(properties, "properties cannot be null.");
+        Preconditions.checkNotNull(symbol, "symbol cannot be null.");
+        if(properties.stringPropertyNames().contains(symbol)){
             return properties.getProperty(symbol);
         }else{
             return "";

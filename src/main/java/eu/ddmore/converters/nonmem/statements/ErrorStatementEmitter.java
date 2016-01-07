@@ -48,9 +48,9 @@ public class ErrorStatementEmitter {
             case COMBINED_ERROR_3 :
             case COMBINED_ERROR_2_LOG :
             {
-                final String iPred = "LOG(" + error.getFunctionRep() + ")";
+                final String iPred = "LOG(" + error.getFunctionName() + ")";
                 final String weight = "SQRT(" + error.getProportional() + "**2" +
-                        " + (" + error.getAdditive() + "/" + error.getFunctionRep() + ")**2)";
+                        " + (" + error.getAdditive() + "/" + error.getFunctionName() + ")**2)";
                 return createErrorStatement(iPred, weight);
             }
             
@@ -97,10 +97,10 @@ public class ErrorStatementEmitter {
      */
     private StringBuilder createErrorStatement(String iPred, String weight){
         StringBuilder errorModel = new StringBuilder();
-        iPred = ((iPred!=null))?Formatter.getReservedParam(iPred):Formatter.getReservedParam(error.getFunctionRep());
+        iPred = ((iPred!=null))?Formatter.getReservedParam(iPred):Formatter.getReservedParam(error.getFunctionName());
         weight = ((weight!=null))?Formatter.getReservedParam(weight):weight;
         
-        errorModel.append(ErrorConstant.IPRED   +" = "+ addStatement(iPred,error.getFunctionRep()));
+        errorModel.append(ErrorConstant.IPRED   +" = "+ addStatement(iPred,error.getFunctionName()));
         errorModel.append(ErrorConstant.W       +" = "+ addStatement(weight,DEFAULT_WEIGHT));
         errorModel.append(ErrorConstant.Y       +" = "+ Formatter.endline(DEFAULT_Y));
         errorModel.append(ErrorConstant.IRES    +" = "+ Formatter.endline(DEFAULT_IRES));

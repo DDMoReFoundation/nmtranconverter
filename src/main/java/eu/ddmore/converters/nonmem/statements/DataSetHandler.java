@@ -40,7 +40,7 @@ public class DataSetHandler {
         ExternalDataSet extDataSet = extDataSets.get(0);
         if (extDataSet.getDataSet().getExternalFile().getPath() != null) {
             dataFileName = extDataSet.getDataSet().getExternalFile().getPath();
-            File data = new File(dataLocation+File.separator+dataFileName);
+            File data = new File(dataLocation, dataFileName);
             if(data.exists()){
                 setDataFile(data);
             }else{

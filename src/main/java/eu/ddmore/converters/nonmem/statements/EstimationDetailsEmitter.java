@@ -1,3 +1,6 @@
+/*******************************************************************************
+ * Copyright (C) 2015 Mango Solutions Ltd - All rights reserved.
+ ******************************************************************************/
 package eu.ddmore.converters.nonmem.statements;
 
 import java.util.List;
@@ -16,7 +19,9 @@ import eu.ddmore.libpharmml.dom.modellingsteps.EstimationOpType;
 import eu.ddmore.libpharmml.dom.modellingsteps.EstimationOperation;
 import eu.ddmore.libpharmml.dom.modellingsteps.OperationProperty;
 
-
+/**
+ * This class assists creation of estimation statement details.
+ */
 public class EstimationDetailsEmitter {
 
     public enum EstConstant{

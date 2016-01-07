@@ -45,7 +45,7 @@ public class DiscreteHandlerTest {
     @Mock CountPMF countPMF;
     @Mock PoissonDistribution poissonDist;
     @Mock NegativeBinomialDistribution negativeBinomialDist;
-    
+
     @Mock PositiveRealValueType realValueType;
     @Mock NaturalNumberValueType naturalNumValueType;
     @Mock ProbabilityValueType probabilityValueType;
