@@ -46,7 +46,7 @@ public class PkMacroAnalyserTest {
         List<StructuralBlock> blocks = new ArrayList<StructuralBlock>();
         blocks.add(block);
         when(definition.getStructuralBlocks()).thenReturn(blocks);
-        
+
         when(details.getCompartments()).thenReturn(cmtMacros);
         when(details.getEliminations()).thenReturn(eliminationMacros);
         when(details.getIvs()).thenReturn(ivMacros);
@@ -61,9 +61,9 @@ public class PkMacroAnalyserTest {
         ArrayList<PKMacro> pkMacros = new ArrayList<PKMacro>();
         pkMacros.add(new CompartmentMacro());
         pkMacros.add(new EliminationMacro());
-        
+
         when(block.getPKMacros()).thenReturn(pkMacros);
-        
+
         PkMacroDetails macroDetails = analyser.analyse(context);
         assertTrue("pk macro details should not be empty",!macroDetails.isEmpty());
     }

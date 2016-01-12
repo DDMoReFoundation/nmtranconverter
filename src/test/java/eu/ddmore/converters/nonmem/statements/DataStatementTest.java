@@ -3,67 +3,37 @@
  ******************************************************************************/
 package eu.ddmore.converters.nonmem.statements;
 
-import java.io.File;
-
-import org.junit.Ignore;
+import static org.junit.Assert.*;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import static org.powermock.api.mockito.PowerMockito.when;
+
 import org.mockito.Mock;
 import org.powermock.modules.junit4.PowerMockRunner;
 
-import eu.ddmore.converters.nonmem.ConversionContext;
-import eu.ddmore.libpharmml.dom.dataset.DataSet;
-import eu.ddmore.libpharmml.dom.dataset.ExternalFile;
-import eu.ddmore.libpharmml.dom.modellingsteps.ExternalDataSet;
-import eu.ddmore.libpharmml.dom.modellingsteps.ModellingSteps;
-
 @RunWith(PowerMockRunner.class)
-public class DataStatementTest {
+public class DataStatementTest extends BasicTestSetup {
 
-	private static final String DATA_FILE_NAME = "warfarin_conc_pca.csv";
-	File srcFile = null;
-	@Mock ConversionContext context;
+    @Mock DataSetHandler dataSetHandler;
 
-	@Ignore("we need to create test suite with valid test data to create data statement.")
-	@Test
-	public void shouldCreateValidDataStatementNONMEMdataSet() {
+    DataStatement dataStatement;
 
-		ModellingSteps modellingSteps = createModellingSteps(createDataSet());
-		
-		srcFile = new File(DATA_FILE_NAME);
-		
-//		DataStatement dataStatement = new DataStatement(modellingSteps.getNONMEMdataSet(),srcFile);
+    private final String dataFileName = "datafile.csv";
+    private static final Character IGNORE_CHAR = '@';
 
-//		assertNotNull("DataStatement should not be null.", dataStatement);
-//		assertEquals("dataFileName should be correct.", DATA_FILE_NAME, dataStatement.getDataFileName());
-//		assertEquals("DataStatement should be correct.",STATEMENT_BLOCK_NAME + " " + DATA_FILE_NAME + " " + IGNORE_STRING + "=" + IGNORE_CHAR, dataStatement.getStatement());
-	}
+    private final String expectedDataStatement = "$DATA \""+dataFileName+"\" IGNORE="+IGNORE_CHAR;
 
-	@Test(expected = NullPointerException.class)
-	public void shouldThrowExceptionNullNONMEMdataSet() {
+    @Test
+    public void shouldGetDataStatement(){
+        dataStatement = new DataStatement(dataSetHandler);
 
-		new DataStatement(null);
-	}
+        when(dataSetHandler.getDataFileName()).thenReturn(dataFileName);
+        when(dataSetHandler.getIgnoreChar()).thenReturn(IGNORE_CHAR);
 
-	private DataSet createDataSet() {
+        String outputDataStatement = dataStatement.getStatement();
 
-		ExternalFile importData = new ExternalFile();
-		importData.setPath(DATA_FILE_NAME);
+        assertEquals("Data statement should be created in expected format.", expectedDataStatement, outputDataStatement);
 
-		DataSet dataset = new DataSet();
-		dataset.setImportData(importData);
-		
-		return dataset;
-	}
+    }
 
-	private ModellingSteps createModellingSteps(DataSet dataset) {
-
-		ExternalDataSet nonmemDataSet = new ExternalDataSet();
-		nonmemDataSet.setDataSet(dataset);
-
-		ModellingSteps modellingSteps = new ModellingSteps();
-		modellingSteps.getListOfExternalDataSet().add(nonmemDataSet);
-
-		return modellingSteps;
-	}
 }

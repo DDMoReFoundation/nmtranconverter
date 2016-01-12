@@ -36,31 +36,31 @@ public class InputStatementTest {
     @Mock DataSet dataSet;
 
     InputStatement inputStatement;
-    
+
     private static final String COL_ID_1 = ColumnConstant.ID.toString();
     private static final ColumnType COL_TYPE_1 = ColumnType.ID;
     private static final SymbolType COL_VALUE_1 = SymbolType.ID;
     private static final Integer COL_NUM_1 = new Integer(1);
     private static final ColumnDefinition ID = new ColumnDefinition(COL_ID_1, COL_TYPE_1, COL_VALUE_1, COL_NUM_1);
-    
+
     private static final String COL_ID_2 = ColumnConstant.TIME.toString();
     private static final ColumnType COL_TYPE_2 = ColumnType.IDV;
     private static final SymbolType COL_VALUE_2 = SymbolType.ID;
     private static final Integer COL_NUM_2 = new Integer(2);
     private static final ColumnDefinition TIME = new ColumnDefinition(COL_ID_2, COL_TYPE_2, COL_VALUE_2, COL_NUM_2);
-    
+
     private static final String COL_ID_3 = "WT";
     private static final ColumnType COL_TYPE_3 = ColumnType.UNDEFINED;
     private static final SymbolType COL_VALUE_3 = SymbolType.ID;
     private static final Integer COL_NUM_3 = new Integer(3);
     private static final ColumnDefinition WT = new ColumnDefinition(COL_ID_3, COL_TYPE_3, COL_VALUE_3, COL_NUM_3);
-    
+
     private static final String COL_ID_4 = "AMT";
     private static final ColumnType COL_TYPE_4 = ColumnType.COVARIATE;
     private static final SymbolType COL_VALUE_4 = SymbolType.ID;
     private static final Integer COL_NUM_4 = new Integer(4);
     private static final ColumnDefinition AMT = new ColumnDefinition(COL_ID_4, COL_TYPE_4, COL_VALUE_4, COL_NUM_4);
-    
+
     private static final String COL_ID_5 = "EVID";
     private static final ColumnType COL_TYPE_5 = ColumnType.UNDEFINED;
     private static final SymbolType COL_VALUE_5 = SymbolType.ID;
@@ -89,7 +89,7 @@ public class InputStatementTest {
         dataColumns.add(AMT);
         dataColumns.add(EVID);
         inputColumns = new InputColumnsHandler(externalDataSets,covDefinitions);
-        
+
         inputStatement = new InputStatement(inputColumns);
         String inputStmt = inputStatement.getStatement();
         assertNotNull("should return input statement",inputStmt);
@@ -99,19 +99,19 @@ public class InputStatementTest {
     public void shouldReturnInputStatementWithDrop() {
         dataColumns.add(EVID);
         inputColumns = new InputColumnsHandler(externalDataSets, covDefinitions);
-        
+
         inputStatement = new InputStatement(inputColumns);
         String inputStmt = inputStatement.getStatement();
         assertNotNull("should return input statement",inputStmt);
         assertTrue("should contain DROP for missing columns in order",inputStmt.contains("DROP"));
     }
-    
+
     @Test
     public void shouldMarkColumnDropped() {
         dataColumns.add(WT);
         dataColumns.add(EVID);
         inputColumns = new InputColumnsHandler(externalDataSets, covDefinitions);
-        
+
         inputStatement = new InputStatement(inputColumns);
         String inputStmt = inputStatement.getStatement();
         assertNotNull("should return input statement",inputStmt);
@@ -120,5 +120,5 @@ public class InputStatementTest {
         //if column "EVID" has columntype "UNDEFINED" then do not mark it as dropped        
         assertFalse("Column EVID should not be marked as dropped when columntype is undefined.",inputStmt.contains(EVID.getColumnId()+"=DROP"));
     }
-    
+
 }

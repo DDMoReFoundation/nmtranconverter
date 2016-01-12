@@ -14,27 +14,27 @@ import eu.ddmore.converters.nonmem.utils.Formatter;
 
 public class ProblemStatementTest {
 
-	private static final String PROBLEM_DESCRIPTION = "Test Problem Description";
+    private static final String PROBLEM_DESCRIPTION = "Test Problem Description";
 
 
-	@Test
-	public void shouldCreateValidProblemStatement() {
+    @Test
+    public void shouldCreateValidProblemStatement() {
 
-		ProblemStatement statement = new ProblemStatement(PROBLEM_DESCRIPTION);
+        ProblemStatement statement = new ProblemStatement(PROBLEM_DESCRIPTION);
 
-		assertNotNull("ProblemStatement should not be null.", statement);
-		assertEquals("problemDescription should be correct.", PROBLEM_DESCRIPTION, statement.getProblemDescription());
-		assertEquals("ProblemStatement should be correct.",
-		    Formatter.problem() + PROBLEM_DESCRIPTION, statement.getStatement());
-	}
-	
-	@Test
-	public void shouldCreateValidProblemStatementWithNullDescription() {
+        assertNotNull("ProblemStatement should not be null.", statement);
+        assertEquals("problemDescription should be correct.", PROBLEM_DESCRIPTION, statement.getProblemDescription());
+        assertEquals("ProblemStatement should be correct.",
+            Formatter.problem() + PROBLEM_DESCRIPTION, statement.getStatement());
+    }
 
-		ProblemStatement statement = new ProblemStatement(null);
+    @Test
+    public void shouldCreateValidProblemStatementWithNullDescription() {
 
-		assertNull("problemDescription should be null.", statement.getProblemDescription());
-		assertEquals("ProblemStatement should be correct.",
-		    Formatter.problem(), statement.getStatement());
-	}
+        ProblemStatement statement = new ProblemStatement(null);
+
+        assertNull("problemDescription should be null.", statement.getProblemDescription());
+        assertEquals("ProblemStatement should be correct.",
+            Formatter.problem(), statement.getStatement());
+    }
 }

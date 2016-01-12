@@ -13,7 +13,6 @@ import org.mockito.Mock;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
-import crx.converter.engine.ScriptDefinition;
 import crx.converter.engine.parts.EstimationStep;
 import eu.ddmore.converters.nonmem.statements.EstimationDetailsEmitter.EstConstant;
 import eu.ddmore.converters.nonmem.statements.EstimationDetailsEmitter.Method;
@@ -26,19 +25,15 @@ import eu.ddmore.libpharmml.dom.modellingsteps.EstimationOperation;
 
 @RunWith(PowerMockRunner.class)
 @PrepareForTest(ScriptDefinitionAccessor.class)
-public class EstimationDetailsEmitterTest {
+public class EstimationDetailsEmitterTest extends BasicTestSetup {
 
     private String method = "METHOD=";
-    @Mock ScriptDefinition scriptDefinition;
     @Mock DiscreteHandler discreteHandler;
 
     EstimationDetailsEmitter detailsEmitter;
 
     List<EstimationStep> estimationSteps;
-    @Mock EstimationStep estStep;
-    @Mock EstimationStep additionalEstStep;
     @Mock EstimationOperation estOperation;
-    @Mock EstimationOperation additionalEstOperation;
     @Mock Algorithm algorithm;
 
     @Before
