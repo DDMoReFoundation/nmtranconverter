@@ -14,9 +14,8 @@ public class DataStatement{
     private String statement;
     private final DataSetHandler dataSetHandler;
 
-
     public DataStatement(DataSetHandler dataSetHandler) {
-        Preconditions.checkNotNull(dataSetHandler, "conversion context cannot be null");
+        Preconditions.checkNotNull(dataSetHandler, "data set handler cannot be null");
         this.dataSetHandler = dataSetHandler;
     }
 
