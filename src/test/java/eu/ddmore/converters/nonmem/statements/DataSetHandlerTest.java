@@ -26,7 +26,6 @@ import eu.ddmore.libpharmml.dom.modellingsteps.ExternalDataSet;
 @PrepareForTest(DataSetHandler.class)
 public class DataSetHandlerTest extends BasicTestSetup  {
 
-    //    @Mock ExternalDataSet extDataSet;
     @Mock BufferedReader reader;
     @Mock InputStreamReader isReader;
     @Mock FileInputStream inputStream;
