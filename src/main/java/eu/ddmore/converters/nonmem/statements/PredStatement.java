@@ -390,8 +390,10 @@ public class PredStatement {
      */
     private StringBuilder getDifferentialInitialConditions(){
         StringBuilder builder = new StringBuilder();
-        if(!context.getScriptDefinition().getStructuralBlocks().isEmpty())
-            builder = InitConditionBuilder.getDifferentialInitialConditions(context.getScriptDefinition().getStructuralBlocks());	
+        if(!context.getScriptDefinition().getStructuralBlocks().isEmpty()){
+            InitConditionBuilder initBuilder = new InitConditionBuilder();
+            builder = initBuilder.getDifferentialInitialConditions(context.getScriptDefinition().getStructuralBlocks());
+        }
         return builder;
     }
 

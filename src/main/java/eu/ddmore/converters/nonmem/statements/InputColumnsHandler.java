@@ -91,7 +91,7 @@ public class InputColumnsHandler {
         if(columnNumber>columnSequence){
             for(;columnSequence<columnNumber;columnSequence++){
                 if(!orderedColumns.containsKey(columnNumber)){
-                    InputColumn emptyColumn = new InputColumn(DROP, false, columnNumber, dataColumn.getColumnType());
+                    InputColumn emptyColumn = new InputColumn(DROP, false, columnSequence, ColumnType.UNDEFINED);
                     orderedColumns.put(columnSequence, emptyColumn);
                 }
             }

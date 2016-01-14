@@ -397,7 +397,7 @@ public class ConversionContext {
     }
 
     public ScriptDefinition getScriptDefinition(){
-        return lexer.getScriptDefinition();    
+        return lexer.getScriptDefinition();
     }
 
     public ParametersHelper getParameterHelper() {

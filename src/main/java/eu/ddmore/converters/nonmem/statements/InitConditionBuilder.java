@@ -19,14 +19,14 @@ import eu.ddmore.libpharmml.dom.maths.Equation;
 
 public class InitConditionBuilder {
 
-    private static Integer derivativeVarCount = 0;
+    private Integer derivativeVarCount = 0;
 
     /**
      * Creates DES statement block from differential initial conditions.
      * 
      * @return
      */	
-    public static StringBuilder getDifferentialInitialConditions(List<StructuralBlock> structuralBlocks){
+    public StringBuilder getDifferentialInitialConditions(List<StructuralBlock> structuralBlocks){
 
         StringBuilder builder = new StringBuilder();
         for(StructuralBlock structBlock : structuralBlocks){
@@ -47,7 +47,7 @@ public class InitConditionBuilder {
      * @param variableType
      * @return
      */
-    private static StringBuilder getInitConditionFromCompartment(DerivativeVariable variableType) {
+    private StringBuilder getInitConditionFromCompartment(DerivativeVariable variableType) {
         StringBuilder builder = new StringBuilder();
         if(variableType.getInitialCondition()!=null){
             InitialValue initialValueType = variableType.getInitialCondition().getInitialValue();
@@ -75,7 +75,7 @@ public class InitConditionBuilder {
      * @param scalar
      * @return
      */
-    private static String getNmTranSpecificInitCondition(SymbolRef symbolRef, JAXBElement<?> scalar) {
+    private String getNmTranSpecificInitCondition(SymbolRef symbolRef, JAXBElement<?> scalar) {
         if(symbolRef!=null){
             return getInitConditionFromSymbRef(symbolRef);
         }
@@ -83,7 +83,7 @@ public class InitConditionBuilder {
             return getInitConditionFromScalar(scalar.getValue());
         }else {
             return new String();
-        }		
+        }
     }
 
     /**
@@ -93,7 +93,7 @@ public class InitConditionBuilder {
      * @param initConditionVar
      * @return
      */
-    private static String getInitConditionFromSymbRef(SymbolRef initConditionVar) {
+    private String getInitConditionFromSymbRef(SymbolRef initConditionVar) {
         if(derivativeVarCount==0 || initConditionVar.getSymbIdRef() == null){
             throw new IllegalStateException("Could not get initial condition for The derivative variable");
         }
@@ -107,7 +107,7 @@ public class InitConditionBuilder {
      * @param value
      * @return
      */
-    private static String getInitConditionFromScalar(Object value) {
+    private String getInitConditionFromScalar(Object value) {
         if(derivativeVarCount==0 || value == null){
             throw new IllegalStateException("Could not get initial condition for The derivative variable");
         }
@@ -119,6 +119,5 @@ public class InitConditionBuilder {
         }
         return Formatter.endline("A_0("+derivativeVarCount+") = "+initialCondition.toUpperCase());
     }
-
 
 }
