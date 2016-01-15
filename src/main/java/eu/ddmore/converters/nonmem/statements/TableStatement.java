@@ -57,13 +57,17 @@ public class TableStatement {
      */
     public StringBuilder getStatements(){
         StringBuilder allTables = new StringBuilder();
-        allTables.append(createTableStatement(getStdTableStatement(),TableFile.STD_TABLE.getFileName()));
-        allTables.append(createTableStatement(getParamTableStatement(),TableFile.PARAM_TABLE.getFileName()));
+        allTables.append(createTableStatement(getStdTableStatement().toString(),TableFile.STD_TABLE.getFileName()));
+
+        String paramTableStatement = getParamTableStatement().toString();
+        if(!paramTableStatement.isEmpty()){
+            allTables.append(createTableStatement(paramTableStatement,TableFile.PARAM_TABLE.getFileName()));
+        }
         if(!inputColumns.getCatCovTableColumns().isEmpty()){
-            allTables.append(createTableStatement(getCatCovTableStatement(),TableFile.CAT_COV_TABLE.getFileName()));
+            allTables.append(createTableStatement(getCatCovTableStatement().toString(),TableFile.CAT_COV_TABLE.getFileName()));
         }
         if(!inputColumns.getContCovTableColumns().isEmpty()){
-            allTables.append(createTableStatement(getContCovTableStatement(),TableFile.CONT_COV_TABLE.getFileName()));
+            allTables.append(createTableStatement(getContCovTableStatement().toString(),TableFile.CONT_COV_TABLE.getFileName()));
         }
 
         return allTables;
@@ -75,7 +79,7 @@ public class TableStatement {
      * @param tableType
      * @return
      */
-    private StringBuilder createTableStatement(StringBuilder columns, String tableType){
+    private StringBuilder createTableStatement(String columns, String tableType){
         StringBuilder tableStatement = new StringBuilder();
         tableStatement.append(Formatter.endline());
         tableStatement.append(Formatter.table());
@@ -128,7 +132,7 @@ public class TableStatement {
         StringBuilder paramTable = new StringBuilder();
 
         InputColumn occColumn = context.getIovHandler().getColumnWithOcc();
-        
+
         if(occColumn!=null && StringUtils.isNotEmpty(occColumn.getColumnId())){
             paramTable.append(SPACE+Formatter.getReservedParam(occColumn.getColumnId()));
         }
@@ -169,7 +173,7 @@ public class TableStatement {
      * 
      * @return
      */
-    public StringBuilder getContCovTableStatement(){
+    private StringBuilder getContCovTableStatement(){
         StringBuilder contCovTable = new StringBuilder();
 
         for(String column : inputColumns.getContCovTableColumns()){
