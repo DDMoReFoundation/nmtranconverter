@@ -30,7 +30,7 @@ import eu.ddmore.libpharmml.dom.dataset.ColumnType;
 import eu.ddmore.libpharmml.dom.modeldefn.ParameterRandomVariable;
 
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({RandomVariableHelper.class})
+@PrepareForTest(RandomVariableHelper.class)
 public class InterOccVariabilityHandlerTest extends BasicTestSetup {
 
     private static final String PARAM_VAR = "Param_Variable";
@@ -52,17 +52,10 @@ public class InterOccVariabilityHandlerTest extends BasicTestSetup {
     public void setUp() throws Exception {
 
         mockStatic(RandomVariableHelper.class);
-
         context = mock(ConversionContext.class,RETURNS_DEEP_STUBS);
 
-        when(levelRefSymbRef.getSymbIdRef()).thenReturn(column.getColumnId());
-        when(levelRef.getSymbRef()).thenReturn(levelRefSymbRef);
-        columns.add(column);
-
-        when(RandomVariableHelper.getNameFromParamRandomVariable(variable)).thenReturn(OMEGA_NAME);
-        when(variable.getSymbId()).thenReturn(PARAM_VAR);
-        when(variable.getVariabilityReference()).thenReturn(levelRef);
-        randomVariables.add(variable);
+        mockColumns();
+        mockRandomVariables();
 
         when(block.getRandomVariables()).thenReturn(randomVariables);
         paramBlocks.add(block);
@@ -71,6 +64,19 @@ public class InterOccVariabilityHandlerTest extends BasicTestSetup {
         when(context.getScriptDefinition()).thenReturn(scriptDefinition);
 
         when(context.getInputColumnsHandler().getInputColumnsProvider().getInputHeaders()).thenReturn(columns);
+    }
+
+    private void mockRandomVariables() {
+        when(RandomVariableHelper.getNameFromParamRandomVariable(variable)).thenReturn(OMEGA_NAME);
+        when(variable.getSymbId()).thenReturn(PARAM_VAR);
+        when(variable.getVariabilityReference()).thenReturn(levelRef);
+        randomVariables.add(variable);
+    }
+
+    private void mockColumns() {
+        when(levelRefSymbRef.getSymbIdRef()).thenReturn(column.getColumnId());
+        when(levelRef.getSymbRef()).thenReturn(levelRefSymbRef);
+        columns.add(column);
     }
 
     @Test
