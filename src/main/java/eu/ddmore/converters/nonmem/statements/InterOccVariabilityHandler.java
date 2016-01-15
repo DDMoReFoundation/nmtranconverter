@@ -109,6 +109,8 @@ public class InterOccVariabilityHandler {
         if(iovColumnUniqueValues.isEmpty() && columnWithOcc!=null){
             CsvReader reader = new CsvReader(dataFile.getAbsolutePath());
             try{
+                //Read the first record of data as column headers
+                reader.readHeaders();
                 while (reader.readRecord())
                 {
                     Double value = Double.parseDouble(reader.get(columnWithOcc.getColumnId()));
