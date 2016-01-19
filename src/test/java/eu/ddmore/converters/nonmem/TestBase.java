@@ -21,11 +21,12 @@ public abstract class TestBase {
 
     final static String TEST_DATA_DIR = "/test-models/PharmML/";
     final static String WORKING_DIR = "target/MainTest_Working_Dir/";
-    final static String V_0_3_SUBDIR = "0.3.0/";
-    final static String V_0_3_1_SUBDIR = "0.3.1/";
+    final static String USECASE_DIR = "usecases/";
+
     final static String V_0_4_SUBDIR = "0.4.0/";
     final static String V_0_4_1_SUBDIR = "0.4.1/";
     final static String V_0_6_SUBDIR = "0.6.0/";
+    final static String V_0_8_SUBDIR = "0.8.0/";
 
 
     public TestBase() {

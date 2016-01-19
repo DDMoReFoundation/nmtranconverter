@@ -39,7 +39,17 @@ public class ConverterProvider extends Lexer {
         VersionImpl target_version = new VersionImpl(7, 3, 0);
         target = new LanguageVersionImpl("NMTRAN", target_version);
 
-        converterVersion = new VersionImpl(0, 3, 0);
+        converterVersion = new VersionImpl(0, 4, 0);
+    }
+
+    @Override
+    protected void initialise() {
+        setSortParameterModel(true);
+        setSortStructuralModel(true);
+        setValidateXML(true);
+        EstimationStep.setUseDefaultParameterEstimate(true);
+        EstimationStep.setDefaultParameterEstimateValue(1.0);
+        setUsePiecewiseAsEvents(true);
     }
 
     @Override
@@ -117,12 +127,5 @@ public class ConverterProvider extends Lexer {
             return simulationStatement.getSimulationStatement();
         }
         return new String();
-    }
-
-    @Override
-    protected void initialise() {
-        EstimationStep.setUseDefaultParameterEstimate(true);
-        EstimationStep.setDefaultParameterEstimateValue(1.0);
-        setUsePiecewiseAsEvents(true);
     }
 }
