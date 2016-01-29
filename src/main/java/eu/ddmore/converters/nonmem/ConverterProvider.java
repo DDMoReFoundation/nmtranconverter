@@ -33,7 +33,7 @@ public class ConverterProvider extends Lexer {
         setParser(p);
         p.setLexer(this);
 
-        VersionImpl source_version = new VersionImpl(0, 6, 1);
+        VersionImpl source_version = new VersionImpl(0, 8, 0);
         source = new LanguageVersionImpl("PharmML", source_version);
 
         VersionImpl target_version = new VersionImpl(7, 3, 0);
@@ -127,5 +127,10 @@ public class ConverterProvider extends Lexer {
             return simulationStatement.getSimulationStatement();
         }
         return new String();
+    }
+    
+    @Override
+    public String toString() {
+        return String.format("PharmMLToNMTRANConverter [source=%s, target=%s, converterVersion=%s]", source, target, converterVersion);
     }
 }
