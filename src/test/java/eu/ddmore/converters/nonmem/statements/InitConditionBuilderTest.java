@@ -7,7 +7,6 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.xml.bind.JAXBElement;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -20,9 +19,10 @@ import crx.converter.engine.parts.StructuralBlock;
 import eu.ddmore.converters.nonmem.utils.Formatter;
 import eu.ddmore.libpharmml.dom.commontypes.DerivativeVariable;
 import eu.ddmore.libpharmml.dom.commontypes.InitialCondition;
-import eu.ddmore.libpharmml.dom.commontypes.InitialValue;
 import eu.ddmore.libpharmml.dom.commontypes.IntValue;
 import eu.ddmore.libpharmml.dom.commontypes.Rhs;
+import eu.ddmore.libpharmml.dom.commontypes.Scalar;
+import eu.ddmore.libpharmml.dom.commontypes.StandardAssignable;
 import eu.ddmore.libpharmml.dom.commontypes.SymbolRef;
 import static org.powermock.api.mockito.PowerMockito.when;
 
@@ -32,10 +32,10 @@ public class InitConditionBuilderTest extends BasicTestSetup {
     @Mock StructuralBlock structBlock;
     @Mock DerivativeVariable variableType;
     @Mock InitialCondition initCondition;
-    @Mock InitialValue initialValueType;
+    @Mock StandardAssignable initialValueType;
     @Mock SymbolRef symbolRef;
     @Mock Rhs assign;
-    @Mock JAXBElement<?> scalar;
+    @Mock Scalar scalar;
     @Mock IntValue scalarValue;
 
     InitConditionBuilder initConditionBuilder;
@@ -51,8 +51,8 @@ public class InitConditionBuilderTest extends BasicTestSetup {
         when(symbolRef.getSymbIdRef()).thenReturn(symbol);
         when(assign.getSymbRef()).thenReturn(symbolRef);
 
-        when(scalarValue.getValue()).thenReturn(scalarVal);
-        doReturn(scalarValue).when(scalar).getValue();
+        when(scalar.valueToString()).thenReturn(scalarVal.toString());
+        //doReturn(scalarValue).when(scalar).getValue();
         doReturn(scalar).when(assign).getScalar();
 
         when(initialValueType.getAssign()).thenReturn(assign);

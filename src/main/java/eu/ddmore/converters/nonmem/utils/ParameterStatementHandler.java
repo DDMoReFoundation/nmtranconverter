@@ -8,7 +8,7 @@ import com.google.common.base.Preconditions;
 import eu.ddmore.converters.nonmem.statements.Parameter;
 import eu.ddmore.converters.nonmem.utils.Formatter.NmConstant;
 import eu.ddmore.converters.nonmem.utils.Formatter.Symbol;
-import eu.ddmore.libpharmml.dom.commontypes.ScalarRhs;
+import eu.ddmore.libpharmml.dom.commontypes.Rhs;
 
 /**
  * This class deals with handling and formatting of parameter statements. 
@@ -24,11 +24,11 @@ public class ParameterStatementHandler {
     public static StringBuilder addParameter(Parameter param) {
         Preconditions.checkNotNull(param, "Paramter cannot be null");
         StringBuilder statement = new StringBuilder();
-        String description = param.getSymbId().toUpperCase();
+        String description = param.getSymbId();//.toUpperCase();
 
-        ScalarRhs lowerBound = param.getLowerBound();
-        ScalarRhs upperBound= param.getUpperBound(); 
-        ScalarRhs initEstimate= param.getInitialEstimate();
+        Rhs lowerBound = param.getLowerBound();
+        Rhs upperBound= param.getUpperBound(); 
+        Rhs initEstimate= param.getInitialEstimate();
         statement.append("(");
 
         if(param.isFixed()){
@@ -65,7 +65,7 @@ public class ParameterStatementHandler {
      * @return parameter statement
      */
     private static StringBuilder prepareParameterStatements(String description,
-            ScalarRhs lowerBound, ScalarRhs upperBound, ScalarRhs initEstimate) {
+            Rhs lowerBound, Rhs upperBound, Rhs initEstimate) {
 
         StringBuilder statement = new StringBuilder(); 
         if(lowerBound!=null){
@@ -104,7 +104,7 @@ public class ParameterStatementHandler {
      * @param upperBound
      * @return parameter statement
      */
-    private static StringBuilder prepareStatement(ScalarRhs lowerBound,ScalarRhs init,ScalarRhs upperBound){
+    private static StringBuilder prepareStatement(Rhs lowerBound,Rhs init,Rhs upperBound){
         StringBuilder statement = new StringBuilder();
         Double value;
         if(lowerBound!=null){

@@ -21,7 +21,7 @@ import eu.ddmore.libpharmml.dom.dataset.ColumnDefinition;
 import eu.ddmore.libpharmml.dom.dataset.DataSet;
 import eu.ddmore.libpharmml.dom.dataset.HeaderColumnsDefinition;
 import eu.ddmore.libpharmml.dom.modeldefn.CovariateDefinition;
-import eu.ddmore.libpharmml.dom.modellingsteps.ExternalDataSet;
+import eu.ddmore.libpharmml.dom.trialdesign.ExternalDataSet;
 import eu.ddmore.libpharmml.util.WrappedList;
 
 @RunWith(PowerMockRunner.class)

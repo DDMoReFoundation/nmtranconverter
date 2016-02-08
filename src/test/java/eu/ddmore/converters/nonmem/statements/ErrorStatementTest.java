@@ -73,7 +73,7 @@ public class ErrorStatementTest extends BasicTestSetup {
         when(functionArg.getSymbId()).thenReturn(FunctionArg.FUNC.getDescription());
         args.add(functionArg);
 
-        when(functionCallType.getFunctionArgument()).thenReturn(args);
+        when(functionCallType.getListOfFunctionArgument()).thenReturn(args);
     }
 
     @Test

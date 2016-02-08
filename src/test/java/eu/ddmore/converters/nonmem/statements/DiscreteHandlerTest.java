@@ -3,12 +3,18 @@
  ******************************************************************************/
 package eu.ddmore.converters.nonmem.statements;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
 import static org.powermock.api.mockito.PowerMockito.when;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
+
+import javax.xml.bind.JAXBElement;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -24,6 +30,7 @@ import eu.ddmore.libpharmml.dom.modeldefn.CountData;
 import eu.ddmore.libpharmml.dom.modeldefn.CountPMF;
 import eu.ddmore.libpharmml.dom.modeldefn.TTEFunction;
 import eu.ddmore.libpharmml.dom.modeldefn.TimeToEventData;
+import eu.ddmore.libpharmml.dom.modeldefn.UncertML;
 import eu.ddmore.libpharmml.dom.uncertml.NaturalNumberValueType;
 import eu.ddmore.libpharmml.dom.uncertml.NegativeBinomialDistribution;
 import eu.ddmore.libpharmml.dom.uncertml.PoissonDistribution;
@@ -42,9 +49,12 @@ public class DiscreteHandlerTest {
     @Mock ScriptDefinition definition;
     @Mock ObservationBlock observationBlock;
     @Mock CountData countData;
-    @Mock CountPMF countPMF;
+
+    CountPMF countPMF;
+    @Mock UncertML uncertML;
     @Mock PoissonDistribution poissonDist;
     @Mock NegativeBinomialDistribution negativeBinomialDist;
+    @Mock JAXBElement<?> abstractDiscreteUnivariateDist;
 
     @Mock PositiveRealValueType realValueType;
     @Mock NaturalNumberValueType naturalNumValueType;
@@ -54,7 +64,6 @@ public class DiscreteHandlerTest {
     @Mock TimeToEventData tteData;
     @Mock TTEFunction tteFunction;
 
-
     @Before
     public void setUp() throws Exception {
         when(context.getScriptDefinition()).thenReturn(definition);
@@ -63,15 +72,20 @@ public class DiscreteHandlerTest {
 
         when(context.getScriptDefinition().getObservationBlocks()).thenReturn(obsBlocks);
         when(observationBlock.isDiscrete()).thenReturn(true);
+
+        countPMF = mock(CountPMF.class,RETURNS_DEEP_STUBS);
+        doReturn(abstractDiscreteUnivariateDist).when(uncertML).getAbstractDiscreteUnivariateDistribution();
+        when(countPMF.getDistribution().getUncertML()).thenReturn(uncertML);
+
     }
 
     private void poissonCountDataSetUp(){
+        doReturn(poissonDist).when(abstractDiscreteUnivariateDist).getValue();
+
         when(observationBlock.getCountData()).thenReturn(countData);
         List<CountPMF> countPMFs = new ArrayList<CountPMF>();
         countPMFs.add(countPMF);
         when(countData.getListOfPMF()).thenReturn(countPMFs);
-
-        when(countPMF.getDistribution()).thenReturn(poissonDist);
 
         when(poissonDist.getRate()).thenReturn(realValueType);
         when(realValueType.getVar()).thenReturn(var);
@@ -79,18 +93,17 @@ public class DiscreteHandlerTest {
     }
 
     private void negativeBinomialSetUp(){
+        doReturn(negativeBinomialDist).when(abstractDiscreteUnivariateDist).getValue();
+
         when(observationBlock.getCountData()).thenReturn(countData);
         List<CountPMF> countPMFs = new ArrayList<CountPMF>();
         countPMFs.add(countPMF);
         when(countData.getListOfPMF()).thenReturn(countPMFs);
 
-        when(countPMF.getDistribution()).thenReturn(negativeBinomialDist);
-
         when(negativeBinomialDist.getNumberOfFailures()).thenReturn(naturalNumValueType);
         when(naturalNumValueType.getVar()).thenReturn(var);
         when(var.getVarId()).thenReturn("NFL");
         when(naturalNumValueType.getNVal()).thenReturn(new BigInteger("1"));
-
 
         when(negativeBinomialDist.getProbability()).thenReturn(probabilityValueType);
         when(probabilityValueType.getVar()).thenReturn(var);

@@ -13,7 +13,8 @@ import java.util.List;
 import org.apache.commons.lang.StringUtils;
 
 import com.google.common.base.Preconditions;
-import eu.ddmore.libpharmml.dom.modellingsteps.ExternalDataSet;
+
+import eu.ddmore.libpharmml.dom.trialdesign.ExternalDataSet;
 
 
 public class DataSetHandler {

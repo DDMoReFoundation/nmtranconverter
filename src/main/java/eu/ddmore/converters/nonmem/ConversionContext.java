@@ -38,14 +38,13 @@ import eu.ddmore.converters.nonmem.utils.CorrelationHandler;
 import eu.ddmore.converters.nonmem.utils.OrderedThetasHandler;
 import eu.ddmore.converters.nonmem.utils.ParametersHelper;
 import eu.ddmore.libpharmml.dom.commontypes.DerivativeVariable;
-import eu.ddmore.libpharmml.dom.maths.Equation;
 import eu.ddmore.libpharmml.dom.maths.FunctionCallType;
-import eu.ddmore.libpharmml.dom.modeldefn.GaussianObsError;
-import eu.ddmore.libpharmml.dom.modeldefn.GaussianObsError.ErrorModel;
 import eu.ddmore.libpharmml.dom.modeldefn.GeneralObsError;
 import eu.ddmore.libpharmml.dom.modeldefn.ObservationError;
-import eu.ddmore.libpharmml.dom.modeldefn.SimpleParameter;
-import eu.ddmore.libpharmml.dom.modellingsteps.ExternalDataSet;
+import eu.ddmore.libpharmml.dom.modeldefn.PopulationParameter;
+import eu.ddmore.libpharmml.dom.modeldefn.StructuredObsError;
+import eu.ddmore.libpharmml.dom.modeldefn.StructuredObsError.ErrorModel;
+import eu.ddmore.libpharmml.dom.trialdesign.ExternalDataSet;
 
 /**
  * Conversion context class accesses common converter for nmtran conversion and initialises 
@@ -82,7 +81,6 @@ public class ConversionContext {
         lexer.setFilterReservedWords(true);
 
         parser.getSymbolReader().loadReservedWords();
-
 
         //This sequence of initialisation is important for information availability.  
         this.inputColumnsHandler = new InputColumnsHandler(retrieveExternalDataSets(),lexer.getCovariates());
@@ -201,20 +199,21 @@ public class ConversionContext {
      */
     public StringBuilder getSimpleParamAssignments() {
         StringBuilder simpleParamAssignmentBlock = new StringBuilder();
-        Map<String, SimpleParameter> params = parameterHelper.getSimpleParamsWithAssignment();
+        Map<String, PopulationParameter> params = parameterHelper.getSimpleParamsWithAssignment();
 
         for(String simpleParamSymbol : params.keySet()){
-            SimpleParameter simpleParam = params.get(simpleParamSymbol);
+            PopulationParameter simpleParam = params.get(simpleParamSymbol);
             Event event = getEventForParameter(simpleParam);
             String parsedEquation = new String();
             if(event !=null){
                 if(event.getPiecewiseTree()!=null && event.getPiecewiseTree().size()>0){
                     parsedEquation = parse(event.getParameter(), event.getPiecewiseTree());
                 }
-            }else {
-                Equation simpleParamAssignmentEq = simpleParam.getAssign().getEquation();
-                parsedEquation = simpleParamSymbol+ " = "+ getParser().getSymbol(simpleParamAssignmentEq);
             }
+            //            else {
+            //                Equation simpleParamAssignmentEq = simpleParam.getAssign().getEquation();
+            //                parsedEquation = simpleParamSymbol+ " = "+ getParser().getSymbol(simpleParamAssignmentEq);
+            //            }
 
             if(!parsedEquation.isEmpty()){
                 simpleParamAssignmentBlock.append(Formatter.endline(parsedEquation));
@@ -223,12 +222,12 @@ public class ConversionContext {
         return simpleParamAssignmentBlock;
     }
 
-    private Event getEventForParameter(SimpleParameter param){
+    private Event getEventForParameter(PopulationParameter simpleParam){
         for(ParameterBlock pb : getScriptDefinition().getParameterBlocks()){
             if (pb.hasEvents()) {
                 for (Event event : pb.getEvents()) {
                     if (event != null) {
-                        if (param.getSymbId().equals(event.getParameter().getSymbId())){
+                        if (simpleParam.getSymbId().equals(event.getParameter().getSymbId())){
                             return event;
                         }
                     }
@@ -315,8 +314,8 @@ public class ConversionContext {
                 //              TODO : DDMORE-1013 : add support for general observation error type once details are available
                 //              throw new IllegalArgumentException("general observation error type is not yet supported.");
             }
-            if(errorType instanceof GaussianObsError){
-                GaussianObsError error = (GaussianObsError) errorType;
+            if(errorType instanceof StructuredObsError){
+                StructuredObsError error = (StructuredObsError) errorType;
                 ErrorStatement errorStatement = prepareErrorStatement(error);
                 errorStatements.put(error.getSymbId(), errorStatement);
             }else{
@@ -327,15 +326,15 @@ public class ConversionContext {
     }
 
     /**
-     * Prepares and returns error statement for the gaussian observation error.
+     * Prepares and returns error statement for the structured observation error.
      * 
      * @param error
      * @return
      */
-    private ErrorStatement prepareErrorStatement(GaussianObsError error) {
+    private ErrorStatement prepareErrorStatement(StructuredObsError error) {
         ErrorModel errorModel = error.getErrorModel();
         String output = error.getOutput().getSymbRef().getSymbIdRef();
-        FunctionCallType functionCall = errorModel.getAssign().getEquation().getFunctionCall();
+        FunctionCallType functionCall = errorModel.getAssign().getFunctionCall();
 
         ErrorStatement errorStatement = new ErrorStatement(functionCall, output);
         return errorStatement;
@@ -378,7 +377,7 @@ public class ConversionContext {
      * @return
      */
     public List<ExternalDataSet> retrieveExternalDataSets(){
-        return getLexer().getDataFiles().getExternalDataSets();
+        return lexer.getDataFiles().getExternalDataSets();
     }
 
     public Map<String, String> getReservedWords(){

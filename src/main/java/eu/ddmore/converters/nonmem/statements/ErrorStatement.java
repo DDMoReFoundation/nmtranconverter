@@ -47,7 +47,7 @@ public class ErrorStatement {
      */
     private void initParamsFromFunctionDetails(String output){
         errorType = functionCallType.getSymbRef().getSymbIdRef();
-        for(FunctionArgument arg : functionCallType.getFunctionArgument()){
+        for(FunctionArgument arg : functionCallType.getListOfFunctionArgument()){
             String paramValue = fetchParamValue(arg);
             if(arg.getSymbId()!=null && paramValue!=null){
 

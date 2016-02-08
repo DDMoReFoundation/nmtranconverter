@@ -17,7 +17,7 @@ import eu.ddmore.libpharmml.dom.dataset.ColumnType;
 import eu.ddmore.libpharmml.dom.dataset.DataSet;
 import eu.ddmore.libpharmml.dom.dataset.HeaderColumnsDefinition;
 import eu.ddmore.libpharmml.dom.modeldefn.CovariateDefinition;
-import eu.ddmore.libpharmml.dom.modellingsteps.ExternalDataSet;
+import eu.ddmore.libpharmml.dom.trialdesign.ExternalDataSet;
 
 import static org.powermock.api.mockito.PowerMockito.when;
 

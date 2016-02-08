@@ -3,7 +3,7 @@
  ******************************************************************************/
 package eu.ddmore.converters.nonmem.statements;
 
-import eu.ddmore.libpharmml.dom.commontypes.ScalarRhs;
+import eu.ddmore.libpharmml.dom.commontypes.Rhs;
 
 /**
  * Creates and adds parameter details.
@@ -12,9 +12,9 @@ import eu.ddmore.libpharmml.dom.commontypes.ScalarRhs;
 public class Parameter {
 
     private final String symbId;
-    private ScalarRhs initialEstimate;
-    private ScalarRhs lowerBound;
-    private ScalarRhs upperBound;	
+    private Rhs initialEstimate;
+    private Rhs lowerBound;
+    private Rhs upperBound;	
     private Integer index;
     private boolean fixed = false;
     private boolean isStdDev = false;
@@ -23,7 +23,7 @@ public class Parameter {
         this.symbId = symbId;
     }
 
-    public void setParameterBounds(ScalarRhs initialEstimate,ScalarRhs lowerBound, ScalarRhs upperBound){
+    public void setParameterBounds(Rhs initialEstimate,Rhs lowerBound, Rhs upperBound){
         this.initialEstimate = initialEstimate;
         this.lowerBound = lowerBound;
         this.upperBound = upperBound;
@@ -42,27 +42,27 @@ public class Parameter {
         return symbId;
     }
 
-    public ScalarRhs getInitialEstimate() {
+    public Rhs getInitialEstimate() {
         return initialEstimate;
     }
 
-    public void setInitialEstimate(ScalarRhs initialEstimate) {
+    public void setInitialEstimate(Rhs initialEstimate) {
         this.initialEstimate = initialEstimate;
     }
 
-    public ScalarRhs getLowerBound() {
+    public Rhs getLowerBound() {
         return lowerBound;
     }
 
-    public void setLowerBound(ScalarRhs lowerBound) {
+    public void setLowerBound(Rhs lowerBound) {
         this.lowerBound = lowerBound;
     }
 
-    public ScalarRhs getUpperBound() {
+    public Rhs getUpperBound() {
         return upperBound;
     }
 
-    public void setUpperBound(ScalarRhs upperBound) {
+    public void setUpperBound(Rhs upperBound) {
         this.upperBound = upperBound;
     }
 

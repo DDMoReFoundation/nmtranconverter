@@ -18,7 +18,7 @@ import eu.ddmore.libpharmml.dom.dataset.HeaderColumnsDefinition;
 import eu.ddmore.libpharmml.dom.modeldefn.ContinuousCovariate;
 import eu.ddmore.libpharmml.dom.modeldefn.CovariateDefinition;
 import eu.ddmore.libpharmml.dom.modeldefn.CovariateTransformation;
-import eu.ddmore.libpharmml.dom.modellingsteps.ExternalDataSet;
+import eu.ddmore.libpharmml.dom.trialdesign.ExternalDataSet;
 
 /**
  * This class handles input columns operations and facilitates input columns provider for access to columns.

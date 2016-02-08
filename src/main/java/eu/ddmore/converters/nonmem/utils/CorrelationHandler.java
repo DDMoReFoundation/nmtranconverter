@@ -18,7 +18,7 @@ import eu.ddmore.converters.nonmem.ConversionContext;
 import eu.ddmore.converters.nonmem.eta.Eta;
 import eu.ddmore.converters.nonmem.eta.VarLevel;
 import eu.ddmore.converters.nonmem.statements.OmegaBlock;
-import eu.ddmore.libpharmml.dom.commontypes.ScalarRhs;
+import eu.ddmore.libpharmml.dom.commontypes.Rhs;
 
 /**
  * This class deals with ordered etas with help of correlations specified. 
@@ -159,9 +159,9 @@ public class CorrelationHandler {
         String secondVar = correlation.rnd2.getSymbId();
         String coefficient = "";
         if(correlation.isCorrelation()){
-            coefficient = getVariableOrValueFromScalarRhs(correlation.correlationCoefficient);
+            coefficient = getVariableOrValueFromRhs(correlation.correlationCoefficient.getAssign());
         }else if(correlation.isCovariance()){
-            coefficient = getVariableOrValueFromScalarRhs(correlation.covariance).toString();
+            coefficient = getVariableOrValueFromRhs(correlation.covariance.getAssign()).toString();
         }
         //add to correlations
         Eta firstEta = new Eta(firstVar);
@@ -189,7 +189,7 @@ public class CorrelationHandler {
      * @param rhs
      * @return scalar variable or value
      */
-    private String getVariableOrValueFromScalarRhs(ScalarRhs rhs) {
+    private String getVariableOrValueFromRhs(Rhs rhs) {
         String coefficient;
         if(rhs.getSymbRef()!=null){
             coefficient = rhs.getSymbRef().getSymbIdRef();

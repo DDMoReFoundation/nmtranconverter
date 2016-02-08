@@ -18,10 +18,10 @@ import crx.converter.engine.parts.ObservationBlock;
 import crx.converter.engine.parts.ParameterBlock;
 import crx.converter.engine.parts.Part;
 import crx.converter.engine.parts.TemporalDoseEvent;
-import eu.ddmore.libpharmml.dom.modeldefn.GaussianObsError;
 import eu.ddmore.libpharmml.dom.modeldefn.ObservationError;
 import eu.ddmore.libpharmml.dom.modeldefn.ParameterRandomVariable;
-import eu.ddmore.libpharmml.dom.modeldefn.GaussianObsError.ResidualError;
+import eu.ddmore.libpharmml.dom.modeldefn.StructuredObsError;
+import eu.ddmore.libpharmml.dom.modeldefn.StructuredObsError.ResidualError;;
 
 /**
  * This class contains methods which access script definition and return expected values/information in return.
@@ -149,8 +149,8 @@ public class ScriptDefinitionAccessor {
         List<ResidualError> residualErrors = new ArrayList<>() ;
         for(ObservationBlock block : scriptDefinition.getObservationBlocks()){
             ObservationError errorType = block.getObservationError();
-            if(errorType instanceof GaussianObsError){
-                GaussianObsError error = (GaussianObsError) errorType;
+            if(errorType instanceof StructuredObsError){
+                StructuredObsError error = (StructuredObsError) errorType;
                 if(error.getResidualError()!=null){
                     residualErrors.add(error.getResidualError());
                 }

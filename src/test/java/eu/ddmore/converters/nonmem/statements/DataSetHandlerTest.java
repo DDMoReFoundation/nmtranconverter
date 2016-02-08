@@ -20,7 +20,7 @@ import org.mockito.Mock;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
-import eu.ddmore.libpharmml.dom.modellingsteps.ExternalDataSet;
+import eu.ddmore.libpharmml.dom.trialdesign.ExternalDataSet;
 
 @RunWith(PowerMockRunner.class)
 @PrepareForTest(DataSetHandler.class)
@@ -58,7 +58,6 @@ public class DataSetHandlerTest extends BasicTestSetup  {
 
     }
 
-    //getDataFileName()
     @Test
     public void shouldGetDataFileName() {
 

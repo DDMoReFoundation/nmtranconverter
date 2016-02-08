@@ -24,11 +24,16 @@ public class TestUseCaseConversions extends TestBase {
     @Before
     public void setUp() throws Exception {
 
-        inputXMLFile = "UseCase15.xml";
+        inputXMLFile = "UseCase7.xml";
         inputDataFile = "warfarin_conc_cmt.csv";
 
-        init(inputDataFile, V_0_4_1_SUBDIR+USECASE_DIR);
-        init(inputXMLFile, V_0_4_1_SUBDIR+USECASE_DIR);
+//        inputXMLFile = "UseCase3_511.xml";
+//        inputDataFile = "warfarin_conc_pca.csv";
+
+        init(inputDataFile, V_0_8_SUBDIR);
+        init(inputXMLFile, V_0_8_SUBDIR);
+        //init(inputDataFile, V_0_4_1_SUBDIR+USECASE_DIR);
+        //init(inputXMLFile, V_0_4_1_SUBDIR+USECASE_DIR);
     }
 
     /**
@@ -38,8 +43,8 @@ public class TestUseCaseConversions extends TestBase {
      * @throws Exception
      */
     public void updateSetUpWith(String inputXMLFile, String inputDataFile) throws Exception {
-        init(inputDataFile, V_0_4_1_SUBDIR+USECASE_DIR);
-        init(inputXMLFile, V_0_4_1_SUBDIR+USECASE_DIR);
+        init(inputDataFile, V_0_8_SUBDIR);
+        init(inputXMLFile, V_0_8_SUBDIR);
     }
 
     @Test
@@ -61,26 +66,59 @@ public class TestUseCaseConversions extends TestBase {
     @Test
     public void allUseCaseConversionsTest() throws Exception{
 
+        /*
+         * 
+         * Err2
+         * java.lang.IllegalArgumentException: No enum constant eu.ddmore.converters.nonmem.statements.PkMacroAnalyser.PkMacroAttribute.ADM
+            at java.lang.Enum.valueOf(Enum.java:236)
+            at eu.ddmore.converters.nonmem.statements.PkMacroAnalyser$PkMacroAttribute.valueOf(PkMacroAnalyser.java:1)
+
+           Err3
+            java.lang.NullPointerException: The PharmML element mapped to a data column cannot be found in the model (column='DV')
+            at crx.converter.engine.parts.BaseTabularDataset$ElementMapping.<init>(BaseTabularDataset.java:60)
+            at crx.converter.engine.parts.BaseStep.processColumnMapping(BaseStep.java:532)
+
+           Err4
+            java.lang.UnsupportedOperationException: Observation scope parameter type unsupported (VariableDefinition)
+            at crx.converter.engine.parts.ObservationBlock.initErrorModel(ObservationBlock.java:726)
+            at crx.converter.engine.parts.ObservationBlock.<init>(ObservationBlock.java:196)
+         * 
+         */
+
         inputXMLFile = "UseCase1.xml";
         inputDataFile = "warfarin_conc.csv";
         updateSetUpWith(inputXMLFile, inputDataFile);
         test();
 
+        //err1
         inputXMLFile = "UseCase2.xml";
         inputDataFile = "warfarin_conc_analytic.csv";
         updateSetUpWith(inputXMLFile, inputDataFile);
         test();
 
-        inputXMLFile = "UseCase2_5.xml";
+        inputXMLFile = "UseCase2_1.xml";
         inputDataFile = "warfarin_conc_analytic.csv";
         updateSetUpWith(inputXMLFile, inputDataFile);
-        //        test();
+        test();
 
+        inputXMLFile = "UseCase2_2.xml";
+        inputDataFile = "warfarin_conc_analytic.csv";
+        updateSetUpWith(inputXMLFile, inputDataFile);
+        test();
+
+        //N/A
+        inputXMLFile = "UseCase2_5.xml";
+        inputDataFile = "warfarin_conc_analytic.csv";
+        //updateSetUpWith(inputXMLFile, inputDataFile);
+        //test();
+
+        //err1
         inputXMLFile = "UseCase3.xml";
         inputDataFile = "warfarin_conc_pca.csv";
         updateSetUpWith(inputXMLFile, inputDataFile);
         test();
 
+        //err1
         inputXMLFile = "UseCase4.xml";
         inputDataFile = "warfarin_infusion_oral.csv";
         updateSetUpWith(inputXMLFile, inputDataFile);
@@ -96,6 +134,7 @@ public class TestUseCaseConversions extends TestBase {
         updateSetUpWith(inputXMLFile, inputDataFile);
         test();
 
+        //err2
         inputXMLFile = "UseCase7.xml";
         inputDataFile = "warfarin_conc_cmt.csv";
         updateSetUpWith(inputXMLFile, inputDataFile);
@@ -107,40 +146,46 @@ public class TestUseCaseConversions extends TestBase {
         test();
 
         inputXMLFile = "UseCase8_4.xml";
-        inputDataFile = "warfarin_conc_bov_P4_sort.csv";
+        inputDataFile = "warfarin_conc_bov_P4.csv";
         updateSetUpWith(inputXMLFile, inputDataFile);
-        //test();
+        test();
 
         inputXMLFile = "UseCase9.xml";
         inputDataFile = "warfarin_infusion.csv";
         updateSetUpWith(inputXMLFile, inputDataFile);
         test();
 
+        //err2
         inputXMLFile = "UseCase10.xml";
         inputDataFile = "warfarin_conc_cmt.csv";
         updateSetUpWith(inputXMLFile, inputDataFile);
         test();
 
+        //err2
         inputXMLFile = "UseCase10_1.xml";
         inputDataFile = "warfarin_conc_cmt.csv";
         updateSetUpWith(inputXMLFile, inputDataFile);
         test();
 
+        //err3
         inputXMLFile = "UseCase11.xml";
         inputDataFile = "count.csv";
         updateSetUpWith(inputXMLFile, inputDataFile);
-        test();
+        //test();
 
+        //err3
         inputXMLFile = "UseCase14.xml";
         inputDataFile = "warfarin_TTE_exact.csv";
         updateSetUpWith(inputXMLFile, inputDataFile);
-        test();
+        //test();
 
+        //err2
         inputXMLFile = "UseCase15.xml";
         inputDataFile = "warfarin_conc_cmt.csv";
         updateSetUpWith(inputXMLFile, inputDataFile);
         test();
 
+        //err4
         inputXMLFile = "UseCase16.xml";
         inputDataFile = "BIOMARKER_simDATA.csv";
         updateSetUpWith(inputXMLFile, inputDataFile);

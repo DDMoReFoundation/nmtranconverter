@@ -11,7 +11,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import javax.xml.bind.JAXBElement;
 
 import com.google.common.base.Preconditions;
 
@@ -27,10 +26,11 @@ import eu.ddmore.converters.nonmem.statements.OmegaBlockStatement;
 import eu.ddmore.converters.nonmem.statements.OmegaStatement;
 import eu.ddmore.converters.nonmem.statements.SigmaStatementBuilder;
 import eu.ddmore.converters.nonmem.statements.ThetaStatement;
-import eu.ddmore.libpharmml.dom.commontypes.ScalarRhs;
+import eu.ddmore.libpharmml.dom.commontypes.Rhs;
+import eu.ddmore.libpharmml.dom.commontypes.Scalar;
 import eu.ddmore.libpharmml.dom.commontypes.SymbolRef;
 import eu.ddmore.libpharmml.dom.modeldefn.ParameterRandomVariable;
-import eu.ddmore.libpharmml.dom.modeldefn.SimpleParameter;
+import eu.ddmore.libpharmml.dom.modeldefn.PopulationParameter;
 import eu.ddmore.libpharmml.dom.modellingsteps.ParameterEstimate;
 
 /**
@@ -45,11 +45,11 @@ public class ParametersHelper {
     private ScriptDefinition scriptDefinition;
 
     // These are keyed by symbol ID
-    private final Map<String, SimpleParameter> simpleParams = new HashMap<String, SimpleParameter>();
-    private final Map<String, SimpleParameter> simpleParamsWithAssignment = new LinkedHashMap<String, SimpleParameter>();
-    private final Map<String, ScalarRhs> initialEstimates = new HashMap<String, ScalarRhs>();
-    private final Map<String, ScalarRhs> lowerBounds = new HashMap<String, ScalarRhs>();
-    private final Map<String, ScalarRhs> upperBounds = new HashMap<String, ScalarRhs>();
+    private final Map<String, PopulationParameter> simpleParams = new HashMap<String, PopulationParameter>();
+    private final Map<String, PopulationParameter> simpleParamsWithAssignment = new LinkedHashMap<String, PopulationParameter>();
+    private final Map<String, Rhs> initialEstimates = new HashMap<String, Rhs>();
+    private final Map<String, Rhs> lowerBounds = new HashMap<String, Rhs>();
+    private final Map<String, Rhs> upperBounds = new HashMap<String, Rhs>();
     private final OmegaBlockStatement omegaBlockStatement;
     private final List<String> verifiedSigmas = new ArrayList<String>();
     private final Set<ParameterRandomVariable> epsilonVars;
@@ -79,13 +79,13 @@ public class ParametersHelper {
      * 
      * @param simpleParameters
      */
-    public void initialiseAllParameters(List<SimpleParameter> simpleParameters){
+    public void initialiseAllParameters(List<PopulationParameter> simpleParameters){
 
         if (simpleParameters==null || simpleParameters.isEmpty()) {
             return;
         }else {
-            for (SimpleParameter simpleParam : simpleParameters) {
-                if(simpleParam.getAssign().getEquation()!=null){
+            for (PopulationParameter simpleParam : simpleParameters) {
+                if(simpleParam.getAssign()!=null){
                     simpleParamsWithAssignment.put(simpleParam.getSymbId(), simpleParam);
                 }else{
                     simpleParams.put(simpleParam.getSymbId(), simpleParam);
@@ -134,7 +134,7 @@ public class ParametersHelper {
             simpleParams.remove(paramName);
         }
         for(String paramName : simpleParams.keySet()){
-            ScalarRhs scalar = getScalarRhsForSymbol(paramName);
+            Rhs scalar = getScalarRhsForSymbol(paramName);
             if(scalar !=null){
                 initialEstimates.put(paramName, scalar);
                 createAndAddThetaForValidParamToMap(unOrderedThetas, paramName, true);    
@@ -215,7 +215,7 @@ public class ParametersHelper {
             omegaStatement.setInitialEstimate(initialEstimates.get(omegaSymbId));
 
             if(initialEstimates.get(omegaSymbId) == null){
-                ScalarRhs scalar = getScalarRhsForSymbol(omegaSymbId);
+                Rhs scalar = getScalarRhsForSymbol(omegaSymbId);
                 if(scalar!=null){
                     omegaStatement.setInitialEstimate(scalar);
                     omegaStatement.setFixed(true);
@@ -231,11 +231,11 @@ public class ParametersHelper {
      * @param symbId
      * @return
      */
-    private ScalarRhs getScalarRhsForSymbol(String symbId) {
-        ScalarRhs scalar = null;
+    private Rhs getScalarRhsForSymbol(String symbId) {
+        Rhs scalar = null;
 
         if(simpleParams.containsKey(symbId)){
-            SimpleParameter param = simpleParams.get(symbId);
+            PopulationParameter param = simpleParams.get(symbId);
             if(simpleParams.get(symbId).getAssign().getScalar()!=null){
                 scalar = createScalarRhs(symbId, param.getAssign().getScalar());    
             }
@@ -250,13 +250,13 @@ public class ParametersHelper {
      * @param scalar
      * @return ScalarRhs object
      */
-    private ScalarRhs createScalarRhs(String symbol,JAXBElement<?> scalar) {
-        ScalarRhs scalarRhs = new ScalarRhs();
-        scalarRhs.setScalar(scalar);
+    private Rhs createScalarRhs(String symbol,Scalar scalar) {
+        Rhs rhs = new Rhs();
+        rhs.setScalar(scalar);
         SymbolRef symbRef = new SymbolRef();
         symbRef.setId(symbol);
-        scalarRhs.setSymbRef(symbRef);
-        return scalarRhs;
+        rhs.setSymbRef(symbRef);
+        return rhs;
     }
 
     /**
@@ -463,7 +463,7 @@ public class ParametersHelper {
         return omegaStatements;
     }
 
-    public Map<String, SimpleParameter> getSimpleParams() {
+    public Map<String, PopulationParameter> getSimpleParams() {
         return simpleParams;
     }
 
@@ -471,7 +471,7 @@ public class ParametersHelper {
         return omegaBlockStatement;
     }
 
-    public Map<String, SimpleParameter> getSimpleParamsWithAssignment() {
+    public Map<String, PopulationParameter> getSimpleParamsWithAssignment() {
         return simpleParamsWithAssignment;
     }
 

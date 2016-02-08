@@ -44,6 +44,8 @@ public class InterOccVariabilityHandlerTest extends BasicTestSetup {
     private List<ParameterBlock> paramBlocks = new ArrayList<>();
     private List<ParameterRandomVariable> randomVariables = new ArrayList<>();
     private List<InputColumn> columns = new ArrayList<>();
+    private List<LevelReference> varReferences = new ArrayList<>();
+    
     private final String columnName = "COLUMN";
     private final String OMEGA_NAME = "OMEGA";
     private InputColumn column = new InputColumn(columnName, false, 1, ColumnType.OCCASION);
@@ -69,7 +71,8 @@ public class InterOccVariabilityHandlerTest extends BasicTestSetup {
     private void mockRandomVariables() {
         when(RandomVariableHelper.getNameFromParamRandomVariable(variable)).thenReturn(OMEGA_NAME);
         when(variable.getSymbId()).thenReturn(PARAM_VAR);
-        when(variable.getVariabilityReference()).thenReturn(levelRef);
+        varReferences.add(levelRef);
+        when(variable.getListOfVariabilityReference()).thenReturn(varReferences);
         randomVariables.add(variable);
     }
 

@@ -1,6 +1,5 @@
 package eu.ddmore.converters.nonmem.statements;
 
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -8,19 +7,16 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
-import javax.xml.bind.JAXBElement;
-
 import com.google.common.base.Preconditions;
 
 import crx.converter.engine.parts.BaseRandomVariableBlock.CorrelationRef;
 import eu.ddmore.converters.nonmem.eta.Eta;
 import eu.ddmore.converters.nonmem.utils.Formatter;
+import eu.ddmore.converters.nonmem.utils.Formatter.NmConstant;
 import eu.ddmore.converters.nonmem.utils.ParametersHelper;
 import eu.ddmore.converters.nonmem.utils.RandomVariableHelper;
-import eu.ddmore.converters.nonmem.utils.Formatter.NmConstant;
 import eu.ddmore.libpharmml.dom.commontypes.IntValue;
-import eu.ddmore.libpharmml.dom.commontypes.ObjectFactory;
-import eu.ddmore.libpharmml.dom.commontypes.ScalarRhs;
+import eu.ddmore.libpharmml.dom.commontypes.Rhs;
 import eu.ddmore.libpharmml.dom.commontypes.SymbolRef;
 import eu.ddmore.libpharmml.dom.modeldefn.ParameterRandomVariable;
 
@@ -151,9 +147,9 @@ public class OmegaBlockCreator {
         if(omegas.get(column)==null || omegas.get(column).getSymbId().equals(EMPTY_VARIABLE)){
             OmegaStatement omega = null ;
             if(corr.isCorrelation()){
-                omega = getOmegaForCoefficient(corr.correlationCoefficient, firstEta, secondEta);
+                omega = getOmegaForCoefficient(corr.correlationCoefficient.getAssign(), firstEta, secondEta);
             }else if(corr.isCovariance()){
-                omega = getOmegaForCoefficient(corr.covariance, firstEta, secondEta);
+                omega = getOmegaForCoefficient(corr.covariance.getAssign(), firstEta, secondEta);
             }
             if(omega != null){
                 omegas.set(column,omega);
@@ -194,7 +190,7 @@ public class OmegaBlockCreator {
     private OmegaStatement createOmegaWithEmptyScalar(String symbol) {
         OmegaStatement omega;
         omega = new OmegaStatement(symbol);
-        ScalarRhs scalar = createScalarRhs(symbol, createScalar(0));  
+        Rhs scalar = createRhs(symbol, 0);
         omega.setInitialEstimate(scalar);
         return omega;
     }
@@ -206,27 +202,14 @@ public class OmegaBlockCreator {
      * @param scalar
      * @return ScalarRhs object
      */
-    private ScalarRhs createScalarRhs(String symbol,JAXBElement<?> scalar) {
-        ScalarRhs scalarRhs = new ScalarRhs();
-        scalarRhs.setScalar(scalar);
+    private Rhs createRhs(String symbol,Integer value) {
         SymbolRef symbRef = new SymbolRef();
         symbRef.setId(symbol);
-        scalarRhs.setSymbRef(symbRef);
-        return scalarRhs;
-    }
 
-    /**
-     * Creates scalar for the value provided.
-     * This method will be helpful when only value or no value is provided in case of correlation coefficients.
-     *  
-     * @param value
-     * @return
-     */
-    private static JAXBElement<IntValue> createScalar(Integer value) {
-        IntValue intValue = new IntValue();
-        intValue.setValue(BigInteger.valueOf(value));
-        ObjectFactory factory = new ObjectFactory();
-        return factory.createInt(intValue);
+        Rhs rhs = new Rhs();
+        rhs.setScalar(new IntValue(value));
+        rhs.setSymbRef(symbRef);
+        return rhs;
     }
 
     /**
@@ -235,14 +218,14 @@ public class OmegaBlockCreator {
      * @param correlation
      * @return
      */
-    private OmegaStatement getOmegaForCoefficient(ScalarRhs coeff, Eta firstEta, Eta secondEta) {
+    private OmegaStatement getOmegaForCoefficient(Rhs coeff, Eta firstEta, Eta secondEta) {
         Preconditions.checkNotNull(coeff, "coefficient value should not be null");
         String firstVar = firstEta.getEtaSymbol();
         String secondVar = secondEta.getEtaSymbol();
 
         if(coeff.getSymbRef()!=null){
             return paramHelper.getOmegaFromRandomVarName(coeff.getSymbRef().getSymbIdRef()); 
-        }else if(coeff.getScalar()!=null || coeff.getEquation()!=null){
+        }else if(coeff.getScalar()!=null ){
             OmegaStatement omega = new OmegaStatement(firstVar+"_"+secondVar);
             omega.setInitialEstimate(coeff);
             return omega;

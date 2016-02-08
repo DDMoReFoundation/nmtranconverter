@@ -113,11 +113,13 @@ public class PredStatement {
     private String getAbsOralMacroEquation(PkMacroDetails pkMacroDetails, MacroValue value) {
         String valueArgument = value.getArgument().toUpperCase().trim();
         if(StringUtils.isNotEmpty(valueArgument) 
-                && !valueArgument.equals(PkMacroAttribute.KA.name()) && value.getAssign().getEquation()!=null) {
+                && !valueArgument.equals(PkMacroAttribute.KA.name()) 
+                && value.getAssign().getSymbRef()!=null) {
 
             PkMacroAttribute attribute= PkMacroAttribute.valueOf(valueArgument);
-            Equation equation = value.getAssign().getEquation();
-            return attribute.getValue()+ pkMacroDetails.getAbsOralCompNumber()+ " = "+ context.getParser().getSymbol(equation);
+            //TODO : check for reserved word and add NM_ prefix 
+            String variable = value.getAssign().getSymbRef().getSymbIdRef();
+            return attribute.getValue()+ pkMacroDetails.getAbsOralCompNumber()+ " = "+ variable;
         }
         return "";
     }
