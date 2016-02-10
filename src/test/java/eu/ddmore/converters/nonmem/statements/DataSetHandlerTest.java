@@ -15,14 +15,11 @@ import java.util.List;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
 
 import eu.ddmore.libpharmml.dom.trialdesign.ExternalDataSet;
 
-@RunWith(PowerMockRunner.class)
 @PrepareForTest(DataSetHandler.class)
 public class DataSetHandlerTest extends BasicTestSetup  {
 

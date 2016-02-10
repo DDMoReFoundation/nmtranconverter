@@ -16,10 +16,8 @@ import javax.xml.bind.JAXBElement;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
 
 import eu.ddmore.converters.nonmem.statements.ErrorStatement.FunctionArg;
 import eu.ddmore.converters.nonmem.utils.ScalarValueHandler;
@@ -28,7 +26,6 @@ import eu.ddmore.libpharmml.dom.commontypes.SymbolRef;
 import eu.ddmore.libpharmml.dom.maths.FunctionCallType;
 import eu.ddmore.libpharmml.dom.maths.FunctionCallType.FunctionArgument;
 
-@RunWith(PowerMockRunner.class)
 @PrepareForTest(ScalarValueHandler.class)
 public class ErrorStatementTest extends BasicTestSetup {
 

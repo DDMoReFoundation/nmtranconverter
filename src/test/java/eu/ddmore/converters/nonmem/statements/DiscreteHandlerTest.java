@@ -18,13 +18,9 @@ import javax.xml.bind.JAXBElement;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.powermock.modules.junit4.PowerMockRunner;
 
-import crx.converter.engine.ScriptDefinition;
 import crx.converter.engine.parts.ObservationBlock;
-import eu.ddmore.converters.nonmem.ConversionContext;
 import eu.ddmore.converters.nonmem.utils.DiscreteHandler;
 import eu.ddmore.libpharmml.dom.modeldefn.CountData;
 import eu.ddmore.libpharmml.dom.modeldefn.CountPMF;
@@ -42,11 +38,8 @@ import eu.ddmore.libpharmml.dom.uncertml.VarRefType;
 /**
  * Testing discrete handler class
  */
-@RunWith(PowerMockRunner.class)
-public class DiscreteHandlerTest {
+public class DiscreteHandlerTest extends BasicTestSetup {
 
-    @Mock ConversionContext context;
-    @Mock ScriptDefinition definition;
     @Mock ObservationBlock observationBlock;
     @Mock CountData countData;
 
@@ -66,7 +59,6 @@ public class DiscreteHandlerTest {
 
     @Before
     public void setUp() throws Exception {
-        when(context.getScriptDefinition()).thenReturn(definition);
         List<ObservationBlock> obsBlocks = new ArrayList<ObservationBlock>();
         obsBlocks.add(observationBlock);
 
@@ -125,7 +117,7 @@ public class DiscreteHandlerTest {
     public void testIfDiscreteStatementsAreCreatedForCountData() {
         poissonCountDataSetUp();
 
-        DiscreteHandler discreteHandler = new DiscreteHandler(definition);
+        DiscreteHandler discreteHandler = new DiscreteHandler(scriptDefinition);
         assertTrue("The discrete data should have count data", discreteHandler.isCountData());
         assertFalse(discreteHandler.getDiscreteStatement().toString().isEmpty());
     }
@@ -134,7 +126,7 @@ public class DiscreteHandlerTest {
     public void testIfDiscreteStatementsAreCreatedForNegativeBinData() {
         negativeBinomialSetUp();
 
-        DiscreteHandler discreteHandler = new DiscreteHandler(definition);
+        DiscreteHandler discreteHandler = new DiscreteHandler(scriptDefinition);
         assertTrue("The discrete data should have negative binomial", discreteHandler.isNegativeBinomial());
         assertFalse(discreteHandler.getDiscreteStatement().toString().isEmpty());
     }
@@ -143,7 +135,7 @@ public class DiscreteHandlerTest {
     public void testIfDiscreteStatementsAreCreatedForTimeToEventData() {
         timeToEventDataSetUp();
 
-        DiscreteHandler discreteHandler = new DiscreteHandler(definition);
+        DiscreteHandler discreteHandler = new DiscreteHandler(scriptDefinition);
         assertTrue("The discrete data should have time to event data", discreteHandler.isTimeToEventData());
         assertFalse(discreteHandler.getDiscreteStatement().toString().isEmpty());
     }

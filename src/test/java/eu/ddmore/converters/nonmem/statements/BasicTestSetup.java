@@ -1,7 +1,11 @@
 package eu.ddmore.converters.nonmem.statements;
 
+import static org.powermock.api.mockito.PowerMockito.when;
+
 import org.junit.Before;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.powermock.modules.junit4.PowerMockRunner;
 
 import crx.converter.engine.ScriptDefinition;
 import crx.converter.engine.parts.EstimationStep;
@@ -13,15 +17,20 @@ import eu.ddmore.libpharmml.dom.dataset.ColumnType;
 /**
  * This class is used as basic common test setup for unit tests around nmtran converter classes
  */
+@RunWith(PowerMockRunner.class)
 public class BasicTestSetup {
 
-    @Mock ConversionContext context;
-    @Mock ScriptDefinition scriptDefinition;
+    @Mock
+    protected ConversionContext context;
+    @Mock 
+    protected ScriptDefinition scriptDefinition;
 
-    @Mock EstimationStep estStep;
+    @Mock 
+    protected EstimationStep estStep;
     
     @Before
     public void setup(){
+        when(context.getScriptDefinition()).thenReturn(scriptDefinition);
     }
     
     protected static final String DROP = "DROP";
