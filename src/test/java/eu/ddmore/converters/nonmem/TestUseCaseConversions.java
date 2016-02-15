@@ -27,8 +27,11 @@ public class TestUseCaseConversions extends TestBase {
         inputXMLFile = "UseCase7.xml";
         inputDataFile = "warfarin_conc_cmt.csv";
 
-//        inputXMLFile = "UseCase3_511.xml";
-//        inputDataFile = "warfarin_conc_pca.csv";
+        //inputXMLFile = "UseCase3_511.xml";
+        //inputDataFile = "warfarin_conc_pca.csv";
+
+        inputXMLFile = "UseCase2.xml";
+        inputDataFile = "warfarin_conc_analytic.csv";
 
         init(inputDataFile, V_0_8_SUBDIR);
         init(inputXMLFile, V_0_8_SUBDIR);

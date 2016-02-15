@@ -76,11 +76,9 @@ public class Formatter {
     }
 
     private static final String DES_VAR_SUFFIX = "_"+Block.DES.toString();
-    private static final String RESERVED_WORD_PREFIX = "NM_";
 
     public static String renameVarForDES(String variable) {
-        variable = (variable.startsWith(RESERVED_WORD_PREFIX))?variable:variable+DES_VAR_SUFFIX;
-        return variable; 
+        return variable+DES_VAR_SUFFIX;
     }
 
     public static String getTimeSymbol(){

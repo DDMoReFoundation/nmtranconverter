@@ -24,7 +24,7 @@ public class ParameterStatementHandler {
     public static StringBuilder addParameter(Parameter param) {
         Preconditions.checkNotNull(param, "Paramter cannot be null");
         StringBuilder statement = new StringBuilder();
-        String description = param.getSymbId();//.toUpperCase();
+        String description = param.getSymbId();
 
         Rhs lowerBound = param.getLowerBound();
         Rhs upperBound= param.getUpperBound(); 

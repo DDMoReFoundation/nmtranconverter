@@ -16,8 +16,6 @@ import com.google.common.base.Preconditions;
 
 import crx.converter.engine.ScriptDefinition;
 import crx.converter.engine.parts.ObservationBlock;
-import crx.converter.engine.parts.ParameterBlock;
-import crx.converter.engine.parts.ParameterBlock.Event;
 import crx.converter.engine.parts.StructuralBlock;
 import crx.converter.spi.ILexer;
 import crx.converter.spi.IParser;
@@ -28,20 +26,17 @@ import eu.ddmore.converters.nonmem.statements.ErrorStatement;
 import eu.ddmore.converters.nonmem.statements.EstimationDetailsEmitter;
 import eu.ddmore.converters.nonmem.statements.InputColumnsHandler;
 import eu.ddmore.converters.nonmem.statements.InterOccVariabilityHandler;
-import eu.ddmore.converters.nonmem.statements.PredStatement;
+import eu.ddmore.converters.nonmem.utils.CorrelationHandler;
 import eu.ddmore.converters.nonmem.utils.DiscreteHandler;
 import eu.ddmore.converters.nonmem.utils.Formatter;
-import eu.ddmore.converters.nonmem.utils.Formatter.Block;
 import eu.ddmore.converters.nonmem.utils.Formatter.NmConstant;
 import eu.ddmore.converters.nonmem.utils.MuReferenceHandler;
-import eu.ddmore.converters.nonmem.utils.CorrelationHandler;
 import eu.ddmore.converters.nonmem.utils.OrderedThetasHandler;
 import eu.ddmore.converters.nonmem.utils.ParametersHelper;
 import eu.ddmore.libpharmml.dom.commontypes.DerivativeVariable;
 import eu.ddmore.libpharmml.dom.maths.FunctionCallType;
 import eu.ddmore.libpharmml.dom.modeldefn.GeneralObsError;
 import eu.ddmore.libpharmml.dom.modeldefn.ObservationError;
-import eu.ddmore.libpharmml.dom.modeldefn.PopulationParameter;
 import eu.ddmore.libpharmml.dom.modeldefn.StructuredObsError;
 import eu.ddmore.libpharmml.dom.modeldefn.StructuredObsError.ErrorModel;
 import eu.ddmore.libpharmml.dom.trialdesign.ExternalDataSet;
@@ -59,7 +54,6 @@ public class ConversionContext {
     private final OrderedThetasHandler orderedThetasHandler;
     private final DiscreteHandler discreteHandler;
     private final CorrelationHandler correlationHandler;
-    private final List<String> thetas = new ArrayList<String>();
     private final Map<String,ErrorStatement> errorStatements = new HashMap<String,ErrorStatement>();
     private final List<DerivativeVariable> derivativeVars = new ArrayList<DerivativeVariable>();
     private final Map<String, String> derivativeVarCompSequences = new HashMap<String, String>();
@@ -118,23 +112,12 @@ public class ConversionContext {
         }
         orderedThetasHandler.createOrderedThetasToEta(retrieveOrderedEtas());
         parameterHelper.initialiseAllParameters(lexer.getModelParameters());
-        setThetaAssigments();
 
         derivativeVars.addAll(getAllStateVariables());
         setDerivativeVarCompartmentSequence();
 
         // Initialise error statement
         prepareAllErrorStatements();
-    }
-
-    /**
-     * Builds pred statement block.
-     *  
-     * @return pred statement
-     */
-    public StringBuilder buildPredStatement(){
-        PredStatement predStatement = new PredStatement(this);
-        return predStatement.getPredStatement();
     }
 
     /**
@@ -191,113 +174,6 @@ public class ConversionContext {
      */
     public boolean isOmegaForIOVPresent(){
         return !parameterHelper.getOmegaStatementBlockForIOV().trim().isEmpty();
-    }
-
-    /**
-     * This method will build simple parameter assignment statements
-     * @return
-     */
-    public StringBuilder getSimpleParamAssignments() {
-        StringBuilder simpleParamAssignmentBlock = new StringBuilder();
-        Map<String, PopulationParameter> params = parameterHelper.getSimpleParamsWithAssignment();
-
-        for(String simpleParamSymbol : params.keySet()){
-            PopulationParameter simpleParam = params.get(simpleParamSymbol);
-            Event event = getEventForParameter(simpleParam);
-            String parsedEquation = new String();
-            if(event !=null){
-                if(event.getPiecewiseTree()!=null && event.getPiecewiseTree().size()>0){
-                    parsedEquation = parse(event.getParameter(), event.getPiecewiseTree());
-                }
-            }
-            //            else {
-            //                Equation simpleParamAssignmentEq = simpleParam.getAssign().getEquation();
-            //                parsedEquation = simpleParamSymbol+ " = "+ getParser().getSymbol(simpleParamAssignmentEq);
-            //            }
-
-            if(!parsedEquation.isEmpty()){
-                simpleParamAssignmentBlock.append(Formatter.endline(parsedEquation));
-            }
-        }
-        return simpleParamAssignmentBlock;
-    }
-
-    private Event getEventForParameter(PopulationParameter simpleParam){
-        for(ParameterBlock pb : getScriptDefinition().getParameterBlocks()){
-            if (pb.hasEvents()) {
-                for (Event event : pb.getEvents()) {
-                    if (event != null) {
-                        if (simpleParam.getSymbId().equals(event.getParameter().getSymbId())){
-                            return event;
-                        }
-                    }
-                }
-            }
-        }
-        return null;
-    }
-
-    /**
-     * Set theta assignements from theta parameters generated.
-     */
-    private void setThetaAssigments(){
-        thetas.addAll(parameterHelper.getThetaParams().keySet());
-    }
-
-    /**
-     * This method builds theta assignment statements with help of parameter helper.
-     * @return theta assignments
-     */
-    public StringBuilder buildThetaAssignments() {
-        StringBuilder thetaAssignmentBlock = new StringBuilder();  
-        for(String theta : parameterHelper.getThetaParams().keySet()){
-            String thetaSymbol = replaceIfReservedVarible(theta);
-
-            thetaAssignmentBlock.append(Formatter.endline(thetaSymbol+ " = "+getThetaForSymbol(theta)));
-        }
-        return thetaAssignmentBlock;
-    }
-
-    private String replaceIfReservedVarible(String variable) {
-        String varSymbol = variable.toUpperCase();
-        if (lexer.isFilterReservedWords()) {
-            if (parser.getSymbolReader().isReservedWord(varSymbol)) {
-                varSymbol = parser.getSymbolReader().replacement4ReservedWord(varSymbol);
-                if (varSymbol == null){
-                    throw new NullPointerException("Replacement symbol for reserved word ('" + varSymbol + "') undefined.");
-                }
-            }
-        }
-        return varSymbol;
-    }
-
-    /**
-     * This method will get theta format for symbol. 
-     *  
-     * @param symbol
-     * @return
-     */
-    private String getThetaForSymbol(String symbol){
-        if(thetas.isEmpty()){
-            setThetaAssigments();
-        }
-        if(thetas.contains(symbol)){
-            symbol = String.format(Block.THETA+"(%s)",thetas.indexOf(symbol)+1);
-        }
-        return symbol;
-    }
-
-    /**
-     * This method will build eta assignment statements to be displayed after theta assignments.
-     * @return
-     */
-    public StringBuilder buildEtaAssignments() {
-        StringBuilder etaAssignment = new StringBuilder();
-        Set<Eta> orderedThetas = retrieveOrderedEtas();
-        for(Eta eta : orderedThetas){
-            etaAssignment.append(Formatter.endline(eta.getEtaSymbol()+ " = "+Formatter.etaFor(eta.getEtaOrderSymbol())));
-        }
-        return etaAssignment;
     }
 
     /**

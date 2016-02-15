@@ -127,9 +127,11 @@ public class DiffEquationStatementBuilder {
                 varDefinition = format(variableDefinitions.get(variable));
             }
 
-            if(context.getReservedWords().keySet().contains(format(varDefinition))){
-                for(String revervedWord : context.getReservedWords().keySet()){
-                    varDefinition = replaceVariable(context.getReservedWords().get(revervedWord), varDefinition);
+            Map<String, String> reservedWords = context.getReservedWords();
+            for(String revervedWord : reservedWords.keySet()){
+                if(varDefinition.contains(revervedWord) 
+                        || varDefinition.contains(reservedWords.get(revervedWord))){
+                    varDefinition = replaceVariable(reservedWords.get(revervedWord), varDefinition);
                     varDefinitionsWithsuffix.put(variable, varDefinition);
                 }
             }

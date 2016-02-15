@@ -195,10 +195,14 @@ public class ParametersHelper {
     }
 
     private boolean validateThetaParamForCorrOmegas(String paramName, List<OmegaBlock> omegaBlocks) {
+        boolean isValid = false;
         for(OmegaBlock omegaBlock :omegaBlocks){
-            return omegaBlock.getEtasToOmegas().values().contains(paramName);
+            isValid = omegaBlock.getEtasToOmegas().values().contains(paramName);
+            if(isValid){
+                return isValid;
+            }
         }
-        return false;
+        return isValid;
     }
 
     /**

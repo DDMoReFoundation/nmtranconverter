@@ -1,6 +1,6 @@
 package eu.ddmore.converters.nonmem.statements;
 
-import static org.powermock.api.mockito.PowerMockito.when;
+import static org.mockito.Mockito.when;
 
 import org.junit.Before;
 import org.junit.runner.RunWith;
@@ -10,6 +10,8 @@ import org.powermock.modules.junit4.PowerMockRunner;
 import crx.converter.engine.ScriptDefinition;
 import crx.converter.engine.parts.EstimationStep;
 import eu.ddmore.converters.nonmem.ConversionContext;
+import eu.ddmore.converters.nonmem.utils.Formatter;
+import eu.ddmore.converters.nonmem.utils.ParametersHelper;
 import eu.ddmore.converters.nonmem.utils.Formatter.ColumnConstant;
 import eu.ddmore.libpharmml.dom.commontypes.SymbolType;
 import eu.ddmore.libpharmml.dom.dataset.ColumnDefinition;
@@ -22,17 +24,27 @@ public class BasicTestSetup {
 
     @Mock
     protected ConversionContext context;
+
+    @Mock
+    protected ParametersHelper parametersHelper;
+
     @Mock 
     protected ScriptDefinition scriptDefinition;
 
     @Mock 
     protected EstimationStep estStep;
-    
+
     @Before
     public void setup(){
         when(context.getScriptDefinition()).thenReturn(scriptDefinition);
     }
-    
+
+    protected static final String PRED_EXAMPLE= Formatter.endline("PRED BLOCK");
+    protected static final String IDV_EXAMPLE = Formatter.endline(Formatter.endline("MU_1 = LOG(POP_KA)")+"KA =  EXP(MU_1 +  ETA(1)) ;");
+    protected static final String ERROR_EXAMPLE = Formatter.endline("error");
+    protected static final String VAR_DEF_EXAMPLE = Formatter.endline("K = (CL/V)");
+    protected static final String COMP1_EXAMPLE = "COMP (COMP1) "+Formatter.indent(";ID");
+
     protected static final String DROP = "DROP";
 
     protected static final String COL_ID_1 = ColumnConstant.ID.toString();

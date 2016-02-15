@@ -11,7 +11,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
-import crx.converter.engine.ScriptDefinition;
 import crx.converter.engine.parts.StructuralBlock;
 import eu.ddmore.converters.nonmem.ConversionContext;
 import eu.ddmore.converters.nonmem.statements.BasicTestSetup;
@@ -39,6 +38,7 @@ public class PkMacroAnalyserTest extends BasicTestSetup {
 
     @Before
     public void setUp() throws Exception {
+
         List<StructuralBlock> blocks = new ArrayList<StructuralBlock>();
         blocks.add(block);
         when(scriptDefinition.getStructuralBlocks()).thenReturn(blocks);
@@ -48,6 +48,7 @@ public class PkMacroAnalyserTest extends BasicTestSetup {
         when(details.getIvs()).thenReturn(ivMacros);
         when(details.getAbsorptionOrals()).thenReturn(oralMacros);
         when(details.getPeripherals()).thenReturn(peripheralMacros);
+        when(context.getScriptDefinition()).thenReturn(scriptDefinition);
     }
 
     @Test
