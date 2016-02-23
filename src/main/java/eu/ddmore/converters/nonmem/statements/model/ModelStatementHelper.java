@@ -79,7 +79,7 @@ public class ModelStatementHelper {
 
             if(!block.getLocalVariables().isEmpty()){
                 for (VariableDefinition definitionType: block.getLocalVariables()){
-                    String rhs = context.parse(definitionType);
+                    String rhs = context.getLocalParserHelper().parse(definitionType);
                     if(!Formatter.isInDesBlock())
                         varDefinitionsBlock.append(rhs);
                 }

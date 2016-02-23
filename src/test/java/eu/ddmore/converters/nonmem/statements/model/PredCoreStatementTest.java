@@ -1,3 +1,6 @@
+/*******************************************************************************
+ * Copyright (C) 2015 Mango Solutions Ltd - All rights reserved.
+ ******************************************************************************/
 package eu.ddmore.converters.nonmem.statements.model;
 
 import static org.junit.Assert.*;
@@ -17,8 +20,8 @@ import org.mockito.Mock;
 
 import eu.ddmore.converters.nonmem.ConversionContext;
 import eu.ddmore.converters.nonmem.eta.Eta;
+import eu.ddmore.converters.nonmem.parameters.ParametersBuilder;
 import eu.ddmore.converters.nonmem.statements.BasicTestSetup;
-import eu.ddmore.converters.nonmem.utils.ParametersHelper;
 import eu.ddmore.libpharmml.dom.modeldefn.ContinuousCovariate;
 import eu.ddmore.libpharmml.dom.modeldefn.CovariateDefinition;
 import eu.ddmore.libpharmml.dom.modeldefn.CovariateTransformation;
@@ -40,7 +43,7 @@ public class PredCoreStatementTest extends BasicTestSetup {
     @Before
     public void setUp() throws Exception {
         context = mock(ConversionContext.class, RETURNS_DEEP_STUBS);
-        parametersHelper = mock(ParametersHelper.class, RETURNS_DEEP_STUBS);
+        parametersHelper = mock(ParametersBuilder.class, RETURNS_DEEP_STUBS);
 
         Eta eta = new Eta(ETA_VAR);
         eta.setOrder(1);
@@ -50,9 +53,9 @@ public class PredCoreStatementTest extends BasicTestSetup {
         covTransformations.add(covTransformation);
 
         when(context.retrieveOrderedEtas()).thenReturn(etas);
-        when(context.getParameterHelper()).thenReturn(parametersHelper);
+        when(context.getParametersBuilder()).thenReturn(parametersHelper);
         when(context.getLexer().getCovariates()).thenReturn(covDefs);
-        when(parametersHelper.getThetaParams().keySet()).thenReturn(thetas);
+        when(parametersHelper.getThetasBuilder().getThetaStatements().keySet()).thenReturn(thetas);
         when(contCov.getListOfTransformation()).thenReturn(covTransformations);
         when(covDef.getContinuous()).thenReturn(contCov);
 
@@ -78,7 +81,7 @@ public class PredCoreStatementTest extends BasicTestSetup {
 
         when(context.isSigmaPresent()).thenReturn(true);
         predCoreStatement = new PredCoreStatement(context);
-        System.out.println(predCoreStatement.getStatement());
+
         assertTrue("Pred core statement should contain Eta1", predCoreStatement.getStatement().toString().contains(etaStatement));
     }
 }

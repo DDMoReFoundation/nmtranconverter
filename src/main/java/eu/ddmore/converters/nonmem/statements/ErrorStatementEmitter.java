@@ -31,37 +31,37 @@ public class ErrorStatementEmitter {
     public StringBuilder getErrorStatementDetails() {
         final ErrorType errorType = ErrorType.fromErrorType(error.getErrorType());
         switch (errorType) {
-        
-            case COMBINED_ERROR_1 :
-                return createErrorStatement(
-                    error.getAdditive() + "+" + error.getProportional() + "*" + ErrorConstant.IPRED
-                );
-                
-            case COMBINED_ERROR_2 :
-            {
-                final String weight = "SQRT(("+error.getAdditive() + "*" +
+
+        case COMBINED_ERROR_1 :
+            return createErrorStatement(
+                error.getAdditive() + "+" + error.getProportional() + "*" + ErrorConstant.IPRED
+                    );
+
+        case COMBINED_ERROR_2 :
+        {
+            final String weight = "SQRT(("+error.getAdditive() + "*" +
                     error.getAdditive() + ")" + "+ (" + error.getProportional() + "*" +
                     error.getProportional() + "*" + ErrorConstant.IPRED + "*" + ErrorConstant.IPRED+"))";
-                return createErrorStatement(weight);
-            }
-            
-            case COMBINED_ERROR_3 :
-            case COMBINED_ERROR_2_LOG :
-            {
-                final String iPred = "LOG(" + error.getFunctionName() + ")";
-                final String weight = "SQRT(" + error.getProportional() + "**2" +
-                        " + (" + error.getAdditive() + "/" + error.getFunctionName() + ")**2)";
-                return createErrorStatement(iPred, weight);
-            }
-            
-            case ADDITIVE_ERROR :
-                return createErrorStatement(error.getAdditive());
-                
-            case PROPORTIONAL_ERROR :
-                return createErrorStatement(error.getProportional() + "*" + ErrorConstant.IPRED);
+            return createErrorStatement(weight);
+        }
 
-            default :
-                throw new UnsupportedOperationException("Unhandled ErrorType encountered in ErrorStatementEmitter");
+        case COMBINED_ERROR_3 :
+        case COMBINED_ERROR_2_LOG :
+        {
+            final String iPred = "LOG(" + error.getFunctionName() + ")";
+            final String weight = "SQRT(" + error.getProportional() + "**2" +
+                    " + (" + error.getAdditive() + "/" + error.getFunctionName() + ")**2)";
+            return createErrorStatement(iPred, weight);
+        }
+
+        case ADDITIVE_ERROR :
+            return createErrorStatement(error.getAdditive());
+
+        case PROPORTIONAL_ERROR :
+            return createErrorStatement(error.getProportional() + "*" + ErrorConstant.IPRED);
+
+        default :
+            throw new UnsupportedOperationException("Unhandled ErrorType encountered in ErrorStatementEmitter");
         }
     }
 
@@ -99,7 +99,7 @@ public class ErrorStatementEmitter {
         StringBuilder errorModel = new StringBuilder();
         iPred = ((iPred!=null))?Formatter.getReservedParam(iPred):Formatter.getReservedParam(error.getFunctionName());
         weight = ((weight!=null))?Formatter.getReservedParam(weight):weight;
-        
+
         errorModel.append(ErrorConstant.IPRED   +" = "+ addStatement(iPred,error.getFunctionName()));
         errorModel.append(ErrorConstant.W       +" = "+ addStatement(weight,DEFAULT_WEIGHT));
         errorModel.append(ErrorConstant.Y       +" = "+ Formatter.endline(DEFAULT_Y));

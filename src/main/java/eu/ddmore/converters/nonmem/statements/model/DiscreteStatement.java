@@ -71,7 +71,8 @@ public class DiscreteStatement {
         if(desBuilder!=null){
             tteBlock.append(desBuilder.getVariableDefinitionsStatement(desBuilder.getAllVarDefinitions()));
         }
-        tteBlock.append(Formatter.endline("CUMHAZ=A(1)"+Formatter.addComment("CUMHAZ since last event")));
+        tteBlock.append(Formatter.endline("CUMHAZ=A(1)"+
+                Formatter.indent(Formatter.indent(""))+Formatter.addComment("CUMHAZ since last event")));
         tteBlock.append(Formatter.endline("HAZARD_FUNC = "+discreteHandler.getHazardFunction()));
         tteBlock.append(discreteHandler.getDiscreteStatement());
 

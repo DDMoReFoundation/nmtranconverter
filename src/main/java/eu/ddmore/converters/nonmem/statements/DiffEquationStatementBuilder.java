@@ -98,14 +98,14 @@ public class DiffEquationStatementBuilder {
     private void addAllVarDefinitionTypes(StructuralBlock block) {
         for (VariableDefinition definitionType: block.getLocalVariables()){
             String variable = definitionType.getSymbId().toUpperCase();
-            String rhs = context.parse(definitionType);
+            String rhs = context.getLocalParserHelper().parse(definitionType);
             allVarDefinitions.put(variable, rhs);
         }
     }
 
     private void addDADTdefinitionsToDES(StructuralBlock block) {
         for(DerivativeVariable variableType: block.getStateVariables()){
-            String parsedDADT = context.parse(variableType).toUpperCase();
+            String parsedDADT = context.getLocalParserHelper().parse(variableType).toUpperCase();
             String variable = variableType.getSymbId().toUpperCase();
 
             if(isDerivativeVariableHasAmount(variable)){

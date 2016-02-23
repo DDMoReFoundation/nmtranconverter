@@ -1,7 +1,7 @@
 /*******************************************************************************
  * Copyright (C) 2015 Mango Solutions Ltd - All rights reserved.
  ******************************************************************************/
-package eu.ddmore.converters.nonmem.statements;
+package eu.ddmore.converters.nonmem.parameters;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -9,10 +9,11 @@ import java.util.List;
 import java.util.Set;
 
 import crx.converter.engine.parts.ObservationBlock;
+import crx.converter.engine.parts.EstimationStep.FixedParameter;
+import eu.ddmore.converters.nonmem.ConversionContext;
 import eu.ddmore.converters.nonmem.utils.Formatter;
 import eu.ddmore.converters.nonmem.utils.Formatter.NmConstant;
 import eu.ddmore.converters.nonmem.utils.Formatter.Symbol;
-import eu.ddmore.converters.nonmem.utils.ParametersHelper;
 import eu.ddmore.converters.nonmem.utils.RandomVariableHelper;
 import eu.ddmore.converters.nonmem.utils.ScalarValueHandler;
 import eu.ddmore.libpharmml.dom.modeldefn.ParameterRandomVariable;
@@ -20,15 +21,24 @@ import eu.ddmore.libpharmml.dom.modellingsteps.ParameterEstimate;
 import eu.ddmore.libpharmml.dom.uncertml.PositiveRealValueType;
 
 /**
- * Creates and adds estimation statement to nonmem file from script definition.
+ * This class helps to build sigma statement for nmtran file.
  * 
  */
 public class SigmaStatementBuilder {
 
-    private ParametersHelper paramHelper;
+    private final List<String> verifiedSigmas = new ArrayList<String>();
+    private List<String> sigmaStatements;
+    private StringBuilder sigmaStatementBlock;
 
-    public SigmaStatementBuilder(ParametersHelper parametersHelper){
-        paramHelper = parametersHelper; 
+    private final Set<ParameterRandomVariable> epsilonVars;
+    private final ConversionContext context;
+
+
+    public SigmaStatementBuilder(ConversionContext context, Set<ParameterRandomVariable> epsilonVars){
+        this.context = context;
+        this.epsilonVars = epsilonVars;
+
+        initialiseSigmaStatement();
     }
 
     /**
@@ -36,17 +46,16 @@ public class SigmaStatementBuilder {
      * with help of parameter helper.
      * @return sigma statement
      */
-    public StringBuilder getSigmaStatementBlock() {
-        StringBuilder sigmaStatement = new StringBuilder();
-        List<String> sigmaStatements = getSigmaStatements();
+    private void initialiseSigmaStatement() {
+        sigmaStatementBlock = new StringBuilder();
+        sigmaStatements = getSigmaStatements();
 
         if(!sigmaStatements.isEmpty()){
-            sigmaStatement.append(Formatter.endline()+Formatter.sigma());
+            sigmaStatementBlock.append(Formatter.endline()+Formatter.sigma());
             for (final String sigmaVar: sigmaStatements) {
-                sigmaStatement.append(sigmaVar);
+                sigmaStatementBlock.append(sigmaVar);
             }
         }
-        return sigmaStatement;
     }
 
     /**
@@ -123,10 +132,10 @@ public class SigmaStatementBuilder {
     private Set<ParameterRandomVariable> getRandomVariablesForSigma() {
         Set<ParameterRandomVariable> randomVariableTypes = new HashSet<ParameterRandomVariable>();
 
-        for(ObservationBlock observationBlock: paramHelper.getScriptDefinition().getObservationBlocks()){
+        for(ObservationBlock observationBlock: context.getScriptDefinition().getObservationBlocks()){
             randomVariableTypes.addAll(observationBlock.getRandomVariables());
         }
-        randomVariableTypes.addAll(paramHelper.getEpsilonVars());
+        randomVariableTypes.addAll(epsilonVars);
         return randomVariableTypes;
     }
 
@@ -141,7 +150,7 @@ public class SigmaStatementBuilder {
     private String getSigmaFromInitialEstimate(String varId, Boolean isStdDev) {
         StringBuilder sigmastatement = new StringBuilder();
 
-        for(ParameterEstimate paramEstimate : paramHelper.getAllEstimationParams()){
+        for(ParameterEstimate paramEstimate : getAllEstimationParams()){
             String symbId = paramEstimate.getSymbRef().getSymbIdRef();
             if(symbId.equals(varId)){
                 Double value = ScalarValueHandler.getValueFromScalarRhs(paramEstimate.getInitialEstimate());
@@ -152,10 +161,34 @@ public class SigmaStatementBuilder {
                 }
                 addAttributeForStdDev(sigmastatement,isStdDev);
                 sigmastatement.append(Formatter.indent(Symbol.COMMENT+ symbId)+Formatter.endline());
-                paramHelper.addToSigmaVerificationListIfNotExists(symbId);
+                addToSigmaVerificationListIfNotExists(symbId);
             }
         }
         return sigmastatement.toString();
+    }
+
+    /**
+     * Adds identified sigma variables to verified sigmas list. 
+     * @param sigmaVar
+     */
+    private void addToSigmaVerificationListIfNotExists(String sigmaVar){
+        if(!verifiedSigmas.contains(sigmaVar))
+            verifiedSigmas.add(sigmaVar);
+    }
+
+    /**
+     * We will need all the estimation parameters to identify sigma params  and at other place, 
+     * irrespective of whether they are fixed or not.
+     * 
+     * @return
+     */
+    private List<ParameterEstimate> getAllEstimationParams(){
+        List<ParameterEstimate> allParams = new ArrayList<ParameterEstimate>();
+        allParams.addAll(context.getParameterInitialiser().getParametersToEstimate());
+        for(FixedParameter fixedParam : context.getParameterInitialiser().getFixedParameters()){
+            allParams.add(fixedParam.pe);
+        }
+        return allParams;
     }
 
     /**
@@ -184,7 +217,7 @@ public class SigmaStatementBuilder {
                 sigmaRepresentation = stddevDistribution.getVar().getVarId();
             } else if(stddevDistribution.getPrVal()!=null){
                 Double idVal = (stddevDistribution.getPrVal()*stddevDistribution.getPrVal());
-                sigmaRepresentation = idVal.toString();	            
+                sigmaRepresentation = idVal.toString();
             }
         }
         return sigmaRepresentation;
@@ -203,7 +236,7 @@ public class SigmaStatementBuilder {
                 sigmaRepresentation = varianceDistribution.getVar().getVarId();
             } else if(varianceDistribution.getPrVal()!=null){
                 Double idVal = (varianceDistribution.getPrVal());
-                sigmaRepresentation = idVal.toString();	            
+                sigmaRepresentation = idVal.toString();
             }
         }
         return sigmaRepresentation;
@@ -223,4 +256,13 @@ public class SigmaStatementBuilder {
         }
         return true;
     }
+
+    public StringBuilder getSigmaStatementBlock() {
+        return sigmaStatementBlock;
+    }
+
+    public List<String> getVerifiedSigmas() {
+        return verifiedSigmas;
+    }
+
 }

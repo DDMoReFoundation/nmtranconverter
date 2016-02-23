@@ -109,7 +109,7 @@ public class IndividualDefinitionEmitter {
             if (fixedEffect != null) {
                 String  fixedEffectStatement = fixedEffect.getSymbRef().getSymbIdRef();
                 if(fixedEffectStatement.isEmpty())
-                    fixedEffectStatement = context.parse(fixedEffect);
+                    fixedEffectStatement = context.getLocalParserHelper().parse(fixedEffect);
                 covStatement = fixedEffectStatement + " * " + covStatement;
             }
         }
@@ -209,7 +209,7 @@ public class IndividualDefinitionEmitter {
     private StringBuilder getIndivDefinitionForAssign(IndividualParameter ip) {
         StringBuilder statement = new StringBuilder();
         if (ip.getAssign() != null) {
-            String assignment = context.parse(ip, context.getLexer().getStatement(ip.getAssign()));
+            String assignment = context.getLocalParserHelper().parse(ip, context.getLexer().getStatement(ip.getAssign()));
             statement.append(Formatter.endline(assignment));
         }
         return statement;

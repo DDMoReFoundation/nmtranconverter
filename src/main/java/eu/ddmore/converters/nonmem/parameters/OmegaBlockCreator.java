@@ -1,4 +1,4 @@
-package eu.ddmore.converters.nonmem.statements;
+package eu.ddmore.converters.nonmem.parameters;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -9,11 +9,11 @@ import java.util.TreeSet;
 
 import com.google.common.base.Preconditions;
 
-import crx.converter.engine.parts.BaseRandomVariableBlock.CorrelationRef;
 import eu.ddmore.converters.nonmem.eta.Eta;
+import eu.ddmore.converters.nonmem.statements.InterOccVariabilityHandler;
+import eu.ddmore.converters.nonmem.statements.OmegaStatement;
 import eu.ddmore.converters.nonmem.utils.Formatter;
 import eu.ddmore.converters.nonmem.utils.Formatter.NmConstant;
-import eu.ddmore.converters.nonmem.utils.ParametersHelper;
 import eu.ddmore.converters.nonmem.utils.RandomVariableHelper;
 import eu.ddmore.libpharmml.dom.commontypes.IntValue;
 import eu.ddmore.libpharmml.dom.commontypes.Rhs;
@@ -25,14 +25,61 @@ import eu.ddmore.libpharmml.dom.modeldefn.ParameterRandomVariable;
  */
 public class OmegaBlockCreator {
     private static final String EMPTY_VARIABLE = "Empty Variable";
-    private Set<Eta> etaToOmagas = new TreeSet<Eta>();
-    ParametersHelper paramHelper;
+    private Set<Eta> orderedEtas = new TreeSet<Eta>();
+    ParametersBuilder paramHelper;
     InterOccVariabilityHandler iovHandler;
+    ParametersInitialiser parameters;
 
-    public OmegaBlockCreator(ParametersHelper parameter, InterOccVariabilityHandler iovHandler, OmegaBlock omegaBlock){
-        paramHelper = parameter;
+    public OmegaBlockCreator(ParametersInitialiser parametersInitialiser, InterOccVariabilityHandler iovHandler, OmegaBlock omegaBlock){
+        this.parameters = parametersInitialiser;
         this.iovHandler = iovHandler;
-        setEtaToOmagas(omegaBlock.getOrderedEtas());
+        this.orderedEtas = omegaBlock.getOrderedEtas();
+    }
+
+    /**
+     * Initialise omega blocks maps and also update ordered eta to omegas from correlations map.
+     * 
+     * @param omegaBlock
+     */
+    public void initialiseOmegaBlocks(OmegaBlock omegaBlock){
+
+        omegaBlock.getOmegaStatements().clear();
+        omegaBlock.setIsCorrelation(false);
+        omegaBlock.setIsOmegaBlockFromStdDev(false);
+
+        if(omegaBlock.getCorrelations()!=null && !omegaBlock.getCorrelations().isEmpty()){
+            for(CorrelationsWrapper correlation : omegaBlock.getCorrelations()){
+                //Need to set SD attribute for whole block if even a single value is from std dev
+                setStdDevAttributeForOmegaBlock(correlation, omegaBlock);
+                setCorrAttributeForOmegaBlock(correlation, omegaBlock);
+            }
+        }
+
+        for(Iterator<Eta> it = orderedEtas.iterator();it.hasNext();){
+            Eta currentEta = it.next();
+            if(!omegaBlock.getEtasToOmegas().keySet().contains(currentEta)){
+                it.remove();
+            }
+        }
+
+        for(Eta eta : orderedEtas){
+            ArrayList<OmegaStatement> statements = new ArrayList<OmegaStatement>();
+            for(int i=0;i<eta.getOrderInCorr();i++) statements.add(null);
+            omegaBlock.addToEtaToOmegaStatement(eta, statements);
+        }
+    }
+
+    private void setStdDevAttributeForOmegaBlock(CorrelationsWrapper correlation, OmegaBlock omegaBlock) {
+        if(!omegaBlock.isOmegaBlockFromStdDev()){
+            omegaBlock.setIsOmegaBlockFromStdDev(RandomVariableHelper.isParamFromStdDev(correlation.getFirstParamRandomVariable()) 
+                || RandomVariableHelper.isParamFromStdDev(correlation.getFirstParamRandomVariable()));
+        }
+    }
+
+    private void setCorrAttributeForOmegaBlock(CorrelationsWrapper correlation, OmegaBlock omegaBlock){
+        if(!omegaBlock.isCorrelation() && correlation.isCorrelationCoeff()){
+            omegaBlock.setIsCorrelation((true));
+        }
     }
 
     /**
@@ -47,18 +94,18 @@ public class OmegaBlockCreator {
 
         if(omegaBlock.getCorrelations()!=null && !omegaBlock.getCorrelations().isEmpty()){
             for(Eta eta : etaToOmagas){
-                Iterator<CorrelationRef> iterator = omegaBlock.getCorrelations().iterator();
+                Iterator<CorrelationsWrapper> iterator = omegaBlock.getCorrelations().iterator();
 
                 while(iterator.hasNext()){
-                    CorrelationRef correlation = iterator.next();
-                    ParameterRandomVariable firstRandomVar = correlation.rnd1;
-                    ParameterRandomVariable secondRandomVar = correlation.rnd2;
+                    CorrelationsWrapper correlation = iterator.next();
+                    ParameterRandomVariable firstRandomVar = correlation.getFirstParamRandomVariable();
+                    ParameterRandomVariable secondRandomVar = correlation.getSecondParamRandomVariable();
                     // row = i column = j
                     int column = getOrderedEtaIndex(firstRandomVar.getSymbId(), etaToOmagas);
                     int row = getOrderedEtaIndex(secondRandomVar.getSymbId(), etaToOmagas);
                     if(column > row){
-                        firstRandomVar = correlation.rnd2;
-                        secondRandomVar = correlation.rnd1;
+                        firstRandomVar = correlation.getSecondParamRandomVariable();
+                        secondRandomVar = correlation.getFirstParamRandomVariable();
                         int swap = column;
                         column = row;
                         row = swap;
@@ -79,7 +126,7 @@ public class OmegaBlockCreator {
         }else if(omegaBlocks!=null && !omegaBlocks.isEmpty()){
             for(Eta eta : omegaBlocks.keySet()){
 
-                OmegaStatement omega = paramHelper.getOmegaFromRandomVarName(eta.getOmegaName());
+                OmegaStatement omega = parameters.createOmegaFromRandomVarName(eta.getOmegaName());
                 List<OmegaStatement> omegas = new ArrayList<OmegaStatement>();
                 omegas.add(omega);
                 omegaBlocks.put(eta, omegas);
@@ -91,7 +138,7 @@ public class OmegaBlockCreator {
      * This method will return index from ordered eta map for random var name provided.
      * 
      * @param randomVariable
-     * @param etaToOmagas
+     * @param orderedEtas
      * @return
      */
     private int getOrderedEtaIndex(String randomVariable, Set<Eta> etaToOmagas) {
@@ -125,7 +172,7 @@ public class OmegaBlockCreator {
 
             List<OmegaStatement> matrixRow = new ArrayList<OmegaStatement>();
             String firstVariable = eta.getOmegaName();
-            matrixRow.add(paramHelper.getOmegaFromRandomVarName(firstVariable));
+            matrixRow.add(parameters.createOmegaFromRandomVarName(firstVariable));
             omegaBlocks.put(eta, matrixRow);
         }
     }
@@ -141,15 +188,15 @@ public class OmegaBlockCreator {
      * @param secondEta
      * @param column
      */
-    private void addCoefficientToCorrMatrix(CorrelationRef corr, Map<Eta, List<OmegaStatement>> omegaBlocks,
+    private void addCoefficientToCorrMatrix(CorrelationsWrapper corr, Map<Eta, List<OmegaStatement>> omegaBlocks,
             Eta firstEta, Eta secondEta, int column) {
         List<OmegaStatement> omegas = omegaBlocks.get(secondEta);
         if(omegas.get(column)==null || omegas.get(column).getSymbId().equals(EMPTY_VARIABLE)){
             OmegaStatement omega = null ;
-            if(corr.isCorrelation()){
-                omega = getOmegaForCoefficient(corr.correlationCoefficient.getAssign(), firstEta, secondEta);
+            if(corr.isCorrelationCoeff()){
+                omega = getOmegaForCoefficient(corr.getCorrelationCoefficient().getAssign(), firstEta, secondEta);
             }else if(corr.isCovariance()){
-                omega = getOmegaForCoefficient(corr.covariance.getAssign(), firstEta, secondEta);
+                omega = getOmegaForCoefficient(corr.getCovariance().getAssign(), firstEta, secondEta);
             }
             if(omega != null){
                 omegas.set(column,omega);
@@ -162,7 +209,7 @@ public class OmegaBlockCreator {
         if(omegas.get(column)==null){
             initialiseRowElements(column, omegas);
             String secondVariable = eta.getOmegaName();
-            omegas.set(column, paramHelper.getOmegaFromRandomVarName(secondVariable));
+            omegas.set(column, parameters.createOmegaFromRandomVarName(secondVariable));
         }
     }
 
@@ -224,7 +271,7 @@ public class OmegaBlockCreator {
         String secondVar = secondEta.getEtaSymbol();
 
         if(coeff.getSymbRef()!=null){
-            return paramHelper.getOmegaFromRandomVarName(coeff.getSymbRef().getSymbIdRef()); 
+            return parameters.createOmegaFromRandomVarName(coeff.getSymbRef().getSymbIdRef()); 
         }else if(coeff.getScalar()!=null ){
             OmegaStatement omega = new OmegaStatement(firstVar+"_"+secondVar);
             omega.setInitialEstimate(coeff);
@@ -232,52 +279,6 @@ public class OmegaBlockCreator {
         }else {
             throw new IllegalArgumentException("The Scalarrhs coefficient related to variables "+firstVar+" and "+secondVar
                 +" should have either variable, scalar value or equation specified."); 
-        }
-    }
-
-    /**
-     * Initialise omega blocks maps and also update ordered eta to omegas from correlations map.
-     * 
-     * @param omegaBlock
-     */
-    public void initialiseOmegaBlocks(OmegaBlock omegaBlock){
-
-        omegaBlock.getOmegaStatements().clear();
-        omegaBlock.setIsCorrelation(false);
-        omegaBlock.setIsOmegaBlockFromStdDev(false);
-
-        if(omegaBlock.getCorrelations()!=null && !omegaBlock.getCorrelations().isEmpty()){
-            for(CorrelationRef correlation : omegaBlock.getCorrelations()){
-                //Need to set SD attribute for whole block if even a single value is from std dev
-                setStdDevAttributeForOmegaBlock(correlation, omegaBlock);
-                setCorrAttributeForOmegaBlock(correlation, omegaBlock);
-            }
-        }
-
-        for(Iterator<Eta> it = etaToOmagas.iterator();it.hasNext();){
-            Eta currentEta = it.next();
-            if(!omegaBlock.getEtasToOmegas().keySet().contains(currentEta)){
-                it.remove();
-            }
-        }
-
-        for(Eta eta : etaToOmagas){
-            ArrayList<OmegaStatement> statements = new ArrayList<OmegaStatement>();
-            for(int i=0;i<eta.getOrderInCorr();i++) statements.add(null);
-            omegaBlock.addToEtaToOmegaStatement(eta, statements);
-        }
-    }
-
-    private void setStdDevAttributeForOmegaBlock(CorrelationRef correlation, OmegaBlock omegaBlock) {
-        if(!omegaBlock.isOmegaBlockFromStdDev()){
-            omegaBlock.setIsOmegaBlockFromStdDev(RandomVariableHelper.isParamFromStdDev(correlation.rnd1) 
-                || RandomVariableHelper.isParamFromStdDev(correlation.rnd1));
-        }
-    }
-
-    private void setCorrAttributeForOmegaBlock(CorrelationRef correlation, OmegaBlock omegaBlock){
-        if(!omegaBlock.isCorrelation() && correlation.isCorrelation()){
-            omegaBlock.setIsCorrelation((true));
         }
     }
 
@@ -298,6 +299,10 @@ public class OmegaBlockCreator {
         omegaBlock.setOmegaBlockTitle(title);
     }
 
+    /**
+     * creates title for omega "SAME" block
+     * @param omegaBlock
+     */
     public void createOmegaSameBlockTitle(OmegaBlock omegaBlock) {
         if(omegaBlock.isIOV()){
             Integer uniqueValueCount = iovHandler.getIovColumnUniqueValues().size();
@@ -305,13 +310,5 @@ public class OmegaBlockCreator {
             String title = String.format(Formatter.endline()+"%s", Formatter.omegaSameBlock(blockCount, uniqueValueCount));
             omegaBlock.setOmegaBlockSameTitle(title);
         }
-    }
-
-    public Set<Eta> getEtaToOmagas() {
-        return etaToOmagas;
-    }
-
-    public void setEtaToOmagas(Set<Eta> etaToOmagas) {
-        this.etaToOmagas = new TreeSet<Eta>(etaToOmagas);
     }
 }

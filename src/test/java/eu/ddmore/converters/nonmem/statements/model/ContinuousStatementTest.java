@@ -1,3 +1,6 @@
+/*******************************************************************************
+ * Copyright (C) 2015 Mango Solutions Ltd - All rights reserved.
+ ******************************************************************************/
 package eu.ddmore.converters.nonmem.statements.model;
 
 import static org.junit.Assert.assertEquals;
@@ -82,7 +85,6 @@ public class ContinuousStatementTest extends BasicTestSetup  {
     public void testGetContinuousStatement() {
         continuousStatement = new ContinuousStatement(modelStatementHelper);
         String contStatement = continuousStatement.getContinuousStatement().toString();
-        System.out.println(contStatement);
 
         assertNotNull("Continuous statement should not be null", contStatement);
     }
@@ -91,7 +93,7 @@ public class ContinuousStatementTest extends BasicTestSetup  {
     public void testGetcontinuousStatementWithComponent(){
         continuousStatement = new ContinuousStatement(modelStatementHelper);
         String contStatement = continuousStatement.getContinuousStatement().toString();
-        System.out.println(contStatement);
+
         assertNotNull("Continuous statement should not be null", contStatement);
         assertNotNull("Continuous statement should contain component", contStatement.contains(COMP1_EXAMPLE));
         assertEquals("should get expected output",EXAMPLE_OUTPUT,contStatement.toString());

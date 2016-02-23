@@ -1,3 +1,6 @@
+/*******************************************************************************
+ * Copyright (C) 2015 Mango Solutions Ltd - All rights reserved.
+ ******************************************************************************/
 package eu.ddmore.converters.nonmem.statements.model;
 
 import static org.junit.Assert.*;
@@ -67,7 +70,6 @@ public class DiscreteStatementTest extends BasicTestSetup {
 
         String hazardFunc = "HAZARD_FUNC = HAZ_VAR";
         discreteStatement = new DiscreteStatement(modelStatementHelper);
-        System.out.println(discreteStatement.getModelStatementForTTE(discreteHandler));
 
         assertNotNull("Discrete statement should not be null", discreteStatement.getModelStatementForTTE(discreteHandler));
         assertTrue("Should contain hazard function", discreteStatement.getModelStatementForTTE(discreteHandler).toString().contains(hazardFunc));

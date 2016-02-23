@@ -1,3 +1,6 @@
+/*******************************************************************************
+ * Copyright (C) 2015 Mango Solutions Ltd - All rights reserved.
+ ******************************************************************************/
 package eu.ddmore.converters.nonmem.statements.model;
 
 import static org.junit.Assert.assertNotNull;
@@ -94,7 +97,8 @@ public class ModelStatementHelperTest extends BasicTestSetup  {
         variableDefinitions.add(variableDefinition);
         structBlocks.add(structBlock);
 
-        when(context.parse(Matchers.any())).thenReturn(VAR_DEF_EXAMPLE);
+        when(context.getLocalParserHelper()).thenReturn(localParserHelper);
+        when(localParserHelper.parse(Matchers.any())).thenReturn(VAR_DEF_EXAMPLE);
         when(scriptDefinition.getStructuralBlocks()).thenReturn(structBlocks);
         when(structBlock.getLocalVariables()).thenReturn(variableDefinitions);
     }

@@ -12,13 +12,14 @@ import org.apache.commons.lang.StringUtils;
 
 import crx.converter.engine.parts.ConditionalDoseEvent;
 import crx.converter.engine.parts.ParameterBlock;
-import crx.converter.engine.parts.TemporalDoseEvent;
 import crx.converter.engine.parts.ParameterBlock.Event;
+import crx.converter.engine.parts.TemporalDoseEvent;
 import eu.ddmore.converters.nonmem.ConversionContext;
 import eu.ddmore.converters.nonmem.eta.Eta;
+import eu.ddmore.converters.nonmem.parameters.Parameter;
 import eu.ddmore.converters.nonmem.utils.Formatter;
-import eu.ddmore.converters.nonmem.utils.ScriptDefinitionAccessor;
 import eu.ddmore.converters.nonmem.utils.Formatter.Block;
+import eu.ddmore.converters.nonmem.utils.ScriptDefinitionAccessor;
 import eu.ddmore.libpharmml.dom.modeldefn.ContinuousCovariate;
 import eu.ddmore.libpharmml.dom.modeldefn.CovariateDefinition;
 import eu.ddmore.libpharmml.dom.modeldefn.CovariateTransformation;
@@ -66,36 +67,35 @@ public class PredCoreStatement {
      */
     private StringBuilder getSimpleParamAssignments() {
         StringBuilder simpleParamAssignmentBlock = new StringBuilder();
-        Map<String, PopulationParameter> params = context.getParameterHelper().getSimpleParamsWithAssignment();
+        Map<String, Parameter> params = context.getParameterInitialiser().getParams();
 
         for(String simpleParamSymbol : params.keySet()){
-            PopulationParameter simpleParam = params.get(simpleParamSymbol);
-            Event event = getEventForParameter(simpleParam);
-            String parsedEquation = new String();
-            if(event !=null){
-                if(event.getPiecewiseTree()!=null && event.getPiecewiseTree().size()>0){
-                    parsedEquation = context.parse(event.getParameter(), event.getPiecewiseTree());
+            if(params.get(simpleParamSymbol).isAssignment()){
+                PopulationParameter simpleParam = params.get(simpleParamSymbol).getPopParameter();
+                Event event = getEventForParameter(simpleParam);
+                String parsedEquation = new String();
+                if(event !=null){
+                    if(event.getPiecewiseTree()!=null && event.getPiecewiseTree().size()>0){
+                        parsedEquation = context.getLocalParserHelper().parse(event.getParameter(), event.getPiecewiseTree());
+                    }
+                }else{
+                    parsedEquation = simpleParamSymbol+" = "+context.getLocalParserHelper().getParsedValueForRhs(simpleParam.getAssign());
                 }
-            }
-            //TODO: Fix this for equation related structural changes.
-            //            else {
-            //                Equation simpleParamAssignmentEq = simpleParam.getAssign().getEquation();
-            //                parsedEquation = simpleParamSymbol+ " = "+ getParser().getSymbol(simpleParamAssignmentEq);
-            //            }
 
-            if(!parsedEquation.isEmpty()){
-                simpleParamAssignmentBlock.append(Formatter.endline(parsedEquation));
+                if(!parsedEquation.isEmpty()){
+                    simpleParamAssignmentBlock.append(Formatter.endline(parsedEquation));
+                }
             }
         }
         return simpleParamAssignmentBlock;
     }
 
-    private Event getEventForParameter(PopulationParameter simpleParam){
+    private Event getEventForParameter(PopulationParameter populationParam){
         for(ParameterBlock pb : context.getScriptDefinition().getParameterBlocks()){
             if (pb.hasEvents()) {
                 for (Event event : pb.getEvents()) {
                     if (event != null) {
-                        if (simpleParam.getSymbId().equals(event.getParameter().getSymbId())){
+                        if (populationParam.getSymbId().equals(event.getParameter().getSymbId())){
                             return event;
                         }
                     }
@@ -111,7 +111,7 @@ public class PredCoreStatement {
      */
     private StringBuilder buildThetaAssignments() {
         StringBuilder thetaAssignmentBlock = new StringBuilder();
-        List<String> thetas = new ArrayList<String>(context.getParameterHelper().getThetaParams().keySet());
+        List<String> thetas = new ArrayList<String>(context.getParametersBuilder().getThetasBuilder().getThetaStatements().keySet());
 
         for(String theta : thetas){
             String thetaSymbol = Formatter.getReservedParam(theta);
