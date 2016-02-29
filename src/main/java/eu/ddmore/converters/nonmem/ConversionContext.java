@@ -15,7 +15,6 @@ import java.util.Set;
 import com.google.common.base.Preconditions;
 
 import crx.converter.engine.ScriptDefinition;
-import crx.converter.engine.parts.ObservationBlock;
 import crx.converter.engine.parts.StructuralBlock;
 import crx.converter.spi.ILexer;
 import crx.converter.spi.IParser;
@@ -24,7 +23,6 @@ import eu.ddmore.converters.nonmem.parameters.CorrelationHandler;
 import eu.ddmore.converters.nonmem.parameters.ParametersBuilder;
 import eu.ddmore.converters.nonmem.parameters.ParametersInitialiser;
 import eu.ddmore.converters.nonmem.statements.DataSetHandler;
-import eu.ddmore.converters.nonmem.statements.ErrorStatement;
 import eu.ddmore.converters.nonmem.statements.EstimationDetailsEmitter;
 import eu.ddmore.converters.nonmem.statements.InputColumnsHandler;
 import eu.ddmore.converters.nonmem.statements.InterOccVariabilityHandler;
@@ -34,12 +32,7 @@ import eu.ddmore.converters.nonmem.utils.Formatter.NmConstant;
 import eu.ddmore.converters.nonmem.utils.MuReferenceHandler;
 import eu.ddmore.converters.nonmem.utils.OrderedThetasHandler;
 import eu.ddmore.libpharmml.dom.commontypes.DerivativeVariable;
-import eu.ddmore.libpharmml.dom.maths.FunctionCallType;
-import eu.ddmore.libpharmml.dom.modeldefn.GeneralObsError;
-import eu.ddmore.libpharmml.dom.modeldefn.ObservationError;
 import eu.ddmore.libpharmml.dom.modeldefn.PopulationParameter;
-import eu.ddmore.libpharmml.dom.modeldefn.StructuredObsError;
-import eu.ddmore.libpharmml.dom.modeldefn.StructuredObsError.ErrorModel;
 import eu.ddmore.libpharmml.dom.trialdesign.ExternalDataSet;
 
 /**
@@ -56,7 +49,6 @@ public class ConversionContext {
     private final OrderedThetasHandler orderedThetasHandler;
     private final DiscreteHandler discreteHandler;
     private final CorrelationHandler correlationHandler;
-    private final Map<String,ErrorStatement> errorStatements = new HashMap<String,ErrorStatement>();
     private final List<DerivativeVariable> derivativeVars = new ArrayList<DerivativeVariable>();
     private final Map<String, String> derivativeVarCompSequences = new HashMap<String, String>();
     private final ConditionalEventHandler conditionalEventHandler;
@@ -112,13 +104,10 @@ public class ConversionContext {
             iovHandler.retrieveIovColumnUniqueValues(dataSetHandler.getDataFile());
         }
         orderedThetasHandler.createOrderedThetasToEta(retrieveOrderedEtas());
-        parametersBuilder.initialiseAllParameters(lexer.getModelParameters());
+        parametersBuilder.initialiseAllParameters();
 
         derivativeVars.addAll(getAllStateVariables());
         setDerivativeVarCompartmentSequence();
-
-        // Initialise error statement
-        prepareAllErrorStatements();
     }
 
     private ParametersInitialiser initialisePopulationParams(List<PopulationParameter> populationParameters) {
@@ -128,7 +117,7 @@ public class ConversionContext {
             return new ParametersInitialiser(populationParameters, getScriptDefinition());
         }
     }
-    
+
     /**
      * This method will get parameter blocks and add it to parameter statement. 
      * @return
@@ -186,46 +175,6 @@ public class ConversionContext {
         return !parametersBuilder.getOmegasBuilder().getOmegaStatementBlockForIOV().trim().isEmpty();
     }
 
-    /**
-     * This method will list prepare all the error statements and returns the list.
-     * We need to prepare this list separately as we need to use it in DES block before writing out to ERROR block.
-     * @return
-     */
-    private Map<String,ErrorStatement> prepareAllErrorStatements(){
-
-        for(ObservationBlock block : lexer.getScriptDefinition().getObservationBlocks()){
-            ObservationError errorType = block.getObservationError();
-            if(errorType instanceof GeneralObsError){
-                //              GeneralObsError genError = (GeneralObsError) errorType;
-                //              TODO : DDMORE-1013 : add support for general observation error type once details are available
-                //              throw new IllegalArgumentException("general observation error type is not yet supported.");
-            }
-            if(errorType instanceof StructuredObsError){
-                StructuredObsError error = (StructuredObsError) errorType;
-                ErrorStatement errorStatement = prepareErrorStatement(error);
-                errorStatements.put(error.getSymbId(), errorStatement);
-            }else{
-                //              TODO : Check if there are any other types to encounter
-            }
-        }
-        return errorStatements;
-    }
-
-    /**
-     * Prepares and returns error statement for the structured observation error.
-     * 
-     * @param error
-     * @return
-     */
-    private ErrorStatement prepareErrorStatement(StructuredObsError error) {
-        ErrorModel errorModel = error.getErrorModel();
-        String output = error.getOutput().getSymbRef().getSymbIdRef();
-        FunctionCallType functionCall = errorModel.getAssign().getFunctionCall();
-
-        ErrorStatement errorStatement = new ErrorStatement(functionCall, output);
-        return errorStatement;
-    }
-
     private Map<String, String> setDerivativeVarCompartmentSequence(){
         int i=1;
         for (DerivativeVariable variableType : derivativeVars){
@@ -266,10 +215,6 @@ public class ConversionContext {
 
     public ParametersBuilder getParametersBuilder() {
         return parametersBuilder;
-    }
-
-    public Map<String,ErrorStatement> getErrorStatements() {
-        return errorStatements;
     }
 
     public IParser getParser() {

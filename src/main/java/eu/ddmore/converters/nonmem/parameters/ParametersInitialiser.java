@@ -118,39 +118,6 @@ public class ParametersInitialiser {
         return omegaStatement;
     }
 
-    /**
-     * Retrieves rhs from parameter assignment with help of symbol id.
-     * @param symbId
-     * @return
-     */
-//    public Rhs getRhsForSymbol(String symbId) {
-//        Rhs scalar = null;
-//
-//        if(getPopulationParams().containsKey(symbId)){
-//            Parameter param = getPopulationParams().get(symbId);
-//            if(param.getPopParameter().getAssign().getScalar()!=null){
-//                scalar = createRhs(symbId, param.getPopParameter().getAssign().getScalar());
-//            }
-//        }
-//        return scalar;
-//    }
-
-//    /**
-//     * This method will create scalar Rhs object for a symbol from the scalar value provided.
-//     *  
-//     * @param symbol
-//     * @param scalar
-//     * @return Rhs object
-//     */
-//    private Rhs createRhs(String symbol,Scalar scalar) {
-//        Rhs rhs = new Rhs();
-//        rhs.setScalar(scalar);
-//        SymbolRef symbRef = new SymbolRef();
-//        symbRef.setId(symbol);
-//        rhs.setSymbRef(symbRef);
-//        return rhs;
-//    }
-
     public List<ParameterEstimate> getParametersToEstimate() {
         return parametersToEstimate;
     }
@@ -159,19 +126,10 @@ public class ParametersInitialiser {
         return fixedParameters;
     }
 
-    public void setFixedParameters(List<FixedParameter> fixedParameters) {
-        this.fixedParameters = fixedParameters;
-    }
-
     public Map<String, Parameter> getParams() {
         return params;
     }
 
-    public void setParametersToEstimate(List<ParameterEstimate> parametersToEstimate) {
-        this.parametersToEstimate = parametersToEstimate;
-    }
-
-    
     public Map<String, PopulationParameter> getPopulationParams() {
         return populationParams;
     }

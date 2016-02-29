@@ -14,7 +14,6 @@ import crx.converter.engine.parts.EstimationStep.FixedParameter;
 import eu.ddmore.converters.nonmem.statements.OmegaStatement;
 import eu.ddmore.converters.nonmem.statements.ThetaStatement;
 import eu.ddmore.converters.nonmem.utils.Formatter;
-import eu.ddmore.converters.nonmem.utils.ParameterStatementHandler;
 import eu.ddmore.libpharmml.dom.commontypes.Rhs;
 import eu.ddmore.libpharmml.dom.modellingsteps.ParameterEstimate;
 

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (C) 2015 Mango Solutions Ltd - All rights reserved.
+ * Copyright (C) 2016 Mango Solutions Ltd - All rights reserved.
  ******************************************************************************/
 package eu.ddmore.converters.nonmem.parameters;
 
@@ -12,7 +12,7 @@ import eu.ddmore.libpharmml.dom.modeldefn.ParameterRandomVariable;
  */
 public class CorrelationsWrapper {
 
-    CorrelationRef correlation;
+    private final CorrelationRef correlation;
 
     CorrelationsWrapper(CorrelationRef correlation){
         this.correlation = correlation;

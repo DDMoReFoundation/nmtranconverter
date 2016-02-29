@@ -12,7 +12,6 @@ import eu.ddmore.converters.nonmem.ConversionContext;
 import eu.ddmore.converters.nonmem.eta.Eta;
 import eu.ddmore.converters.nonmem.statements.OmegaStatement;
 import eu.ddmore.converters.nonmem.utils.Formatter;
-import eu.ddmore.converters.nonmem.utils.ParameterStatementHandler;
 import eu.ddmore.converters.nonmem.utils.RandomVariableHelper;
 import eu.ddmore.libpharmml.dom.modeldefn.ParameterRandomVariable;
 

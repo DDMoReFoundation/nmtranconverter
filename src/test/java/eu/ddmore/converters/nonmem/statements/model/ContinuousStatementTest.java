@@ -48,11 +48,11 @@ public class ContinuousStatementTest extends BasicTestSetup  {
 
     @Before
     public void setUp() throws Exception {
-        mockContext();
+        mockConversionContext();
         mockModelStatementHelper();
     }
 
-    private void mockContext(){
+    private void mockConversionContext(){
 
         context = mock(ConversionContext.class, RETURNS_DEEP_STUBS);
 

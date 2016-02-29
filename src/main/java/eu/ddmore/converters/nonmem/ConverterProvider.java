@@ -36,7 +36,7 @@ public class ConverterProvider extends Lexer {
         setParser(p);
         p.setLexer(this);
 
-        VersionImpl source_version = new VersionImpl(0, 6, 1);
+        VersionImpl source_version = new VersionImpl(0, 8, 0);
         source = new LanguageVersionImpl("PharmML", source_version);
 
         VersionImpl target_version = new VersionImpl(7, 3, 0);
@@ -47,9 +47,11 @@ public class ConverterProvider extends Lexer {
 
     @Override
     protected void initialise() {
-        setSortParameterModel(true);
+        setSortParameterModel(false);
+        setSortParameterModelByContext(true);
         setSortStructuralModel(true);
         setValidateXML(true);
+
         EstimationStep.setUseDefaultParameterEstimate(true);
         EstimationStep.setDefaultParameterEstimateValue(1.0);
         setUsePiecewiseAsEvents(true);

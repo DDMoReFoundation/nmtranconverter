@@ -1,11 +1,13 @@
 /*******************************************************************************
  * Copyright (C) 2015 Mango Solutions Ltd - All rights reserved.
  ******************************************************************************/
-package eu.ddmore.converters.nonmem.utils;
+package eu.ddmore.converters.nonmem.parameters;
 
 import com.google.common.base.Preconditions;
 
 import eu.ddmore.converters.nonmem.statements.Parameter;
+import eu.ddmore.converters.nonmem.utils.Formatter;
+import eu.ddmore.converters.nonmem.utils.ScalarValueHandler;
 import eu.ddmore.converters.nonmem.utils.Formatter.NmConstant;
 import eu.ddmore.converters.nonmem.utils.Formatter.Symbol;
 import eu.ddmore.libpharmml.dom.commontypes.Rhs;

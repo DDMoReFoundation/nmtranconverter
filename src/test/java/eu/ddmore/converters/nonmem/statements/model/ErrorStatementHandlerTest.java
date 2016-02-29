@@ -20,9 +20,11 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Matchers;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 
 import crx.converter.engine.parts.BaseStep.MultipleDvRef;
+import crx.converter.engine.parts.ObservationBlock;
 
 import eu.ddmore.converters.nonmem.ConversionContext;
 import eu.ddmore.converters.nonmem.statements.BasicTestSetup;
@@ -32,20 +34,24 @@ import eu.ddmore.converters.nonmem.statements.ErrorStatementEmitter;
 import eu.ddmore.converters.nonmem.utils.Formatter;
 import eu.ddmore.converters.nonmem.utils.ScriptDefinitionAccessor;
 import eu.ddmore.libpharmml.dom.commontypes.SymbolRef;
+import eu.ddmore.libpharmml.dom.maths.FunctionCallType;
+import eu.ddmore.libpharmml.dom.modeldefn.StructuredObsError;
+import eu.ddmore.libpharmml.dom.modeldefn.StructuredObsError.ErrorModel;
 
 @PrepareForTest({ErrorStatementHandler.class, ScriptDefinitionAccessor.class})
 public class ErrorStatementHandlerTest extends BasicTestSetup {
 
-    private static final String ERROR_STATEMENT_CONTENT = Formatter.endline()+"error";
-    private static final String varDefStatementString = new String("K = (CL/V)");
+    private final String ERROR_STATEMENT_CONTENT = Formatter.endline()+"error";
+    private final String varDefStatementString = new String("K = (CL/V)");
     @Mock private ErrorStatement error;
     @Mock private ErrorStatementEmitter errorStatementEmitter;
     @Mock private MultipleDvRef dvReference;
     @Mock private SymbolRef columnName;
     @Mock private DiffEquationStatementBuilder desBuilder;
 
+    @Mock private ObservationBlock observationBlock;
+
     private ErrorStatementHandler errorStatementHandler;
-    private Map<String, ErrorStatement> errorStatements = new HashMap<String, ErrorStatement>();
     private Map<String, String> varDefs = new HashMap<String, String>();
 
     @Before
@@ -55,11 +61,28 @@ public class ErrorStatementHandlerTest extends BasicTestSetup {
         context = mock(ConversionContext.class,RETURNS_DEEP_STUBS);
         when(context.getScriptDefinition()).thenReturn(scriptDefinition);
 
-        errorStatements.put(COL_ID_1, error);
-        when(context.getErrorStatements()).thenReturn(errorStatements);
+        mockErrorStatementsPreperation();
 
         whenNew(ErrorStatementEmitter.class).withArguments(Matchers.any(ErrorStatement.class)).thenReturn(errorStatementEmitter);
         when(errorStatementEmitter.getErrorStatementDetails()).thenReturn(new StringBuilder(ERROR_STATEMENT_CONTENT));
+    }
+
+    private void mockErrorStatementsPreperation() throws Exception{
+
+        List<ObservationBlock> obsBlocks = new ArrayList<>();
+        obsBlocks.add(observationBlock);
+
+        when(scriptDefinition.getObservationBlocks()).thenReturn(obsBlocks);
+        StructuredObsError errorType = Mockito.mock(StructuredObsError.class, RETURNS_DEEP_STUBS);
+        when(observationBlock.getObservationError()).thenReturn(errorType);
+
+        ErrorModel errorModel = Mockito.mock(ErrorModel.class,RETURNS_DEEP_STUBS);
+        FunctionCallType callType = Mockito.mock(FunctionCallType.class);
+        when(errorType.getErrorModel()).thenReturn(errorModel);
+        when(errorType.getOutput().getSymbRef().getSymbIdRef()).thenReturn("Y");
+        when(errorModel.getAssign().getFunctionCall()).thenReturn(callType);
+
+        whenNew(ErrorStatement.class).withAnyArguments().thenReturn(error);
     }
 
     @Test

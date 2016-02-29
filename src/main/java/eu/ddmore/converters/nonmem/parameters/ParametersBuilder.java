@@ -3,14 +3,12 @@
  ******************************************************************************/
 package eu.ddmore.converters.nonmem.parameters;
 
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import eu.ddmore.converters.nonmem.ConversionContext;
 import eu.ddmore.converters.nonmem.utils.ScriptDefinitionAccessor;
 import eu.ddmore.libpharmml.dom.modeldefn.ParameterRandomVariable;
-import eu.ddmore.libpharmml.dom.modeldefn.PopulationParameter;
 
 /**
  * This is class for to build parameter related statements for NmTran conversion.
@@ -19,7 +17,6 @@ import eu.ddmore.libpharmml.dom.modeldefn.PopulationParameter;
 public class ParametersBuilder {
     private final Map<Integer, String> thetasToEtaOrder;
     private final Set<ParameterRandomVariable> epsilonVars;
-
     private final ConversionContext context;
     private OmegaStatementBuilder omegasBuilder;
     private SigmaStatementBuilder sigmasBuilder;
@@ -27,7 +24,7 @@ public class ParametersBuilder {
 
     /**
      * Constructor expects conversion context with script definition which contains all the blocks populated as part of common converter 
-     * and parameters initialiser which has all the population parameter related details processed. 
+     * and parameters initialiser which has all the population parameter related details processed.
      * @param scriptDefinition
      */
     public ParametersBuilder(ConversionContext context){
@@ -41,7 +38,7 @@ public class ParametersBuilder {
      * 
      * @param populationParameters
      */
-    public void initialiseAllParameters(List<PopulationParameter> populationParameters){
+    public void initialiseAllParameters(){
 
         //need to set omegas and sigma before setting theta params
         omegasBuilder = new OmegaStatementBuilder(context, epsilonVars);

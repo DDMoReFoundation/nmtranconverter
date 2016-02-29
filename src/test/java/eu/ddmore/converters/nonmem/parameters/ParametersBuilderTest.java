@@ -41,6 +41,6 @@ public class ParametersBuilderTest extends ParametersMockHelper {
     @Test(expected=IllegalStateException.class)
     public void shouldThrowExceptionIfParamBlocksEmpty(){
         parametersBuilder = new ParametersBuilder(context);
-        parametersBuilder.initialiseAllParameters(populationParameters);
+        parametersBuilder.initialiseAllParameters();
     }
 }
