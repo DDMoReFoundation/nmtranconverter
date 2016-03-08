@@ -11,9 +11,7 @@ import crx.converter.engine.parts.EstimationStep;
 import eu.ddmore.converters.nonmem.utils.DiscreteHandler;
 import eu.ddmore.converters.nonmem.utils.Formatter;
 import eu.ddmore.converters.nonmem.utils.ScriptDefinitionAccessor;
-import eu.ddmore.libpharmml.dom.commontypes.BooleanValue;
-import eu.ddmore.libpharmml.dom.commontypes.TrueBoolean;
-import eu.ddmore.libpharmml.dom.maths.Equation;
+import eu.ddmore.libpharmml.dom.commontypes.Scalar;
 import eu.ddmore.libpharmml.dom.modellingsteps.Algorithm;
 import eu.ddmore.libpharmml.dom.modellingsteps.EstimationOpType;
 import eu.ddmore.libpharmml.dom.modellingsteps.EstimationOperation;
@@ -140,12 +138,8 @@ public class EstimationDetailsEmitter {
      * @param equation
      * @return
      */
-    private Boolean isCovPropertyForEstOperation(Object value) {
-        if(value instanceof BooleanValue){
-            BooleanValue val = (BooleanValue) value;
-            return (val instanceof TrueBoolean);
-        }
-        return false;
+    private Boolean isCovPropertyForEstOperation(Scalar value) {
+        return Boolean.parseBoolean(value.valueToString());
     }
 
     /**
@@ -166,11 +160,12 @@ public class EstimationDetailsEmitter {
             for(OperationProperty property : operationType.getProperty()){
                 if(property.getName().equals("cov") && property.getAssign()!=null){
                     if(property.getAssign().getScalar()!=null){
-                        return isCovPropertyForEstOperation(property.getAssign().getScalar().getValue());
-                    }else if(property.getAssign().getEquation()!=null){
-                        Equation equation = property.getAssign().getEquation();
-                        return isCovPropertyForEstOperation(equation.getScalar().getValue());
+                        return isCovPropertyForEstOperation(property.getAssign().getScalar());
                     }
+                    //else if(property.getAssign().getEquation()!=null){
+                    //Equation equation = property.getAssign().getEquation();
+                    //return isCovPropertyForEstOperation(equation.getScalar().getValue());
+                    //}
                 }
             };
         }

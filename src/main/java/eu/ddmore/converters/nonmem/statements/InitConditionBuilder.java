@@ -5,17 +5,13 @@ package eu.ddmore.converters.nonmem.statements;
 
 import java.util.List;
 
-import javax.xml.bind.JAXBElement;
-
 import crx.converter.engine.parts.StructuralBlock;
 import eu.ddmore.converters.nonmem.utils.Formatter;
 import eu.ddmore.libpharmml.dom.commontypes.DerivativeVariable;
-import eu.ddmore.libpharmml.dom.commontypes.InitialValue;
-import eu.ddmore.libpharmml.dom.commontypes.IntValue;
-import eu.ddmore.libpharmml.dom.commontypes.RealValue;
 import eu.ddmore.libpharmml.dom.commontypes.Rhs;
+import eu.ddmore.libpharmml.dom.commontypes.Scalar;
+import eu.ddmore.libpharmml.dom.commontypes.StandardAssignable;
 import eu.ddmore.libpharmml.dom.commontypes.SymbolRef;
-import eu.ddmore.libpharmml.dom.maths.Equation;
 
 public class InitConditionBuilder {
 
@@ -50,16 +46,16 @@ public class InitConditionBuilder {
     private StringBuilder getInitConditionFromCompartment(DerivativeVariable variableType) {
         StringBuilder builder = new StringBuilder();
         if(variableType.getInitialCondition()!=null){
-            InitialValue initialValueType = variableType.getInitialCondition().getInitialValue();
+            StandardAssignable initialValueType = variableType.getInitialCondition().getInitialValue();
 
             if(initialValueType!=null){
                 Rhs assign = initialValueType.getAssign();
 
                 String initialCondition = getNmTranSpecificInitCondition(assign.getSymbRef(), assign.getScalar());
-                if(initialCondition.isEmpty()) {
-                    Equation equation = assign.getEquation();
-                    initialCondition = getNmTranSpecificInitCondition(equation.getSymbRef(), equation.getScalar());
-                }
+//                if(initialCondition.isEmpty()) {
+//                    Equation equation = assign.getEquation();
+//                    initialCondition = getNmTranSpecificInitCondition(equation.getSymbRef(), equation.getScalar());
+//                }
                 builder.append(initialCondition);
             }
         }
@@ -75,12 +71,12 @@ public class InitConditionBuilder {
      * @param scalar
      * @return
      */
-    private String getNmTranSpecificInitCondition(SymbolRef symbolRef, JAXBElement<?> scalar) {
+    private String getNmTranSpecificInitCondition(SymbolRef symbolRef, Scalar scalar) {
         if(symbolRef!=null){
             return getInitConditionFromSymbRef(symbolRef);
         }
         else if(scalar!=null){
-            return getInitConditionFromScalar(scalar.getValue());
+            return Formatter.endline("A_0("+derivativeVarCount+") = "+scalar.valueToString().toUpperCase());
         }else {
             return new String();
         }
@@ -99,25 +95,4 @@ public class InitConditionBuilder {
         }
         return Formatter.endline("A_0("+derivativeVarCount+") = "+initConditionVar.getSymbIdRef().toUpperCase());
     }
-
-    /**
-     * Create nmtran initial condition representation from scalar
-     * 
-     * @param derivativeVarCount
-     * @param value
-     * @return
-     */
-    private String getInitConditionFromScalar(Object value) {
-        if(derivativeVarCount==0 || value == null){
-            throw new IllegalStateException("Could not get initial condition for The derivative variable");
-        }
-        String initialCondition = new String();
-        if(value instanceof RealValue){
-            initialCondition = Double.toString(((RealValue)value).getValue());
-        } else if(value instanceof IntValue){
-            initialCondition = ((IntValue)value).getValue().toString();
-        }
-        return Formatter.endline("A_0("+derivativeVarCount+") = "+initialCondition.toUpperCase());
-    }
-
 }

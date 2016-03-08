@@ -43,9 +43,10 @@ public class EtaHandler {
     private Set<Eta> retrieveAllEtas(ScriptDefinition scriptDefinition) {
         List<ParameterBlock> blocks = scriptDefinition.getParameterBlocks();
         for(ParameterBlock block : blocks ){
+
             for(IndividualParameter parameterType: block.getIndividualParameters()){
-                if (parameterType.getGaussianModel() != null) {
-                    List<ParameterRandomEffect> randomEffects = parameterType.getGaussianModel().getRandomEffects();
+                if (parameterType.getStructuredModel() != null) {
+                    List<ParameterRandomEffect> randomEffects = parameterType.getStructuredModel().getListOfRandomEffects();
                     for (ParameterRandomEffect randomEffect : randomEffects) {
                         if (randomEffect == null) continue;
                         String eta = randomEffect.getSymbRef().get(0).getSymbIdRef();

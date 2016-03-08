@@ -15,9 +15,13 @@ import eu.ddmore.libpharmml.dom.modeldefn.CountData;
 import eu.ddmore.libpharmml.dom.modeldefn.CountPMF;
 import eu.ddmore.libpharmml.dom.modeldefn.TTEFunction;
 import eu.ddmore.libpharmml.dom.modeldefn.TimeToEventData;
+import eu.ddmore.libpharmml.dom.modeldefn.UncertML;
+import eu.ddmore.libpharmml.dom.uncertml.AbstractDiscreteUnivariateDistributionType;
 import eu.ddmore.libpharmml.dom.uncertml.NaturalNumberValueType;
 import eu.ddmore.libpharmml.dom.uncertml.NegativeBinomialDistribution;
+import eu.ddmore.libpharmml.dom.uncertml.NegativeBinomialDistributionType;
 import eu.ddmore.libpharmml.dom.uncertml.PoissonDistribution;
+import eu.ddmore.libpharmml.dom.uncertml.PoissonDistributionType;
 import eu.ddmore.libpharmml.dom.uncertml.PositiveRealValueType;
 import eu.ddmore.libpharmml.dom.uncertml.ProbabilityValueType;
 
@@ -66,7 +70,6 @@ public class DiscreteHandler {
                 } else if(block.getCategoricalData()!=null){
                     setCategoricalData(true);
                     //TODO : Categorical data
-
                 } else if(block.getTimeToEventData()!=null){
                     setTimeToEventData(true);
                     //TODO : Incomplete TTE data
@@ -103,21 +106,23 @@ public class DiscreteHandler {
     private StringBuilder getCountDataStatement(CountPMF countPMF) {
         StringBuilder countDistStatement = new StringBuilder();
 
-        if(countPMF.getDistribution() instanceof PoissonDistribution){
-            setPoissonDist(true);
+        UncertML uncertML = countPMF.getDistribution().getUncertML();
+        AbstractDiscreteUnivariateDistributionType dist = uncertML.getAbstractDiscreteUnivariateDistribution().getValue();
 
-            PoissonDistribution poissonDist = (PoissonDistribution) countPMF.getDistribution();
+        if(dist instanceof PoissonDistributionType){
+            setPoissonDist(true);
+            PoissonDistribution poissonDist = (PoissonDistribution) dist;
             String poissonDistVar = getCountDataValue(poissonDist.getRate());
             countDistStatement.append(createPoissonStatements(poissonDistVar));
 
-        } else if (countPMF.getDistribution() instanceof NegativeBinomialDistribution){
+        } else if(dist instanceof NegativeBinomialDistributionType){
             setNegativeBinomial(true);
-
-            NegativeBinomialDistribution negativeBinomialDist = (NegativeBinomialDistribution) countPMF.getDistribution();
+            NegativeBinomialDistribution negativeBinomialDist = (NegativeBinomialDistribution) dist;
             String numberOfFailures = getCountDataValue(negativeBinomialDist.getNumberOfFailures());
             String probability = getCountDataValue(negativeBinomialDist.getProbability());
             countDistStatement.append(createNegativeBinomialStatement(numberOfFailures, probability));
         }
+
         return countDistStatement;
     }
 

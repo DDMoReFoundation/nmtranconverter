@@ -15,37 +15,25 @@ import java.util.Set;
 import com.google.common.base.Preconditions;
 
 import crx.converter.engine.ScriptDefinition;
-import crx.converter.engine.parts.ObservationBlock;
-import crx.converter.engine.parts.ParameterBlock;
-import crx.converter.engine.parts.ParameterBlock.Event;
 import crx.converter.engine.parts.StructuralBlock;
 import crx.converter.spi.ILexer;
 import crx.converter.spi.IParser;
-import crx.converter.tree.BinaryTree;
 import eu.ddmore.converters.nonmem.eta.Eta;
+import eu.ddmore.converters.nonmem.parameters.CorrelationHandler;
+import eu.ddmore.converters.nonmem.parameters.ParametersBuilder;
+import eu.ddmore.converters.nonmem.parameters.ParametersInitialiser;
 import eu.ddmore.converters.nonmem.statements.DataSetHandler;
-import eu.ddmore.converters.nonmem.statements.ErrorStatement;
 import eu.ddmore.converters.nonmem.statements.EstimationDetailsEmitter;
 import eu.ddmore.converters.nonmem.statements.InputColumnsHandler;
 import eu.ddmore.converters.nonmem.statements.InterOccVariabilityHandler;
-import eu.ddmore.converters.nonmem.statements.PredStatement;
 import eu.ddmore.converters.nonmem.utils.DiscreteHandler;
 import eu.ddmore.converters.nonmem.utils.Formatter;
-import eu.ddmore.converters.nonmem.utils.Formatter.Block;
 import eu.ddmore.converters.nonmem.utils.Formatter.NmConstant;
 import eu.ddmore.converters.nonmem.utils.MuReferenceHandler;
-import eu.ddmore.converters.nonmem.utils.CorrelationHandler;
 import eu.ddmore.converters.nonmem.utils.OrderedThetasHandler;
-import eu.ddmore.converters.nonmem.utils.ParametersHelper;
 import eu.ddmore.libpharmml.dom.commontypes.DerivativeVariable;
-import eu.ddmore.libpharmml.dom.maths.Equation;
-import eu.ddmore.libpharmml.dom.maths.FunctionCallType;
-import eu.ddmore.libpharmml.dom.modeldefn.GaussianObsError;
-import eu.ddmore.libpharmml.dom.modeldefn.GaussianObsError.ErrorModel;
-import eu.ddmore.libpharmml.dom.modeldefn.GeneralObsError;
-import eu.ddmore.libpharmml.dom.modeldefn.ObservationError;
-import eu.ddmore.libpharmml.dom.modeldefn.SimpleParameter;
-import eu.ddmore.libpharmml.dom.modellingsteps.ExternalDataSet;
+import eu.ddmore.libpharmml.dom.modeldefn.PopulationParameter;
+import eu.ddmore.libpharmml.dom.trialdesign.ExternalDataSet;
 
 /**
  * Conversion context class accesses common converter for nmtran conversion and initialises 
@@ -56,12 +44,11 @@ public class ConversionContext {
 
     private final IParser parser;
     private final ILexer lexer;
-    private final ParametersHelper parameterHelper;
+    private final LocalParserHelper localParserHelper;
+    private final ParametersBuilder parametersBuilder;
     private final OrderedThetasHandler orderedThetasHandler;
     private final DiscreteHandler discreteHandler;
     private final CorrelationHandler correlationHandler;
-    private final List<String> thetas = new ArrayList<String>();
-    private final Map<String,ErrorStatement> errorStatements = new HashMap<String,ErrorStatement>();
     private final List<DerivativeVariable> derivativeVars = new ArrayList<DerivativeVariable>();
     private final Map<String, String> derivativeVarCompSequences = new HashMap<String, String>();
     private final ConditionalEventHandler conditionalEventHandler;
@@ -70,6 +57,7 @@ public class ConversionContext {
     private final InterOccVariabilityHandler iovHandler; 
     private final InputColumnsHandler inputColumnsHandler;
     private final DataSetHandler dataSetHandler;
+    private final ParametersInitialiser parameterInitialiser;
 
     ConversionContext(File srcFile, IParser parser, ILexer lexer) throws IOException{
         Preconditions.checkNotNull(srcFile, "source file cannot be null");
@@ -82,7 +70,7 @@ public class ConversionContext {
         lexer.setFilterReservedWords(true);
 
         parser.getSymbolReader().loadReservedWords();
-
+        localParserHelper = new LocalParserHelper(this);
 
         //This sequence of initialisation is important for information availability.  
         this.inputColumnsHandler = new InputColumnsHandler(retrieveExternalDataSets(),lexer.getCovariates());
@@ -95,7 +83,9 @@ public class ConversionContext {
         //Refers to discrete handler
         this.estimationEmitter = new EstimationDetailsEmitter(getScriptDefinition(), discreteHandler);
         estimationEmitter.processEstimationStatement();
-        this.parameterHelper = new ParametersHelper(this);
+        //initialise parameters
+        this.parameterInitialiser = initialisePopulationParams(lexer.getModelParameters());
+        this.parametersBuilder = new ParametersBuilder(this);
 
         this.conditionalEventHandler = new ConditionalEventHandler(this);
         this.muReferenceHandler = new MuReferenceHandler(this);
@@ -110,33 +100,22 @@ public class ConversionContext {
      */
     private void initialise() throws IOException{
 
-        //initialise parameters
-        if (lexer.getModelParameters().isEmpty()) {
-            throw new IllegalArgumentException("Cannot find simple parameters for the pharmML file.");
-        }
-
         if(dataSetHandler.getDataFile().exists()){
             iovHandler.retrieveIovColumnUniqueValues(dataSetHandler.getDataFile());
         }
         orderedThetasHandler.createOrderedThetasToEta(retrieveOrderedEtas());
-        parameterHelper.initialiseAllParameters(lexer.getModelParameters());
-        setThetaAssigments();
+        parametersBuilder.initialiseAllParameters();
 
         derivativeVars.addAll(getAllStateVariables());
         setDerivativeVarCompartmentSequence();
-
-        // Initialise error statement
-        prepareAllErrorStatements();
     }
 
-    /**
-     * Builds pred statement block.
-     *  
-     * @return pred statement
-     */
-    public StringBuilder buildPredStatement(){
-        PredStatement predStatement = new PredStatement(this);
-        return predStatement.getPredStatement();
+    private ParametersInitialiser initialisePopulationParams(List<PopulationParameter> populationParameters) {
+        if (populationParameters==null || populationParameters.isEmpty()) {
+            throw new IllegalArgumentException("Cannot find simple parameters for the pharmML file.");
+        }else{
+            return new ParametersInitialiser(populationParameters, getScriptDefinition());
+        }
     }
 
     /**
@@ -146,15 +125,15 @@ public class ConversionContext {
     public StringBuilder getParameterStatement() {
         StringBuilder parameterStatement = new StringBuilder();
 
-        String thetaStatement = parameterHelper.getThetaStatementBlock();
+        String thetaStatement = parametersBuilder.getThetasBuilder().getThetaStatementBlock();
         parameterStatement.append(thetaStatement);
 
-        String omegaStatement = parameterHelper.getOmegaStatementBlock();
+        String omegaStatement = parametersBuilder.getOmegasBuilder().getOmegaStatementBlock();
         if(!omegaStatement.isEmpty()){
             parameterStatement.append(omegaStatement);
         }
 
-        String omegaStatementForIOV = parameterHelper.getOmegaStatementBlockForIOV();
+        String omegaStatementForIOV = parametersBuilder.getOmegasBuilder().getOmegaStatementBlockForIOV();
         if(!omegaStatementForIOV.isEmpty()){
             parameterStatement.append(omegaStatementForIOV);
         }
@@ -165,7 +144,7 @@ public class ConversionContext {
             parameterStatement.append(Formatter.endline(Formatter.omega()+"0 "+NmConstant.FIX));
         }
 
-        String sigmaStatement = parameterHelper.getSigmaStatementBlock();
+        StringBuilder sigmaStatement = parametersBuilder.getSigmasBuilder().getSigmaStatementBlock();
         parameterStatement.append(sigmaStatement);
 
         return parameterStatement;
@@ -176,7 +155,8 @@ public class ConversionContext {
      * @return 
      */
     public boolean isSigmaPresent(){
-        return !parameterHelper.getSigmaStatementBlock().trim().isEmpty();
+        StringBuilder sigmaStement = parametersBuilder.getSigmasBuilder().getSigmaStatementBlock();
+        return !sigmaStement.toString().trim().isEmpty();
     }
 
     /**
@@ -184,7 +164,7 @@ public class ConversionContext {
      * @return
      */
     public boolean isOmegaForIIVPresent(){
-        return !parameterHelper.getOmegaStatementBlock().trim().isEmpty();
+        return !parametersBuilder.getOmegasBuilder().getOmegaStatementBlock().trim().isEmpty();
     }
 
     /**
@@ -192,153 +172,7 @@ public class ConversionContext {
      * @return
      */
     public boolean isOmegaForIOVPresent(){
-        return !parameterHelper.getOmegaStatementBlockForIOV().trim().isEmpty();
-    }
-
-    /**
-     * This method will build simple parameter assignment statements
-     * @return
-     */
-    public StringBuilder getSimpleParamAssignments() {
-        StringBuilder simpleParamAssignmentBlock = new StringBuilder();
-        Map<String, SimpleParameter> params = parameterHelper.getSimpleParamsWithAssignment();
-
-        for(String simpleParamSymbol : params.keySet()){
-            SimpleParameter simpleParam = params.get(simpleParamSymbol);
-            Event event = getEventForParameter(simpleParam);
-            String parsedEquation = new String();
-            if(event !=null){
-                if(event.getPiecewiseTree()!=null && event.getPiecewiseTree().size()>0){
-                    parsedEquation = parse(event.getParameter(), event.getPiecewiseTree());
-                }
-            }else {
-                Equation simpleParamAssignmentEq = simpleParam.getAssign().getEquation();
-                parsedEquation = simpleParamSymbol+ " = "+ getParser().getSymbol(simpleParamAssignmentEq);
-            }
-
-            if(!parsedEquation.isEmpty()){
-                simpleParamAssignmentBlock.append(Formatter.endline(parsedEquation));
-            }
-        }
-        return simpleParamAssignmentBlock;
-    }
-
-    private Event getEventForParameter(SimpleParameter param){
-        for(ParameterBlock pb : getScriptDefinition().getParameterBlocks()){
-            if (pb.hasEvents()) {
-                for (Event event : pb.getEvents()) {
-                    if (event != null) {
-                        if (param.getSymbId().equals(event.getParameter().getSymbId())){
-                            return event;
-                        }
-                    }
-                }
-            }
-        }
-        return null;
-    }
-
-    /**
-     * Set theta assignements from theta parameters generated.
-     */
-    private void setThetaAssigments(){
-        thetas.addAll(parameterHelper.getThetaParams().keySet());
-    }
-
-    /**
-     * This method builds theta assignment statements with help of parameter helper.
-     * @return theta assignments
-     */
-    public StringBuilder buildThetaAssignments() {
-        StringBuilder thetaAssignmentBlock = new StringBuilder();  
-        for(String theta : parameterHelper.getThetaParams().keySet()){
-            String thetaSymbol = replaceIfReservedVarible(theta);
-
-            thetaAssignmentBlock.append(Formatter.endline(thetaSymbol+ " = "+getThetaForSymbol(theta)));
-        }
-        return thetaAssignmentBlock;
-    }
-
-    private String replaceIfReservedVarible(String variable) {
-        String varSymbol = variable.toUpperCase();
-        if (lexer.isFilterReservedWords()) {
-            if (parser.getSymbolReader().isReservedWord(varSymbol)) {
-                varSymbol = parser.getSymbolReader().replacement4ReservedWord(varSymbol);
-                if (varSymbol == null){
-                    throw new NullPointerException("Replacement symbol for reserved word ('" + varSymbol + "') undefined.");
-                }
-            }
-        }
-        return varSymbol;
-    }
-
-    /**
-     * This method will get theta format for symbol. 
-     *  
-     * @param symbol
-     * @return
-     */
-    private String getThetaForSymbol(String symbol){
-        if(thetas.isEmpty()){
-            setThetaAssigments();
-        }
-        if(thetas.contains(symbol)){
-            symbol = String.format(Block.THETA+"(%s)",thetas.indexOf(symbol)+1);
-        }
-        return symbol;
-    }
-
-    /**
-     * This method will build eta assignment statements to be displayed after theta assignments.
-     * @return
-     */
-    public StringBuilder buildEtaAssignments() {
-        StringBuilder etaAssignment = new StringBuilder();
-        Set<Eta> orderedThetas = retrieveOrderedEtas();
-        for(Eta eta : orderedThetas){
-            etaAssignment.append(Formatter.endline(eta.getEtaSymbol()+ " = "+Formatter.etaFor(eta.getEtaOrderSymbol())));
-        }
-        return etaAssignment;
-    }
-
-    /**
-     * This method will list prepare all the error statements and returns the list.
-     * We need to prepare this list separately as we need to use it in DES block before writing out to ERROR block.
-     * @return
-     */
-    private Map<String,ErrorStatement> prepareAllErrorStatements(){
-
-        for(ObservationBlock block : lexer.getScriptDefinition().getObservationBlocks()){
-            ObservationError errorType = block.getObservationError();
-            if(errorType instanceof GeneralObsError){
-                //              GeneralObsError genError = (GeneralObsError) errorType;
-                //              TODO : DDMORE-1013 : add support for general observation error type once details are available
-                //              throw new IllegalArgumentException("general observation error type is not yet supported.");
-            }
-            if(errorType instanceof GaussianObsError){
-                GaussianObsError error = (GaussianObsError) errorType;
-                ErrorStatement errorStatement = prepareErrorStatement(error);
-                errorStatements.put(error.getSymbId(), errorStatement);
-            }else{
-                //              TODO : Check if there are any other types to encounter
-            }
-        }
-        return errorStatements;
-    }
-
-    /**
-     * Prepares and returns error statement for the gaussian observation error.
-     * 
-     * @param error
-     * @return
-     */
-    private ErrorStatement prepareErrorStatement(GaussianObsError error) {
-        ErrorModel errorModel = error.getErrorModel();
-        String output = error.getOutput().getSymbRef().getSymbIdRef();
-        FunctionCallType functionCall = errorModel.getAssign().getEquation().getFunctionCall();
-
-        ErrorStatement errorStatement = new ErrorStatement(functionCall, output);
-        return errorStatement;
+        return !parametersBuilder.getOmegasBuilder().getOmegaStatementBlockForIOV().trim().isEmpty();
     }
 
     private Map<String, String> setDerivativeVarCompartmentSequence(){
@@ -364,48 +198,23 @@ public class ConversionContext {
     }
 
     /**
-     * It will parse the object passed and returns parsed results in form of string.
-     *  
-     * @param context
-     * @return
-     */
-    public String parse(Object context){
-        return parse(context, lexer.getStatement(context));
-    }
-
-    /**
      * Get external dataSets from list of data files 
      * @return
      */
     public List<ExternalDataSet> retrieveExternalDataSets(){
-        return getLexer().getDataFiles().getExternalDataSets();
+        return lexer.getDataFiles().getExternalDataSets();
     }
 
     public Map<String, String> getReservedWords(){
         return parser.getSymbolReader().getReservedWordMap();
     }
 
-    /**
-     * It will parse the object passed with help of binary tree provided.
-     * This tree is generated by common converter for elements.
-     * 
-     * @param context
-     * @return
-     */
-    public String parse(Object context, BinaryTree tree){
-        return parser.parse(context, tree);
-    }
-
     public ScriptDefinition getScriptDefinition(){
         return lexer.getScriptDefinition();
     }
 
-    public ParametersHelper getParameterHelper() {
-        return parameterHelper;
-    }
-
-    public Map<String,ErrorStatement> getErrorStatements() {
-        return errorStatements;
+    public ParametersBuilder getParametersBuilder() {
+        return parametersBuilder;
     }
 
     public IParser getParser() {
@@ -462,5 +271,13 @@ public class ConversionContext {
 
     public EstimationDetailsEmitter getEstimationEmitter() {
         return estimationEmitter;
+    }
+
+    public LocalParserHelper getLocalParserHelper() {
+        return localParserHelper;
+    }
+
+    public ParametersInitialiser getParameterInitialiser() {
+        return parameterInitialiser;
     }
 }

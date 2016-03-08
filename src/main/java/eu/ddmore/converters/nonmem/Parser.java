@@ -3,7 +3,6 @@
  ******************************************************************************/
 package eu.ddmore.converters.nonmem;
 
-import static crx.converter.engine.PharmMLTypeChecker.isActivity;
 import static crx.converter.engine.PharmMLTypeChecker.isBinaryOperation;
 import static crx.converter.engine.PharmMLTypeChecker.isUnaryOperation;
 import static crx.converter.engine.PharmMLTypeChecker.isConstant;
@@ -19,7 +18,6 @@ import static crx.converter.engine.PharmMLTypeChecker.isInitialCondition;
 import static crx.converter.engine.PharmMLTypeChecker.isJAXBElement;
 import static crx.converter.engine.PharmMLTypeChecker.isLocalVariable;
 import static crx.converter.engine.PharmMLTypeChecker.isObservationModel;
-import static crx.converter.engine.PharmMLTypeChecker.isParameter;
 import static crx.converter.engine.PharmMLTypeChecker.isParameterEstimate;
 import static crx.converter.engine.PharmMLTypeChecker.isPiece;
 import static crx.converter.engine.PharmMLTypeChecker.isPiecewise;
@@ -29,6 +27,7 @@ import static crx.converter.engine.PharmMLTypeChecker.isScalarInterface;
 import static crx.converter.engine.PharmMLTypeChecker.isSequence;
 import static crx.converter.engine.PharmMLTypeChecker.isSymbolReference;
 import static crx.converter.engine.PharmMLTypeChecker.isVector;
+import static crx.converter.engine.PharmMLTypeChecker.isPopulationParameter;
 
 import java.io.File;
 import java.io.IOException;
@@ -40,7 +39,6 @@ import java.util.Properties;
 import javax.xml.bind.JAXBElement;
 
 import crx.converter.engine.BaseParser;
-import crx.converter.engine.CategoryRef;
 import crx.converter.engine.parts.EstimationStep.FixedParameter;
 import crx.converter.engine.parts.ObservationBlock.ObservationParameter;
 import crx.converter.tree.BinaryTree;
@@ -48,6 +46,8 @@ import crx.converter.tree.Node;
 import eu.ddmore.converters.nonmem.utils.Formatter;
 import eu.ddmore.converters.nonmem.utils.Formatter.Symbol;
 import eu.ddmore.libpharmml.dom.IndependentVariable;
+import eu.ddmore.libpharmml.dom.commontypes.AnnotationType;
+import eu.ddmore.libpharmml.dom.commontypes.CategoryRef;
 import eu.ddmore.libpharmml.dom.commontypes.PharmMLRootType;
 import eu.ddmore.libpharmml.dom.commontypes.SymbolRef;
 import eu.ddmore.libpharmml.dom.maths.Binop;
@@ -61,8 +61,7 @@ import eu.ddmore.libpharmml.dom.maths.Uniop;
 import eu.ddmore.libpharmml.dom.modeldefn.CovariateDefinition;
 import eu.ddmore.libpharmml.dom.modeldefn.CovariateTransformation;
 import eu.ddmore.libpharmml.dom.modeldefn.ParameterRandomVariable;
-import eu.ddmore.libpharmml.dom.modeldefn.SimpleParameter;
-import eu.ddmore.libpharmml.dom.trialdesign.Activity;
+import eu.ddmore.libpharmml.dom.modeldefn.PopulationParameter;
 
 public class Parser extends BaseParser {
 
@@ -95,7 +94,7 @@ public class Parser extends BaseParser {
     private String getCategoryMappingFor(String modelSymbol){
         CategoryRef cref = (CategoryRef) lexer.getAccessor().fetchElement(modelSymbol.toLowerCase());
         if(cref != null){
-            modelSymbol = cref.getDataSymbol();
+            modelSymbol = cref.getId();
         }
         return modelSymbol;
     }
@@ -142,7 +141,7 @@ public class Parser extends BaseParser {
      * @return String
      */
     @Override
-    protected String doParameter(SimpleParameter p) {
+    protected String doParameter(PopulationParameter p) {
         return z.get(p);
     }
 
@@ -158,7 +157,7 @@ public class Parser extends BaseParser {
             if(isLocalVariable(context)){
                 current_symbol = getSymbol(context).toUpperCase();
                 current_value = getValueWhenPiecewise(leaf, inPiecewise, current_symbol);
-            }else if (isDerivative(context) || isParameter(context)) {
+            }else if (isDerivative(context) || isPopulationParameter(context)) {
                 current_symbol = getSymbol(context);
                 String description = (isRootType(context))? readDescription((PharmMLRootType) context) : current_symbol;
                 current_value = getValueWhenPiecewise(leaf, inPiecewise, description);
@@ -170,8 +169,8 @@ public class Parser extends BaseParser {
             } else if (isContinuousCovariate(context)) {
                 current_symbol = getSymbol(context).toUpperCase();
                 current_value = Formatter.endline(String.format(equationFormat, current_symbol, leaf.data));
-            } else if (isActivity(context)) {
-                current_value = getSymbol(new ActivityDoseAmountBlock((Activity) context, (String) leaf.data));
+                //            } else if (isActivity(context)) {
+                //                current_value = getSymbol(new ActivityDoseAmountBlock((Activity) context, (String) leaf.data));
             } else if (isIndividualParameter(context)) {
                 current_symbol = getSymbol(context);
                 current_value = getValueWhenPiecewise(leaf, inPiecewise, current_symbol);
@@ -208,6 +207,21 @@ public class Parser extends BaseParser {
             }
         } else
             throw new IllegalStateException("Should be a statement string bound to the root.data element.");
+    }
+
+    /**
+     * Read the description type of a model element.
+     * @param v
+     * @return java.lang.String
+     */
+    protected String readDescription(PharmMLRootType v) {
+        String description = "";
+        if (v != null) {
+            AnnotationType desc = v.getDescription();
+            if (desc != null) description = desc.getValue();
+        }
+
+        return description;
     }
 
     private String getValueWhenPiecewise(Node leaf, boolean inPiecewise, String description) {
@@ -348,13 +362,13 @@ public class Parser extends BaseParser {
         BinaryTree assignmentTree = null;
 
         if (isBinaryOperation(expressionValue)) {
-            assignmentTree = lexer.getTreeMaker().newInstance(getEquation((Binop) expressionValue));
+            assignmentTree = lexer.getTreeMaker().newInstance((Binop) expressionValue);
         }else if (isUnaryOperation(expressionValue)) {
-            assignmentTree = lexer.getTreeMaker().newInstance(getEquation((Uniop) expressionValue));
+            assignmentTree = lexer.getTreeMaker().newInstance((Uniop) expressionValue);
         }else if (isFunctionCall(expressionValue)) {
-            assignmentTree = lexer.getTreeMaker().newInstance(getEquation((FunctionCallType) expressionValue));
+            assignmentTree = lexer.getTreeMaker().newInstance((FunctionCallType) expressionValue);
         } else if (isJAXBElement(expressionValue)) {
-            assignmentTree = lexer.getTreeMaker().newInstance(getEquation((JAXBElement<?>) expressionValue));
+            assignmentTree = lexer.getTreeMaker().newInstance((JAXBElement<?>) expressionValue);
         } else if (isScalarInterface(expressionValue) || isSymbolReference(expressionValue) || isConstant(expressionValue) ) {
             assignmentTree = lexer.getTreeMaker().newInstance(expressionValue);
         } else 

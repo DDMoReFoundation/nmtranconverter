@@ -1,17 +1,22 @@
+/*******************************************************************************
+ * Copyright (C) 2015 Mango Solutions Ltd - All rights reserved.
+ ******************************************************************************/
 package eu.ddmore.converters.nonmem.statements;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.when;
+
 import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
 
 import crx.converter.engine.parts.EstimationStep;
 import eu.ddmore.converters.nonmem.statements.EstimationDetailsEmitter.EstConstant;
@@ -23,7 +28,6 @@ import eu.ddmore.libpharmml.dom.modellingsteps.Algorithm;
 import eu.ddmore.libpharmml.dom.modellingsteps.EstimationOpType;
 import eu.ddmore.libpharmml.dom.modellingsteps.EstimationOperation;
 
-@RunWith(PowerMockRunner.class)
 @PrepareForTest(ScriptDefinitionAccessor.class)
 public class EstimationDetailsEmitterTest extends BasicTestSetup {
 

@@ -15,12 +15,15 @@ import eu.ddmore.converters.nonmem.statements.InputStatement;
 import eu.ddmore.converters.nonmem.statements.ProblemStatement;
 import eu.ddmore.converters.nonmem.statements.SimulationStatement;
 import eu.ddmore.converters.nonmem.statements.TableStatement;
+import eu.ddmore.converters.nonmem.statements.model.ModelStatement;
 import eu.ddmore.converters.nonmem.utils.Formatter;
 import eu.ddmore.convertertoolbox.api.response.ConversionReport;
 import eu.ddmore.convertertoolbox.domain.LanguageVersionImpl;
 import eu.ddmore.convertertoolbox.domain.VersionImpl;
 
-
+/**
+ * Converter provider helps conversion from pharmml file to nmtran.
+ */
 public class ConverterProvider extends Lexer {
     String model_filename = new String();
     private static final String SCRIPT_FILE_SUFFIX = "ctl";
@@ -44,9 +47,11 @@ public class ConverterProvider extends Lexer {
 
     @Override
     protected void initialise() {
-        setSortParameterModel(true);
+        setSortParameterModel(false);
+        setSortParameterModelByContext(true);
         setSortStructuralModel(true);
         setValidateXML(true);
+
         EstimationStep.setUseDefaultParameterEstimate(true);
         EstimationStep.setDefaultParameterEstimateValue(1.0);
         setUsePiecewiseAsEvents(true);
@@ -90,8 +95,8 @@ public class ConverterProvider extends Lexer {
         return String.format(format, output_dir, modelFileName, SCRIPT_FILE_SUFFIX);
     }
 
-    private void createPKPDScript(PrintWriter fout, File src, File output_dir) throws IOException {
-        if (fout == null || output_dir == null) return;
+    private void createPKPDScript(PrintWriter fout, File src, File outputDirectory) throws IOException {
+        if (fout == null || outputDirectory == null) return;
         ConversionContext context = new ConversionContext(src, getParser(), this);
 
         ProblemStatement problemStatement = new ProblemStatement(getModelName());
@@ -111,7 +116,8 @@ public class ConverterProvider extends Lexer {
         fout.write(dataStatement.getStatement());
         fout.write(getSimulationStatement());
 
-        fout.write(context.buildPredStatement().toString());
+        ModelStatement modelStatement = new ModelStatement(context);
+        fout.write(modelStatement.getModelStatement().toString());
         fout.write(context.getParameterStatement().toString());
 
         EstimationStatement estStatement = new EstimationStatement(context.getEstimationEmitter());

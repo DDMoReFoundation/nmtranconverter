@@ -1,3 +1,6 @@
+/*******************************************************************************
+ * Copyright (C) 2015 Mango Solutions Ltd - All rights reserved.
+ ******************************************************************************/
 package eu.ddmore.converters.nonmem.statements;
 
 import static org.junit.Assert.assertEquals;
@@ -15,10 +18,8 @@ import java.util.Map;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
 
 import crx.converter.engine.parts.ParameterBlock;
 import eu.ddmore.converters.nonmem.ConversionContext;
@@ -29,7 +30,6 @@ import eu.ddmore.libpharmml.dom.commontypes.SymbolRef;
 import eu.ddmore.libpharmml.dom.dataset.ColumnType;
 import eu.ddmore.libpharmml.dom.modeldefn.ParameterRandomVariable;
 
-@RunWith(PowerMockRunner.class)
 @PrepareForTest(RandomVariableHelper.class)
 public class InterOccVariabilityHandlerTest extends BasicTestSetup {
 
@@ -44,6 +44,8 @@ public class InterOccVariabilityHandlerTest extends BasicTestSetup {
     private List<ParameterBlock> paramBlocks = new ArrayList<>();
     private List<ParameterRandomVariable> randomVariables = new ArrayList<>();
     private List<InputColumn> columns = new ArrayList<>();
+    private List<LevelReference> varReferences = new ArrayList<>();
+    
     private final String columnName = "COLUMN";
     private final String OMEGA_NAME = "OMEGA";
     private InputColumn column = new InputColumn(columnName, false, 1, ColumnType.OCCASION);
@@ -69,7 +71,8 @@ public class InterOccVariabilityHandlerTest extends BasicTestSetup {
     private void mockRandomVariables() {
         when(RandomVariableHelper.getNameFromParamRandomVariable(variable)).thenReturn(OMEGA_NAME);
         when(variable.getSymbId()).thenReturn(PARAM_VAR);
-        when(variable.getVariabilityReference()).thenReturn(levelRef);
+        varReferences.add(levelRef);
+        when(variable.getListOfVariabilityReference()).thenReturn(varReferences);
         randomVariables.add(variable);
     }
 

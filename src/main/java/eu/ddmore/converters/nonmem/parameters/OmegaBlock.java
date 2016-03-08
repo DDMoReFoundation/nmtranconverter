@@ -1,4 +1,4 @@
-package eu.ddmore.converters.nonmem.statements;
+package eu.ddmore.converters.nonmem.parameters;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -8,9 +8,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
-import crx.converter.engine.parts.BaseRandomVariableBlock.CorrelationRef;
-
 import eu.ddmore.converters.nonmem.eta.Eta;
+import eu.ddmore.converters.nonmem.statements.OmegaStatement;
 
 /**
  * Omega block which stores information related to omega statement block.
@@ -18,7 +17,7 @@ import eu.ddmore.converters.nonmem.eta.Eta;
  */
 public class OmegaBlock {
 
-    private List<CorrelationRef> correlations = new ArrayList<>();
+    private List<CorrelationsWrapper> correlations = new ArrayList<>();
     private final Set<Eta> orderedEtas = new TreeSet<Eta>();
     private Map<Eta, String> etasToOmegas = new LinkedHashMap<Eta, String>();
     private Map<Eta, List<OmegaStatement>> omegaStatements = new HashMap<Eta, List<OmegaStatement>>();
@@ -32,7 +31,7 @@ public class OmegaBlock {
         orderedEtas.add(eta);
     }
 
-    public void addToCorrelations(CorrelationRef correlation){
+    public void addToCorrelations(CorrelationsWrapper correlation){
         correlations.add(correlation);
     }
 
@@ -88,11 +87,11 @@ public class OmegaBlock {
         this.omegaStatements = omegaStatements;
     }
 
-    public List<CorrelationRef> getCorrelations() {
+    public List<CorrelationsWrapper> getCorrelations() {
         return correlations;
     }
 
-    public void setCorrelations(List<CorrelationRef> correlations) {
+    public void setCorrelations(List<CorrelationsWrapper> correlations) {
         this.correlations = correlations;
     }
 

@@ -61,7 +61,8 @@ public class RandomVariableHelper {
      */
     public static PositiveRealValueType getDistributionTypeStdDev(ParameterRandomVariable rv){
         Preconditions.checkNotNull(rv, "Parameter random variable cannot be null.");
-        final AbstractContinuousUnivariateDistributionType distributionType = rv.getAbstractContinuousUnivariateDistribution().getValue();
+        final AbstractContinuousUnivariateDistributionType distributionType = rv.getDistribution().getUncertML().getAbstractContinuousUnivariateDistribution().getValue();  //rv.getAbstractContinuousUnivariateDistribution().getValue();
+        
         if (distributionType instanceof NormalDistribution) {
             return ((NormalDistribution) distributionType).getStddev();
         }
@@ -75,7 +76,7 @@ public class RandomVariableHelper {
      */
     public static PositiveRealValueType getDistributionTypeVariance(ParameterRandomVariable rv){
         Preconditions.checkNotNull(rv, "Parameter random variable cannot be null.");
-        final AbstractContinuousUnivariateDistributionType distributionType = rv.getAbstractContinuousUnivariateDistribution().getValue();
+        final AbstractContinuousUnivariateDistributionType distributionType = rv.getDistribution().getUncertML().getAbstractContinuousUnivariateDistribution().getValue();
         if (distributionType instanceof NormalDistribution) {
             return ((NormalDistribution) distributionType).getVariance();
         }

@@ -1,4 +1,7 @@
-package eu.ddmore.converters.nonmem.statements;
+/*******************************************************************************
+ * Copyright (C) 2015 Mango Solutions Ltd - All rights reserved.
+ ******************************************************************************/
+package eu.ddmore.converters.nonmem.statements.model;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -9,14 +12,12 @@ import java.util.List;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.powermock.modules.junit4.PowerMockRunner;
 
-import crx.converter.engine.ScriptDefinition;
 import crx.converter.engine.parts.StructuralBlock;
 import eu.ddmore.converters.nonmem.ConversionContext;
-import eu.ddmore.converters.nonmem.statements.PkMacroAnalyser.PkMacroDetails;
+import eu.ddmore.converters.nonmem.statements.BasicTestSetup;
+import eu.ddmore.converters.nonmem.statements.model.PkMacroAnalyser.PkMacroDetails;
 import eu.ddmore.libpharmml.dom.modeldefn.pkmacro.AbsorptionOralMacro;
 import eu.ddmore.libpharmml.dom.modeldefn.pkmacro.CompartmentMacro;
 import eu.ddmore.libpharmml.dom.modeldefn.pkmacro.EliminationMacro;
@@ -25,12 +26,10 @@ import eu.ddmore.libpharmml.dom.modeldefn.pkmacro.OralMacro;
 import eu.ddmore.libpharmml.dom.modeldefn.pkmacro.PKMacro;
 import eu.ddmore.libpharmml.dom.modeldefn.pkmacro.PeripheralMacro;
 
-@RunWith(PowerMockRunner.class)
-public class PkMacroAnalyserTest {
+public class PkMacroAnalyserTest extends BasicTestSetup {
 
     PkMacroAnalyser analyser = new PkMacroAnalyser();
     @Mock ConversionContext context;
-    @Mock ScriptDefinition definition;
     @Mock PkMacroDetails details;
     @Mock StructuralBlock block;
 
@@ -42,16 +41,17 @@ public class PkMacroAnalyserTest {
 
     @Before
     public void setUp() throws Exception {
-        when(context.getScriptDefinition()).thenReturn(definition);
+
         List<StructuralBlock> blocks = new ArrayList<StructuralBlock>();
         blocks.add(block);
-        when(definition.getStructuralBlocks()).thenReturn(blocks);
+        when(scriptDefinition.getStructuralBlocks()).thenReturn(blocks);
 
         when(details.getCompartments()).thenReturn(cmtMacros);
         when(details.getEliminations()).thenReturn(eliminationMacros);
         when(details.getIvs()).thenReturn(ivMacros);
         when(details.getAbsorptionOrals()).thenReturn(oralMacros);
         when(details.getPeripherals()).thenReturn(peripheralMacros);
+        when(context.getScriptDefinition()).thenReturn(scriptDefinition);
     }
 
     @Test

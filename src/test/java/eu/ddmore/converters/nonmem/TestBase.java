@@ -54,6 +54,19 @@ public abstract class TestBase {
         c.setAddPlottingBlock(false);
     }
 
+    /*
+     * 
+     *  f = new File(inputXMLFile);
+        c = new Converter();
+        Converter.getManager().setFixedRunId(fixedRunId);
+        c.setUseCrxImplConversionReport(useCrxReportDetail);
+        c.setAddPlottingBlock(false);
+        c.setRunId("test");
+        BaseLexer.getManager().setFixedRunId(true);
+        job = new Job();
+        job.setInterpreterExePath(interpreter_path);
+        job.setCommandFormat(command_format);
+     */
     /**
      * 
      * @param relativePathToFile

@@ -1,3 +1,6 @@
+/*******************************************************************************
+ * Copyright (C) 2015 Mango Solutions Ltd - All rights reserved.
+ ******************************************************************************/
 package eu.ddmore.converters.nonmem.statements;
 
 import static org.junit.Assert.assertEquals;
@@ -15,14 +18,11 @@ import java.util.List;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
 
-import eu.ddmore.libpharmml.dom.modellingsteps.ExternalDataSet;
+import eu.ddmore.libpharmml.dom.trialdesign.ExternalDataSet;
 
-@RunWith(PowerMockRunner.class)
 @PrepareForTest(DataSetHandler.class)
 public class DataSetHandlerTest extends BasicTestSetup  {
 
@@ -58,7 +58,6 @@ public class DataSetHandlerTest extends BasicTestSetup  {
 
     }
 
-    //getDataFileName()
     @Test
     public void shouldGetDataFileName() {
 

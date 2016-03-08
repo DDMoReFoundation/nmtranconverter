@@ -27,8 +27,8 @@ public class TestUseCaseConversions extends TestBase {
         inputXMLFile = "UseCase15.xml";
         inputDataFile = "warfarin_conc_cmt.csv";
 
-        init(inputDataFile, V_0_4_1_SUBDIR+USECASE_DIR);
-        init(inputXMLFile, V_0_4_1_SUBDIR+USECASE_DIR);
+        init(inputDataFile, V_0_8_SUBDIR);
+        init(inputXMLFile, V_0_8_SUBDIR);
     }
 
     /**
@@ -38,8 +38,8 @@ public class TestUseCaseConversions extends TestBase {
      * @throws Exception
      */
     public void updateSetUpWith(String inputXMLFile, String inputDataFile) throws Exception {
-        init(inputDataFile, V_0_4_1_SUBDIR+USECASE_DIR);
-        init(inputXMLFile, V_0_4_1_SUBDIR+USECASE_DIR);
+        init(inputDataFile, V_0_8_SUBDIR);
+        init(inputXMLFile, V_0_8_SUBDIR);
     }
 
     @Test
@@ -71,10 +71,21 @@ public class TestUseCaseConversions extends TestBase {
         updateSetUpWith(inputXMLFile, inputDataFile);
         test();
 
-        inputXMLFile = "UseCase2_5.xml";
+        inputXMLFile = "UseCase2_1.xml";
         inputDataFile = "warfarin_conc_analytic.csv";
         updateSetUpWith(inputXMLFile, inputDataFile);
-        //        test();
+        test();
+
+        inputXMLFile = "UseCase2_2.xml";
+        inputDataFile = "warfarin_conc_analytic.csv";
+        updateSetUpWith(inputXMLFile, inputDataFile);
+        test();
+
+        //N/A
+        inputXMLFile = "UseCase2_5.xml";
+        inputDataFile = "warfarin_conc_analytic.csv";
+        //updateSetUpWith(inputXMLFile, inputDataFile);
+        //test();
 
         inputXMLFile = "UseCase3.xml";
         inputDataFile = "warfarin_conc_pca.csv";
@@ -107,9 +118,9 @@ public class TestUseCaseConversions extends TestBase {
         test();
 
         inputXMLFile = "UseCase8_4.xml";
-        inputDataFile = "warfarin_conc_bov_P4_sort.csv";
+        inputDataFile = "warfarin_conc_bov_P4.csv";
         updateSetUpWith(inputXMLFile, inputDataFile);
-        //test();
+        test();
 
         inputXMLFile = "UseCase9.xml";
         inputDataFile = "warfarin_infusion.csv";
@@ -129,7 +140,7 @@ public class TestUseCaseConversions extends TestBase {
         inputXMLFile = "UseCase11.xml";
         inputDataFile = "count.csv";
         updateSetUpWith(inputXMLFile, inputDataFile);
-        test();
+        //test();
 
         inputXMLFile = "UseCase14.xml";
         inputDataFile = "warfarin_TTE_exact.csv";
@@ -144,7 +155,7 @@ public class TestUseCaseConversions extends TestBase {
         inputXMLFile = "UseCase16.xml";
         inputDataFile = "BIOMARKER_simDATA.csv";
         updateSetUpWith(inputXMLFile, inputDataFile);
-        //test();
+        test();
 
         inputXMLFile = "UseCase17.xml";
         inputDataFile = "warfarin_conc_SS.csv";

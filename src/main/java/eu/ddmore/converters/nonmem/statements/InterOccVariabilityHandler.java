@@ -86,13 +86,13 @@ public class InterOccVariabilityHandler {
      */
     public boolean isRandomVarIOV(ParameterRandomVariable variable){
         boolean isIOV = false;
-        if(variable.getVariabilityReference()!=null){
-            LevelReference levelRef = variable.getVariabilityReference();
-            if(levelRef.getSymbRef().getSymbIdRef()!=null){
-                String variabilityRef = levelRef.getSymbRef().getSymbIdRef();
-
-                if(columnWithOcc!=null && columnWithOcc.getColumnId().equals(variabilityRef)){
-                    isIOV = true;
+        if(variable.getListOfVariabilityReference()!=null){
+            for(LevelReference levelRef : variable.getListOfVariabilityReference()){
+                if(levelRef.getSymbRef().getSymbIdRef()!=null){
+                    String variabilityRef = levelRef.getSymbRef().getSymbIdRef();
+                    if(columnWithOcc!=null && columnWithOcc.getColumnId().equals(variabilityRef)){
+                        isIOV = true;
+                    }
                 }
             }
         }
@@ -113,7 +113,7 @@ public class InterOccVariabilityHandler {
                 reader.readHeaders();
                 while (reader.readRecord())
                 {
-                    Double value = Double.parseDouble(reader.get(columnWithOcc.getColumnId()));
+                    Double value = Double.parseDouble(reader.get(columnWithOcc.getColumnSequence()+1));
                     if(!iovColumnUniqueValues.contains(value)){
                         iovColumnUniqueValues.add(value);
                     }

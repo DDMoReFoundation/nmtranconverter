@@ -9,12 +9,15 @@ import eu.ddmore.converters.nonmem.utils.ScalarValueHandler;
 import eu.ddmore.libpharmml.dom.maths.FunctionCallType;
 import eu.ddmore.libpharmml.dom.maths.FunctionCallType.FunctionArgument;
 
+/**
+ * Initialises and stores error statement and related information for nmtran
+ */
 public class ErrorStatement {
 
-    enum ErrorConstant{
+    public enum ErrorConstant{
         DV,	IWRES, IRES, IPRED, Y, W;
     }
-    enum FunctionArg{
+    public enum FunctionArg{
         ADDITIVE ("additive"),
         PROP ("proportional"),
         FUNC ("f");
@@ -47,7 +50,7 @@ public class ErrorStatement {
      */
     private void initParamsFromFunctionDetails(String output){
         errorType = functionCallType.getSymbRef().getSymbIdRef();
-        for(FunctionArgument arg : functionCallType.getFunctionArgument()){
+        for(FunctionArgument arg : functionCallType.getListOfFunctionArgument()){
             String paramValue = fetchParamValue(arg);
             if(arg.getSymbId()!=null && paramValue!=null){
 

@@ -13,7 +13,8 @@ import com.google.common.base.Preconditions;
 import eu.ddmore.converters.nonmem.ConversionContext;
 import eu.ddmore.libpharmml.dom.commontypes.IntValue;
 import eu.ddmore.libpharmml.dom.commontypes.RealValue;
-import eu.ddmore.libpharmml.dom.commontypes.ScalarRhs;
+import eu.ddmore.libpharmml.dom.commontypes.Rhs;
+import eu.ddmore.libpharmml.dom.commontypes.Scalar;
 import eu.ddmore.libpharmml.dom.maths.Binop;
 import eu.ddmore.libpharmml.dom.maths.Uniop;
 
@@ -28,33 +29,31 @@ public final class ScalarValueHandler {
      * @param rhs
      * @return
      */
-    public static Double getValueFromScalarRhs(ScalarRhs rhs) {
+    public static Double getValueFromScalarRhs(Rhs rhs) {
         Preconditions.checkNotNull(rhs, "Scalar rhs cannot be null");
         if(rhs.getScalar()!=null){
-            return getValue(rhs.getScalar().getValue());
-        }else if(rhs.getEquation().getScalar()!=null){
-            return getValue(rhs.getEquation().getScalar().getValue());
-        }else if(rhs.getEquation().getUniop()!=null){
-            Uniop uniop = rhs.getEquation().getUniop();
-            return getUniopValue(uniop);
-        }else{
+            return Double.parseDouble(rhs.getScalar().valueToString());
+        }else if(rhs.getUniop()!=null){
+            return getUniopValue(rhs.getUniop());
+        } else{
             throw new IllegalArgumentException("Scalar value doesn't exist as expected.");
         }
     }
-    
+
     private static Double getUniopValue(Uniop uniop){
         if(uniop.getValue() instanceof Binop){
-            throw new IllegalStateException("Binary Operation not supported as uniop of scalar rhs at the moment. ");
+            throw new IllegalStateException("Binary Operation not supported as uniop of rhs at the moment. ");
         }
         Properties uniopProperties = loadUniopProperties();
-        
+
         String operator = uniop.getOperator().getOperator();
         String op = new String();
-        
+
         if(!operator.isEmpty() && uniopProperties.stringPropertyNames().contains(operator)){
             op = uniopProperties.getProperty(operator);
         }
-        return Double.parseDouble(op+getValue(uniop.getValue()));
+        Scalar value = (Scalar) uniop.getValue();
+        return Double.parseDouble(op+value.valueToString());
     }
 
     private static Properties loadUniopProperties() {
@@ -82,12 +81,13 @@ public final class ScalarValueHandler {
             throw new RuntimeException(e);
         }
     }
-    
+
     public static Double getValue(IntValue num) {
         Preconditions.checkNotNull(num, "The integer value cannot be null");
         BigInteger number = num.getValue();
         return number.doubleValue();
     }
+
     public static Double getValue(RealValue num) {
         Preconditions.checkNotNull(num, "The real value cannot be null");
         return num.getValue();

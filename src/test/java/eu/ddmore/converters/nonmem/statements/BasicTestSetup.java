@@ -1,11 +1,20 @@
+/*******************************************************************************
+ * Copyright (C) 2015 Mango Solutions Ltd - All rights reserved.
+ ******************************************************************************/
 package eu.ddmore.converters.nonmem.statements;
 
 import org.junit.Before;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.powermock.modules.junit4.PowerMockRunner;
+import static org.powermock.api.mockito.PowerMockito.when;
 
 import crx.converter.engine.ScriptDefinition;
 import crx.converter.engine.parts.EstimationStep;
 import eu.ddmore.converters.nonmem.ConversionContext;
+import eu.ddmore.converters.nonmem.LocalParserHelper;
+import eu.ddmore.converters.nonmem.parameters.ParametersBuilder;
+import eu.ddmore.converters.nonmem.utils.Formatter;
 import eu.ddmore.converters.nonmem.utils.Formatter.ColumnConstant;
 import eu.ddmore.libpharmml.dom.commontypes.SymbolType;
 import eu.ddmore.libpharmml.dom.dataset.ColumnDefinition;
@@ -13,17 +22,36 @@ import eu.ddmore.libpharmml.dom.dataset.ColumnType;
 /**
  * This class is used as basic common test setup for unit tests around nmtran converter classes
  */
+@RunWith(PowerMockRunner.class)
 public class BasicTestSetup {
 
-    @Mock ConversionContext context;
-    @Mock ScriptDefinition scriptDefinition;
+    @Mock
+    protected ConversionContext context;
 
-    @Mock EstimationStep estStep;
+    @Mock
+    protected ParametersBuilder parametersHelper;
+
+    @Mock 
+    protected ScriptDefinition scriptDefinition;
     
+    @Mock 
+    protected LocalParserHelper localParserHelper; 
+
+    @Mock 
+    protected EstimationStep estStep;
+
     @Before
     public void setup(){
+        when(context.getScriptDefinition()).thenReturn(scriptDefinition);
+        when(context.getLocalParserHelper()).thenReturn(localParserHelper);
     }
-    
+
+    protected static final String PRED_EXAMPLE= Formatter.endline("PRED BLOCK");
+    protected static final String IDV_EXAMPLE = Formatter.endline(Formatter.endline("MU_1 = LOG(POP_KA)")+"KA =  EXP(MU_1 +  ETA(1)) ;");
+    protected static final String ERROR_EXAMPLE = Formatter.endline("error");
+    protected static final String VAR_DEF_EXAMPLE = Formatter.endline("K = (CL/V)");
+    protected static final String COMP1_EXAMPLE = "COMP (COMP1) "+Formatter.indent(";ID");
+
     protected static final String DROP = "DROP";
 
     protected static final String COL_ID_1 = ColumnConstant.ID.toString();

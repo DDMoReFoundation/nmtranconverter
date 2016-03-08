@@ -98,14 +98,14 @@ public class DiffEquationStatementBuilder {
     private void addAllVarDefinitionTypes(StructuralBlock block) {
         for (VariableDefinition definitionType: block.getLocalVariables()){
             String variable = definitionType.getSymbId().toUpperCase();
-            String rhs = context.parse(definitionType);
+            String rhs = context.getLocalParserHelper().parse(definitionType);
             allVarDefinitions.put(variable, rhs);
         }
     }
 
     private void addDADTdefinitionsToDES(StructuralBlock block) {
         for(DerivativeVariable variableType: block.getStateVariables()){
-            String parsedDADT = context.parse(variableType).toUpperCase();
+            String parsedDADT = context.getLocalParserHelper().parse(variableType).toUpperCase();
             String variable = variableType.getSymbId().toUpperCase();
 
             if(isDerivativeVariableHasAmount(variable)){
@@ -127,9 +127,11 @@ public class DiffEquationStatementBuilder {
                 varDefinition = format(variableDefinitions.get(variable));
             }
 
-            if(context.getReservedWords().keySet().contains(format(varDefinition))){
-                for(String revervedWord : context.getReservedWords().keySet()){
-                    varDefinition = replaceVariable(context.getReservedWords().get(revervedWord), varDefinition);
+            Map<String, String> reservedWords = context.getReservedWords();
+            for(String revervedWord : reservedWords.keySet()){
+                if(varDefinition.contains(revervedWord) 
+                        || varDefinition.contains(reservedWords.get(revervedWord))){
+                    varDefinition = replaceVariable(reservedWords.get(revervedWord), varDefinition);
                     varDefinitionsWithsuffix.put(variable, varDefinition);
                 }
             }
