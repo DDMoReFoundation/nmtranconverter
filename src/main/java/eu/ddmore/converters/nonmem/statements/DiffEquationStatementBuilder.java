@@ -127,10 +127,12 @@ public class DiffEquationStatementBuilder {
                 varDefinition = format(variableDefinitions.get(variable));
             }
 
+            varDefinition = replaceTimeVarForDES(varDefinition);
+
             Map<String, String> reservedWords = context.getReservedWords();
             for(String revervedWord : reservedWords.keySet()){
-                if(varDefinition.contains(revervedWord) 
-                        || varDefinition.contains(reservedWords.get(revervedWord))){
+                if(variable.equals(revervedWord) 
+                        || variable.equals(reservedWords.get(revervedWord))){
                     varDefinition = replaceVariable(reservedWords.get(revervedWord), varDefinition);
                     varDefinitionsWithsuffix.put(variable, varDefinition);
                 }
@@ -145,6 +147,8 @@ public class DiffEquationStatementBuilder {
             }
 
             for(String derivativeVar : allVarDefinitions.keySet()){
+                derivativeVar = (reservedWords.get(derivativeVar)!=null)?reservedWords.get(derivativeVar):derivativeVar;
+
                 if(format(varDefinition).contains(format(derivativeVar))){
                     varDefinition = replaceVariable(derivativeVar, varDefinition);
                     varDefinitionsWithsuffix.put(variable, varDefinition);
@@ -162,6 +166,10 @@ public class DiffEquationStatementBuilder {
         String variablePatternToReplace = "\\b"+Pattern.quote(variableToReplace)+"\\b";
         definition = definition.replaceAll(variablePatternToReplace, Formatter.renameVarForDES(variableToReplace));
 
+        return definition;
+    }
+
+    private String replaceTimeVarForDES(String definition) {
         if(Formatter.isInDesBlock()){
             String varPatternToReplace = "\\b"+Pattern.quote(Formatter.ColumnConstant.TIME.toString())+"\\b";
             definition = definition.replaceAll(varPatternToReplace, Formatter.NmConstant.T.toString());

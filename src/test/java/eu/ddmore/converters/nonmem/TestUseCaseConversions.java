@@ -11,7 +11,6 @@ import static org.junit.Assert.assertTrue;
 import java.util.List;
 
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import crx.converter.engine.ConversionDetail_;
@@ -20,14 +19,13 @@ import eu.ddmore.convertertoolbox.api.response.ConversionDetail.Severity;
 import eu.ddmore.convertertoolbox.api.response.ConversionReport;
 import eu.ddmore.convertertoolbox.api.response.ConversionReport.ConversionCode;
 
-@Ignore("TODO check validity of the test as it is redundant with Converters ATH")
 public class TestUseCaseConversions extends TestBase {
 
     @Before
     public void setUp() throws Exception {
 
-        inputXMLFile = "UseCase15.xml";
-        inputDataFile = "warfarin_conc_cmt.csv";
+        inputXMLFile = "UseCase1.xml";
+        inputDataFile = "warfarin_conc.csv";
 
         init(inputDataFile, V_0_8_SUBDIR);
         init(inputXMLFile, V_0_8_SUBDIR);
@@ -63,6 +61,26 @@ public class TestUseCaseConversions extends TestBase {
     @Test
     public void allUseCaseConversionsTest() throws Exception{
 
+        inputXMLFile = "pkmacro/UseCase7_HBN_ADVAN1.xml";
+        inputDataFile = "pkmacro/warfarin_conc_cmt.csv";
+        updateSetUpWith(inputXMLFile, inputDataFile);
+        //test();
+        
+        inputXMLFile = "pkmacro/UseCase7_HBN_ADVAN2.xml";
+        inputDataFile = "pkmacro/warfarin_conc_cmt.csv";
+        updateSetUpWith(inputXMLFile, inputDataFile);
+        //test();
+        
+        inputXMLFile = "pkmacro/UseCase7_HBN_ADVAN3.xml";
+        inputDataFile = "pkmacro/warfarin_conc_cmt.csv";
+        updateSetUpWith(inputXMLFile, inputDataFile);
+        //test();
+        
+        inputXMLFile = "pkmacro/UseCase7_HBN_ADVAN4.xml";
+        inputDataFile = "pkmacro/warfarin_conc_cmt.csv";
+        updateSetUpWith(inputXMLFile, inputDataFile);
+        //test();
+        
         inputXMLFile = "UseCase1.xml";
         inputDataFile = "warfarin_conc.csv";
         updateSetUpWith(inputXMLFile, inputDataFile);
