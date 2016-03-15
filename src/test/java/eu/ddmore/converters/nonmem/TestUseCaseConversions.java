@@ -11,6 +11,7 @@ import static org.junit.Assert.assertTrue;
 import java.util.List;
 
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import crx.converter.engine.ConversionDetail_;
@@ -19,6 +20,7 @@ import eu.ddmore.convertertoolbox.api.response.ConversionDetail.Severity;
 import eu.ddmore.convertertoolbox.api.response.ConversionReport;
 import eu.ddmore.convertertoolbox.api.response.ConversionReport.ConversionCode;
 
+@Ignore("TODO check validity of the test as it is redundant with Converters ATH")
 public class TestUseCaseConversions extends TestBase {
 
     @Before
