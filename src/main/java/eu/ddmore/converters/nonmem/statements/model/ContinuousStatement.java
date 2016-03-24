@@ -43,17 +43,17 @@ public class ContinuousStatement {
 
         StringBuilder continuousStatement = new StringBuilder();
         //TODO: Handle specific types of advans. Currently everything goes through default advan type.
-        //if(pkMacroDetails.getMacroAdvanType().isEmpty()){
+        if(pkMacroDetails.getMacroAdvanType().isEmpty()){
 
         int tolValue = (statementHelper.getContext().getEstimationEmitter().isSAEM())? 6:9;
         continuousStatement.append(getSubsStatement("ADVAN13", " TOL="+tolValue));
         continuousStatement.append(getDerivativePredStatement(pkMacroDetails));
 
-        //}else{
-        //    String advanType = pkMacroDetails.getMacroAdvanType();
-        //    continuousStatement.append(getSubsStatement(advanType, " TRANS=1"));
-        //    continuousStatement.append(getAdvanMacroStatement(advanType));
-        //}
+        }else{
+            String advanType = pkMacroDetails.getMacroAdvanType();
+            continuousStatement.append(getSubsStatement(advanType, " TRANS=1"));
+            continuousStatement.append(getAdvanMacroStatement(advanType, pkMacroDetails));
+        }
 
         return continuousStatement;
     }
@@ -62,11 +62,10 @@ public class ContinuousStatement {
         return Formatter.endline()+Formatter.endline(Formatter.subs()+advanType+additionalParams);
     }
 
-    @SuppressWarnings("unused")
-    private StringBuilder getAdvanMacroStatement(String advanType){
+    private StringBuilder getAdvanMacroStatement(String advanType, PkMacroDetails pkMacroDetails){
         StringBuilder advanblock = new StringBuilder();
-        advanblock.append(Formatter.endline()+Formatter.endline(Formatter.subs()+advanType+" TRANS=1"));
         advanblock.append(getPKStatement());
+        advanblock.append(getPkMacroEquations(pkMacroDetails));
         advanblock.append(Formatter.error());
         advanblock.append(statementHelper.getErrorStatementHandler().getErrorStatement());
         return advanblock;
