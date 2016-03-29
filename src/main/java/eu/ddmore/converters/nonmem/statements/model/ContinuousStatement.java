@@ -3,11 +3,15 @@
  ******************************************************************************/
 package eu.ddmore.converters.nonmem.statements.model;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.lang.StringUtils;
 
 import com.google.common.base.Preconditions;
+
+import crx.converter.engine.parts.StructuralBlock;
 
 import eu.ddmore.converters.nonmem.eta.Eta;
 import eu.ddmore.converters.nonmem.statements.DiffEquationStatementBuilder;
@@ -17,7 +21,10 @@ import eu.ddmore.converters.nonmem.statements.model.PkMacroAnalyser.PkMacroAttri
 import eu.ddmore.converters.nonmem.statements.model.PkMacroAnalyser.PkMacroDetails;
 import eu.ddmore.converters.nonmem.utils.Formatter;
 import eu.ddmore.libpharmml.dom.commontypes.DerivativeVariable;
+import eu.ddmore.libpharmml.dom.commontypes.VariableDefinition;
 import eu.ddmore.libpharmml.dom.modeldefn.pkmacro.AbsorptionOralMacro;
+import eu.ddmore.libpharmml.dom.modeldefn.pkmacro.CompartmentMacro;
+import eu.ddmore.libpharmml.dom.modeldefn.pkmacro.CompartmentMacro.Arg;
 import eu.ddmore.libpharmml.dom.modeldefn.pkmacro.MacroValue;
 
 /**
@@ -45,9 +52,9 @@ public class ContinuousStatement {
         //TODO: Handle specific types of advans. Currently everything goes through default advan type.
         if(pkMacroDetails.getMacroAdvanType().isEmpty()){
 
-        int tolValue = (statementHelper.getContext().getEstimationEmitter().isSAEM())? 6:9;
-        continuousStatement.append(getSubsStatement("ADVAN13", " TOL="+tolValue));
-        continuousStatement.append(getDerivativePredStatement(pkMacroDetails));
+            int tolValue = (statementHelper.getContext().getEstimationEmitter().isSAEM())? 6:9;
+            continuousStatement.append(getSubsStatement("ADVAN13", " TOL="+tolValue));
+            continuousStatement.append(getDerivativePredStatement(pkMacroDetails));
 
         }else{
             String advanType = pkMacroDetails.getMacroAdvanType();
@@ -67,8 +74,27 @@ public class ContinuousStatement {
         advanblock.append(getPKStatement());
         advanblock.append(getPkMacroEquations(pkMacroDetails));
         advanblock.append(Formatter.error());
+        advanblock.append(getPkMacroCompAmountEquation(pkMacroDetails));
+        advanblock.append(getStructuralModelVarDefinitions());
         advanblock.append(statementHelper.getErrorStatementHandler().getErrorStatement());
         return advanblock;
+    }
+
+    private StringBuilder getStructuralModelVarDefinitions() {
+        StringBuilder builder = new StringBuilder();
+        if(!statementHelper.getContext().getScriptDefinition().getStructuralBlocks().isEmpty()){
+            for(StructuralBlock block : statementHelper.getContext().getScriptDefinition().getStructuralBlocks()){
+                Map<String, String> allVarDefinitions = new HashMap<String, String>();
+                for (VariableDefinition definitionType: block.getLocalVariables()){
+                    String variable = definitionType.getSymbId().toUpperCase();
+                    String rhs = statementHelper.getContext().getLocalParserHelper().parse(definitionType);
+                    allVarDefinitions.put(variable, rhs);
+                    builder.append(rhs);
+                }
+            }
+        }
+
+        return builder;
     }
 
     private StringBuilder getDerivativePredStatement(PkMacroDetails pkMacroDetails){
@@ -174,10 +200,27 @@ public class ContinuousStatement {
         return new StringBuilder(pkStatementBlock.toString().toUpperCase());
     }
 
-    private StringBuilder getPkMacroEquations(PkMacroDetails pkMacroDetails) {
-        // TODO Auto-generated method stub
+    private StringBuilder getPkMacroCompAmountEquation(PkMacroDetails pkMacroDetails) {
         StringBuilder builder = new StringBuilder();
 
+        if(!pkMacroDetails.getCompartments().isEmpty()){
+            for(CompartmentMacro compMacro : pkMacroDetails.getCompartments()){
+                for(MacroValue value : compMacro.getListOfValue()){
+                    if(value.getArgument().equals(Arg.AMOUNT.toString())){
+                        String macroEquation = value.getAssign().getSymbRef().getSymbIdRef()+" = F";
+                        if(StringUtils.isNotEmpty(macroEquation)){
+                            builder.append(Formatter.endline(macroEquation));
+                        }
+                    }
+                }
+            }
+            builder.append(Formatter.endline());
+        }
+        return builder;
+    }
+
+    private StringBuilder getPkMacroEquations(PkMacroDetails pkMacroDetails) {
+        StringBuilder builder = new StringBuilder();
         if(!pkMacroDetails.getAbsorptionOrals().isEmpty()){
             for(AbsorptionOralMacro oralMacro : pkMacroDetails.getAbsorptionOrals()){
                 for(MacroValue value : oralMacro.getListOfValue()){
@@ -189,7 +232,6 @@ public class ContinuousStatement {
             }
             builder.append(Formatter.endline());
         }
-
         return builder;
     }
 
@@ -200,7 +242,6 @@ public class ContinuousStatement {
                 && value.getAssign().getSymbRef()!=null) {
 
             PkMacroAttribute attribute= PkMacroAttribute.valueOf(valueArgument);
-            //TODO : check for reserved word and add NM_ prefix
             String variable = Formatter.getReservedParam(value.getAssign().getSymbRef().getSymbIdRef());
             return attribute.getValue()+ pkMacroDetails.getAbsOralCompNumber()+ " = "+ variable;
         }
