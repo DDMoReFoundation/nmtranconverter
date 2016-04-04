@@ -16,16 +16,14 @@ public class ThetaStatementBuilderTest extends ParametersMockHelper {
 
     @Mock ParametersBuilder parametersBuilder;
 
-    ThetaStatementBuilder thetaStatementBuilder;
     @Before
     public void setUp() throws Exception {
         parametersBuilder = Mockito.mock(ParametersBuilder.class, RETURNS_DEEP_STUBS);
-
     }
 
     @Test
     public void shouldGetThetaStatementBlock() {
-        thetaStatementBuilder = new ThetaStatementBuilder(parametersBuilder, correlationHandler, paramInitialiser);
+        ThetaStatementBuilder thetaStatementBuilder = new ThetaStatementBuilder(parametersBuilder, correlationHandler, paramInitialiser);
         assertNotNull("Should get theta statements block.", thetaStatementBuilder.getThetaStatementBlock());
     }
 

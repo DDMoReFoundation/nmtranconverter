@@ -49,12 +49,6 @@ public class DiscreteHandler {
         setDiscreteStatement(getDiscreteDetails(definition));
     }
 
-    /**
-     * Gets details for discrete statements from observation blocks.
-     * 
-     * @param convContext
-     * @return discrete statement with details
-     */
     private StringBuilder getDiscreteDetails(ScriptDefinition definition) {
         Preconditions.checkNotNull(definition.getObservationBlocks(), "Observation block cannot be null");
 
@@ -80,12 +74,6 @@ public class DiscreteHandler {
         return discreteStatement;
     }
 
-    /**
-     * Retrieves required variables related to discrete block from common observation model.
-     * 
-     * @param obsModel
-     * @return
-     */
     private StringBuilder getDiscreteStatements(CommonObservationModel obsModel){
         StringBuilder statement = new StringBuilder();
         if(obsModel instanceof CountData){
@@ -159,12 +147,6 @@ public class DiscreteHandler {
         }
     }
 
-    /**
-     * Create statements for time to event data with help of the variable provided.
-     * 
-     * @param tteVar
-     * @return
-     */
     private StringBuilder createTimeToEventDataStatements(String tteVar) {
         StringBuilder stringToAdd = new StringBuilder();
         //Adds parts of Error statement at this moment
@@ -180,12 +162,6 @@ public class DiscreteHandler {
         return stringToAdd;
     }
 
-    /**
-     * Create statements for count data with help of the poisson distribution variable provided.
-     * 
-     * @param poissonDistVar
-     * @return
-     */
     private StringBuilder createPoissonStatements(String poissonDistVar) {
         StringBuilder stringToAdd = new StringBuilder();
 
@@ -214,12 +190,6 @@ public class DiscreteHandler {
         return stringToAdd;
     }
 
-    /**
-     * Create statements for count data with help of the negative binomial details provided.
-     * 
-     * @param poissonDistVar
-     * @return
-     */
     private StringBuilder createNegativeBinomialStatement(String numberOfFailures, String probability ){
 
         StringBuilder stringToAdd = new StringBuilder();
@@ -248,7 +218,6 @@ public class DiscreteHandler {
     public boolean isDiscrete() {
         return isDiscrete;
     }
-
 
     public void setDiscrete(boolean isDiscrete) {
         this.isDiscrete = isDiscrete;

@@ -1,3 +1,6 @@
+/*******************************************************************************
+ * Copyright (C) 2015 Mango Solutions Ltd - All rights reserved.
+ ******************************************************************************/
 package eu.ddmore.converters.nonmem.parameters;
 
 import java.util.ArrayList;
@@ -10,18 +13,16 @@ import crx.converter.engine.parts.EstimationStep.FixedParameter;
 import crx.converter.engine.parts.ParameterBlock;
 import eu.ddmore.converters.nonmem.ConversionContext;
 import eu.ddmore.converters.nonmem.eta.Eta;
-import eu.ddmore.converters.nonmem.statements.OmegaStatement;
 import eu.ddmore.converters.nonmem.utils.Formatter;
 import eu.ddmore.converters.nonmem.utils.RandomVariableHelper;
 import eu.ddmore.libpharmml.dom.modeldefn.ParameterRandomVariable;
 
 /**
  * This class helps to build omega statement for nmtran file.
- * 
  */
 public class OmegaStatementBuilder {
 
-    private final LinkedHashMap<String, OmegaStatement> omegaStatements = new LinkedHashMap<String, OmegaStatement>();
+    private final LinkedHashMap<String, OmegaParameter> omegaParameters = new LinkedHashMap<String, OmegaParameter>();
     private OmegaBlockStatement omegaBlockStatement;
     private final Set<ParameterRandomVariable> epsilonVars;
     private final ConversionContext context;
@@ -42,7 +43,7 @@ public class OmegaStatementBuilder {
 
             if(!context.getIovHandler().isRandomVarIOV(rv)){
                 String symbId = RandomVariableHelper.getNameFromParamRandomVariable(rv);
-                OmegaStatement omegaStatement = context.getParameterInitialiser().createOmegaFromRandomVarName(symbId);
+                OmegaParameter omegaStatement = context.getParameterInitialiser().createOmegaFromRandomVarName(symbId);
                 if(omegaStatement!=null){
                     for(Iterator<FixedParameter> it= context.getParameterInitialiser().getFixedParameters().iterator();it.hasNext();){
                         String paramName = it.next().pe.getSymbRef().getSymbIdRef();
@@ -54,7 +55,7 @@ public class OmegaStatementBuilder {
                     if(RandomVariableHelper.isParamFromStdDev(rv)){
                         omegaStatement.setStdDev(true);
                     }
-                    omegaStatements.put(symbId, omegaStatement);
+                    omegaParameters.put(symbId, omegaStatement);
                 }
             }
         }
@@ -119,8 +120,8 @@ public class OmegaStatementBuilder {
         if (!omegaDoesNotExist()) {
             omegaStatement.append(Formatter.endline());
             omegaStatement.append(Formatter.endline(Formatter.omega()));
-            for (final String omegaVar : omegaStatements.keySet()) {
-                omegaStatement.append(ParameterStatementHandler.addParameter(omegaStatements.get(omegaVar)));
+            for (final String omegaVar : omegaParameters.keySet()) {
+                omegaStatement.append(ParameterStatementHandler.addParameter(omegaParameters.get(omegaVar)));
             }
         }
         return omegaStatement.toString();
@@ -132,7 +133,7 @@ public class OmegaStatementBuilder {
      * @return
      */
     public Boolean omegaDoesNotExist(){
-        return (omegaStatements == null || omegaStatements.isEmpty());
+        return (omegaParameters == null || omegaParameters.isEmpty());
     }
 
     private StringBuilder appendOmegaBlocks(List<OmegaBlock> omegaBlocks) {
@@ -141,7 +142,7 @@ public class OmegaStatementBuilder {
             if(omegaBlock.getOrderedEtas().size()>0){
                 omegaStatement.append(Formatter.endline(omegaBlock.getOmegaBlockTitle()));
                 for(Eta eta : omegaBlock.getOrderedEtas()){
-                    for(OmegaStatement omega : omegaBlock.getOmegaStatements().get(eta)){
+                    for(OmegaParameter omega : omegaBlock.getOmegaParameters().get(eta)){
                         if(omega!=null){
                             omegaStatement.append(ParameterStatementHandler.addParameter(omega));
                         }
@@ -155,7 +156,7 @@ public class OmegaStatementBuilder {
         return omegaStatement;
     }
 
-    public LinkedHashMap<String, OmegaStatement> getOmegaStatements() {
-        return omegaStatements;
+    public LinkedHashMap<String, OmegaParameter> getOmegaStatements() {
+        return omegaParameters;
     }
 }

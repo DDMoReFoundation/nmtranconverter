@@ -19,23 +19,27 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 public class OmegaBlockStatementTest extends ParametersMockHelper {
 
-    @Mock OmegaBlockCreator omegaBlockCreator;
+    @Mock OmegaBlockPopulator omegaBlockCreator;
 
     OmegaBlockStatement omegaBlockStatement;
 
     List<OmegaBlock> omegaBlocks = new ArrayList<>();
+    List<Double> uniqueValues = new ArrayList<>();
     @Before
     public void setUp() throws Exception {
 
-        setDummyEtasInCorrelation();
-        setDummyOmegaBlock();
+        initialiseDummyEtasInCorrelation();
+        initialiseDummyOmegaBlock();
+
+        uniqueValues.add(new Double(1));
+        uniqueValues.add(new Double(2));
 
         etas = new HashSet<>();
         etas.add(firstEta);
         etas.add(secondEta);
         omegaBlocks.add(omegaBlock);
         when(correlationHandler.getOmegaBlocksInIOV()).thenReturn(omegaBlocks);
-        whenNew(OmegaBlockCreator.class).withArguments(paramInitialiser,iovHandler,omegaBlock).thenReturn(omegaBlockCreator);
+        whenNew(OmegaBlockPopulator.class).withArguments(paramInitialiser, uniqueValues).thenReturn(omegaBlockCreator);
     }
 
     @Test
@@ -46,9 +50,6 @@ public class OmegaBlockStatementTest extends ParametersMockHelper {
     }
 
     private void mockOmegaBlocksForIOV(){
-        List<Double> uniqueValues = new ArrayList<>();
-        uniqueValues.add(new Double(1));
-        uniqueValues.add(new Double(2));
 
         when(iovHandler.getIovColumnUniqueValues()).thenReturn(uniqueValues);
 

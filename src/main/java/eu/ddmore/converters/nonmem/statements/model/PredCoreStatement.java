@@ -67,7 +67,7 @@ public class PredCoreStatement {
      */
     private StringBuilder getSimpleParamAssignments() {
         StringBuilder simpleParamAssignmentBlock = new StringBuilder();
-        Map<String, Parameter> params = context.getParameterInitialiser().getParams();
+        Map<String, Parameter> params = context.getParameterInitialiser().getParameters();
 
         for(String simpleParamSymbol : params.keySet()){
             if(params.get(simpleParamSymbol).isAssignment()){
@@ -111,7 +111,7 @@ public class PredCoreStatement {
      */
     private StringBuilder buildThetaAssignments() {
         StringBuilder thetaAssignmentBlock = new StringBuilder();
-        List<String> thetas = new ArrayList<String>(context.getParametersBuilder().getThetasBuilder().getThetaStatements().keySet());
+        List<String> thetas = new ArrayList<String>(context.getParametersBuilder().getThetasBuilder().getThetaParameters().keySet());
 
         for(String theta : thetas){
             String thetaSymbol = Formatter.getReservedParam(theta);

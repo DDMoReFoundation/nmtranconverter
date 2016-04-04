@@ -25,6 +25,9 @@ import eu.ddmore.converters.nonmem.statements.DiffEquationStatementBuilder;
 import eu.ddmore.converters.nonmem.utils.Formatter;
 import eu.ddmore.libpharmml.dom.commontypes.DerivativeVariable;
 
+/**
+ * Junit tests for ContinuousStatement class. 
+ */
 public class ContinuousStatementTest extends BasicTestSetup  {
 
     @Mock ModelStatementHelper modelStatementHelper;

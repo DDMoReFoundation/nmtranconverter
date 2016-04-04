@@ -52,11 +52,11 @@ public class CorrelationHandler {
     private void initialise(){
 
         arrangeAllCorrelations();
-        OmegaBlock omegaBlockinIOV = new OmegaBlock();
-        omegaBlockinIOV.setCorrelations(getIovCorrelations());
+        OmegaBlock omegaBlockInIOV = new OmegaBlock();
+        omegaBlockInIOV.setCorrelations(getIovCorrelations());
 
-        addcorrelationEtas(omegaBlockinIOV, VarLevel.IOV);
-        omegaBlocksInIOV.add(omegaBlockinIOV);
+        addcorrelationEtas(omegaBlockInIOV, VarLevel.IOV);
+        omegaBlocksInIOV.add(omegaBlockInIOV);
 
         OmegaBlock omegaBlockInNonIOV = new OmegaBlock();
         omegaBlockInNonIOV.setCorrelations(getNonIovCorrelations());
@@ -64,7 +64,7 @@ public class CorrelationHandler {
         omegaBlocksInNonIOV.add(omegaBlockInNonIOV);
 
         EtaAndOmegaBlocksInitialiser blocksInitialiser = new EtaAndOmegaBlocksInitialiser(context, omegaBlocksInIOV, omegaBlocksInNonIOV);
-        allOrderedEtas = blocksInitialiser.popupateOrderedEtaAndOmegaBlocks();
+        allOrderedEtas = blocksInitialiser.populateOrderedEtaAndOmegaBlocks();
     }
 
     private void addcorrelationEtas(OmegaBlock omegaBlock, VarLevel varLevel){
@@ -73,12 +73,6 @@ public class CorrelationHandler {
         }
     }
 
-    /**
-     * Adds correlations reference to map provided for eta to correlations map.
-     * 
-     * @param omegaBlocks
-     * @param correlation
-     */
     private void addCorrelationEtas(OmegaBlock omegaBlock, VarLevel level, CorrelationsWrapper correlation) {
         Preconditions.checkNotNull(correlation, "Correlation reference cannot be null");
 

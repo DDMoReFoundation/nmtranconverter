@@ -29,6 +29,9 @@ import eu.ddmore.converters.nonmem.utils.Formatter;
 import eu.ddmore.libpharmml.dom.commontypes.VariableDefinition;
 import eu.ddmore.libpharmml.dom.modeldefn.IndividualParameter;
 
+/**
+ * Junit tests for ModelStatementHelper class. 
+ */
 @PrepareForTest(ModelStatementHelper.class)
 public class ModelStatementHelperTest extends BasicTestSetup  {
 

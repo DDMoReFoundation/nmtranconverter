@@ -1,3 +1,6 @@
+/*******************************************************************************
+ * Copyright (C) 2016 Mango Solutions Ltd - All rights reserved.
+ ******************************************************************************/
 package eu.ddmore.converters.nonmem.parameters;
 
 import java.util.ArrayList;
@@ -9,18 +12,16 @@ import java.util.Set;
 import java.util.TreeSet;
 
 import eu.ddmore.converters.nonmem.eta.Eta;
-import eu.ddmore.converters.nonmem.statements.OmegaStatement;
 
 /**
  * Omega block which stores information related to omega statement block.
- * 
  */
 public class OmegaBlock {
 
-    private List<CorrelationsWrapper> correlations = new ArrayList<>();
     private final Set<Eta> orderedEtas = new TreeSet<Eta>();
-    private Map<Eta, String> etasToOmegas = new LinkedHashMap<Eta, String>();
-    private Map<Eta, List<OmegaStatement>> omegaStatements = new HashMap<Eta, List<OmegaStatement>>();
+    private final Map<Eta, String> etasToOmegas = new LinkedHashMap<Eta, String>();
+    private final Map<Eta, List<OmegaParameter>> omegaParameters = new HashMap<Eta, List<OmegaParameter>>();
+    private List<CorrelationsWrapper> correlations = new ArrayList<>();
     private Boolean isOmegaBlockFromStdDev = false;
     private Boolean isCorrelation = false;
     private Boolean isIOV = false;
@@ -39,8 +40,8 @@ public class OmegaBlock {
         etasToOmegas.put(eta, omega);
     }
 
-    public void addToEtaToOmegaStatement(Eta eta, List<OmegaStatement> omega) {
-        omegaStatements.put(eta, omega);
+    public void addToEtaToOmegaParameter(Eta eta, List<OmegaParameter> omega) {
+        omegaParameters.put(eta, omega);
     }
 
     public Set<Eta> getOrderedEtas() {
@@ -49,10 +50,6 @@ public class OmegaBlock {
 
     public Map<Eta, String> getEtasToOmegas() {
         return etasToOmegas;
-    }
-
-    public void setEtasToOmegas(Map<Eta, String> etasToOmegas) {
-        this.etasToOmegas = etasToOmegas;
     }
 
     public String getOmegaBlockTitle() {
@@ -79,12 +76,8 @@ public class OmegaBlock {
         this.isOmegaBlockFromStdDev = isOmegaBlockFromStdDev;
     }
 
-    public Map<Eta, List<OmegaStatement>> getOmegaStatements() {
-        return omegaStatements;
-    }
-
-    public void setOmegaStatements(Map<Eta, List<OmegaStatement>> omegaStatements) {
-        this.omegaStatements = omegaStatements;
+    public Map<Eta, List<OmegaParameter>> getOmegaParameters() {
+        return omegaParameters;
     }
 
     public List<CorrelationsWrapper> getCorrelations() {

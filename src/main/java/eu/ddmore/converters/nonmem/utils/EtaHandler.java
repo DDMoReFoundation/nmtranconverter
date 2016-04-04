@@ -4,7 +4,6 @@ import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.TreeSet;
 
 import org.apache.commons.lang.StringUtils;
 
@@ -24,7 +23,6 @@ import eu.ddmore.libpharmml.dom.modeldefn.ParameterRandomVariable;
 public class EtaHandler {
 
     private final Set<Eta> allEtas = new LinkedHashSet<Eta>();
-    private final Set<Eta> allOrderedEtas = new TreeSet<Eta>();
 
     public EtaHandler(ScriptDefinition scriptDefinition){
         Preconditions.checkNotNull(scriptDefinition, "Script definition cannot be null");
@@ -91,10 +89,6 @@ public class EtaHandler {
                 }
             }
         }
-    }
-
-    public Set<Eta> getAllOrderedEtas() {
-        return allOrderedEtas;
     }
 
     public Set<Eta> getAllEtas() {

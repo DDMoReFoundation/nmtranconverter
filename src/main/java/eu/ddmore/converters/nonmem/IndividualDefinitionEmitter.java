@@ -44,7 +44,7 @@ public class IndividualDefinitionEmitter {
      * This method is used as part of pred core block.
      * 
      * @param param
-     * @return
+     * @return statement
      */
     public String createIndividualDefinition(IndividualParameter param){
         Preconditions.checkNotNull(param, "Individual parameter provided cannot be null.");
@@ -70,7 +70,7 @@ public class IndividualDefinitionEmitter {
      * 
      * @param covRelation
      * @param type
-     * @return
+     * @return value to append
      */
     private String getCovariateForIndividualDefinition(CovariateRelation covRelation, PharmMLRootType type) {
         Preconditions.checkNotNull(type, "Covariate type associated with covariate relation cannot be null. ");
@@ -101,15 +101,16 @@ public class IndividualDefinitionEmitter {
      * This method parses and adds fixed effects statements from covariates to individual parameter definition .
      * @param covariate
      * @param covStatement
-     * @return
+     * @return cov statement
      */
     private String addFixedEffectsStatementToIndivParamDef(CovariateRelation covariate, String covStatement) {
         List<FixedEffectRelation> fixedEffects = covariate.getListOfFixedEffect();
         for(FixedEffectRelation fixedEffect : fixedEffects){
             if (fixedEffect != null) {
                 String  fixedEffectStatement = fixedEffect.getSymbRef().getSymbIdRef();
-                if(fixedEffectStatement.isEmpty())
+                if(fixedEffectStatement.isEmpty()){
                     fixedEffectStatement = context.getLocalParserHelper().parse(fixedEffect);
+                }
                 covStatement = fixedEffectStatement + " * " + covStatement;
             }
         }
@@ -123,7 +124,7 @@ public class IndividualDefinitionEmitter {
      * @param structuredModel
      * @param paramId
      * @param indivDefinitionFromCov
-     * @return
+     * @return statement
      */
     private StringBuilder arrangeEquationStatement(StructuredModel structuredModel, String paramId, String popSymbol){
         StringBuilder statement = new StringBuilder();

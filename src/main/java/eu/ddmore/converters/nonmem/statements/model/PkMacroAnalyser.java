@@ -126,6 +126,10 @@ public class PkMacroAnalyser {
         }
 
         String advanType = new String();
+        if(details.getCompartments().size()>1){
+            return advanType;
+        }
+
         switch(details.getPeripherals().size()){
         case 0:
             if(isIV(details)){

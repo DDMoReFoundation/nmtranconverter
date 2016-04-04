@@ -11,8 +11,6 @@ import java.util.Map;
 import com.google.common.base.Preconditions;
 
 import crx.converter.engine.parts.EstimationStep.FixedParameter;
-import eu.ddmore.converters.nonmem.statements.OmegaStatement;
-import eu.ddmore.converters.nonmem.statements.ThetaStatement;
 import eu.ddmore.converters.nonmem.utils.Formatter;
 import eu.ddmore.libpharmml.dom.commontypes.Rhs;
 import eu.ddmore.libpharmml.dom.modellingsteps.ParameterEstimate;
@@ -22,18 +20,21 @@ import eu.ddmore.libpharmml.dom.modellingsteps.ParameterEstimate;
  */
 public class ThetaStatementBuilder {
 
-    private final LinkedHashMap<String, ThetaStatement> thetaStatements = new LinkedHashMap<String, ThetaStatement>();
+    private final LinkedHashMap<String, ThetaParameter> thetaParameters = new LinkedHashMap<String, ThetaParameter>();
     private final Map<Integer, String> thetasToEtaOrder;
 
-    private final ParametersInitialiser parameters;
+    private final ParametersInitialiser parametersInitialiser;
     private final CorrelationHandler correlationHandler;
-    private final LinkedHashMap<String, OmegaStatement> omegaStatements;
+    private final LinkedHashMap<String, OmegaParameter> omegaStatements;
     private final List<String> verifiedSigmas;
 
     public ThetaStatementBuilder(ParametersBuilder parametersBuilder, CorrelationHandler correlationHandler, ParametersInitialiser parametersInitialiser) {
+        Preconditions.checkNotNull(parametersBuilder, "Parameters builder can not be null.");
+        Preconditions.checkNotNull(correlationHandler, "Correlations handler can not be null.");
+        Preconditions.checkNotNull(parametersInitialiser, "Parameters initialiser can not be null.");
 
         thetasToEtaOrder = parametersBuilder.getThetasToEtaOrder();
-        parameters = parametersInitialiser;
+        this.parametersInitialiser = parametersInitialiser;
         omegaStatements = parametersBuilder.getOmegasBuilder().getOmegaStatements();
         verifiedSigmas = parametersBuilder.getSigmasBuilder().getVerifiedSigmas();
         this.correlationHandler = correlationHandler;
@@ -42,31 +43,31 @@ public class ThetaStatementBuilder {
     }
 
     private void initialiseThetaStatement(){
-        final Map<String, ThetaStatement> unOrderedThetas = new HashMap<String, ThetaStatement>();
+        final Map<String, ThetaParameter> unOrderedThetas = new HashMap<String, ThetaParameter>();
 
-        for(ParameterEstimate parameter : parameters.getParametersToEstimate()){
+        for(ParameterEstimate parameter : parametersInitialiser.getParametersToEstimate()){
             Preconditions.checkNotNull(parameter.getSymbRef(), "Parameter to estimate doesnt have parameter symbol.");
             String paramName = parameter.getSymbRef().getSymbIdRef();
             createAndAddThetaForValidParamToMap(unOrderedThetas, paramName, false);
-            parameters.getParams().remove(paramName);
+            parametersInitialiser.getParameters().remove(paramName);
         }
-        for(FixedParameter fixedParameter : parameters.getFixedParameters()){
+        for(FixedParameter fixedParameter : parametersInitialiser.getFixedParameters()){
             Preconditions.checkNotNull(fixedParameter.pe.getSymbRef(), "Fixed Parameter doesnt have parameter symbol.");
             String paramName = fixedParameter.pe.getSymbRef().getSymbIdRef();
             createAndAddThetaForValidParamToMap(unOrderedThetas, paramName, true);
-            parameters.getParams().remove(paramName);
+            parametersInitialiser.getParameters().remove(paramName);
         }
-        for(String paramName : parameters.getPopulationParams().keySet()){
-            Parameter param = parameters.getParams().get(paramName);
+        for(String paramName : parametersInitialiser.getPopulationParams().keySet()){
+            Parameter param = parametersInitialiser.getParameters().get(paramName);
             Rhs scalar = param.getPopParameter().getAssign();
-            //Rhs scalar = parameters.getRhsForSymbol(paramName);
+            //Rhs scalar = parametersInitialiser.getRhsForSymbol(paramName);
             if(scalar !=null){
                 param.setInitialEstimate(scalar);
-                //parameters.getInitialEstimates().put(paramName, scalar);
+                //parametersInitialiser.getInitialEstimates().put(paramName, scalar);
                 createAndAddThetaForValidParamToMap(unOrderedThetas, paramName, true);
             }
         }
-        thetaStatements.putAll(unOrderedThetas);
+        thetaParameters.putAll(unOrderedThetas);
 
     }
 
@@ -76,13 +77,13 @@ public class ThetaStatementBuilder {
      * @param unOrderedThetas
      * @param paramName
      */
-    private void createAndAddThetaForValidParamToMap(final Map<String, ThetaStatement> unOrderedThetas, String paramName, Boolean isFixed) {
+    private void createAndAddThetaForValidParamToMap(final Map<String, ThetaParameter> unOrderedThetas, String paramName, Boolean isFixed) {
         if(validateParamName(paramName)){
-            ThetaStatement thetaStatement = new ThetaStatement(paramName);
+            ThetaParameter thetaParameter = new ThetaParameter(paramName);
             if(!thetasToEtaOrder.containsValue(paramName)){
-                addThetaToMap(unOrderedThetas, thetaStatement,isFixed);
+                addThetaToMap(unOrderedThetas, thetaParameter,isFixed);
             }
-            addThetaToMap(thetaStatements, thetaStatement,isFixed);
+            addThetaToMap(thetaParameters, thetaParameter,isFixed);
         }
     }
 
@@ -92,16 +93,16 @@ public class ThetaStatementBuilder {
      * @param paramName
      * @param isFixed
      */
-    private void addThetaToMap(final Map<String, ThetaStatement> unOrderedThetas, ThetaStatement thetaStatement, Boolean isFixed) {
-        String paramName = thetaStatement.getSymbId();
-        Parameter param = parameters.getParams().get(paramName);
+    private void addThetaToMap(final Map<String, ThetaParameter> unOrderedThetas, ThetaParameter thetaParameter, Boolean isFixed) {
+        String paramName = thetaParameter.getSymbId();
+        Parameter param = parametersInitialiser.getParameters().get(paramName);
         if(param.getInitialEstimate()==null && param.getLowerBound()==null && param.getUpperBound()==null ){
             return;
         }else{
-            thetaStatement.setParameterBounds(param.getInitialEstimate(),param.getLowerBound(),param.getUpperBound());
+            thetaParameter.setParameterBounds(param.getInitialEstimate(),param.getLowerBound(),param.getUpperBound());
         }
-        if(isFixed!=null) thetaStatement.setFixed(isFixed);
-        unOrderedThetas.put(paramName, thetaStatement);
+        if(isFixed!=null) thetaParameter.setFixed(isFixed);
+        unOrderedThetas.put(paramName, thetaParameter);
     }
 
     /**
@@ -113,7 +114,7 @@ public class ThetaStatementBuilder {
     private boolean validateParamName(String paramName) {
         boolean isValid = true;
         if(paramName== null ||  omegaStatements.containsKey(paramName) 
-                || verifiedSigmas.contains(paramName) || thetaStatements.containsKey(paramName)
+                || verifiedSigmas.contains(paramName) || thetaParameters.containsKey(paramName)
                 || validateThetaParamForCorrOmegas(paramName, correlationHandler.getOmegaBlocksInIOV()) 
                 || validateThetaParamForCorrOmegas(paramName, correlationHandler.getOmegaBlocksInNonIOV())){
             isValid = false;
@@ -140,16 +141,16 @@ public class ThetaStatementBuilder {
      */
     public String getThetaStatementBlock(){
         StringBuilder thetaStatement = new StringBuilder();
-        if (!thetaStatements.isEmpty()) {
+        if (!thetaParameters.isEmpty()) {
             thetaStatement.append(Formatter.endline()+Formatter.theta());
-            for (String thetaVar : thetaStatements.keySet()) {
-                thetaStatement.append(ParameterStatementHandler.addParameter(thetaStatements.get(thetaVar)));
+            for (String thetaVar : thetaParameters.keySet()) {
+                thetaStatement.append(ParameterStatementHandler.addParameter(thetaParameters.get(thetaVar)));
             }
         }
         return thetaStatement.toString();
     }
 
-    public LinkedHashMap<String, ThetaStatement> getThetaStatements() {
-        return thetaStatements;
+    public LinkedHashMap<String, ThetaParameter> getThetaParameters() {
+        return thetaParameters;
     }
 }

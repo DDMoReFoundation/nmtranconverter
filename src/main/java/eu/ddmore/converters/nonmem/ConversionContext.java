@@ -100,9 +100,6 @@ public class ConversionContext {
      */
     private void initialise() throws IOException{
 
-        if(dataSetHandler.getDataFile().exists()){
-            iovHandler.retrieveIovColumnUniqueValues(dataSetHandler.getDataFile());
-        }
         orderedThetasHandler.createOrderedThetasToEta(retrieveOrderedEtas());
         parametersBuilder.initialiseAllParameters();
 

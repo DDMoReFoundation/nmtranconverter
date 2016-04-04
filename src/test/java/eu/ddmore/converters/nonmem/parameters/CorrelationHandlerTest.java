@@ -35,9 +35,7 @@ public class CorrelationHandlerTest extends BasicTestSetup {
     @Mock ParameterRandomVariable firstRandomVar;
     @Mock ParameterRandomVariable secondRandomVar;
 
-    Eta eta = new Eta("ETA1");
-
-    CorrelationHandler correlationHandler;
+    private final Eta eta = new Eta("ETA1");
 
     @Before
     public void setUp() throws Exception {
@@ -56,7 +54,7 @@ public class CorrelationHandlerTest extends BasicTestSetup {
 
     @Test
     public void shouldGetAllOrderedEtas() {
-        correlationHandler = new CorrelationHandler(context);
+        CorrelationHandler correlationHandler = new CorrelationHandler(context);
 
         assertNotNull("ordered etas should not be null", correlationHandler.getAllOrderedEtas());
         for(Eta nextEta : correlationHandler.getAllOrderedEtas()){

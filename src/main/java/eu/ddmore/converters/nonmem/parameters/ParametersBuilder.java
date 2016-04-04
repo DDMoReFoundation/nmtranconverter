@@ -12,7 +12,6 @@ import eu.ddmore.libpharmml.dom.modeldefn.ParameterRandomVariable;
 
 /**
  * This is class for to build parameter related statements for NmTran conversion.
- * 
  */
 public class ParametersBuilder {
     private final Map<Integer, String> thetasToEtaOrder;
@@ -25,7 +24,7 @@ public class ParametersBuilder {
     /**
      * Constructor expects conversion context with script definition which contains all the blocks populated as part of common converter 
      * and parameters initialiser which has all the population parameter related details processed.
-     * @param scriptDefinition
+     * @param context
      */
     public ParametersBuilder(ConversionContext context){
         this.context = context;
@@ -35,8 +34,6 @@ public class ParametersBuilder {
 
     /**
      * This method initialises all the Sigma, Omega and Theta parameter maps from simple parameters and their properties.
-     * 
-     * @param populationParameters
      */
     public void initialiseAllParameters(){
 

@@ -14,7 +14,7 @@ import org.junit.Test;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 
 import eu.ddmore.converters.nonmem.eta.Eta;
-import eu.ddmore.converters.nonmem.statements.OmegaStatement;
+import eu.ddmore.converters.nonmem.utils.Formatter;
 import eu.ddmore.converters.nonmem.utils.RandomVariableHelper;
 
 @PrepareForTest(RandomVariableHelper.class)
@@ -27,26 +27,25 @@ public class OmegaBlockCreatorTest extends ParametersMockHelper {
 
     @Test
     public void shouldInitialiseOmegaBlocks() {
-        OmegaBlockCreator blockCreator = new OmegaBlockCreator(paramInitialiser, iovHandler, omegaBlock);
-        blockCreator.initialiseOmegaBlocks(omegaBlock);
+        OmegaBlockPopulator blockCreator = new OmegaBlockPopulator(paramInitialiser, iovHandler.getIovColumnUniqueValues());
+        blockCreator.populateOmegaBlock(omegaBlock);
 
-        assertFalse("Omega statements map should not be empty", omegaBlock.getOmegaStatements().isEmpty());
+        assertFalse("Omega statements map should not be empty", omegaBlock.getOmegaParameters().isEmpty());
     }
 
     @Test
     public void shouldCreateOmegaBlocks(){
-        OmegaBlockCreator blockCreator = new OmegaBlockCreator(paramInitialiser, iovHandler, omegaBlock);
-        blockCreator.initialiseOmegaBlocks(omegaBlock);
-        blockCreator.createOmegaBlocks(omegaBlock);
+        OmegaBlockPopulator blockCreator = new OmegaBlockPopulator(paramInitialiser, iovHandler.getIovColumnUniqueValues());
+        blockCreator.populateOmegaBlock(omegaBlock);
 
-        for(Eta eta :omegaBlock.getOmegaStatements().keySet()){
-            List<OmegaStatement> omegas = omegaBlock.getOmegaStatements().get(eta);
+        for(Eta eta :omegaBlock.getOmegaParameters().keySet()){
+            List<OmegaParameter> omegas = omegaBlock.getOmegaParameters().get(eta);
             if(eta.getEtaSymbol().equals(firstEta.getEtaSymbol())){
                 assertTrue("First row of omega block should have one omega",omegas.size()==1);
             }
             if(eta.getEtaSymbol().equals(secondEta.getEtaSymbol())){
                 assertTrue("First row of omega block should have two omegas",omegas.size()==2);
-                OmegaStatement coeffOmega = omegas.get(0);
+                OmegaParameter coeffOmega = omegas.get(0);
                 assertEquals("First omega should be manually created omega if corresponding correlation coefficient is not provided.", "Empty Variable", coeffOmega.getSymbId());
             }
         }
@@ -56,10 +55,9 @@ public class OmegaBlockCreatorTest extends ParametersMockHelper {
     public void shouldCreateOmegaBlockTitle(){
         omegaBlock.setIsCorrelation(true);
 
-        OmegaBlockCreator blockCreator = new OmegaBlockCreator(paramInitialiser, iovHandler, omegaBlock);
-        blockCreator.initialiseOmegaBlocks(omegaBlock);
-        blockCreator.createOmegaBlockTitle(omegaBlock);
-        assertEquals("should return omega title", expectedOmegaTitle, omegaBlock.getOmegaBlockTitle().trim());
+        OmegaBlockPopulator blockCreator = new OmegaBlockPopulator(paramInitialiser, iovHandler.getIovColumnUniqueValues());
+        blockCreator.populateOmegaBlock(omegaBlock);
+        assertEquals("should return omega title", expectedOmegaTitle+" "+Formatter.NmConstant.CORRELATION, omegaBlock.getOmegaBlockTitle().trim());
     }
 
 }

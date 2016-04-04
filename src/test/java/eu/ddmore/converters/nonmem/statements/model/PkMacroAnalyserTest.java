@@ -26,6 +26,9 @@ import eu.ddmore.libpharmml.dom.modeldefn.pkmacro.OralMacro;
 import eu.ddmore.libpharmml.dom.modeldefn.pkmacro.PKMacro;
 import eu.ddmore.libpharmml.dom.modeldefn.pkmacro.PeripheralMacro;
 
+/**
+ * Junit tests for PkMacroAnalyser class. 
+ */
 public class PkMacroAnalyserTest extends BasicTestSetup {
 
     PkMacroAnalyser analyser = new PkMacroAnalyser();

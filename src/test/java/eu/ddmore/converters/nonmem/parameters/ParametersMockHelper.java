@@ -20,7 +20,6 @@ import eu.ddmore.converters.nonmem.eta.Eta;
 import eu.ddmore.converters.nonmem.eta.VarLevel;
 import eu.ddmore.converters.nonmem.statements.BasicTestSetup;
 import eu.ddmore.converters.nonmem.statements.InterOccVariabilityHandler;
-import eu.ddmore.converters.nonmem.statements.OmegaStatement;
 import eu.ddmore.converters.nonmem.utils.RandomVariableHelper;
 import eu.ddmore.libpharmml.dom.modeldefn.ParameterRandomVariable;
 import eu.ddmore.libpharmml.dom.uncertml.PositiveRealValueType;
@@ -36,16 +35,16 @@ public class ParametersMockHelper extends BasicTestSetup {
 
     @Mock OmegaBlock omegaBlock;
     @Mock CorrelationHandler correlationHandler;
-    @Mock OmegaStatement firstOmegaStatement;
-    @Mock OmegaStatement secondOmegaStatement;
-    @Mock OmegaStatement coeffOmegaStatement;
+    @Mock OmegaParameter firstOmegaStatement;
+    @Mock OmegaParameter secondOmegaStatement;
+    @Mock OmegaParameter coeffOmegaStatement;
 
     @Mock CorrelationsWrapper correlation;
     @Mock ParameterRandomVariable firstPrv;
     @Mock ParameterRandomVariable secondPrv;
 
-    Eta firstEta;
-    Eta secondEta;
+    protected Eta firstEta;
+    protected Eta secondEta;
 
     final String firstEtaSymbol ="ETA_CL";
     final String secondEtaSymbol ="ETA_V";
@@ -54,15 +53,15 @@ public class ParametersMockHelper extends BasicTestSetup {
     final String secondOmegaSymbol = "PPV_V";
 
     final String expectedOmegaTitle = new String("$OMEGA BLOCK(2)");
-    List<OmegaStatement> omegas;
+    List<OmegaParameter> omegas;
     Set<Eta> etas;
 
     Set<ParameterRandomVariable> epsilonVars;
 
     protected void createDummyOmegaBlockToPopulate(){
 
-        setDummyEtasInCorrelation();
-        setDummyOmegaBlock();
+        initialiseDummyEtasInCorrelation();
+        initialiseDummyOmegaBlock();
         mockRandomVarHelper();
         mockCorrelationWrapper();
 
@@ -72,7 +71,7 @@ public class ParametersMockHelper extends BasicTestSetup {
         omegaBlock.addToCorrelations(correlation);
     }
 
-    protected void setDummyOmegaBlock() {
+    protected void initialiseDummyOmegaBlock() {
         omegaBlock = new OmegaBlock();
 
         omegas = new ArrayList<>();
@@ -86,7 +85,7 @@ public class ParametersMockHelper extends BasicTestSetup {
         omegaBlock.addToEtaToOmegas(secondEta, secondOmegaSymbol);
     }
 
-    protected void setDummyEtasInCorrelation() {
+    protected void initialiseDummyEtasInCorrelation() {
         firstEta = new Eta(firstEtaSymbol);
         firstEta.setCorrelationRelated(true);
         firstEta.setOmegaName(firstOmegaSymbol);

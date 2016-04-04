@@ -32,6 +32,8 @@ import eu.ddmore.libpharmml.dom.modeldefn.pkmacro.MacroValue;
  */
 public class ContinuousStatement {
 
+    private static final int TOL_VALUE_IF_NOT_SAEM = 9;
+    private static final int TOL_VALUE_IF_SAEM = 6;
     private final ModelStatementHelper statementHelper;
 
     public ContinuousStatement(ModelStatementHelper statementHelper){
@@ -47,21 +49,17 @@ public class ContinuousStatement {
     public StringBuilder getContinuousStatement(){
         PkMacroAnalyser analyser = new PkMacroAnalyser();
         PkMacroDetails pkMacroDetails = analyser.analyse(statementHelper.getContext());
-
         StringBuilder continuousStatement = new StringBuilder();
         //TODO: Handle specific types of advans. Currently everything goes through default advan type.
         if(pkMacroDetails.getMacroAdvanType().isEmpty()){
-
-            int tolValue = (statementHelper.getContext().getEstimationEmitter().isSAEM())? 6:9;
+            int tolValue = (statementHelper.getContext().getEstimationEmitter().isSAEM())? TOL_VALUE_IF_SAEM:TOL_VALUE_IF_NOT_SAEM;
             continuousStatement.append(getSubsStatement("ADVAN13", " TOL="+tolValue));
             continuousStatement.append(getDerivativePredStatement(pkMacroDetails));
-
         }else{
             String advanType = pkMacroDetails.getMacroAdvanType();
             continuousStatement.append(getSubsStatement(advanType, " TRANS=1"));
             continuousStatement.append(getAdvanMacroStatement(advanType, pkMacroDetails));
         }
-
         return continuousStatement;
     }
 
@@ -93,7 +91,6 @@ public class ContinuousStatement {
                 }
             }
         }
-
         return builder;
     }
 
@@ -107,23 +104,19 @@ public class ContinuousStatement {
         if(pkMacroDetails!=null && !pkMacroDetails.isEmpty()){
             derivativePredblock.append(getPkMacroEquations(pkMacroDetails));
         }
-
         derivativePredblock.append(getDifferentialInitialConditions());
-
         DiffEquationStatementBuilder desBuilder = statementHelper.getDiffEquationStatement(derivativePredblock);
-
         //TODO: getAESStatement();
         derivativePredblock.append(Formatter.endline()+Formatter.error());
         derivativePredblock.append(statementHelper.getErrorStatementHandler().getErrorStatement(desBuilder));
 
         return derivativePredblock;
-
     }
 
     /**
      * Creates DES statement block from differential initial conditions.
      * 
-     * @return
+     * @return differential initial conditions
      */
     private StringBuilder getDifferentialInitialConditions(){
         StringBuilder builder = new StringBuilder();
@@ -133,7 +126,6 @@ public class ContinuousStatement {
         }
         return builder;
     }
-
 
     /**
      * get model statement block for pred statement of nonmem file.
@@ -163,10 +155,8 @@ public class ContinuousStatement {
 
             for(Eta iovEta :etas){
                 int etaOrder = (isFirstBlock)?iovEta.getOrder():++prevBlockValue;
-
                 StringBuilder etaValues = new StringBuilder();
                 prevBlockValue = getIovEtaValueForAbbr(iovEtasCount, etaOrder, etaValues);
-
                 String nextAbbr = Formatter.abbr()+"REPLACE "+Formatter.etaFor(iovEta.getEtaOrderSymbol());
                 abbrStatement.append(Formatter.endline(nextAbbr+"="+Formatter.etaFor(etaValues.toString())));
             }

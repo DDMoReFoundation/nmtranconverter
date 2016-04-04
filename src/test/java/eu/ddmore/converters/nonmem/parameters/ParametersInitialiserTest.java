@@ -23,8 +23,8 @@ import static org.powermock.api.mockito.PowerMockito.when;
 public class ParametersInitialiserTest extends BasicTestSetup {
 
     @Mock PopulationParameter populationParameter;
-    ParametersInitialiser parametersInitialiser;
-    List<PopulationParameter> populationParameters;
+    private ParametersInitialiser parametersInitialiser;
+    private List<PopulationParameter> populationParameters;
 
     @Before
     public void setUp() throws Exception {

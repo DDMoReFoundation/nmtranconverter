@@ -38,6 +38,9 @@ import eu.ddmore.libpharmml.dom.maths.FunctionCallType;
 import eu.ddmore.libpharmml.dom.modeldefn.StructuredObsError;
 import eu.ddmore.libpharmml.dom.modeldefn.StructuredObsError.ErrorModel;
 
+/**
+ * Junit tests for ErrorStatementHandler class. 
+ */
 @PrepareForTest({ErrorStatementHandler.class, ScriptDefinitionAccessor.class})
 public class ErrorStatementHandlerTest extends BasicTestSetup {
 

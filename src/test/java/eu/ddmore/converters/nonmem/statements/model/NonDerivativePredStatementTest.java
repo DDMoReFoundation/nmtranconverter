@@ -13,6 +13,9 @@ import org.mockito.Mock;
 import eu.ddmore.converters.nonmem.statements.BasicTestSetup;
 import eu.ddmore.converters.nonmem.utils.Formatter;
 
+/**
+ * Junit tests for NonDerivativePredStatement class.
+ */
 public class NonDerivativePredStatementTest extends BasicTestSetup {
 
     @Mock ModelStatementHelper statementHelper;

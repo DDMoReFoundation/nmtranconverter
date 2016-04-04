@@ -9,10 +9,11 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.google.common.base.Preconditions;
+
 import crx.converter.engine.ScriptDefinition;
 import crx.converter.engine.parts.EstimationStep;
 import crx.converter.engine.parts.EstimationStep.FixedParameter;
-import eu.ddmore.converters.nonmem.statements.OmegaStatement;
 import eu.ddmore.converters.nonmem.utils.ScriptDefinitionAccessor;
 import eu.ddmore.libpharmml.dom.commontypes.Rhs;
 import eu.ddmore.libpharmml.dom.modeldefn.PopulationParameter;
@@ -24,20 +25,16 @@ import eu.ddmore.libpharmml.dom.modellingsteps.ParameterEstimate;
 public class ParametersInitialiser {
 
     private final Map<String, PopulationParameter> populationParams = new HashMap<String, PopulationParameter>();
-    private final Map<String, Parameter> params = new LinkedHashMap<String, Parameter>();
+    private final Map<String, Parameter> parameters = new LinkedHashMap<String, Parameter>();
     private List<ParameterEstimate> parametersToEstimate;
     private List<FixedParameter> fixedParameters;
 
     public ParametersInitialiser(List<PopulationParameter> populationParameters, ScriptDefinition scriptDefinition) {
+        Preconditions.checkNotNull(populationParameters, "Population Parameters cannot be null");
+        Preconditions.checkNotNull(scriptDefinition, "Script Definition cannot be null");
         initialise(populationParameters, scriptDefinition);
     }
 
-    /**
-     * Initialises population parameters with help of script definition.
-     * 
-     * @param populationParameters
-     * @param scriptDefinition
-     */
     private void initialise(List<PopulationParameter> populationParameters, ScriptDefinition scriptDefinition){
 
         if (populationParameters==null || populationParameters.isEmpty()) {
@@ -61,7 +58,7 @@ public class ParametersInitialiser {
             popParam.setPopParameter(populationParam);
             popParam.setAssignment(populationParam.getAssign()!=null);
 
-            params.put(populationParam.getSymbId(), popParam);
+            parameters.put(populationParam.getSymbId(), popParam);
         }
     }
 
@@ -83,7 +80,7 @@ public class ParametersInitialiser {
 
     private void setParameterBounds(ParameterEstimate paramEstimate){
         String symbolId = paramEstimate.getSymbRef().getSymbIdRef();
-        Parameter param = params.get(symbolId);
+        Parameter param = parameters.get(symbolId);
         if(param != null){
             param.setInitialEstimate(paramEstimate.getInitialEstimate());
             param.setLowerBound(paramEstimate.getLowerBound());
@@ -98,24 +95,24 @@ public class ParametersInitialiser {
      * @param randomVar
      * @return
      */
-    public OmegaStatement createOmegaFromRandomVarName(String omegaSymbId) {
-        OmegaStatement omegaStatement = null;
+    public OmegaParameter createOmegaFromRandomVarName(String omegaSymbId) {
+        OmegaParameter omegaParameter = null;
         if(omegaSymbId!= null){
-            omegaStatement = new OmegaStatement(omegaSymbId);
-            Parameter param = params.get(omegaSymbId);
-            omegaStatement.setInitialEstimate(param.getInitialEstimate());
+            omegaParameter = new OmegaParameter(omegaSymbId);
+            Parameter param = parameters.get(omegaSymbId);
+            omegaParameter.setInitialEstimate(param.getInitialEstimate());
 
             if(param.getInitialEstimate() == null){
                 Rhs scalar = param.getPopParameter().getAssign();
                 if(scalar!=null){
-                    omegaStatement.setInitialEstimate(scalar);
-                    omegaStatement.setFixed(true);
+                    omegaParameter.setInitialEstimate(scalar);
+                    omegaParameter.setFixed(true);
                 }
-                params.remove(omegaSymbId);
+                parameters.remove(omegaSymbId);
                 populationParams.remove(omegaSymbId);
             }
         }
-        return omegaStatement;
+        return omegaParameter;
     }
 
     public List<ParameterEstimate> getParametersToEstimate() {
@@ -126,8 +123,8 @@ public class ParametersInitialiser {
         return fixedParameters;
     }
 
-    public Map<String, Parameter> getParams() {
-        return params;
+    public Map<String, Parameter> getParameters() {
+        return parameters;
     }
 
     public Map<String, PopulationParameter> getPopulationParams() {

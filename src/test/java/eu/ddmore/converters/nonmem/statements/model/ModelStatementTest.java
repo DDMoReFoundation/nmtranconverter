@@ -21,6 +21,9 @@ import eu.ddmore.converters.nonmem.statements.BasicTestSetup;
 import eu.ddmore.converters.nonmem.utils.DiscreteHandler;
 import eu.ddmore.libpharmml.dom.commontypes.DerivativeVariable;
 
+/**
+ * Junit tests for ModelStatement class.
+ */
 @PrepareForTest(ModelStatement.class)
 public class ModelStatementTest extends BasicTestSetup {
 
