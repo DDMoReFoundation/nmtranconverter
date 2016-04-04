@@ -27,7 +27,9 @@ public class EstimationDetailsEmitter {
         SAEM_STATEMENT("SAEM AUTO=1 PRINT=100 CINTERVAL=30 ATOL=6 SIGL=6"),
         FOCEI_STATEMENT ("COND INTER NSIG=3 SIGL=9 MAXEVALS=9999 PRINT=10 NOABORT"),
         FOCE_STATEMENT ("COND NSIG=3 SIGL=9 MAXEVALS=9999 PRINT=10 NOABORT"),
-        FO_STATEMENT ("ZERO NSIG=3 SIGL=9 MAXEVALS=9999 PRINT=10 NOABORT");
+        FO_STATEMENT ("ZERO NSIG=3 SIGL=9 MAXEVALS=9999 PRINT=10 NOABORT"),
+        TTE_DATA_LAPLACE_OPTION(" LIKELIHOOD LAPLACE NUMERICAL NOINTERACTION"),
+        COUNT_DATA_LAPLACE_OPTION(" -2LL LAPLACE NOINTERACTION");
 
         private String statement;
         EstConstant(String statement){
@@ -54,7 +56,7 @@ public class EstimationDetailsEmitter {
         estimationSteps = ScriptDefinitionAccessor.getEstimationSteps(scriptDefinition);
     }
 
-    public StringBuilder buildEstimationStatementFromAlgorithm(Algorithm algorithm) {
+    private StringBuilder buildEstimationStatementFromAlgorithm(Algorithm algorithm) {
         StringBuilder statement = new StringBuilder();
 
         statement.append("METHOD=");
@@ -73,7 +75,7 @@ public class EstimationDetailsEmitter {
             }
             else if (methodDefinition.equals(Method.SAEM.toString())) {
                 isSAEM = true;
-                statement.append(Formatter.endline(EstConstant.SAEM_STATEMENT.getStatement()));
+                statement.append(EstConstant.SAEM_STATEMENT.getStatement());
                 statement.append(appendDiscreteEstOptions());
             }
             else {
@@ -88,9 +90,9 @@ public class EstimationDetailsEmitter {
     private StringBuilder appendDiscreteEstOptions() {
         StringBuilder statement = new StringBuilder();
         if(discreteHandler.isCountData()){
-            statement.append(" -2LL LAPLACE NOINTERACTION");
+            statement.append(EstConstant.COUNT_DATA_LAPLACE_OPTION.getStatement());
         }else if(discreteHandler.isTimeToEventData()){
-            statement.append(" LIKELIHOOD LAPLACE NUMERICAL NOINTERACTION");
+            statement.append(EstConstant.TTE_DATA_LAPLACE_OPTION.getStatement());
         }
         return statement;
     }

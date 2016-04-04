@@ -95,7 +95,6 @@ public class EstimationDetailsEmitterTest extends BasicTestSetup {
 
         String methodType = Method.FOCEI.toString();
         String expectedStatement = Formatter.est()+method+EstConstant.FOCEI_STATEMENT.getStatement();
-
         shouldVerifyStatement(methodType, expectedStatement);
     }
 
@@ -105,6 +104,26 @@ public class EstimationDetailsEmitterTest extends BasicTestSetup {
         String methodType = Method.SAEM.toString();
         String expectedStatement = Formatter.est()+method+EstConstant.SAEM_STATEMENT.getStatement();
 
+        shouldVerifyStatement(methodType, expectedStatement);
+    }
+
+    @Test
+    public void shouldGetEstimationStatementForSAEMWhenCountData() {
+
+        String methodType = Method.SAEM.toString();
+        String expectedStatement = Formatter.est()+method+EstConstant.SAEM_STATEMENT.getStatement()+EstConstant.COUNT_DATA_LAPLACE_OPTION.getStatement();
+
+        when(discreteHandler.isCountData()).thenReturn(true);
+        shouldVerifyStatement(methodType, expectedStatement);
+    }
+
+    @Test
+    public void shouldGetEstimationStatementForSAEMWhenTTE() {
+
+        String methodType = Method.SAEM.toString();
+        String expectedStatement = Formatter.est()+method+EstConstant.SAEM_STATEMENT.getStatement()+EstConstant.TTE_DATA_LAPLACE_OPTION.getStatement();
+
+        when(discreteHandler.isTimeToEventData()).thenReturn(true);
         shouldVerifyStatement(methodType, expectedStatement);
     }
 
