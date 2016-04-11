@@ -85,7 +85,7 @@ public class TableStatementTest extends BasicTestSetup {
         contCovTableColumns.add(LOGTWT);
         when(context.getInputColumnsHandler().getInputColumnsProvider()).thenReturn(inputColumns);
         when(inputColumns.getContCovTableColumns()).thenReturn(contCovTableColumns);
-        
+
         catCovTableColumns.add("TWT");
         when(context.getInputColumnsHandler().getInputColumnsProvider()).thenReturn(inputColumns);
         when(inputColumns.getCatCovTableColumns()).thenReturn(catCovTableColumns);

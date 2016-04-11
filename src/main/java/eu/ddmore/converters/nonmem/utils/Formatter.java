@@ -63,9 +63,14 @@ public class Formatter {
         }
     }
 
-    public static final PropertiesHandler propertyHandler = new PropertiesHandler();
-
+    private static final String DES_VAR_SUFFIX = "_"+Block.DES.toString();
+    private static final String NEW_LINE = System.getProperty("line.separator");
+    private static final String newLineBlockTitle = "%s%s "+NEW_LINE;
+    private static final String inLineBlockTitle = "%s%s ";
+    private static final String DUMMY_ETA = "DUMMY = ETA(1)";
     private static boolean inDesBlock = false;
+
+    public static final PropertiesHandler propertyHandler = new PropertiesHandler();
 
     public static boolean isInDesBlock() {
         return inDesBlock;
@@ -75,8 +80,6 @@ public class Formatter {
         Formatter.inDesBlock = inDesBlock;
     }
 
-    private static final String DES_VAR_SUFFIX = "_"+Block.DES.toString();
-
     public static String renameVarForDES(String variable) {
         return variable+DES_VAR_SUFFIX;
     }
@@ -84,11 +87,6 @@ public class Formatter {
     public static String getTimeSymbol(){
         return (inDesBlock)?NmConstant.T.toString():ColumnConstant.TIME.toString();
     }
-
-    private static final String NEW_LINE = System.getProperty("line.separator");
-
-    private static final String newLineBlockTitle = "%s%s "+NEW_LINE;
-    private static final String inLineBlockTitle = "%s%s ";
 
     /**
      * Add <code>Table</code> Block title and then continue appending on the same line
@@ -146,7 +144,6 @@ public class Formatter {
         return sameBlockStatement.toString();
     }
 
-    private static final String DUMMY_ETA = "DUMMY = ETA(1)";
     public static String getDummyEtaStatement() {
         return Formatter.endline(DUMMY_ETA);
     }
@@ -302,6 +299,11 @@ public class Formatter {
         return NEW_LINE;
     }
 
+    /**
+     * Formats ETA variable as "ETA(<value>)" for eta value provided. 
+     * @param etaVal
+     * @return formatted Eta variable
+     */
     public static String etaFor(String etaVal){
         return " ETA("+etaVal+")";
     }

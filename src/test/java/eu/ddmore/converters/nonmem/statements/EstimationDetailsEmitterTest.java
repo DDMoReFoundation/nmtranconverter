@@ -31,7 +31,7 @@ import eu.ddmore.libpharmml.dom.modellingsteps.EstimationOperation;
 @PrepareForTest(ScriptDefinitionAccessor.class)
 public class EstimationDetailsEmitterTest extends BasicTestSetup {
 
-    private String method = "METHOD=";
+    private static final String METHOD = "METHOD=";
     @Mock DiscreteHandler discreteHandler;
 
     EstimationDetailsEmitter detailsEmitter;
@@ -64,7 +64,6 @@ public class EstimationDetailsEmitterTest extends BasicTestSetup {
         estimationSteps.add(estStep);
 
         detailsEmitter = new EstimationDetailsEmitter(scriptDefinition, discreteHandler);
-        detailsEmitter.processEstimationStatement();
 
         String covStatement = detailsEmitter.getCovStatement();
         assertNotNull("Cov statement cannot be null if operation type is estFIM", covStatement);
@@ -76,7 +75,7 @@ public class EstimationDetailsEmitterTest extends BasicTestSetup {
     public void shouldGetEstimationStatementForFO() {
 
         String methodType = Method.FO.toString();
-        String expectedStatement = Formatter.est()+method+EstConstant.FO_STATEMENT.getStatement();
+        String expectedStatement = Formatter.est()+METHOD+EstConstant.FO_STATEMENT.getStatement();
 
         shouldVerifyStatement(methodType, expectedStatement);
     }
@@ -85,7 +84,7 @@ public class EstimationDetailsEmitterTest extends BasicTestSetup {
     public void shouldGetEstimationStatementForFOCE() {
 
         String methodType = Method.FOCE.toString();
-        String expectedStatement = Formatter.est()+method+EstConstant.FOCE_STATEMENT.getStatement();
+        String expectedStatement = Formatter.est()+METHOD+EstConstant.FOCE_STATEMENT.getStatement();
 
         shouldVerifyStatement(methodType, expectedStatement);
     }
@@ -94,7 +93,7 @@ public class EstimationDetailsEmitterTest extends BasicTestSetup {
     public void shouldGetEstimationStatementForFOCEI() {
 
         String methodType = Method.FOCEI.toString();
-        String expectedStatement = Formatter.est()+method+EstConstant.FOCEI_STATEMENT.getStatement();
+        String expectedStatement = Formatter.est()+METHOD+EstConstant.FOCEI_STATEMENT.getStatement();
         shouldVerifyStatement(methodType, expectedStatement);
     }
 
@@ -102,7 +101,7 @@ public class EstimationDetailsEmitterTest extends BasicTestSetup {
     public void shouldGetEstimationStatementForSAEM() {
 
         String methodType = Method.SAEM.toString();
-        String expectedStatement = Formatter.est()+method+EstConstant.SAEM_STATEMENT.getStatement();
+        String expectedStatement = Formatter.est()+METHOD+EstConstant.SAEM_STATEMENT.getStatement();
 
         shouldVerifyStatement(methodType, expectedStatement);
     }
@@ -111,7 +110,7 @@ public class EstimationDetailsEmitterTest extends BasicTestSetup {
     public void shouldGetEstimationStatementForSAEMWhenCountData() {
 
         String methodType = Method.SAEM.toString();
-        String expectedStatement = Formatter.est()+method+EstConstant.SAEM_STATEMENT.getStatement()+EstConstant.COUNT_DATA_LAPLACE_OPTION.getStatement();
+        String expectedStatement = Formatter.est()+METHOD+EstConstant.SAEM_STATEMENT.getStatement()+EstConstant.COUNT_DATA_LAPLACE_OPTION.getStatement();
 
         when(discreteHandler.isCountData()).thenReturn(true);
         shouldVerifyStatement(methodType, expectedStatement);
@@ -121,7 +120,7 @@ public class EstimationDetailsEmitterTest extends BasicTestSetup {
     public void shouldGetEstimationStatementForSAEMWhenTTE() {
 
         String methodType = Method.SAEM.toString();
-        String expectedStatement = Formatter.est()+method+EstConstant.SAEM_STATEMENT.getStatement()+EstConstant.TTE_DATA_LAPLACE_OPTION.getStatement();
+        String expectedStatement = Formatter.est()+METHOD+EstConstant.SAEM_STATEMENT.getStatement()+EstConstant.TTE_DATA_LAPLACE_OPTION.getStatement();
 
         when(discreteHandler.isTimeToEventData()).thenReturn(true);
         shouldVerifyStatement(methodType, expectedStatement);
@@ -131,7 +130,6 @@ public class EstimationDetailsEmitterTest extends BasicTestSetup {
         when(estOperation.getAlgorithm()).thenReturn(algorithm);
         when(algorithm.getDefinition()).thenReturn(methodType);
         detailsEmitter = new EstimationDetailsEmitter(scriptDefinition, discreteHandler);
-        detailsEmitter.processEstimationStatement();
 
         String generatedStatement = detailsEmitter.getEstimationStatement().toString().trim();
 
@@ -144,7 +142,6 @@ public class EstimationDetailsEmitterTest extends BasicTestSetup {
     public void shouldAddSimContentForDiscrete() {
         when(discreteHandler.isDiscrete()).thenReturn(true);
         detailsEmitter = new EstimationDetailsEmitter(scriptDefinition, discreteHandler);
-        detailsEmitter.processEstimationStatement();
 
         String simContent = "sim content";
         assertFalse("Should return sim content if discrete.", detailsEmitter.addSimContentForDiscrete(simContent).isEmpty());
@@ -154,7 +151,6 @@ public class EstimationDetailsEmitterTest extends BasicTestSetup {
     public void shouldNotAddSimContentForDiscrete() {
         when(discreteHandler.isDiscrete()).thenReturn(false);
         detailsEmitter = new EstimationDetailsEmitter(scriptDefinition, discreteHandler);
-        detailsEmitter.processEstimationStatement();
 
         String simContent = "sim content";
         assertTrue("Should not return sim content if discrete.", detailsEmitter.addSimContentForDiscrete(simContent).isEmpty());

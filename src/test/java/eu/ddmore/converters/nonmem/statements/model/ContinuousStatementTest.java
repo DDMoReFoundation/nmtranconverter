@@ -64,9 +64,9 @@ public class ContinuousStatementTest extends BasicTestSetup  {
         when(derivativeVar.getSymbId()).thenReturn(COL_ID_1);
         when(context.getDerivativeVars()).thenReturn(derivativeVars);
 
-        Map<String, String> VarCompSeqs = new HashMap<String, String>();
-        VarCompSeqs.put(COL_ID_1, COL_NUM_1.toString());
-        when(context.getDerivativeVarCompSequences()).thenReturn(VarCompSeqs);
+        Map<String, String> varCompartmentSequences = new HashMap<String, String>();
+        varCompartmentSequences.put(COL_ID_1, COL_NUM_1.toString());
+        when(context.getDerivativeVarCompSequences()).thenReturn(varCompartmentSequences);
 
         when(context.getEstimationEmitter().isSAEM()).thenReturn(true);
     }

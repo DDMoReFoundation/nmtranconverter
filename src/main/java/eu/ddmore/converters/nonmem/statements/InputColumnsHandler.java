@@ -55,11 +55,6 @@ public class InputColumnsHandler {
         }
     }
 
-    /**
-     * Computes estimation headers for external datasets retrieved.
-     * 
-     * @param dataFiles
-     */
     private void populateColumnsWithHeadersforDataSets(List<ExternalDataSet> dataFiles) {
 
         for(ExternalDataSet dataFile : dataFiles) {

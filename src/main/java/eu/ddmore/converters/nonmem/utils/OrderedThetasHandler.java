@@ -41,6 +41,7 @@ public class OrderedThetasHandler {
     /**
      * Create ordered thetas to eta map from ordered etas map.
      * The order is used to add Thetas in order of thetas.
+     * @param orderedEtas
      */
     public void createOrderedThetasToEta(Set<Eta> orderedEtas){ 
         Preconditions.checkNotNull(orderedEtas, "Ordered etas cannot be null.");
@@ -51,8 +52,7 @@ public class OrderedThetasHandler {
 
     /**
      * Creates ordered thetas list with help of etasOrderMap and individual parameters
-     * @param orderedEtas
-     * @param nextEtaOrder
+     * @param eta
      */
     private void addToThetasOrderMap(Eta eta) {
         for(ParameterBlock block : scriptDefinition.getParameterBlocks()){

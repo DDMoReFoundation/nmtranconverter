@@ -28,7 +28,6 @@ public class PkMacroAnalyser {
 
     /**
      * Enum with pk macro attributes and respective values for these attributes.
-     * More elements might be added over the time to make more inclusive. 
      */
     enum PkMacroAttribute{
         P("F"), TLAG("ALAG"), KA("KA"), V("V");
@@ -53,7 +52,7 @@ public class PkMacroAnalyser {
      * This method will process pk macros to collect information and set macro advan type and other details. 
      * 
      * @param context
-     * @return
+     * @return pk macro details
      */
     public PkMacroDetails analyse(ConversionContext context) {
         Preconditions.checkNotNull(context, "Conversion Context cannot be null");
@@ -66,9 +65,8 @@ public class PkMacroAnalyser {
     }
 
     /**
-     * This method will process compartments, eliminations, iv/orals and peripherals from all the pk macros.
+     * This method processes compartments, eliminations, iv/orals and peripherals from all the pk macros.
      * Also it will determine and set pk macro advan type.
-     * 
      */
     private PkMacroDetails processPkMacros(ScriptDefinition scriptDefinition){
         Preconditions.checkNotNull(scriptDefinition, "Script definition cannot be null");
@@ -203,7 +201,6 @@ public class PkMacroAnalyser {
 
     /**
      * Check if injection type is Oral
-     * @return
      */
     private boolean isOral(PkMacroDetails details){
         if(details.getIvs().isEmpty() && !details.getAbsorptionOrals().isEmpty()){

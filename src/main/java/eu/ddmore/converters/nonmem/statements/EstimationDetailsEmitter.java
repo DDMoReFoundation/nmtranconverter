@@ -44,22 +44,57 @@ public class EstimationDetailsEmitter {
         FO, FOCE, FOCEI, SAEM
     }
 
+    private static final String METHOD = "METHOD=";
     private final List<EstimationStep> estimationSteps;
-    private Boolean isCovFound = false;
     private Boolean isSAEM = false;
 
     private final DiscreteHandler discreteHandler;
     private StringBuilder estStatement = new StringBuilder();
+    private String covStatement;
 
     public EstimationDetailsEmitter(ScriptDefinition scriptDefinition, DiscreteHandler discreteHandler){
         this.discreteHandler = discreteHandler;
         estimationSteps = ScriptDefinitionAccessor.getEstimationSteps(scriptDefinition);
+        initialise();
+    }
+
+    private void initialise(){
+        processEstimationStatement();
+    }
+
+    /**
+     * This method will create estimation statement for nonmem file from estimation steps collected from steps map.
+     */
+    private void processEstimationStatement() {
+        Boolean isCovFound = false;
+        estStatement.append(Formatter.endline());
+
+        if(estimationSteps!=null && !estimationSteps.isEmpty()){
+            estStatement.append(Formatter.est());
+            for(EstimationStep estStep : estimationSteps){
+                for(EstimationOperation operationType :estStep.getOperations()){
+                    String optType = operationType.getOpType();
+                    //If covariate is not found in any other operations or properties
+                    if(!isCovFound){
+                        isCovFound = checkForCovariateStatement(operationType);
+                    }
+
+                    if(EstimationOpType.EST_POP.value().equals(optType)){
+                        estStatement.append(buildEstimationStatementFromAlgorithm(operationType.getAlgorithm()));
+                    }else if(EstimationOpType.EST_INDIV.value().equals(optType)){
+                        break;
+                    }
+                }
+            }
+        }
+
+        setCovStatement(isCovFound);
     }
 
     private StringBuilder buildEstimationStatementFromAlgorithm(Algorithm algorithm) {
         StringBuilder statement = new StringBuilder();
 
-        statement.append("METHOD=");
+        statement.append(METHOD);
         if (algorithm!=null) {
             String methodDefinition =algorithm.getDefinition().trim().toUpperCase();
             if (methodDefinition.equals(Method.FO.toString())) {
@@ -87,6 +122,10 @@ public class EstimationDetailsEmitter {
         return statement;
     }
 
+    private void setCovStatement(Boolean isCovFound){
+        covStatement = (isCovFound) ? Formatter.cov(): "";
+    }
+
     private StringBuilder appendDiscreteEstOptions() {
         StringBuilder statement = new StringBuilder();
         if(discreteHandler.isCountData()){
@@ -98,39 +137,11 @@ public class EstimationDetailsEmitter {
     }
 
     /**
-     * This method will create estimation statement for nonmem file from estimation steps collected from steps map.
-     * 
-     * @return estimation statement
-     */
-    public StringBuilder processEstimationStatement() {
-        estStatement.append(Formatter.endline());
-
-        if(estimationSteps!=null && !estimationSteps.isEmpty()){
-            estStatement.append(Formatter.est());
-            for(EstimationStep estStep : estimationSteps){
-                for(EstimationOperation operationType :estStep.getOperations()){
-                    String optType = operationType.getOpType();
-                    isCovFound = checkForCovariateStatement(operationType);
-
-                    if(EstimationOpType.EST_POP.value().equals(optType)){
-                        estStatement.append(buildEstimationStatementFromAlgorithm(operationType.getAlgorithm()));
-                    }else if(EstimationOpType.EST_INDIV.value().equals(optType)){
-                        break;
-                    }
-                }
-            }
-        }
-
-        return estStatement;
-    }
-
-    /**
      * This method creates COV statement. 
      * this method is added here, as it is dependent on availability of EstFIM.
      * @param fout
      */
     public String getCovStatement(){
-        String covStatement = (isCovFound) ? Formatter.cov(): "";
         return Formatter.endline()+covStatement;
     }
 
@@ -151,10 +162,6 @@ public class EstimationDetailsEmitter {
      * @return boolean result
      */
     private Boolean checkForCovariateStatement(EstimationOperation operationType){
-        //If covariate is found in any other operations or properties already then return
-        if(isCovFound==true){
-            return isCovFound;
-        }
         String optType = operationType.getOpType();
         if(EstimationOpType.EST_FIM.value().equals(optType)){
             return true;

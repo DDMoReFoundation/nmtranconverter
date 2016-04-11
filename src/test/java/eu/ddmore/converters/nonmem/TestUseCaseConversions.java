@@ -26,21 +26,15 @@ public class TestUseCaseConversions extends TestBase {
     @Before
     public void setUp() throws Exception {
 
-        inputXMLFile = "UseCase1.xml";
-        inputDataFile = "warfarin_conc.csv";
+//        inputXMLFile = "UseCase1.xml";
+//        inputDataFile = "warfarin_conc.csv";
+        inputXMLFile = "UseCase7.xml";
+        inputDataFile = "warfarin_conc_cmt.csv";
 
-        init(inputDataFile, V_0_8_SUBDIR);
         init(inputXMLFile, V_0_8_SUBDIR);
     }
 
-    /**
-     * Used while executing more than one use cases are getting converted.
-     * @param inputXMLFile
-     * @param inputDataFile
-     * @throws Exception
-     */
-    public void updateSetUpWith(String inputXMLFile, String inputDataFile) throws Exception {
-        init(inputDataFile, V_0_8_SUBDIR);
+    private void updateSetUpWith(String inputXMLFile, String inputDataFile) throws Exception {
         init(inputXMLFile, V_0_8_SUBDIR);
     }
 
@@ -63,26 +57,46 @@ public class TestUseCaseConversions extends TestBase {
     @Test
     public void allUseCaseConversionsTest() throws Exception{
 
-        inputXMLFile = "pkmacro/UseCase7_HBN_ADVAN1.xml";
-        inputDataFile = "pkmacro/warfarin_conc_cmt.csv";
+        inputXMLFile = "pkmacro/PKmacros_advan1_HBN.xml";
+        inputDataFile = "pkmacro/example1.csv";
         updateSetUpWith(inputXMLFile, inputDataFile);
         //test();
-        
-        inputXMLFile = "pkmacro/UseCase7_HBN_ADVAN2.xml";
-        inputDataFile = "pkmacro/warfarin_conc_cmt.csv";
+
+        inputXMLFile = "pkmacro/PKmacros_advan1.xml";
+        inputDataFile = "pkmacro/example1.csv";
         updateSetUpWith(inputXMLFile, inputDataFile);
         //test();
-        
-        inputXMLFile = "pkmacro/UseCase7_HBN_ADVAN3.xml";
-        inputDataFile = "pkmacro/warfarin_conc_cmt.csv";
+
+        inputXMLFile = "pkmacro/PKmacros_advan10.xml";
+        inputDataFile = "pkmacro/example10.csv";
         updateSetUpWith(inputXMLFile, inputDataFile);
         //test();
-        
-        inputXMLFile = "pkmacro/UseCase7_HBN_ADVAN4.xml";
-        inputDataFile = "pkmacro/warfarin_conc_cmt.csv";
+
+        inputXMLFile = "pkmacro/PKmacros_advan11.xml";
+        inputDataFile = "pkmacro/example11.csv";
         updateSetUpWith(inputXMLFile, inputDataFile);
         //test();
-        
+
+        inputXMLFile = "pkmacro/PKmacros_advan12.xml";
+        inputDataFile = "pkmacro/example12.csv";
+        updateSetUpWith(inputXMLFile, inputDataFile);
+        //test();
+
+        inputXMLFile = "pkmacro/PKmacros_advan2.xml";
+        inputDataFile = "pkmacro/example2.csv";
+        updateSetUpWith(inputXMLFile, inputDataFile);
+        //test();
+
+        inputXMLFile = "pkmacro/PKmacros_advan3.xml";
+        inputDataFile = "pkmacro/example3.csv";
+        updateSetUpWith(inputXMLFile, inputDataFile);
+        //test();
+
+        inputXMLFile = "pkmacro/PKmacros_advan4.xml";
+        inputDataFile = "pkmacro/example4.csv";
+        updateSetUpWith(inputXMLFile, inputDataFile);
+        //test();
+
         inputXMLFile = "UseCase1.xml";
         inputDataFile = "warfarin_conc.csv";
         updateSetUpWith(inputXMLFile, inputDataFile);

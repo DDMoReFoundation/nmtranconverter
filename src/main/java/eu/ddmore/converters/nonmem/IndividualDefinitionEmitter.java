@@ -123,12 +123,12 @@ public class IndividualDefinitionEmitter {
      * 
      * @param structuredModel
      * @param paramId
-     * @param indivDefinitionFromCov
-     * @return statement
+     * @param popSymbol
+     * @return equation statement
      */
     private StringBuilder arrangeEquationStatement(StructuredModel structuredModel, String paramId, String popSymbol){
         StringBuilder statement = new StringBuilder();
-        String etas = addEtasStatementsToIndivParamDef(structuredModel.getListOfRandomEffects());
+        String etas = addEtasFromRandomEffectsToIndivParamDef(structuredModel.getListOfRandomEffects());
 
         String variableSymbol = paramId;
         String paramSymbol = Formatter.getReservedParam(paramId);
@@ -203,9 +203,6 @@ public class IndividualDefinitionEmitter {
 
     /**
      * This method will return individual definition details if assignment is present.
-     * 
-     * @param ip
-     * @return
      */
     private StringBuilder getIndivDefinitionForAssign(IndividualParameter ip) {
         StringBuilder statement = new StringBuilder();
@@ -218,17 +215,15 @@ public class IndividualDefinitionEmitter {
 
     /**
      * This method adds etas from random effects to individual parameter definitions.
-     * @param random_effects
-     * @return
      */
-    private String addEtasStatementsToIndivParamDef(List<ParameterRandomEffect> random_effects) {
+    private String addEtasFromRandomEffectsToIndivParamDef(List<ParameterRandomEffect> randomEffects) {
         StringBuilder etas = new StringBuilder();
-        if (random_effects != null && !random_effects.isEmpty()) {
-            for (ParameterRandomEffect random_effect : random_effects) {
-                if (random_effect == null) continue;
+        if (randomEffects != null && !randomEffects.isEmpty()) {
+            for (ParameterRandomEffect randomEffect : randomEffects) {
+                if (randomEffect == null) continue;
                 etas.append("+ ");
                 for(Eta eta : context.retrieveOrderedEtas()){
-                    if(eta.getEtaSymbol().equals(random_effect.getSymbRef().get(0).getSymbIdRef())){
+                    if(eta.getEtaSymbol().equals(randomEffect.getSymbRef().get(0).getSymbIdRef())){
                         etas.append(Formatter.etaFor(eta.getEtaOrderSymbol()));
                         break;
                     }

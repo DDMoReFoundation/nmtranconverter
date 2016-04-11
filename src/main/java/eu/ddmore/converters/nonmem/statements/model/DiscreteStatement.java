@@ -62,8 +62,8 @@ public class DiscreteStatement {
         tteBlock.append(statementHelper.getAllIndividualParamAssignments());
         //$DES
         DiffEquationStatementBuilder desBuilder = statementHelper.getDiffEquationStatement(tteBlock);
-        String HAZARD_FUNC_DES = Formatter.renameVarForDES(discreteHandler.getHazardFunction());
-        tteBlock.append(Formatter.endline("HAZARD_FUNC_DES = "+HAZARD_FUNC_DES));
+        String hazardFunction = Formatter.renameVarForDES(discreteHandler.getHazardFunction());
+        tteBlock.append(Formatter.endline("HAZARD_FUNC_DES = "+hazardFunction));
         tteBlock.append(Formatter.endline("DADT(1) = HAZARD_FUNC_DES"));
         //Customised ERROR
         //$ERROR

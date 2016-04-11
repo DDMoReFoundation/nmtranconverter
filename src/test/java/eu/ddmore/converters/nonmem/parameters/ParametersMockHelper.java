@@ -17,7 +17,7 @@ import org.mockito.Mockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 
 import eu.ddmore.converters.nonmem.eta.Eta;
-import eu.ddmore.converters.nonmem.eta.VarLevel;
+import eu.ddmore.converters.nonmem.eta.VariabilityLevel;
 import eu.ddmore.converters.nonmem.statements.BasicTestSetup;
 import eu.ddmore.converters.nonmem.statements.InterOccVariabilityHandler;
 import eu.ddmore.converters.nonmem.utils.RandomVariableHelper;
@@ -91,14 +91,14 @@ public class ParametersMockHelper extends BasicTestSetup {
         firstEta.setOmegaName(firstOmegaSymbol);
         firstEta.setOrder(3);
         firstEta.setOrderInCorr(1);
-        firstEta.setVarLevel(VarLevel.IIV);
+        firstEta.setVarLevel(VariabilityLevel.IIV);
 
         secondEta = new Eta(secondEtaSymbol);
         secondEta.setCorrelationRelated(true);
         secondEta.setOmegaName(secondOmegaSymbol);
         secondEta.setOrder(4);
         secondEta.setOrderInCorr(2);
-        secondEta.setVarLevel(VarLevel.IIV);
+        secondEta.setVarLevel(VariabilityLevel.IIV);
     }
 
     protected void mockCorrelationWrapper() {

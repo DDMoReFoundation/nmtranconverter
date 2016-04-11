@@ -20,7 +20,7 @@ import eu.ddmore.libpharmml.dom.modellingsteps.ParameterEstimate;
  */
 public class ThetaStatementBuilder {
 
-    private final LinkedHashMap<String, ThetaParameter> thetaParameters = new LinkedHashMap<String, ThetaParameter>();
+    private final Map<String, ThetaParameter> thetaParameters = new LinkedHashMap<String, ThetaParameter>();
     private final Map<Integer, String> thetasToEtaOrder;
 
     private final ParametersInitialiser parametersInitialiser;
@@ -73,9 +73,10 @@ public class ThetaStatementBuilder {
 
     /**
      * Creates thetas for parameter name passed after verifying if its valid theta and adds it to ordered thetas map.
-     *  
+     * 
      * @param unOrderedThetas
      * @param paramName
+     * @param isFixed
      */
     private void createAndAddThetaForValidParamToMap(final Map<String, ThetaParameter> unOrderedThetas, String paramName, Boolean isFixed) {
         if(validateParamName(paramName)){
@@ -107,9 +108,6 @@ public class ThetaStatementBuilder {
 
     /**
      * Validate parameter before adding it to Theta, by checking if it is omega or sigma or already added to theta.
-     * 
-     * @param paramName
-     * @return
      */
     private boolean validateParamName(String paramName) {
         boolean isValid = true;
@@ -136,8 +134,6 @@ public class ThetaStatementBuilder {
 
     /**
      * Prepares theta statement for thetas if present.
-     *  
-     * @return omega statement
      */
     public String getThetaStatementBlock(){
         StringBuilder thetaStatement = new StringBuilder();
@@ -150,7 +146,7 @@ public class ThetaStatementBuilder {
         return thetaStatement.toString();
     }
 
-    public LinkedHashMap<String, ThetaParameter> getThetaParameters() {
+    public Map<String, ThetaParameter> getThetaParameters() {
         return thetaParameters;
     }
 }
