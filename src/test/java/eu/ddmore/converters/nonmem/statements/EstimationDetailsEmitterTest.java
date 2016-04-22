@@ -77,7 +77,7 @@ public class EstimationDetailsEmitterTest extends BasicTestSetup {
         String methodType = Method.FO.toString();
         String expectedStatement = Formatter.est()+METHOD+EstConstant.FO_STATEMENT.getStatement();
 
-        shouldVerifyStatement(methodType, expectedStatement);
+        verifyStatement(methodType, expectedStatement);
     }
 
     @Test
@@ -86,7 +86,7 @@ public class EstimationDetailsEmitterTest extends BasicTestSetup {
         String methodType = Method.FOCE.toString();
         String expectedStatement = Formatter.est()+METHOD+EstConstant.FOCE_STATEMENT.getStatement();
 
-        shouldVerifyStatement(methodType, expectedStatement);
+        verifyStatement(methodType, expectedStatement);
     }
 
     @Test
@@ -94,7 +94,7 @@ public class EstimationDetailsEmitterTest extends BasicTestSetup {
 
         String methodType = Method.FOCEI.toString();
         String expectedStatement = Formatter.est()+METHOD+EstConstant.FOCEI_STATEMENT.getStatement();
-        shouldVerifyStatement(methodType, expectedStatement);
+        verifyStatement(methodType, expectedStatement);
     }
 
     @Test
@@ -103,7 +103,7 @@ public class EstimationDetailsEmitterTest extends BasicTestSetup {
         String methodType = Method.SAEM.toString();
         String expectedStatement = Formatter.est()+METHOD+EstConstant.SAEM_STATEMENT.getStatement();
 
-        shouldVerifyStatement(methodType, expectedStatement);
+        verifyStatement(methodType, expectedStatement);
     }
 
     @Test
@@ -113,7 +113,7 @@ public class EstimationDetailsEmitterTest extends BasicTestSetup {
         String expectedStatement = Formatter.est()+METHOD+EstConstant.SAEM_STATEMENT.getStatement()+EstConstant.COUNT_DATA_LAPLACE_OPTION.getStatement();
 
         when(discreteHandler.isCountData()).thenReturn(true);
-        shouldVerifyStatement(methodType, expectedStatement);
+        verifyStatement(methodType, expectedStatement);
     }
 
     @Test
@@ -123,10 +123,10 @@ public class EstimationDetailsEmitterTest extends BasicTestSetup {
         String expectedStatement = Formatter.est()+METHOD+EstConstant.SAEM_STATEMENT.getStatement()+EstConstant.TTE_DATA_LAPLACE_OPTION.getStatement();
 
         when(discreteHandler.isTimeToEventData()).thenReturn(true);
-        shouldVerifyStatement(methodType, expectedStatement);
+        verifyStatement(methodType, expectedStatement);
     }
 
-    private void shouldVerifyStatement(String methodType, String expectedStatement){
+    private void verifyStatement(String methodType, String expectedStatement){
         when(estOperation.getAlgorithm()).thenReturn(algorithm);
         when(algorithm.getDefinition()).thenReturn(methodType);
         detailsEmitter = new EstimationDetailsEmitter(scriptDefinition, discreteHandler);

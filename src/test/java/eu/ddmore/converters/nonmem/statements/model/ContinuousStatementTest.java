@@ -17,13 +17,21 @@ import org.mockito.Matchers;
 import org.mockito.Mock;
 import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.powermock.api.mockito.PowerMockito.when;
+import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 import eu.ddmore.converters.nonmem.ConversionContext;
 import eu.ddmore.converters.nonmem.statements.BasicTestSetup;
 import eu.ddmore.converters.nonmem.statements.DiffEquationStatementBuilder;
+import eu.ddmore.converters.nonmem.statements.pkmacro.PkMacroAnalyser;
+import eu.ddmore.converters.nonmem.statements.pkmacro.PkMacroAnalyser.AdvanType;
+import eu.ddmore.converters.nonmem.statements.pkmacro.PkMacroAnalyser.PkMacroDetails;
 import eu.ddmore.converters.nonmem.utils.Formatter;
 import eu.ddmore.libpharmml.dom.commontypes.DerivativeVariable;
+import eu.ddmore.libpharmml.dom.modeldefn.pkmacro.AbsorptionOralMacro;
+import eu.ddmore.libpharmml.dom.modeldefn.pkmacro.CompartmentMacro;
+import eu.ddmore.libpharmml.dom.modeldefn.pkmacro.EliminationMacro;
+import eu.ddmore.libpharmml.dom.modeldefn.pkmacro.OralMacro;
 
 /**
  * Junit tests for ContinuousStatement class. 
@@ -34,8 +42,14 @@ public class ContinuousStatementTest extends BasicTestSetup  {
     @Mock DiffEquationStatementBuilder desBuilder;
     @Mock PredCoreStatement predCoreStatement;
     @Mock ErrorStatementHandler errorStatementHandler;
+    @Mock PkMacroAnalyser analyser;
+    @Mock PkMacroDetails pkMacroDetails;
 
     @Mock DerivativeVariable derivativeVar;
+
+    private List<CompartmentMacro> cmtMacros = new  ArrayList<CompartmentMacro>();
+    private List<EliminationMacro> eliminationMacros = new  ArrayList<EliminationMacro>();
+    private List<AbsorptionOralMacro> oralMacros = new  ArrayList<AbsorptionOralMacro>();
 
     private Map<String, String> varDefs = new HashMap<String, String>();
     private static final String EXAMPLE_OUTPUT = Formatter.endline()+Formatter.endline("$SUBS ADVAN13 TOL=6")+
@@ -56,7 +70,6 @@ public class ContinuousStatementTest extends BasicTestSetup  {
     }
 
     private void mockConversionContext(){
-
         context = mock(ConversionContext.class, RETURNS_DEEP_STUBS);
 
         List<DerivativeVariable> derivativeVars = new ArrayList<>();
@@ -102,4 +115,26 @@ public class ContinuousStatementTest extends BasicTestSetup  {
         assertEquals("should get expected output",EXAMPLE_OUTPUT,contStatement.toString());
     }
 
+    private void mockPkMacroAnalyser() throws Exception{
+        AdvanType advanType = PkMacroAnalyser.AdvanType.ADVAN2;
+        cmtMacros.add(new CompartmentMacro());
+        eliminationMacros.add(new EliminationMacro());
+        oralMacros.add(new OralMacro());
+        when(modelStatementHelper.getContext()).thenReturn(context);
+        whenNew(PkMacroAnalyser.class).withNoArguments().thenReturn(analyser);
+        whenNew(PkMacroDetails.class).withNoArguments().thenReturn(pkMacroDetails);
+        when(analyser.analyse(context)).thenReturn(pkMacroDetails);
+        when(pkMacroDetails.getMacroAdvanType()).thenReturn(advanType);
+    }
+
+    @Test
+    public void testGetcontinuousStatementWithPkMacro() throws Exception{
+        mockPkMacroAnalyser();
+        continuousStatement = new ContinuousStatement(modelStatementHelper);
+        String contStatement = continuousStatement.getContinuousStatement().toString();
+
+        assertNotNull("Continuous statement should not be null", contStatement);
+        assertNotNull("Continuous statement should contain component", contStatement.contains(COMP1_EXAMPLE));
+        assertEquals("should get expected output",EXAMPLE_OUTPUT, contStatement.toString());
+    }
 }

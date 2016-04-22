@@ -69,7 +69,7 @@ public class EtaAndOmegaBlocksInitialiser {
                     iovEta.setOrder(++etaCount);
                     iovEta.setOrderInCorr(++iovEtaCount);
                     iovEta.setVarLevel(VariabilityLevel.IOV);
-                    String etaSymbolForIOV = iovhandler.getColumnWithOcc().getColumnId()+"_"+iovEta.getOmegaName();
+                    String etaSymbolForIOV = iovhandler.getIovColumn().getColumnId()+"_"+iovEta.getOmegaName();
                     iovEta.setEtaSymbolForIOV(etaSymbolForIOV);
                     allOrderedEtas.add(iovEta);
                     omegaBlock.addToOrderedEtas(iovEta);
@@ -127,7 +127,7 @@ public class EtaAndOmegaBlocksInitialiser {
                 if(iovhandler.getOccasionRandomVariables().contains(eta.getEtaSymbol())){
                     eta.setVarLevel(VariabilityLevel.IOV);
                     eta.setOrderInCorr(DEFAULT_CORR_ORDER);
-                    String etaSymbolForIOV = iovhandler.getColumnWithOcc().getColumnId()+"_"+eta.getOmegaName();
+                    String etaSymbolForIOV = iovhandler.getIovColumn().getColumnId()+"_"+eta.getOmegaName();
                     eta.setEtaSymbolForIOV(etaSymbolForIOV);
 
                     nonCorrIOVEtas.add(eta);

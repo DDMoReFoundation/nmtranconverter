@@ -1,7 +1,7 @@
 /*******************************************************************************
  * Copyright (C) 2015 Mango Solutions Ltd - All rights reserved.
  ******************************************************************************/
-package eu.ddmore.converters.nonmem.statements.model;
+package eu.ddmore.converters.nonmem.statements.pkmacro;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,7 +30,7 @@ public class PkMacroAnalyser {
      * Enum with pk macro attributes and respective values for these attributes.
      */
     enum PkMacroAttribute{
-        P("F"), TLAG("ALAG"), KA("KA"), V("V");
+        P("F"), TLAG("ALAG"), KA("KA"), V("V"), CL("CL"), K("K");
 
         private String value;
 
@@ -44,8 +44,8 @@ public class PkMacroAnalyser {
 
     }
 
-    enum AdvanType{
-        ADVAN1,ADVAN2,ADVAN3,ADVAN4,ADVAN10,ADVAN11,ADVAN12;
+    public enum AdvanType{
+        ADVAN1,ADVAN2,ADVAN3,ADVAN4,ADVAN10,ADVAN11,ADVAN12,ADVAN13, NONE;
     };
 
     /**
@@ -60,7 +60,6 @@ public class PkMacroAnalyser {
         if(!details.isEmpty()){
             details.setMacroAdvanType(captureAdvanType(details));
         }
-
         return details;
     }
 
@@ -117,13 +116,13 @@ public class PkMacroAnalyser {
      * @return advan type
      */
     @VisibleForTesting
-    String captureAdvanType(PkMacroDetails details) {
+    AdvanType captureAdvanType(PkMacroDetails details) {
 
         if(details.getCompartments().isEmpty() || details.getEliminations().isEmpty()){
             throw new IllegalArgumentException("The compartment missing from pk macro specified");
         }
 
-        String advanType = new String();
+        AdvanType advanType = AdvanType.NONE;
         if(details.getCompartments().size()>1){
             return advanType;
         }
@@ -132,30 +131,30 @@ public class PkMacroAnalyser {
         case 0:
             if(isIV(details)){
                 if(isKmAndVm(details)){
-                    advanType = AdvanType.ADVAN10.toString();
+                    advanType = AdvanType.ADVAN10;
                 }else{
-                    advanType = AdvanType.ADVAN1.toString();
+                    advanType = AdvanType.ADVAN1;
                 }
             }else if(isOral(details)){
-                advanType = AdvanType.ADVAN2.toString();
+                advanType = AdvanType.ADVAN2;
             }
             break;
         case 1:
             if(isIV(details)){
-                advanType = AdvanType.ADVAN3.toString();
+                advanType = AdvanType.ADVAN3;
             }else if(isOral(details)){
-                advanType = AdvanType.ADVAN4.toString();
+                advanType = AdvanType.ADVAN4;
             }
             break;
         case 2:
             if(isIV(details)){
-                advanType = AdvanType.ADVAN11.toString();
+                advanType = AdvanType.ADVAN11;
             }else if(isOral(details)){
-                advanType = AdvanType.ADVAN12.toString();
+                advanType = AdvanType.ADVAN12;
             }
             break;
         default:
-            advanType = new String();
+            advanType = AdvanType.NONE;
         }
         return advanType;
     }
@@ -224,13 +223,13 @@ public class PkMacroAnalyser {
         private int absOralCompNumber=0;
         private int cmtCompNumber=0;
 
-        private String macroAdvanType = new String();
+        private AdvanType macroAdvanType = AdvanType.NONE;
 
-        public String getMacroAdvanType() {
+        public AdvanType getMacroAdvanType() {
             return macroAdvanType;
         }
 
-        private String setMacroAdvanType(String advanType) {
+        private AdvanType setMacroAdvanType(AdvanType advanType) {
             return macroAdvanType = advanType;
         }
 

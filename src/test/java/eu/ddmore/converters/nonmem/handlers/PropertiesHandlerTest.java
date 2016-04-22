@@ -35,7 +35,6 @@ public class PropertiesHandlerTest extends BasicTestSetup {
     public void shouldGetBinopPropertyFor() {
         final String plusSymbol = "+";
         final String plus = "plus"; //+
-
         propertiesHandler = new PropertiesHandler();
         String resultSymbol = propertiesHandler.getBinopPropertyFor(plus);
         assertNotNull("column name for column type should not be null.", resultSymbol);
@@ -44,8 +43,8 @@ public class PropertiesHandlerTest extends BasicTestSetup {
 
     @Test
     public void shouldGetReservedWordFor() {
-        final String pred = "PRED"; //
-        final String predSymbol = "NM_PRED";
+        final String pred = "PRED";
+        final String predSymbol = "NM_PRED"; //NM_PRED
 
         propertiesHandler = new PropertiesHandler();
         String resultSymbol = propertiesHandler.getReservedWordFor(pred);

@@ -134,7 +134,7 @@ public class TableStatement {
         List<ParameterBlock> blocks =  context.getScriptDefinition().getParameterBlocks();
         StringBuilder paramTable = new StringBuilder();
 
-        InputColumn occColumn = context.getIovHandler().getColumnWithOcc();
+        InputColumn occColumn = context.getIovHandler().getIovColumn();
 
         if(occColumn!=null && StringUtils.isNotEmpty(occColumn.getColumnId())){
             paramTable.append(SPACE+Formatter.getReservedParam(occColumn.getColumnId()));

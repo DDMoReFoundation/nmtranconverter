@@ -26,15 +26,27 @@ public class TestUseCaseConversions extends TestBase {
     @Before
     public void setUp() throws Exception {
 
-//        inputXMLFile = "UseCase1.xml";
-//        inputDataFile = "warfarin_conc.csv";
-        inputXMLFile = "UseCase7.xml";
+        //inputXMLFile = "UseCase1.xml";
+        //inputDataFile = "warfarin_conc.csv";
+
+        //inputXMLFile = "UseCase7.xml";
+        //inputDataFile = "warfarin_conc_cmt.csv";
+
+        //inputXMLFile = "UseCase15.xml";
+        //inputDataFile = "warfarin_conc_cmt.csv";
+
+//        inputXMLFile = "pkmacro/UseCase7_HBN_ADVAN4_2.xml";
+//        inputDataFile = "pkmacro/warfarin_conc_cmt.csv";
+        
+        inputXMLFile = "UseCase10.xml";
         inputDataFile = "warfarin_conc_cmt.csv";
 
+        init(inputDataFile, V_0_8_SUBDIR);
         init(inputXMLFile, V_0_8_SUBDIR);
     }
 
     private void updateSetUpWith(String inputXMLFile, String inputDataFile) throws Exception {
+        init(inputDataFile, V_0_8_SUBDIR);
         init(inputXMLFile, V_0_8_SUBDIR);
     }
 
@@ -56,6 +68,21 @@ public class TestUseCaseConversions extends TestBase {
 
     @Test
     public void allUseCaseConversionsTest() throws Exception{
+
+        inputXMLFile = "pkmacro/UseCase7_HBN_ADVAN1_2.xml";
+        inputDataFile = "pkmacro/warfarin_conc_cmt.csv";
+        updateSetUpWith(inputXMLFile, inputDataFile);
+        test();
+
+        inputXMLFile = "pkmacro/UseCase7_HBN_ADVAN3_2.xml";
+        inputDataFile = "pkmacro/warfarin_conc_cmt.csv";
+        updateSetUpWith(inputXMLFile, inputDataFile);
+        test();
+
+        inputXMLFile = "pkmacro/UseCase7_HBN_ADVAN4_2.xml";
+        inputDataFile = "pkmacro/warfarin_conc_cmt.csv";
+        updateSetUpWith(inputXMLFile, inputDataFile);
+        test();
 
         inputXMLFile = "pkmacro/PKmacros_advan1_HBN.xml";
         inputDataFile = "pkmacro/example1.csv";
