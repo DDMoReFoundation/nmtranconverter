@@ -26,7 +26,7 @@ public class PkMacrosEmitter {
     private final ConversionContext context;
     PkMacroDetails pkMacroDetails;
     //    private Integer cmtValue=0;
-    private String macroEquation;
+    private String macroEquation = "";
     private StringBuilder pkMacroStatement = new StringBuilder();
 
     //    private final Set<PkMacroRateConstantsPair> rateConstants = new HashSet<PkMacroRateConstantsPair>();
