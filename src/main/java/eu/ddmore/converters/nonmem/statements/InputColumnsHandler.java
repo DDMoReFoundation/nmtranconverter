@@ -26,7 +26,7 @@ import eu.ddmore.libpharmml.dom.trialdesign.ExternalDataSet;
 public class InputColumnsHandler {
 
     private static final String DROP = "DROP";
-    private InputColumnsProvider inputColumnsProvider = new InputColumnsProvider();
+    private final InputColumnsProvider inputColumnsProvider = new InputColumnsProvider();
 
     public InputColumnsHandler(final List<ExternalDataSet> dataSets, List<CovariateDefinition> covDefinitions) {
         Preconditions.checkNotNull(dataSets, "Datasets cannot be null");
@@ -49,6 +49,8 @@ public class InputColumnsHandler {
 
                     if(transCovId!=null && !transCovId.isEmpty()){
                         inputColumnsProvider.addContCovTableColumn(transCovId);
+                    }else {
+                        throw new IllegalStateException("transformed covariate id should exist.");
                     }
                 }
             }
@@ -65,7 +67,8 @@ public class InputColumnsHandler {
     private void populateColumnsWithEstHeaders(ExternalDataSet externalDataSet) {
 
         HeaderColumnsDefinition headerColumns = externalDataSet.getDataSet().getDefinition();
-        Preconditions.checkNotNull(headerColumns, "Header columns definition has no columns");
+        Preconditions.checkNotNull(headerColumns, "Header columns definition has no columns.");
+        Preconditions.checkArgument(!headerColumns.getListOfColumn().isEmpty(), "Header columns list should not be empty.");
 
         List<ColumnDefinition> dataColumns = headerColumns.getListOfColumn();
 
@@ -79,6 +82,10 @@ public class InputColumnsHandler {
         inputColumnsProvider.getInputHeaders().addAll(orderedColumns.values());
     }
 
+    /**
+     * Creates input columns with column type column sequence and 'is dropped ' information. 
+     * These columns are added in order of column sequences and stored in a map.
+     */
     private Integer addToOrderedColumns(ColumnDefinition dataColumn, Integer columnSequence, Map<Integer, InputColumn> orderedColumns) {
         String columnId = dataColumn.getColumnId().toUpperCase();
         Integer columnNumber = dataColumn.getColumnNum().intValue();
@@ -122,6 +129,8 @@ public class InputColumnsHandler {
             }
             if(valueType.equals(SymbolType.REAL)){
                 inputColumnsProvider.addContCovTableColumn(symbol.toUpperCase());
+            } else {
+                throw new IllegalStateException("Found unexpected/unsupported type of column value : "+ valueType);
             }
         }
     }
@@ -129,9 +138,4 @@ public class InputColumnsHandler {
     public InputColumnsProvider getInputColumnsProvider() {
         return inputColumnsProvider;
     }
-
-    public void setInputColumnsProvider(InputColumnsProvider inputColumnsProvider) {
-        this.inputColumnsProvider = inputColumnsProvider;
-    }
-
 }
