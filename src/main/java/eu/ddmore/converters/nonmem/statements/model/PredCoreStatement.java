@@ -79,7 +79,8 @@ public class PredCoreStatement {
                         parsedEquation = context.getLocalParserHelper().parse(event.getParameter(), event.getPiecewiseTree());
                     }
                 }else{
-                    parsedEquation = simpleParamSymbol+" = "+context.getLocalParserHelper().getParsedValueForRhs(simpleParam.getAssign());
+                    String paramSymbol = Formatter.getReservedParam(simpleParamSymbol);
+                    parsedEquation = paramSymbol+" = "+context.getLocalParserHelper().getParsedValueForRhs(simpleParam.getAssign());
                 }
 
                 if(!parsedEquation.isEmpty()){
