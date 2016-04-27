@@ -52,7 +52,7 @@ public class OrderedThetasHandler {
 
     /**
      * Creates ordered thetas list with help of etasOrderMap and individual parameters
-     * @param eta
+     * @param eta Eta object to add
      */
     private void addToThetasOrderMap(Eta eta) {
         for(ParameterBlock block : scriptDefinition.getParameterBlocks()){
