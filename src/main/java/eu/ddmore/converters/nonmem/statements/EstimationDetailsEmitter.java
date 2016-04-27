@@ -63,7 +63,7 @@ public class EstimationDetailsEmitter {
     }
 
     /**
-     * This method will create estimation statement for nonmem file from estimation steps collected from steps map.
+     * This method creates estimation statement for nonmem file from estimation steps collected from steps map.
      */
     private void processEstimationStatement() {
         Boolean isCovFound = false;
@@ -87,7 +87,6 @@ public class EstimationDetailsEmitter {
                 }
             }
         }
-
         setCovStatement(isCovFound);
     }
 
