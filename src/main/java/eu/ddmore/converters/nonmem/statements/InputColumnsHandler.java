@@ -40,7 +40,6 @@ public class InputColumnsHandler {
     }
 
     private void populateColumnsFromTransformedCov(List<CovariateDefinition> covDefinitions) {
-
         for(CovariateDefinition covDef : covDefinitions){
             if(covDef.getContinuous()!=null){
                 ContinuousCovariate contCov = covDef.getContinuous();
@@ -58,27 +57,23 @@ public class InputColumnsHandler {
     }
 
     private void populateColumnsWithHeadersforDataSets(List<ExternalDataSet> dataFiles) {
-
         for(ExternalDataSet dataFile : dataFiles) {
             populateColumnsWithEstHeaders(dataFile);
         }
     }
 
     private void populateColumnsWithEstHeaders(ExternalDataSet externalDataSet) {
-
         HeaderColumnsDefinition headerColumns = externalDataSet.getDataSet().getDefinition();
         Preconditions.checkNotNull(headerColumns, "Header columns definition has no columns.");
         Preconditions.checkArgument(!headerColumns.getListOfColumn().isEmpty(), "Header columns list should not be empty.");
 
         List<ColumnDefinition> dataColumns = headerColumns.getListOfColumn();
-
         Map<Integer, InputColumn> orderedColumns = new TreeMap<Integer, InputColumn>();
         Integer columnSequence= new Integer(1);
 
         for (ColumnDefinition dataColumn : dataColumns) {
             columnSequence = addToOrderedColumns(dataColumn, columnSequence, orderedColumns);
         }
-
         inputColumnsProvider.getInputHeaders().addAll(orderedColumns.values());
     }
 
