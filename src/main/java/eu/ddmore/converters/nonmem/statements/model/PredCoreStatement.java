@@ -10,6 +10,8 @@ import java.util.Set;
 
 import org.apache.commons.lang.StringUtils;
 
+import com.google.common.base.Preconditions;
+
 import crx.converter.engine.parts.ConditionalDoseEvent;
 import crx.converter.engine.parts.ParameterBlock;
 import crx.converter.engine.parts.ParameterBlock.Event;
@@ -34,6 +36,7 @@ public class PredCoreStatement {
     private final ConversionContext context;
 
     public PredCoreStatement(ConversionContext context){
+        Preconditions.checkNotNull(context,"Conversion context cannot be null");
         this.context = context;
     }
 
