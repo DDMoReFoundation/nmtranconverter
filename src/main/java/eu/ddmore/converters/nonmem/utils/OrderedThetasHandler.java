@@ -23,7 +23,6 @@ import eu.ddmore.libpharmml.dom.modeldefn.StructuredModel.LinearCovariate;
 
 /**
  * This class handles ordered thetas and associated methods to retrieve information from it.
- *  
  */
 public class OrderedThetasHandler {
     private final TreeMap<Integer, String> orderedThetas = new TreeMap<Integer, String>();
