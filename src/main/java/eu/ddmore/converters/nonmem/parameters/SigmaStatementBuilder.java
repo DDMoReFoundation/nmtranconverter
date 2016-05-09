@@ -4,7 +4,7 @@
 package eu.ddmore.converters.nonmem.parameters;
 
 import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -114,13 +114,14 @@ public class SigmaStatementBuilder {
             if(isNumeric(sigmaRepresentation)){
                 sigmaStatements.append(Double.parseDouble(sigmaRepresentation) +" "+NmConstant.FIX);
                 addAttributeForStdDev(sigmaStatements,isStdDev);
+                sigmaStatements.append(Formatter.endline());
             }else {
                 String sigmastatement = getSigmaFromInitialEstimate(sigmaRepresentation, isStdDev);
                 sigmaStatements.append(sigmastatement);
             }
-            sigmaStatements.append(Formatter.endline());
             sigmaParams.add(sigmaStatements.toString());
         }
+
         return sigmaParams;
     }
 
@@ -130,7 +131,7 @@ public class SigmaStatementBuilder {
      * @return set of random variables
      */
     private Set<ParameterRandomVariable> getRandomVariablesForSigma() {
-        Set<ParameterRandomVariable> randomVariableTypes = new HashSet<ParameterRandomVariable>();
+        Set<ParameterRandomVariable> randomVariableTypes = new LinkedHashSet<ParameterRandomVariable>();
 
         for(ObservationBlock observationBlock: context.getScriptDefinition().getObservationBlocks()){
             randomVariableTypes.addAll(observationBlock.getRandomVariables());
