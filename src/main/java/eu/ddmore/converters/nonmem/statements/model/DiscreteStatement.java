@@ -62,14 +62,17 @@ public class DiscreteStatement {
         tteBlock.append(statementHelper.getAllIndividualParamAssignments());
         //$DES
         DiffEquationStatementBuilder desBuilder = statementHelper.getDiffEquationStatement(tteBlock);
+        Integer dadtEquationIndex = desBuilder.getDadtDefinitionsInDES().size()+1;
+
         String hazardFunction = Formatter.renameVarForDES(discreteHandler.getHazardFunction());
         tteBlock.append(Formatter.endline("HAZARD_FUNC_DES = "+hazardFunction));
-        tteBlock.append(Formatter.endline("DADT(1) = HAZARD_FUNC_DES"));
+        tteBlock.append(Formatter.endline("DADT("+dadtEquationIndex+") = HAZARD_FUNC_DES"));
         //Customised ERROR
         //$ERROR
         tteBlock.append(Formatter.endline()+Formatter.error());
         tteBlock.append(desBuilder.getVariableDefinitionsStatement(desBuilder.getAllVarDefinitions()));
-        tteBlock.append(Formatter.endline("CUMHAZ=A(1)"+
+        //TODO : change A(1) to A(n+1)
+        tteBlock.append(Formatter.endline("CUMHAZ=A("+dadtEquationIndex+")"+
                 Formatter.indent(Formatter.indent(""))+Formatter.addComment("CUMHAZ since last event")));
         tteBlock.append(Formatter.endline("HAZARD_FUNC = "+discreteHandler.getHazardFunction()));
         tteBlock.append(discreteHandler.getDiscreteStatement());

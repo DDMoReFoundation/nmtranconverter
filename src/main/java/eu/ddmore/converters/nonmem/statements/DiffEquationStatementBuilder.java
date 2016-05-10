@@ -185,6 +185,11 @@ public class DiffEquationStatementBuilder {
         return derivativeVarsInDES;
     }
 
+    
+    public Map<String, String> getDadtDefinitionsInDES() {
+        return dadtDefinitionsInDES;
+    }
+
     public Map<String, String> getAllVarDefinitions() {
         return allVarDefinitions;
     }
