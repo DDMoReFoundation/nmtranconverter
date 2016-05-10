@@ -15,7 +15,7 @@ import crx.converter.engine.parts.BaseRandomVariableBlock.CorrelationRef;
 import crx.converter.engine.parts.ParameterBlock;
 import eu.ddmore.converters.nonmem.ConversionContext;
 import eu.ddmore.converters.nonmem.eta.Eta;
-import eu.ddmore.converters.nonmem.eta.VarLevel;
+import eu.ddmore.converters.nonmem.eta.VariabilityLevel;
 import eu.ddmore.converters.nonmem.utils.RandomVariableHelper;
 import eu.ddmore.converters.nonmem.utils.ScalarValueHandler;
 import eu.ddmore.libpharmml.dom.commontypes.Rhs;
@@ -52,34 +52,28 @@ public class CorrelationHandler {
     private void initialise(){
 
         arrangeAllCorrelations();
-        OmegaBlock omegaBlockinIOV = new OmegaBlock();
-        omegaBlockinIOV.setCorrelations(getIovCorrelations());
+        OmegaBlock omegaBlockInIOV = new OmegaBlock();
+        omegaBlockInIOV.setCorrelations(getIovCorrelations());
 
-        addcorrelationEtas(omegaBlockinIOV, VarLevel.IOV);
-        omegaBlocksInIOV.add(omegaBlockinIOV);
+        addcorrelationEtas(omegaBlockInIOV, VariabilityLevel.IOV);
+        omegaBlocksInIOV.add(omegaBlockInIOV);
 
         OmegaBlock omegaBlockInNonIOV = new OmegaBlock();
         omegaBlockInNonIOV.setCorrelations(getNonIovCorrelations());
-        addcorrelationEtas(omegaBlockInNonIOV, VarLevel.IIV);
+        addcorrelationEtas(omegaBlockInNonIOV, VariabilityLevel.IIV);
         omegaBlocksInNonIOV.add(omegaBlockInNonIOV);
 
         EtaAndOmegaBlocksInitialiser blocksInitialiser = new EtaAndOmegaBlocksInitialiser(context, omegaBlocksInIOV, omegaBlocksInNonIOV);
-        allOrderedEtas = blocksInitialiser.popupateOrderedEtaAndOmegaBlocks();
+        allOrderedEtas = blocksInitialiser.populateOrderedEtaAndOmegaBlocks();
     }
 
-    private void addcorrelationEtas(OmegaBlock omegaBlock, VarLevel varLevel){
+    private void addcorrelationEtas(OmegaBlock omegaBlock, VariabilityLevel varLevel){
         for(CorrelationsWrapper correlation : omegaBlock.getCorrelations()){
             addCorrelationEtas(omegaBlock, varLevel, correlation);
         }
     }
 
-    /**
-     * Adds correlations reference to map provided for eta to correlations map.
-     * 
-     * @param omegaBlocks
-     * @param correlation
-     */
-    private void addCorrelationEtas(OmegaBlock omegaBlock, VarLevel level, CorrelationsWrapper correlation) {
+    private void addCorrelationEtas(OmegaBlock omegaBlock, VariabilityLevel level, CorrelationsWrapper correlation) {
         Preconditions.checkNotNull(correlation, "Correlation reference cannot be null");
 
         String firstVar = correlation.getFirstParamRandomVariable().getSymbId();
@@ -103,7 +97,7 @@ public class CorrelationHandler {
 
         Eta coeffEta = new Eta(coefficient);
         coeffEta.setOmegaName(coefficient);
-        coeffEta.setVarLevel(VarLevel.NONE);
+        coeffEta.setVarLevel(VariabilityLevel.NONE);
 
         omegaBlock.addToEtaToOmegas(firstEta,RandomVariableHelper.getNameFromParamRandomVariable(correlation.getFirstParamRandomVariable()));
         omegaBlock.addToEtaToOmegas(secondEta,RandomVariableHelper.getNameFromParamRandomVariable(correlation.getSecondParamRandomVariable()));

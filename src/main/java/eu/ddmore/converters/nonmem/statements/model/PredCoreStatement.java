@@ -10,6 +10,8 @@ import java.util.Set;
 
 import org.apache.commons.lang.StringUtils;
 
+import com.google.common.base.Preconditions;
+
 import crx.converter.engine.parts.ConditionalDoseEvent;
 import crx.converter.engine.parts.ParameterBlock;
 import crx.converter.engine.parts.ParameterBlock.Event;
@@ -34,6 +36,7 @@ public class PredCoreStatement {
     private final ConversionContext context;
 
     public PredCoreStatement(ConversionContext context){
+        Preconditions.checkNotNull(context,"Conversion context cannot be null");
         this.context = context;
     }
 
@@ -67,7 +70,7 @@ public class PredCoreStatement {
      */
     private StringBuilder getSimpleParamAssignments() {
         StringBuilder simpleParamAssignmentBlock = new StringBuilder();
-        Map<String, Parameter> params = context.getParameterInitialiser().getParams();
+        Map<String, Parameter> params = context.getParameterInitialiser().getParameters();
 
         for(String simpleParamSymbol : params.keySet()){
             if(params.get(simpleParamSymbol).isAssignment()){
@@ -79,7 +82,8 @@ public class PredCoreStatement {
                         parsedEquation = context.getLocalParserHelper().parse(event.getParameter(), event.getPiecewiseTree());
                     }
                 }else{
-                    parsedEquation = simpleParamSymbol+" = "+context.getLocalParserHelper().getParsedValueForRhs(simpleParam.getAssign());
+                    String paramSymbol = Formatter.getReservedParam(simpleParamSymbol);
+                    parsedEquation = paramSymbol+" = "+context.getLocalParserHelper().getParsedValueForRhs(simpleParam.getAssign());
                 }
 
                 if(!parsedEquation.isEmpty()){
@@ -111,7 +115,7 @@ public class PredCoreStatement {
      */
     private StringBuilder buildThetaAssignments() {
         StringBuilder thetaAssignmentBlock = new StringBuilder();
-        List<String> thetas = new ArrayList<String>(context.getParametersBuilder().getThetasBuilder().getThetaStatements().keySet());
+        List<String> thetas = new ArrayList<String>(context.getParametersBuilder().getThetasBuilder().getThetaParameters().keySet());
 
         for(String theta : thetas){
             String thetaSymbol = Formatter.getReservedParam(theta);

@@ -21,6 +21,9 @@ import eu.ddmore.converters.nonmem.statements.DiffEquationStatementBuilder;
 import eu.ddmore.converters.nonmem.utils.DiscreteHandler;
 import eu.ddmore.converters.nonmem.utils.Formatter;
 
+/**
+ * Junit tests for DiscreteStatement class. 
+ */
 public class DiscreteStatementTest extends BasicTestSetup {
 
     private static final String EXAMPLE_STRING = Formatter.endline("PRED CORE");

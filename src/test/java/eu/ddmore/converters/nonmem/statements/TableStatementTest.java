@@ -25,6 +25,9 @@ import eu.ddmore.converters.nonmem.utils.Formatter;
 import eu.ddmore.libpharmml.dom.dataset.ColumnType;
 import eu.ddmore.libpharmml.dom.modeldefn.IndividualParameter;
 
+/**
+ * Junit tests for table statement class. 
+ */
 public class TableStatementTest extends BasicTestSetup {
 
     private static final String LOGTWT = "LOGTWT";
@@ -38,13 +41,13 @@ public class TableStatementTest extends BasicTestSetup {
     @Mock InputColumnsProvider inputColumns;
     @Mock InputColumnsProvider columnsProvider;
 
-    List<IndividualParameter> indivParamTypes = new ArrayList<>();
-    List<ParameterBlock> blocks = new ArrayList<>();
-    Set<Eta> orderedEtas = new HashSet<>();
-    List<String> contCovTableColumns = new ArrayList<>();
-    List<String> catCovTableColumns = new ArrayList<>();
+    private List<IndividualParameter> indivParamTypes = new ArrayList<>();
+    private List<ParameterBlock> blocks = new ArrayList<>();
+    private Set<Eta> orderedEtas = new HashSet<>();
+    private List<String> contCovTableColumns = new ArrayList<>();
+    private List<String> catCovTableColumns = new ArrayList<>();
 
-    TableStatement statement;
+    private TableStatement statement;
 
     String expectedTableStatement = Formatter.endline()+
             Formatter.endline("$TABLE  ID TIME PRED IPRED RES IRES WRES IWRES Y DV NOAPPEND NOPRINT FILE=sdtab")+
@@ -82,7 +85,7 @@ public class TableStatementTest extends BasicTestSetup {
         contCovTableColumns.add(LOGTWT);
         when(context.getInputColumnsHandler().getInputColumnsProvider()).thenReturn(inputColumns);
         when(inputColumns.getContCovTableColumns()).thenReturn(contCovTableColumns);
-        
+
         catCovTableColumns.add("TWT");
         when(context.getInputColumnsHandler().getInputColumnsProvider()).thenReturn(inputColumns);
         when(inputColumns.getCatCovTableColumns()).thenReturn(catCovTableColumns);

@@ -14,7 +14,6 @@ import eu.ddmore.converters.nonmem.utils.Formatter;
 
 public class SigmaStatementBuilderTest extends ParametersMockHelper {
 
-    SigmaStatementBuilder sigmaStatementBuilder;
     private final String expectedsigmaStatement = Formatter.endline()+Formatter.sigma()+Formatter.endline("1.0 FIX"); 
     @Before
     public void setUp() throws Exception {
@@ -25,7 +24,7 @@ public class SigmaStatementBuilderTest extends ParametersMockHelper {
 
     @Test
     public void shouldGetSigmaStatementBlock() {
-        sigmaStatementBuilder = new SigmaStatementBuilder(context, epsilonVars);
+        SigmaStatementBuilder sigmaStatementBuilder = new SigmaStatementBuilder(context, epsilonVars);
         assertNotNull("Should get sigma statements block", sigmaStatementBuilder.getSigmaStatementBlock());
         assertEquals("Should get expected sigma statement.", expectedsigmaStatement, sigmaStatementBuilder.getSigmaStatementBlock().toString());
     }

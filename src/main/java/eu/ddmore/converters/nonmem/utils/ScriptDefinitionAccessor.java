@@ -4,7 +4,7 @@
 package eu.ddmore.converters.nonmem.utils;
 
 import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -18,10 +18,11 @@ import crx.converter.engine.parts.ObservationBlock;
 import crx.converter.engine.parts.ParameterBlock;
 import crx.converter.engine.parts.Part;
 import crx.converter.engine.parts.TemporalDoseEvent;
+import crx.converter.engine.parts.VariabilityBlock;
+import eu.ddmore.libpharmml.dom.commontypes.LevelReference;
 import eu.ddmore.libpharmml.dom.modeldefn.ObservationError;
 import eu.ddmore.libpharmml.dom.modeldefn.ParameterRandomVariable;
 import eu.ddmore.libpharmml.dom.modeldefn.StructuredObsError;
-import eu.ddmore.libpharmml.dom.modeldefn.StructuredObsError.ResidualError;;
 
 /**
  * This class contains methods which access script definition and return expected values/information in return.
@@ -120,17 +121,16 @@ public class ScriptDefinitionAccessor {
      */
     public static Set<ParameterRandomVariable> getEpsilonRandomVariables(ScriptDefinition scriptDefinition) {
         Preconditions.checkNotNull(scriptDefinition, "Script definition cannot be null");
-        Set<ParameterRandomVariable> epsilonRandomVariables = new HashSet<ParameterRandomVariable>();
-        List<ResidualError> residualErrors = retrieveResidualErrors(scriptDefinition);
+        Set<ParameterRandomVariable> epsilonRandomVariables = new LinkedHashSet<ParameterRandomVariable>();
+        List<String> residualErrors = retrieveResidualErrors(scriptDefinition);
 
         for(ParameterBlock paramBlock: scriptDefinition.getParameterBlocks()){
             if(residualErrors.isEmpty() || paramBlock.getRandomVariables().isEmpty()){
                 break;
             }
-            for(ResidualError error : residualErrors){
-                String errorName = error.getSymbRef().getSymbIdRef();
+            for(String errorName : residualErrors){
                 for(ParameterRandomVariable randomVar : paramBlock.getRandomVariables()){
-                    if(randomVar.getSymbId().equals(errorName)){
+                    if(isEpsilonRandomVar(randomVar, errorName)){
                         epsilonRandomVariables.add(randomVar);
                     }
                 }
@@ -139,23 +139,47 @@ public class ScriptDefinitionAccessor {
         return epsilonRandomVariables;
     }
 
+    private static boolean isEpsilonRandomVar(ParameterRandomVariable randomVar, String epsilonRandomVarName){
+        if(randomVar.getSymbId().equals(epsilonRandomVarName)){
+            return true;
+        }else{
+            for(LevelReference levelRef :randomVar.getListOfVariabilityReference()){
+                String levelReferenceName = levelRef.getSymbRef().getSymbIdRef();
+                if(levelReferenceName.equals(epsilonRandomVarName)){
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     /**
      * Retrieves residual error using observation blocks from script definition. 
      * 
      * @param scriptDefinition
      * @return
      */
-    private static List<ResidualError> retrieveResidualErrors(ScriptDefinition scriptDefinition){
-        List<ResidualError> residualErrors = new ArrayList<>() ;
+    private static List<String> retrieveResidualErrors(ScriptDefinition scriptDefinition){
+        List<String> residualErrors = new ArrayList<>() ;
         for(ObservationBlock block : scriptDefinition.getObservationBlocks()){
             ObservationError errorType = block.getObservationError();
             if(errorType instanceof StructuredObsError){
                 StructuredObsError error = (StructuredObsError) errorType;
-                if(error.getResidualError()!=null){
-                    residualErrors.add(error.getResidualError());
+                if(error.getResidualError()!=null && error.getResidualError().getSymbRef()!=null){
+                    String errorName = error.getResidualError().getSymbRef().getSymbIdRef();
+                    residualErrors.add(errorName);
                 }
             }
         }
+
+        for(VariabilityBlock variabilityBlock :scriptDefinition.getVariabilityBlocks()){
+            for(String level :variabilityBlock.getLevels()){
+                if(variabilityBlock.isResidualError()){
+                    residualErrors.add(level);
+                }
+            }
+        }
+
         return residualErrors;
     }
 }

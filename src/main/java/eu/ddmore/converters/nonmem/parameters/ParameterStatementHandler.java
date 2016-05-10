@@ -5,7 +5,6 @@ package eu.ddmore.converters.nonmem.parameters;
 
 import com.google.common.base.Preconditions;
 
-import eu.ddmore.converters.nonmem.statements.Parameter;
 import eu.ddmore.converters.nonmem.utils.Formatter;
 import eu.ddmore.converters.nonmem.utils.ScalarValueHandler;
 import eu.ddmore.converters.nonmem.utils.Formatter.NmConstant;

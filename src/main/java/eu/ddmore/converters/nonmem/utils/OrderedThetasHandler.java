@@ -23,7 +23,6 @@ import eu.ddmore.libpharmml.dom.modeldefn.StructuredModel.LinearCovariate;
 
 /**
  * This class handles ordered thetas and associated methods to retrieve information from it.
- *  
  */
 public class OrderedThetasHandler {
     private final TreeMap<Integer, String> orderedThetas = new TreeMap<Integer, String>();
@@ -41,6 +40,7 @@ public class OrderedThetasHandler {
     /**
      * Create ordered thetas to eta map from ordered etas map.
      * The order is used to add Thetas in order of thetas.
+     * @param orderedEtas
      */
     public void createOrderedThetasToEta(Set<Eta> orderedEtas){ 
         Preconditions.checkNotNull(orderedEtas, "Ordered etas cannot be null.");
@@ -51,8 +51,7 @@ public class OrderedThetasHandler {
 
     /**
      * Creates ordered thetas list with help of etasOrderMap and individual parameters
-     * @param orderedEtas
-     * @param nextEtaOrder
+     * @param eta Eta object to add
      */
     private void addToThetasOrderMap(Eta eta) {
         for(ParameterBlock block : scriptDefinition.getParameterBlocks()){

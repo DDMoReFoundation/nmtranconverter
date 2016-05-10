@@ -4,9 +4,9 @@
 package eu.ddmore.converters.nonmem.parameters;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -20,16 +20,16 @@ public class ParametersBuilderTest extends ParametersMockHelper {
 
     @Mock PopulationParameter popParameter;
     @Mock OrderedThetasHandler orderedThetasHandler;
-    List<PopulationParameter> populationParameters;
-    ParametersBuilder parametersBuilder;
+    private List<PopulationParameter> populationParameters;
+    private ParametersBuilder parametersBuilder;
 
-    Map<Integer, String> orderedThetas;
+    private Map<Integer, String> orderedThetas;
     @Before
     public void setUp() throws Exception {
         populationParameters = new ArrayList<>();
         populationParameters.add(popParameter);
         
-        orderedThetas = new HashMap<Integer, String>();
+        orderedThetas = new TreeMap<Integer, String>();
         when(context.getParameterInitialiser()).thenReturn(paramInitialiser);
         when(context.getCorrelationHandler()).thenReturn(correlationHandler);
         when(context.getIovHandler()).thenReturn(iovHandler);

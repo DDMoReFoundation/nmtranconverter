@@ -1,3 +1,6 @@
+/*******************************************************************************
+ * Copyright (C) 2016 Mango Solutions Ltd - All rights reserved.
+ ******************************************************************************/
 package eu.ddmore.converters.nonmem.eta;
 
 import static org.junit.Assert.*;
@@ -9,12 +12,14 @@ import java.util.TreeSet;
 import org.junit.Before;
 import org.junit.Test;
 
-
+/**
+ * Test for Eta class.
+ */
 public class EtaTest {
 
-    Eta eta1;
-    Eta eta2;
-    Eta eta3;
+    private Eta eta1;
+    private Eta eta2;
+    private Eta eta3;
     @Before
     public void setUp() throws Exception {
         String etaSymbol1 = "firstEta";
@@ -34,7 +39,7 @@ public class EtaTest {
      * This is one of the required features of Eta.
      */
     @Test
-    public void shouldAddNewEtaInRightOrder(){
+    public void shouldVerifyCompareToOfEtaForOrderedSet(){
         Set<Eta> etas = new TreeSet<Eta>();
 
         Eta eta4 = new Eta("eta");
@@ -48,7 +53,7 @@ public class EtaTest {
         assertEquals("should add new eta to set",4,etas.size());
 
         int index = getIndexFromSet(etas, eta4);
-        assertEquals("Shoul add eta with order "+eta4.getOrder()+" at correct place in set", 3, index);
+        assertEquals("Should add eta with order "+eta4.getOrder()+" at correct place in set", 3, index);
     }
 
     @Test
@@ -66,7 +71,7 @@ public class EtaTest {
         assertTrue("should return success for eta comparison if eta symbols are same", eta4.equals(eta3));
         int index = getIndexFromSet(etas, eta4);
         //Should add eta to "Set" even though the etas are with same eta symbol
-        assertEquals("Should add eta with order "+eta4.getOrder()+" at in set", 3, index);
+        assertEquals("Should add eta with order "+eta4.getOrder()+" at "+3+" in set",3, index);
     }
 
     @Test
@@ -83,6 +88,7 @@ public class EtaTest {
 
         int index = getIndexFromSet(etas, eta4);
         //Should add eta even though the etas are with same eta symbol
+        assertTrue("etas contains eta 3", (getIndexFromSet(etas, eta3)!=-1));
         assertEquals("Should not add eta with order "+eta4.getOrder()+" as there is already one with the same order.", -1, index);
     }
 

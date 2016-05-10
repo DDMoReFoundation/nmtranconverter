@@ -26,19 +26,22 @@ import eu.ddmore.libpharmml.dom.modeldefn.ContinuousCovariate;
 import eu.ddmore.libpharmml.dom.modeldefn.CovariateDefinition;
 import eu.ddmore.libpharmml.dom.modeldefn.CovariateTransformation;
 
+/**
+ * Junit tests for PredCoreStatement class.
+ */
 public class PredCoreStatementTest extends BasicTestSetup {
 
-    private static final String ETA_VAR = "eta1";
-    private static final String THETA_VAR = "Pop_V";
-    PredCoreStatement predCoreStatement;
     @Mock CovariateDefinition covDef;
     @Mock ContinuousCovariate contCov;
     @Mock CovariateTransformation covTransformation;
 
-    Set<String> thetas = new HashSet<>();
-    Set<Eta> etas= new HashSet<>();
-    List<CovariateDefinition> covDefs = new ArrayList<>();
-    List<CovariateTransformation> covTransformations = new ArrayList<>();
+    private static final String ETA_VAR = "eta1";
+    private static final String THETA_VAR = "Pop_V";
+    private PredCoreStatement predCoreStatement;
+    private Set<String> thetas = new HashSet<>();
+    private Set<Eta> etas= new HashSet<>();
+    private List<CovariateDefinition> covDefs = new ArrayList<>();
+    private List<CovariateTransformation> covTransformations = new ArrayList<>();
 
     @Before
     public void setUp() throws Exception {
@@ -55,7 +58,7 @@ public class PredCoreStatementTest extends BasicTestSetup {
         when(context.retrieveOrderedEtas()).thenReturn(etas);
         when(context.getParametersBuilder()).thenReturn(parametersHelper);
         when(context.getLexer().getCovariates()).thenReturn(covDefs);
-        when(parametersHelper.getThetasBuilder().getThetaStatements().keySet()).thenReturn(thetas);
+        when(parametersHelper.getThetasBuilder().getThetaParameters().keySet()).thenReturn(thetas);
         when(contCov.getListOfTransformation()).thenReturn(covTransformations);
         when(covDef.getContinuous()).thenReturn(contCov);
 

@@ -9,7 +9,7 @@ import org.apache.commons.lang.builder.HashCodeBuilder;
 public class Eta implements Comparable<Eta> {
 
     private final String etaSymbol;
-    private VarLevel varLevel;
+    private VariabilityLevel varLevel;
     private Integer order=0;
     private Integer orderInCorrelation=0;
     private String etaSymbolForIOV;
@@ -19,7 +19,7 @@ public class Eta implements Comparable<Eta> {
     public Eta(String etaSymbol){
         this.etaSymbol = etaSymbol;
         //Currently this is default variability level.
-        varLevel = VarLevel.IIV;
+        varLevel = VariabilityLevel.IIV;
     }
 
     public String getEtaSymbol() {
@@ -27,7 +27,7 @@ public class Eta implements Comparable<Eta> {
     }
 
     public boolean isIOV() {
-        return (varLevel.equals(VarLevel.IOV));
+        return (varLevel.equals(VariabilityLevel.IOV));
     }
     
     public String getEtaOrderSymbol(){
@@ -59,12 +59,12 @@ public class Eta implements Comparable<Eta> {
     }
 
 
-    public VarLevel getVarLevel() {
+    public VariabilityLevel getVarLevel() {
         return varLevel;
     }
 
 
-    public void setVarLevel(VarLevel varLevel) {
+    public void setVarLevel(VariabilityLevel varLevel) {
         this.varLevel = varLevel;
     }
 
@@ -95,7 +95,6 @@ public class Eta implements Comparable<Eta> {
     public int hashCode() {
         return new HashCodeBuilder(17, 31).
                 append(etaSymbol).
-//                append(order).
                 toHashCode();
     }
 
@@ -109,7 +108,6 @@ public class Eta implements Comparable<Eta> {
         Eta rhs = (Eta) obj;
         return new EqualsBuilder().
                 append(etaSymbol, rhs.etaSymbol).
-//                append(order, rhs.order).
                 isEquals();
     }
 }

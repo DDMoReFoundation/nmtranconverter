@@ -19,6 +19,9 @@ import eu.ddmore.converters.nonmem.utils.Formatter.ColumnConstant;
 import eu.ddmore.converters.nonmem.utils.Formatter.TableConstant;
 import eu.ddmore.libpharmml.dom.modeldefn.IndividualParameter;
 
+/**
+ * This class creates Table statement for nmtran with help of conversion context.
+ */
 public class TableStatement {
 
     private static final String SPACE = " ";
@@ -77,7 +80,7 @@ public class TableStatement {
      * Creates table statement for table type with columns provided. 
      * @param columns
      * @param tableType
-     * @return
+     * @return table statement
      */
     private StringBuilder createTableStatement(String columns, String tableType){
         StringBuilder tableStatement = new StringBuilder();
@@ -93,7 +96,7 @@ public class TableStatement {
      * Standard table contains columns listed as part of input statement 
      * and variables defined in Error model along with 'DV' at the end.
      * 
-     * @return
+     * @return standard table statement
      */
     private StringBuilder getStdTableStatement(){
 
@@ -125,13 +128,13 @@ public class TableStatement {
     /**
      * Parameter table contains individual parameters as columns.
      * 
-     * @return
+     * @return parameter table statement
      */
     private StringBuilder getParamTableStatement(){
         List<ParameterBlock> blocks =  context.getScriptDefinition().getParameterBlocks();
         StringBuilder paramTable = new StringBuilder();
 
-        InputColumn occColumn = context.getIovHandler().getColumnWithOcc();
+        InputColumn occColumn = context.getIovHandler().getIovColumn();
 
         if(occColumn!=null && StringUtils.isNotEmpty(occColumn.getColumnId())){
             paramTable.append(SPACE+Formatter.getReservedParam(occColumn.getColumnId()));
@@ -171,7 +174,7 @@ public class TableStatement {
      * 		columnType is "covariate" and valueType is "real"
      * 		with FILE=cotab.
      * 
-     * @return
+     * @return continuous cov statement
      */
     private StringBuilder getContCovTableStatement(){
         StringBuilder contCovTable = new StringBuilder();

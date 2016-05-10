@@ -82,7 +82,6 @@ public class ConversionContext {
         this.discreteHandler = new DiscreteHandler(getScriptDefinition());
         //Refers to discrete handler
         this.estimationEmitter = new EstimationDetailsEmitter(getScriptDefinition(), discreteHandler);
-        estimationEmitter.processEstimationStatement();
         //initialise parameters
         this.parameterInitialiser = initialisePopulationParams(lexer.getModelParameters());
         this.parametersBuilder = new ParametersBuilder(this);
@@ -100,9 +99,6 @@ public class ConversionContext {
      */
     private void initialise() throws IOException{
 
-        if(dataSetHandler.getDataFile().exists()){
-            iovHandler.retrieveIovColumnUniqueValues(dataSetHandler.getDataFile());
-        }
         orderedThetasHandler.createOrderedThetasToEta(retrieveOrderedEtas());
         parametersBuilder.initialiseAllParameters();
 
@@ -120,7 +116,6 @@ public class ConversionContext {
 
     /**
      * This method will get parameter blocks and add it to parameter statement. 
-     * @return
      */
     public StringBuilder getParameterStatement() {
         StringBuilder parameterStatement = new StringBuilder();
@@ -152,7 +147,6 @@ public class ConversionContext {
 
     /**
      * Check and returns true if sigma statement is present
-     * @return 
      */
     public boolean isSigmaPresent(){
         StringBuilder sigmaStement = parametersBuilder.getSigmasBuilder().getSigmaStatementBlock();
@@ -161,7 +155,6 @@ public class ConversionContext {
 
     /**
      * Check and returns true if omega statement for IIV is present
-     * @return
      */
     public boolean isOmegaForIIVPresent(){
         return !parametersBuilder.getOmegasBuilder().getOmegaStatementBlock().trim().isEmpty();
@@ -169,7 +162,6 @@ public class ConversionContext {
 
     /**
      * Check and returns true if omega statement for IOV is present
-     * @return
      */
     public boolean isOmegaForIOVPresent(){
         return !parametersBuilder.getOmegasBuilder().getOmegaStatementBlockForIOV().trim().isEmpty();
@@ -186,8 +178,6 @@ public class ConversionContext {
 
     /**
      * Collects all derivativeVariable types (state variables) from structural blocks in order to create model statement.
-     * 
-     * @return
      */
     private Set<DerivativeVariable> getAllStateVariables() {
         Set<DerivativeVariable> stateVariables = new LinkedHashSet<DerivativeVariable>();
@@ -199,7 +189,6 @@ public class ConversionContext {
 
     /**
      * Get external dataSets from list of data files 
-     * @return
      */
     public List<ExternalDataSet> retrieveExternalDataSets(){
         return lexer.getDataFiles().getExternalDataSets();

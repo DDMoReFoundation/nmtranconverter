@@ -1,7 +1,7 @@
 /*******************************************************************************
  * Copyright (C) 2015 Mango Solutions Ltd - All rights reserved.
  ******************************************************************************/
-package eu.ddmore.converters.nonmem.statements.model;
+package eu.ddmore.converters.nonmem.statements.pkmacro;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -17,7 +17,9 @@ import org.mockito.Mock;
 import crx.converter.engine.parts.StructuralBlock;
 import eu.ddmore.converters.nonmem.ConversionContext;
 import eu.ddmore.converters.nonmem.statements.BasicTestSetup;
-import eu.ddmore.converters.nonmem.statements.model.PkMacroAnalyser.PkMacroDetails;
+import eu.ddmore.converters.nonmem.statements.pkmacro.PkMacroAnalyser;
+import eu.ddmore.converters.nonmem.statements.pkmacro.PkMacroAnalyser.AdvanType;
+import eu.ddmore.converters.nonmem.statements.pkmacro.PkMacroAnalyser.PkMacroDetails;
 import eu.ddmore.libpharmml.dom.modeldefn.pkmacro.AbsorptionOralMacro;
 import eu.ddmore.libpharmml.dom.modeldefn.pkmacro.CompartmentMacro;
 import eu.ddmore.libpharmml.dom.modeldefn.pkmacro.EliminationMacro;
@@ -26,6 +28,9 @@ import eu.ddmore.libpharmml.dom.modeldefn.pkmacro.OralMacro;
 import eu.ddmore.libpharmml.dom.modeldefn.pkmacro.PKMacro;
 import eu.ddmore.libpharmml.dom.modeldefn.pkmacro.PeripheralMacro;
 
+/**
+ * Junit tests for PkMacroAnalyser class. 
+ */
 public class PkMacroAnalyserTest extends BasicTestSetup {
 
     PkMacroAnalyser analyser = new PkMacroAnalyser();
@@ -74,8 +79,8 @@ public class PkMacroAnalyserTest extends BasicTestSetup {
         eliminationMacros.add(new EliminationMacro());
         ivMacros.add(new IVMacro());
 
-        String capturedAdvanType = analyser.captureAdvanType(details);
-        verifyAdvanType(PkMacroAnalyser.AdvanType.ADVAN1.toString(), capturedAdvanType);
+        AdvanType capturedAdvanType = analyser.captureAdvanType(details);
+        verifyAdvanType(PkMacroAnalyser.AdvanType.ADVAN1, capturedAdvanType);
     }
 
     @Test
@@ -84,8 +89,8 @@ public class PkMacroAnalyserTest extends BasicTestSetup {
         eliminationMacros.add(new EliminationMacro());
         oralMacros.add(new OralMacro());
 
-        String capturedAdvanType = analyser.captureAdvanType(details);
-        verifyAdvanType(PkMacroAnalyser.AdvanType.ADVAN2.toString(), capturedAdvanType);
+        AdvanType capturedAdvanType = analyser.captureAdvanType(details);
+        verifyAdvanType(PkMacroAnalyser.AdvanType.ADVAN2, capturedAdvanType);
     }
 
     @Test
@@ -95,8 +100,8 @@ public class PkMacroAnalyserTest extends BasicTestSetup {
         ivMacros.add(new IVMacro());
         peripheralMacros.add(new PeripheralMacro());
 
-        String capturedAdvanType = analyser.captureAdvanType(details);
-        verifyAdvanType(PkMacroAnalyser.AdvanType.ADVAN3.toString(), capturedAdvanType);
+        AdvanType capturedAdvanType = analyser.captureAdvanType(details);
+        verifyAdvanType(PkMacroAnalyser.AdvanType.ADVAN3, capturedAdvanType);
     }
 
     @Test
@@ -106,8 +111,8 @@ public class PkMacroAnalyserTest extends BasicTestSetup {
         oralMacros.add(new OralMacro());
         peripheralMacros.add(new PeripheralMacro());
 
-        String capturedAdvanType = analyser.captureAdvanType(details);
-        verifyAdvanType(PkMacroAnalyser.AdvanType.ADVAN4.toString(), capturedAdvanType);
+        AdvanType capturedAdvanType = analyser.captureAdvanType(details);
+        verifyAdvanType(PkMacroAnalyser.AdvanType.ADVAN4, capturedAdvanType);
     }
 
     @Test
@@ -118,8 +123,8 @@ public class PkMacroAnalyserTest extends BasicTestSetup {
         peripheralMacros.add(new PeripheralMacro());
         peripheralMacros.add(new PeripheralMacro());
 
-        String capturedAdvanType = analyser.captureAdvanType(details);
-        verifyAdvanType(PkMacroAnalyser.AdvanType.ADVAN11.toString(), capturedAdvanType);
+        AdvanType capturedAdvanType = analyser.captureAdvanType(details);
+        verifyAdvanType(PkMacroAnalyser.AdvanType.ADVAN11, capturedAdvanType);
     }
 
     @Test
@@ -130,12 +135,12 @@ public class PkMacroAnalyserTest extends BasicTestSetup {
         peripheralMacros.add(new PeripheralMacro());
         peripheralMacros.add(new PeripheralMacro());
 
-        String capturedAdvanType = analyser.captureAdvanType(details);
-        verifyAdvanType(PkMacroAnalyser.AdvanType.ADVAN12.toString(), capturedAdvanType);
+        AdvanType capturedAdvanType = analyser.captureAdvanType(details);
+        verifyAdvanType(PkMacroAnalyser.AdvanType.ADVAN12, capturedAdvanType);
     }
 
-    private void verifyAdvanType(String expectedAdvan, String capturedAdvan) {
-        assertFalse("AdvanType should not be empty",capturedAdvan.isEmpty());
+    private void verifyAdvanType(AdvanType expectedAdvan, AdvanType capturedAdvan) {
+        assertFalse("AdvanType should not be empty",capturedAdvan.equals(AdvanType.NONE));
         assertTrue("Correct advan type should be returned as : "+expectedAdvan,expectedAdvan.equals(capturedAdvan));
     }
 }

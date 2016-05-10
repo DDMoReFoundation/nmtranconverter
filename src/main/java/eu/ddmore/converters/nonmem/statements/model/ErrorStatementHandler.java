@@ -9,6 +9,8 @@ import java.util.Map;
 
 import org.apache.commons.lang.StringUtils;
 
+import com.google.common.base.Preconditions;
+
 import crx.converter.engine.parts.ObservationBlock;
 import crx.converter.engine.parts.BaseStep.MultipleDvRef;
 import eu.ddmore.converters.nonmem.ConversionContext;
@@ -32,6 +34,7 @@ public class ErrorStatementHandler {
     ConversionContext context;
 
     public ErrorStatementHandler(ConversionContext context) {
+        Preconditions.checkNotNull(context,"Conversion context cannot be null");
         this.context = context;
         prepareAllErrorStatements();
     }

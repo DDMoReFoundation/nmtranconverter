@@ -1,7 +1,7 @@
 /*******************************************************************************
  * Copyright (C) 2015 Mango Solutions Ltd - All rights reserved.
  ******************************************************************************/
-package eu.ddmore.converters.nonmem.statements.model;
+package eu.ddmore.converters.nonmem.statements.pkmacro;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,10 +28,9 @@ public class PkMacroAnalyser {
 
     /**
      * Enum with pk macro attributes and respective values for these attributes.
-     * More elements might be added over the time to make more inclusive. 
      */
     enum PkMacroAttribute{
-        P("F"), TLAG("ALAG"), KA("KA"), V("V");
+        P("F"), TLAG("ALAG"), KA("KA"), V("V"), CL("CL"), K("K");
 
         private String value;
 
@@ -45,15 +44,15 @@ public class PkMacroAnalyser {
 
     }
 
-    enum AdvanType{
-        ADVAN1,ADVAN2,ADVAN3,ADVAN4,ADVAN10,ADVAN11,ADVAN12;
+    public enum AdvanType{
+        ADVAN1,ADVAN2,ADVAN3,ADVAN4,ADVAN10,ADVAN11,ADVAN12,ADVAN13, NONE;
     };
 
     /**
      * This method will process pk macros to collect information and set macro advan type and other details. 
      * 
      * @param context
-     * @return
+     * @return pk macro details
      */
     public PkMacroDetails analyse(ConversionContext context) {
         Preconditions.checkNotNull(context, "Conversion Context cannot be null");
@@ -61,14 +60,12 @@ public class PkMacroAnalyser {
         if(!details.isEmpty()){
             details.setMacroAdvanType(captureAdvanType(details));
         }
-
         return details;
     }
 
     /**
-     * This method will process compartments, eliminations, iv/orals and peripherals from all the pk macros.
+     * This method processes compartments, eliminations, iv/orals and peripherals from all the pk macros.
      * Also it will determine and set pk macro advan type.
-     * 
      */
     private PkMacroDetails processPkMacros(ScriptDefinition scriptDefinition){
         Preconditions.checkNotNull(scriptDefinition, "Script definition cannot be null");
@@ -119,41 +116,45 @@ public class PkMacroAnalyser {
      * @return advan type
      */
     @VisibleForTesting
-    String captureAdvanType(PkMacroDetails details) {
+    AdvanType captureAdvanType(PkMacroDetails details) {
 
         if(details.getCompartments().isEmpty() || details.getEliminations().isEmpty()){
             throw new IllegalArgumentException("The compartment missing from pk macro specified");
         }
 
-        String advanType = new String();
+        AdvanType advanType = AdvanType.NONE;
+        if(details.getCompartments().size()>1){
+            return advanType;
+        }
+
         switch(details.getPeripherals().size()){
         case 0:
             if(isIV(details)){
                 if(isKmAndVm(details)){
-                    advanType = AdvanType.ADVAN10.toString();
+                    advanType = AdvanType.ADVAN10;
                 }else{
-                    advanType = AdvanType.ADVAN1.toString();
+                    advanType = AdvanType.ADVAN1;
                 }
             }else if(isOral(details)){
-                advanType = AdvanType.ADVAN2.toString();
+                advanType = AdvanType.ADVAN2;
             }
             break;
         case 1:
             if(isIV(details)){
-                advanType = AdvanType.ADVAN3.toString();
+                advanType = AdvanType.ADVAN3;
             }else if(isOral(details)){
-                advanType = AdvanType.ADVAN4.toString();
+                advanType = AdvanType.ADVAN4;
             }
             break;
         case 2:
             if(isIV(details)){
-                advanType = AdvanType.ADVAN11.toString();
+                advanType = AdvanType.ADVAN11;
             }else if(isOral(details)){
-                advanType = AdvanType.ADVAN12.toString();
+                advanType = AdvanType.ADVAN12;
             }
             break;
         default:
-            advanType = new String();
+            advanType = AdvanType.NONE;
         }
         return advanType;
     }
@@ -199,7 +200,6 @@ public class PkMacroAnalyser {
 
     /**
      * Check if injection type is Oral
-     * @return
      */
     private boolean isOral(PkMacroDetails details){
         if(details.getIvs().isEmpty() && !details.getAbsorptionOrals().isEmpty()){
@@ -223,13 +223,13 @@ public class PkMacroAnalyser {
         private int absOralCompNumber=0;
         private int cmtCompNumber=0;
 
-        private String macroAdvanType = new String();
+        private AdvanType macroAdvanType = AdvanType.NONE;
 
-        public String getMacroAdvanType() {
+        public AdvanType getMacroAdvanType() {
             return macroAdvanType;
         }
 
-        private String setMacroAdvanType(String advanType) {
+        private AdvanType setMacroAdvanType(AdvanType advanType) {
             return macroAdvanType = advanType;
         }
 

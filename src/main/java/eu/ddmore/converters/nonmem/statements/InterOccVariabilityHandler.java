@@ -22,12 +22,12 @@ import eu.ddmore.libpharmml.dom.dataset.ColumnType;
 import eu.ddmore.libpharmml.dom.modeldefn.ParameterRandomVariable;
 
 /**
- * This class handled Inter Occasion Variability in nmtran 
+ * This class deals with Occasion random Variabes associated with Inter Occasional variability 
+ * and collects information about unique values in occasion column.
  */
 public class InterOccVariabilityHandler {
     private final ConversionContext context;
-    private final List<InputColumn> columns;
-    private InputColumn columnWithOcc;
+    private InputColumn iovColumn;
     private final Map<Integer, OccRandomVariable> orderedOccRandomVars = new TreeMap<Integer, OccRandomVariable>();
     private final List<String> occasionRandomVariables = new ArrayList<String>();
     private final List<Double> iovColumnUniqueValues = new ArrayList<Double>();
@@ -37,7 +37,6 @@ public class InterOccVariabilityHandler {
         Preconditions.checkNotNull(context.getInputColumnsHandler().getInputColumnsProvider().getInputHeaders(), "columns list cannot be null");
 
         this.context = context;
-        columns = context.getInputColumnsHandler().getInputColumnsProvider().getInputHeaders();
         initialise();
     }
 
@@ -45,7 +44,7 @@ public class InterOccVariabilityHandler {
         Preconditions.checkNotNull(context.getScriptDefinition(), "script definition cannot be null");
         Preconditions.checkNotNull(context.getScriptDefinition().getParameterBlocks(), "parameter blocks cannot be null");
 
-        getOccColumns();
+        retrieveOccColumns();
         int count = 1;
         for(ParameterBlock block : context.getScriptDefinition().getParameterBlocks()){
             for(ParameterRandomVariable variable : block.getRandomVariables()){
@@ -55,12 +54,19 @@ public class InterOccVariabilityHandler {
                 count = addOccVariabilityRef(variable, count);
             }
         }
+
+        File dataFile = context.getDataSetHandler().getDataFile();
+        if(dataFile.exists()){
+            retrieveIovColumnUniqueValues(dataFile);
+        }
     }
 
-    private void getOccColumns(){
+    private void retrieveOccColumns(){
+        List<InputColumn> columns = context.getInputColumnsHandler().getInputColumnsProvider().getInputHeaders();
         for(InputColumn column : columns){
             if(column.getColumnType().name().equalsIgnoreCase(ColumnType.OCCASION.name())){
-                columnWithOcc = column;
+                iovColumn = column;
+                break;
             }
         }
     }
@@ -71,7 +77,7 @@ public class InterOccVariabilityHandler {
             String omegaName = RandomVariableHelper.getNameFromParamRandomVariable(variable);
             eta.setOmegaName(omegaName);
             eta.setOrderInCorr(count);
-            OccRandomVariable occRandomVariable = new OccRandomVariable(columnWithOcc.getColumnType(), variable, eta);
+            OccRandomVariable occRandomVariable = new OccRandomVariable(iovColumn.getColumnType(), variable, eta);
             orderedOccRandomVars.put(count,occRandomVariable);
             count++;
             occasionRandomVariables.add(variable.getSymbId());
@@ -79,41 +85,34 @@ public class InterOccVariabilityHandler {
         return count;
     }
 
-    /**
-     * Checks if random variable is with occasional variability level .
-     * @param variable
-     * @return
-     */
     public boolean isRandomVarIOV(ParameterRandomVariable variable){
-        boolean isIOV = false;
         if(variable.getListOfVariabilityReference()!=null){
             for(LevelReference levelRef : variable.getListOfVariabilityReference()){
                 if(levelRef.getSymbRef().getSymbIdRef()!=null){
                     String variabilityRef = levelRef.getSymbRef().getSymbIdRef();
-                    if(columnWithOcc!=null && columnWithOcc.getColumnId().equals(variabilityRef)){
-                        isIOV = true;
+                    if(iovColumn!=null && iovColumn.getColumnId().equals(variabilityRef)){
+                        return true;
                     }
                 }
             }
         }
-        return isIOV;
+        return false;
     }
 
     /**
-     *  gets unique values from iov related columns.
-     *  
-     * @param iovColumnUniqueValues
+     * gets unique values from iov related columns where column type is "occasion".
+     * @param dataFile nonmem data file
      * @throws IOException
      */
-    public void retrieveIovColumnUniqueValues(File dataFile) throws IOException{
-        if(iovColumnUniqueValues.isEmpty() && columnWithOcc!=null){
+    private void retrieveIovColumnUniqueValues(File dataFile) throws IOException{
+        if(iovColumnUniqueValues.isEmpty() && iovColumn!=null){
             CsvReader reader = new CsvReader(dataFile.getAbsolutePath());
             try{
                 //Read the first record of data as column headers
                 reader.readHeaders();
                 while (reader.readRecord())
                 {
-                    Double value = Double.parseDouble(reader.get(columnWithOcc.getColumnSequence()+1));
+                    Double value = Double.parseDouble(reader.get(iovColumn.getColumnSequence()-1));
                     if(!iovColumnUniqueValues.contains(value)){
                         iovColumnUniqueValues.add(value);
                     }
@@ -128,8 +127,8 @@ public class InterOccVariabilityHandler {
         return orderedOccRandomVars;
     }
 
-    public InputColumn getColumnWithOcc() {
-        return columnWithOcc;
+    public InputColumn getIovColumn() {
+        return iovColumn;
     }
 
     public List<Double> getIovColumnUniqueValues() {
