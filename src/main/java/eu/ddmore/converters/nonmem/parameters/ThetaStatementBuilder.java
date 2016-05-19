@@ -10,7 +10,8 @@ import java.util.Map;
 
 import com.google.common.base.Preconditions;
 
-import crx.converter.engine.parts.EstimationStep.FixedParameter;
+import crx.converter.engine.FixedParameter;
+
 import eu.ddmore.converters.nonmem.utils.Formatter;
 import eu.ddmore.libpharmml.dom.commontypes.Rhs;
 import eu.ddmore.libpharmml.dom.modellingsteps.ParameterEstimate;

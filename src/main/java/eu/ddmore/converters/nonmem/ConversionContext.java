@@ -15,9 +15,9 @@ import java.util.Set;
 import com.google.common.base.Preconditions;
 
 import crx.converter.engine.ScriptDefinition;
-import crx.converter.engine.parts.StructuralBlock;
 import crx.converter.spi.ILexer;
 import crx.converter.spi.IParser;
+import crx.converter.spi.blocks.StructuralBlock;
 import eu.ddmore.converters.nonmem.eta.Eta;
 import eu.ddmore.converters.nonmem.parameters.CorrelationHandler;
 import eu.ddmore.converters.nonmem.parameters.ParametersBuilder;

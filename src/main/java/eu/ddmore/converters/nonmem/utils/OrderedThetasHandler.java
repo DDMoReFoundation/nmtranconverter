@@ -11,7 +11,7 @@ import java.util.TreeMap;
 import com.google.common.base.Preconditions;
 
 import crx.converter.engine.ScriptDefinition;
-import crx.converter.engine.parts.ParameterBlock;
+import crx.converter.spi.blocks.ParameterBlock;
 import eu.ddmore.converters.nonmem.ConversionContext;
 import eu.ddmore.converters.nonmem.eta.Eta;
 import eu.ddmore.libpharmml.dom.commontypes.Rhs;

@@ -9,8 +9,9 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Set;
 
-import crx.converter.engine.parts.EstimationStep.FixedParameter;
-import crx.converter.engine.parts.ParameterBlock;
+import crx.converter.engine.FixedParameter;
+import crx.converter.spi.blocks.ParameterBlock;
+
 import eu.ddmore.converters.nonmem.ConversionContext;
 import eu.ddmore.converters.nonmem.eta.Eta;
 import eu.ddmore.converters.nonmem.utils.Formatter;

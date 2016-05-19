@@ -10,15 +10,16 @@ import java.util.Set;
 
 import com.google.common.base.Preconditions;
 
+import crx.converter.engine.Part;
 import crx.converter.engine.ScriptDefinition;
-import crx.converter.engine.parts.BaseStep.MultipleDvRef;
-import crx.converter.engine.parts.ConditionalDoseEvent;
-import crx.converter.engine.parts.EstimationStep;
-import crx.converter.engine.parts.ObservationBlock;
-import crx.converter.engine.parts.ParameterBlock;
-import crx.converter.engine.parts.Part;
-import crx.converter.engine.parts.TemporalDoseEvent;
-import crx.converter.engine.parts.VariabilityBlock;
+import crx.converter.engine.common.ConditionalDoseEvent;
+import crx.converter.engine.common.MultipleDvRef;
+import crx.converter.engine.common.TemporalDoseEvent;
+import crx.converter.spi.blocks.ObservationBlock;
+import crx.converter.spi.blocks.ParameterBlock;
+import crx.converter.spi.blocks.VariabilityBlock;
+import crx.converter.spi.steps.EstimationStep;
+
 import eu.ddmore.libpharmml.dom.commontypes.LevelReference;
 import eu.ddmore.libpharmml.dom.modeldefn.ObservationError;
 import eu.ddmore.libpharmml.dom.modeldefn.ParameterRandomVariable;

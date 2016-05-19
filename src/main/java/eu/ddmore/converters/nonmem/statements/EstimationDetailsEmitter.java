@@ -6,7 +6,7 @@ package eu.ddmore.converters.nonmem.statements;
 import java.util.List;
 
 import crx.converter.engine.ScriptDefinition;
-import crx.converter.engine.parts.EstimationStep;
+import crx.converter.spi.steps.EstimationStep;
 
 import eu.ddmore.converters.nonmem.utils.DiscreteHandler;
 import eu.ddmore.converters.nonmem.utils.Formatter;

@@ -3,7 +3,7 @@
  ******************************************************************************/
 package eu.ddmore.converters.nonmem.statements;
 
-import crx.converter.engine.parts.SimulationStep;
+import crx.converter.spi.steps.SimulationStep;
 import eu.ddmore.converters.nonmem.utils.Formatter;
 
 /**

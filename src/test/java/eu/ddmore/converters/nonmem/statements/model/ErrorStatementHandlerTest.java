@@ -23,8 +23,8 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 
-import crx.converter.engine.parts.BaseStep.MultipleDvRef;
-import crx.converter.engine.parts.ObservationBlock;
+import crx.converter.engine.common.MultipleDvRef;
+import crx.converter.spi.blocks.ObservationBlock;
 
 import eu.ddmore.converters.nonmem.ConversionContext;
 import eu.ddmore.converters.nonmem.statements.BasicTestSetup;

@@ -16,7 +16,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
-import crx.converter.engine.parts.StructuralBlock;
+import crx.converter.spi.blocks.StructuralBlock;
+
 import eu.ddmore.converters.nonmem.utils.Formatter;
 import eu.ddmore.libpharmml.dom.commontypes.DerivativeVariable;
 import eu.ddmore.libpharmml.dom.commontypes.InitialCondition;

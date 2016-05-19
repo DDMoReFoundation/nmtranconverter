@@ -9,7 +9,8 @@ import java.util.Set;
 
 import com.google.common.base.Preconditions;
 
-import crx.converter.engine.parts.StructuralBlock;
+import crx.converter.spi.blocks.StructuralBlock;
+
 import eu.ddmore.converters.nonmem.eta.Eta;
 import eu.ddmore.converters.nonmem.parameters.OmegaBlock;
 import eu.ddmore.converters.nonmem.statements.DiffEquationStatementBuilder;

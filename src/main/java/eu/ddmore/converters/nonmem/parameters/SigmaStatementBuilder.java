@@ -8,8 +8,9 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
-import crx.converter.engine.parts.ObservationBlock;
-import crx.converter.engine.parts.EstimationStep.FixedParameter;
+import crx.converter.engine.FixedParameter;
+import crx.converter.spi.blocks.ObservationBlock;
+
 import eu.ddmore.converters.nonmem.ConversionContext;
 import eu.ddmore.converters.nonmem.utils.Formatter;
 import eu.ddmore.converters.nonmem.utils.Formatter.NmConstant;

@@ -3,7 +3,7 @@
  ******************************************************************************/
 package eu.ddmore.converters.nonmem.parameters;
 
-import crx.converter.engine.parts.BaseRandomVariableBlock.CorrelationRef;
+import crx.converter.engine.common.CorrelationRef;
 import eu.ddmore.libpharmml.dom.commontypes.Matrix;
 import eu.ddmore.libpharmml.dom.commontypes.StandardAssignable;
 import eu.ddmore.libpharmml.dom.modeldefn.ParameterRandomVariable;

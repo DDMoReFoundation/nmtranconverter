@@ -97,7 +97,7 @@ public class InputColumnsHandler {
         if (orderedColumns.containsKey(columnNumber) && !orderedColumns.get(columnNumber).getColumnId().equals(DROP) ) {
             throw new IllegalStateException("External data set contains duplicate columns for : "+columnId);
         } else {
-            ColumnType columnType = dataColumn.getColumnType();
+            ColumnType columnType = dataColumn.getListOfColumnType().get(0);
             Boolean isDropped = (columnType.equals(ColumnType.UNDEFINED) && !ReservedColumnConstant.contains(columnId));
 
             String formattedColumnId =Formatter.getReservedParam(columnId);
@@ -121,8 +121,7 @@ public class InputColumnsHandler {
         if(columnType.equals(ColumnType.COVARIATE)){
             if(valueType.equals(SymbolType.INT)){
                 inputColumnsProvider.addCatCovTableColumn(symbol.toUpperCase()); 
-            }
-            if(valueType.equals(SymbolType.REAL)){
+            }else if(valueType.equals(SymbolType.REAL)){
                 inputColumnsProvider.addContCovTableColumn(symbol.toUpperCase());
             } else {
                 throw new IllegalStateException("Found unexpected/unsupported type of column value : "+ valueType);

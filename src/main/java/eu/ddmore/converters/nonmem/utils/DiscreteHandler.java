@@ -8,7 +8,7 @@ import java.util.List;
 import com.google.common.base.Preconditions;
 
 import crx.converter.engine.ScriptDefinition;
-import crx.converter.engine.parts.ObservationBlock;
+import crx.converter.spi.blocks.ObservationBlock;
 import eu.ddmore.converters.nonmem.utils.Formatter;
 import eu.ddmore.libpharmml.dom.modeldefn.CommonObservationModel;
 import eu.ddmore.libpharmml.dom.modeldefn.CountData;

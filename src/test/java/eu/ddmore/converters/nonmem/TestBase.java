@@ -49,9 +49,6 @@ public abstract class TestBase {
         dir = new File(WORKING_DIR, version);
 
         c = new ConverterProvider();
-        ConverterProvider.getManager().setFixedRunId(fixedRunId);
-        c.setUseCrxImplConversionReport(useCrxReportDetail);
-        c.setAddPlottingBlock(false);
     }
 
     /*

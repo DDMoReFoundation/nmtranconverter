@@ -21,7 +21,8 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 
-import crx.converter.engine.parts.ParameterBlock;
+import crx.converter.spi.blocks.ParameterBlock;
+
 import eu.ddmore.converters.nonmem.ConversionContext;
 import eu.ddmore.converters.nonmem.statements.InterOccVariabilityHandler.OccRandomVariable;
 import eu.ddmore.converters.nonmem.utils.RandomVariableHelper;

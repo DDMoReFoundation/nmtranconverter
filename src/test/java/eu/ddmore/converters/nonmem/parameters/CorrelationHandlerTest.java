@@ -15,7 +15,7 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 
-import crx.converter.engine.parts.ParameterBlock;
+import crx.converter.spi.blocks.ParameterBlock;
 
 import static org.powermock.api.mockito.PowerMockito.when;
 import static org.powermock.api.mockito.PowerMockito.whenNew;

@@ -12,10 +12,10 @@ import org.apache.commons.lang.StringUtils;
 
 import com.google.common.base.Preconditions;
 
-import crx.converter.engine.parts.ConditionalDoseEvent;
-import crx.converter.engine.parts.ParameterBlock;
-import crx.converter.engine.parts.ParameterBlock.Event;
-import crx.converter.engine.parts.TemporalDoseEvent;
+import crx.converter.engine.common.ConditionalDoseEvent;
+import crx.converter.engine.common.ParameterEvent;
+import crx.converter.engine.common.TemporalDoseEvent;
+import crx.converter.spi.blocks.ParameterBlock;
 import eu.ddmore.converters.nonmem.ConversionContext;
 import eu.ddmore.converters.nonmem.eta.Eta;
 import eu.ddmore.converters.nonmem.parameters.Parameter;
@@ -75,7 +75,7 @@ public class PredCoreStatement {
         for(String simpleParamSymbol : params.keySet()){
             if(params.get(simpleParamSymbol).isAssignment()){
                 PopulationParameter simpleParam = params.get(simpleParamSymbol).getPopParameter();
-                Event event = getEventForParameter(simpleParam);
+                ParameterEvent event = getEventForParameter(simpleParam);
                 String parsedEquation = new String();
                 if(event !=null){
                     if(event.getPiecewiseTree()!=null && event.getPiecewiseTree().size()>0){
@@ -94,10 +94,10 @@ public class PredCoreStatement {
         return simpleParamAssignmentBlock;
     }
 
-    private Event getEventForParameter(PopulationParameter populationParam){
+    private ParameterEvent getEventForParameter(PopulationParameter populationParam){
         for(ParameterBlock pb : context.getScriptDefinition().getParameterBlocks()){
             if (pb.hasEvents()) {
-                for (Event event : pb.getEvents()) {
+                for (ParameterEvent event : pb.getEvents()) {
                     if (event != null) {
                         if (populationParam.getSymbId().equals(event.getParameter().getSymbId())){
                             return event;

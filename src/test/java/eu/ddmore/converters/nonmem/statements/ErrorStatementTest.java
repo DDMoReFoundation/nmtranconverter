@@ -11,7 +11,6 @@ import static org.mockito.Mockito.mock;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.when;
 
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -47,7 +46,7 @@ public class ErrorStatementTest extends BasicTestSetup {
 
     @Mock SymbolRef symbolRef;
 
-    BigInteger value = new BigInteger("1");
+    Integer value = new Integer("1");
     String output = "outputVariablePlaceHolder";
     ErrorStatement errorStatement;
     List<FunctionArgument> args = new ArrayList<FunctionArgument>();

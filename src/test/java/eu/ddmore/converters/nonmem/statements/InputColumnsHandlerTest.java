@@ -60,7 +60,7 @@ public class InputColumnsHandlerTest extends BasicTestSetup {
         ColumnType COL_TYPE_5 = ColumnType.UNDEFINED;
         SymbolType COL_VALUE_5 = SymbolType.ID;
         Integer COL_NUM_5 = new Integer(5);
-        ColumnDefinition DUP_EVID = new ColumnDefinition(COL_ID_5, COL_TYPE_5, COL_VALUE_5, COL_NUM_5);
+        ColumnDefinition DUP_EVID = new ColumnDefinition(COL_ID_5,COL_VALUE_5,COL_NUM_5, COL_TYPE_5);
 
         dataColumns.add(DUP_EVID);
         columnsHandler = new InputColumnsHandler(dataSets, covDefinitions);
@@ -97,6 +97,6 @@ public class InputColumnsHandlerTest extends BasicTestSetup {
 
     private void verifyColumn(ColumnDefinition expected, InputColumn actual){
         assertEquals("Should have expected column name ", expected.getColumnId(), actual.getColumnId());
-        assertEquals("Should have expected column type", expected.getColumnType(), actual.getColumnType());
+        assertEquals("Should have expected column type", expected.getListOfColumnType().get(0), actual.getColumnType());
     }
 }

@@ -5,7 +5,8 @@ package eu.ddmore.converters.nonmem.statements;
 
 import java.util.List;
 
-import crx.converter.engine.parts.StructuralBlock;
+import crx.converter.spi.blocks.StructuralBlock;
+
 import eu.ddmore.converters.nonmem.utils.Formatter;
 import eu.ddmore.libpharmml.dom.commontypes.DerivativeVariable;
 import eu.ddmore.libpharmml.dom.commontypes.Rhs;

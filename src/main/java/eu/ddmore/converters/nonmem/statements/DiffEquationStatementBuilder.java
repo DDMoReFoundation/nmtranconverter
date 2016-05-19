@@ -9,7 +9,8 @@ import java.util.regex.Pattern;
 
 import com.google.common.base.Preconditions;
 
-import crx.converter.engine.parts.StructuralBlock;
+import crx.converter.spi.blocks.StructuralBlock;
+
 import eu.ddmore.converters.nonmem.ConversionContext;
 import eu.ddmore.converters.nonmem.utils.Formatter;
 import eu.ddmore.libpharmml.dom.commontypes.DerivativeVariable;

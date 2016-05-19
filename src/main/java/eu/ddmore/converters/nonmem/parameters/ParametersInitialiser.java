@@ -11,9 +11,9 @@ import java.util.Map;
 
 import com.google.common.base.Preconditions;
 
+import crx.converter.engine.FixedParameter;
 import crx.converter.engine.ScriptDefinition;
-import crx.converter.engine.parts.EstimationStep;
-import crx.converter.engine.parts.EstimationStep.FixedParameter;
+import crx.converter.spi.steps.EstimationStep;
 import eu.ddmore.converters.nonmem.utils.ScriptDefinitionAccessor;
 import eu.ddmore.libpharmml.dom.commontypes.Rhs;
 import eu.ddmore.libpharmml.dom.modeldefn.PopulationParameter;

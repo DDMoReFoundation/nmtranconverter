@@ -9,9 +9,9 @@ import org.apache.commons.lang.StringUtils;
 
 import com.google.common.base.Preconditions;
 
-import crx.converter.engine.parts.BaseStep.MultipleDvRef;
-import crx.converter.engine.parts.ConditionalDoseEvent;
-import crx.converter.engine.parts.TemporalDoseEvent;
+import crx.converter.engine.common.ConditionalDoseEvent;
+import crx.converter.engine.common.MultipleDvRef;
+import crx.converter.engine.common.TemporalDoseEvent;
 import crx.converter.tree.BinaryTree;
 import eu.ddmore.converters.nonmem.utils.Formatter;
 import eu.ddmore.libpharmml.dom.commontypes.SymbolRef;

@@ -18,7 +18,7 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 
-import crx.converter.engine.parts.EstimationStep;
+import crx.converter.spi.steps.EstimationStep;
 import eu.ddmore.converters.nonmem.statements.EstimationDetailsEmitter.EstConstant;
 import eu.ddmore.converters.nonmem.statements.EstimationDetailsEmitter.Method;
 import eu.ddmore.converters.nonmem.utils.DiscreteHandler;

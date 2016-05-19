@@ -26,20 +26,8 @@ public class TestUseCaseConversions extends TestBase {
     @Before
     public void setUp() throws Exception {
 
-        //inputXMLFile = "UseCase1.xml";
-        //inputDataFile = "warfarin_conc.csv";
-
-        //inputXMLFile = "UseCase7.xml";
-        //inputDataFile = "warfarin_conc_cmt.csv";
-
-        //inputXMLFile = "UseCase15.xml";
-        //inputDataFile = "warfarin_conc_cmt.csv";
-
-//        inputXMLFile = "pkmacro/UseCase7_HBN_ADVAN4_2.xml";
-//        inputDataFile = "pkmacro/warfarin_conc_cmt.csv";
-        
-        inputXMLFile = "UseCase10.xml";
-        inputDataFile = "warfarin_conc_cmt.csv";
+        inputXMLFile = "UseCase1.xml";
+        inputDataFile = "warfarin_conc.csv";
 
         init(inputDataFile, V_0_8_SUBDIR);
         init(inputXMLFile, V_0_8_SUBDIR);

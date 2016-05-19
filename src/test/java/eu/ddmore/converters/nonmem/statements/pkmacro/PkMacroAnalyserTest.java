@@ -14,7 +14,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
-import crx.converter.engine.parts.StructuralBlock;
+import crx.converter.spi.blocks.StructuralBlock;
+
 import eu.ddmore.converters.nonmem.ConversionContext;
 import eu.ddmore.converters.nonmem.statements.BasicTestSetup;
 import eu.ddmore.converters.nonmem.statements.pkmacro.PkMacroAnalyser;

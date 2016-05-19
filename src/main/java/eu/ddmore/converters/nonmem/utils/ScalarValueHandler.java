@@ -5,7 +5,6 @@ package eu.ddmore.converters.nonmem.utils;
 
 import java.io.IOException;
 import java.lang.reflect.Method;
-import java.math.BigInteger;
 import java.util.Properties;
 
 import com.google.common.base.Preconditions;
@@ -84,7 +83,7 @@ public final class ScalarValueHandler {
 
     public static Double getValue(IntValue num) {
         Preconditions.checkNotNull(num, "The integer value cannot be null");
-        BigInteger number = num.getValue();
+        Integer number = num.getValue();
         return number.doubleValue();
     }
 

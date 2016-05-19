@@ -20,7 +20,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
-import crx.converter.engine.parts.ObservationBlock;
+import crx.converter.spi.blocks.ObservationBlock;
+
 import eu.ddmore.converters.nonmem.utils.DiscreteHandler;
 import eu.ddmore.libpharmml.dom.modeldefn.CountData;
 import eu.ddmore.libpharmml.dom.modeldefn.CountPMF;

@@ -11,8 +11,9 @@ import org.apache.commons.lang.StringUtils;
 
 import com.google.common.base.Preconditions;
 
-import crx.converter.engine.parts.ObservationBlock;
-import crx.converter.engine.parts.BaseStep.MultipleDvRef;
+import crx.converter.engine.common.MultipleDvRef;
+import crx.converter.spi.blocks.ObservationBlock;
+
 import eu.ddmore.converters.nonmem.ConversionContext;
 import eu.ddmore.converters.nonmem.statements.DiffEquationStatementBuilder;
 import eu.ddmore.converters.nonmem.statements.ErrorStatement;
