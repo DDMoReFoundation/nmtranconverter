@@ -11,10 +11,13 @@ import com.google.common.base.Preconditions;
 
 import crx.converter.spi.blocks.StructuralBlock;
 
+import eu.ddmore.converters.nonmem.ConversionContext;
+import eu.ddmore.converters.nonmem.LocalParserHelper;
 import eu.ddmore.converters.nonmem.eta.Eta;
 import eu.ddmore.converters.nonmem.parameters.OmegaBlock;
 import eu.ddmore.converters.nonmem.statements.DiffEquationStatementBuilder;
 import eu.ddmore.converters.nonmem.statements.InitConditionBuilder;
+import eu.ddmore.converters.nonmem.statements.InputColumn;
 import eu.ddmore.converters.nonmem.statements.pkmacro.PkMacroAnalyser;
 import eu.ddmore.converters.nonmem.statements.pkmacro.PkMacrosEmitter;
 import eu.ddmore.converters.nonmem.statements.pkmacro.PkMacroAnalyser.AdvanType;
@@ -22,6 +25,9 @@ import eu.ddmore.converters.nonmem.statements.pkmacro.PkMacroAnalyser.PkMacroDet
 import eu.ddmore.converters.nonmem.utils.Formatter;
 import eu.ddmore.libpharmml.dom.commontypes.DerivativeVariable;
 import eu.ddmore.libpharmml.dom.commontypes.VariableDefinition;
+import eu.ddmore.libpharmml.dom.dataset.ColumnMapping;
+import eu.ddmore.libpharmml.dom.dataset.ColumnType;
+import eu.ddmore.libpharmml.dom.maths.ExpressionValue;
 
 /**
  * This class generates continuous statement block
@@ -30,6 +36,8 @@ public class ContinuousStatement {
 
     private static final int TOL_VALUE_IF_NOT_SAEM = 9;
     private static final int TOL_VALUE_IF_SAEM = 6;
+    private static final String DEFDOSE = "DEFDOSE";
+
     private final ModelStatementHelper statementHelper;
     private PkMacrosEmitter pkMacroEquationsEmitter;
     private PkMacroDetails pkMacroDetails;
@@ -136,13 +144,54 @@ public class ContinuousStatement {
      */
     private StringBuilder getModelStatement() {
         StringBuilder modelBlock = new StringBuilder();
+        boolean  isCMTColumn = false;
+        InputColumn doseColumn = null;
+
         modelBlock.append(Formatter.endline());
         modelBlock.append(Formatter.model());
-        for(DerivativeVariable stateVariable :statementHelper.getContext().getDerivativeVars()){
-            String compartment = stateVariable.getSymbId().toUpperCase();
-            modelBlock.append(Formatter.endline("COMP "+"(COMP"+statementHelper.getContext().getDerivativeVarCompSequences().get(compartment)+") "+Formatter.addComment(compartment)));
+        ConversionContext context = statementHelper.getContext();
+
+        for(InputColumn column : context.getInputColumnsHandler().getInputColumnsProvider().getInputHeaders()){
+            if(column.getColumnType().equals(ColumnType.CMT)){
+                isCMTColumn = true; 
+            }
+            if(column.getColumnType().equals(ColumnType.DOSE)){
+                doseColumn = column;
+            }
+        }
+
+        String doseColumnReatedColumnMapping = "";
+        if(doseColumn !=null){
+            doseColumnReatedColumnMapping = getDoseColumnRelatedColumnMappingSymbol(doseColumn);
+        }
+
+        for(DerivativeVariable stateVariable :context.getDerivativeVars()){
+            String compartmentSymbol = stateVariable.getSymbId().toUpperCase();
+            String compartmentNumber = context.getDerivativeVarCompSequences().get(compartmentSymbol);
+            String defDoseSymbol = "";
+            if(doseColumnReatedColumnMapping.equals(compartmentSymbol) && !isCMTColumn){
+                defDoseSymbol = " "+DEFDOSE;
+            }
+
+            modelBlock.append(Formatter.endline("COMP "+"(COMP"+compartmentNumber+defDoseSymbol+") "+Formatter.addComment(compartmentSymbol)));
         }
         return modelBlock;
+    }
+
+    private String getDoseColumnRelatedColumnMappingSymbol(InputColumn doseColumn) {
+        for(ColumnMapping columnMapping :statementHelper.getContext().getColumnMappings()){
+            if(doseColumn.getColumnId().equals(columnMapping.getColumnRef().getColumnIdRef())){
+                if(columnMapping.getSymbRef()!=null && columnMapping.getSymbRef().getSymbIdRef()!=null ){
+                    return columnMapping.getSymbRef().getSymbIdRef().trim();
+                }else if(columnMapping.getPiecewise()!=null){
+                    LocalParserHelper localParser = new LocalParserHelper(statementHelper.getContext());
+                    ExpressionValue value = columnMapping.getPiecewise().getListOfPiece().get(0).getValue();
+                    String columnMappingSymbol = localParser.getParsedValueForExpressionValue(value);
+                    return columnMappingSymbol.trim();
+                }
+            }
+        }
+        return "";
     }
 
     private StringBuilder getAbbreviatedStatement() {

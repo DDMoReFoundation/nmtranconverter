@@ -32,6 +32,7 @@ import eu.ddmore.converters.nonmem.utils.Formatter.NmConstant;
 import eu.ddmore.converters.nonmem.utils.MuReferenceHandler;
 import eu.ddmore.converters.nonmem.utils.OrderedThetasHandler;
 import eu.ddmore.libpharmml.dom.commontypes.DerivativeVariable;
+import eu.ddmore.libpharmml.dom.dataset.ColumnMapping;
 import eu.ddmore.libpharmml.dom.modeldefn.PopulationParameter;
 import eu.ddmore.libpharmml.dom.trialdesign.ExternalDataSet;
 
@@ -268,5 +269,9 @@ public class ConversionContext {
 
     public ParametersInitialiser getParameterInitialiser() {
         return parameterInitialiser;
+    }
+    
+    public List<ColumnMapping> getColumnMappings() {
+        return dataSetHandler.getColumnMappings();
     }
 }

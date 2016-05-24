@@ -59,9 +59,17 @@ public class LocalParserHelper {
      * @return
      */
     public String getParsedValueForRhs(Rhs rhs){
-        BinaryTree assignmentTree = getAssignmentTree((ExpressionValue) rhs.getContent());
-        return context.getParser().parse(new Object(), assignmentTree);
+        return getParsedValueForExpressionValue((ExpressionValue) rhs.getContent());
+    }
 
+    /**
+     * Gets parsed values of expression value
+     * @param value
+     * @return
+     */
+    public String getParsedValueForExpressionValue(ExpressionValue value){
+        BinaryTree assignmentTree = getAssignmentTree(value);
+        return context.getParser().parse(new Object(), assignmentTree);
     }
 
     private BinaryTree getAssignmentTree(ExpressionValue expressionValue){

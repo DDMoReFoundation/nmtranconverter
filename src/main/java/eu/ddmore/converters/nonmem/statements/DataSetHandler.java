@@ -14,6 +14,7 @@ import org.apache.commons.lang.StringUtils;
 
 import com.google.common.base.Preconditions;
 
+import eu.ddmore.libpharmml.dom.dataset.ColumnMapping;
 import eu.ddmore.libpharmml.dom.trialdesign.ExternalDataSet;
 
 
@@ -23,6 +24,7 @@ public class DataSetHandler {
     private String dataFileName = null;
     private File dataFile = null;
     private final List<ExternalDataSet> extDataSets;
+    private List<ColumnMapping> columnMappings;
     private Character ignoreChar;
 
     public DataSetHandler(List<ExternalDataSet> extDataSets, String dataLocation) {
@@ -39,6 +41,7 @@ public class DataSetHandler {
             throw new IllegalStateException("Multiple external datasets are not supported yet.");
         }
         ExternalDataSet extDataSet = extDataSets.get(0);
+        columnMappings = extDataSet.getListOfColumnMapping();
         if (extDataSet.getDataSet().getExternalFile().getPath() != null) {
             dataFileName = extDataSet.getDataSet().getExternalFile().getPath();
             File data = new File(dataLocation, dataFileName);
@@ -102,6 +105,10 @@ public class DataSetHandler {
 
     public void setIgnoreChar(Character ignoreChar) {
         this.ignoreChar = ignoreChar;
+    }
+
+    public List<ColumnMapping> getColumnMappings() {
+        return columnMappings;
     }
 
 }
