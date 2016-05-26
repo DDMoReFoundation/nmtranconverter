@@ -34,6 +34,8 @@ public final class ScalarValueHandler {
             return Double.parseDouble(rhs.getScalar().valueToString());
         }else if(rhs.getUniop()!=null){
             return getUniopValue(rhs.getUniop());
+        } else if(rhs.getBinop()!=null) {
+            return ExpressionEvaluator.evaluate(rhs.getBinop().toMathExpression());
         } else{
             throw new IllegalArgumentException(String.format("The expected scalar value doesn't exist %s [id = %s].", rhs, rhs.getId()));
         }

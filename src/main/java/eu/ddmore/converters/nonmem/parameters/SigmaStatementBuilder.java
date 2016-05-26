@@ -94,7 +94,6 @@ public class SigmaStatementBuilder {
         Set<ParameterRandomVariable> randomVariableTypes = getRandomVariablesForSigma();
 
         for (ParameterRandomVariable rv : randomVariableTypes) {
-
             Boolean isStdDev = false;
 
             sigmaRepresentation = RandomVariableHelper.getDistributionTypeStdDev(rv);
