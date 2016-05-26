@@ -9,13 +9,16 @@ import com.google.common.base.Preconditions;
 
 import crx.converter.engine.ScriptDefinition;
 import crx.converter.spi.blocks.ObservationBlock;
-import eu.ddmore.converters.nonmem.utils.Formatter;
 import eu.ddmore.libpharmml.dom.modeldefn.CommonObservationModel;
 import eu.ddmore.libpharmml.dom.modeldefn.CountData;
 import eu.ddmore.libpharmml.dom.modeldefn.CountPMF;
 import eu.ddmore.libpharmml.dom.modeldefn.TTEFunction;
 import eu.ddmore.libpharmml.dom.modeldefn.TimeToEventData;
 import eu.ddmore.libpharmml.dom.modeldefn.UncertML;
+import eu.ddmore.libpharmml.dom.probonto.DistributionName;
+import eu.ddmore.libpharmml.dom.probonto.DistributionParameter;
+import eu.ddmore.libpharmml.dom.probonto.ParameterName;
+import eu.ddmore.libpharmml.dom.probonto.ProbOnto;
 import eu.ddmore.libpharmml.dom.uncertml.AbstractDiscreteUnivariateDistributionType;
 import eu.ddmore.libpharmml.dom.uncertml.NaturalNumberValueType;
 import eu.ddmore.libpharmml.dom.uncertml.NegativeBinomialDistribution;
@@ -94,6 +97,42 @@ public class DiscreteHandler {
     private StringBuilder getCountDataStatement(CountPMF countPMF) {
         StringBuilder countDistStatement = new StringBuilder();
 
+        if(countPMF.getDistribution().getUncertML()!=null) {
+            processUncertMLDistribution(countPMF, countDistStatement);
+        } else {
+            processProbOntoDistribution(countPMF, countDistStatement);
+        }
+
+        return countDistStatement;
+    }
+
+    private void processProbOntoDistribution(CountPMF countPMF, StringBuilder countDistStatement) {
+        ProbOnto probOnto = countPMF.getDistribution().getProbOnto();
+        if(DistributionName.POISSON_1 == probOnto.getName()) {
+            String poissonDistVar = getValueOrReference(probOnto.getParameter(ParameterName.RATE));
+            countDistStatement.append(createPoissonStatements(poissonDistVar));
+        } else if(DistributionName.NEGATIVE_BINOMIAL_1 == probOnto.getName()) {
+            String numberOfFailures = getValueOrReference(probOnto.getParameter(ParameterName.NUMBER_OF_FAILURES));
+            String probability = getValueOrReference(probOnto.getParameter(ParameterName.PROBABILITY));
+            if(probability==null) {
+                probability = getValueOrReference(probOnto.getParameter(ParameterName.PROBABILITY_OF_SUCCESS));
+            }
+            countDistStatement.append(createNegativeBinomialStatement(numberOfFailures, probability));
+        }
+    }
+
+    private String getValueOrReference(DistributionParameter distributionParameter) {
+        if(distributionParameter==null) {
+            return null;
+        }
+        if(distributionParameter.getAssign().getScalar()!=null) {
+            return distributionParameter.getAssign().getScalar().valueToString();
+        } else {
+            return distributionParameter.getAssign().getSymbRef().getSymbIdRef();
+        }
+        
+    }
+    private void processUncertMLDistribution(CountPMF countPMF, StringBuilder countDistStatement) {
         UncertML uncertML = countPMF.getDistribution().getUncertML();
         AbstractDiscreteUnivariateDistributionType dist = uncertML.getAbstractDiscreteUnivariateDistribution().getValue();
 
@@ -110,8 +149,6 @@ public class DiscreteHandler {
             String probability = getCountDataValue(negativeBinomialDist.getProbability());
             countDistStatement.append(createNegativeBinomialStatement(numberOfFailures, probability));
         }
-
-        return countDistStatement;
     }
 
     private String getCountDataValue(PositiveRealValueType valueType){

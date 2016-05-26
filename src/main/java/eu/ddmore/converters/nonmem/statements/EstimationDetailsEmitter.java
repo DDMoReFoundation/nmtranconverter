@@ -3,16 +3,20 @@
  ******************************************************************************/
 package eu.ddmore.converters.nonmem.statements;
 
+import java.util.Collection;
 import java.util.List;
+
+import org.apache.commons.lang.StringUtils;
+
+import com.google.common.base.Predicate;
+import com.google.common.collect.Collections2;
 
 import crx.converter.engine.ScriptDefinition;
 import crx.converter.spi.steps.EstimationStep;
-
 import eu.ddmore.converters.nonmem.utils.DiscreteHandler;
 import eu.ddmore.converters.nonmem.utils.Formatter;
 import eu.ddmore.converters.nonmem.utils.ScriptDefinitionAccessor;
 import eu.ddmore.libpharmml.dom.commontypes.Scalar;
-import eu.ddmore.libpharmml.dom.modellingsteps.Algorithm;
 import eu.ddmore.libpharmml.dom.modellingsteps.EstimationOpType;
 import eu.ddmore.libpharmml.dom.modellingsteps.EstimationOperation;
 import eu.ddmore.libpharmml.dom.modellingsteps.OperationProperty;
@@ -45,6 +49,8 @@ public class EstimationDetailsEmitter {
     }
 
     private static final String METHOD = "METHOD=";
+    private static final String GENERIC_OPERATION = "generic";
+    private static final String GENERIC_OPERATION_ALGO_PROP = "algo";
     private final List<EstimationStep> estimationSteps;
     private Boolean isSAEM = false;
 
@@ -80,9 +86,11 @@ public class EstimationDetailsEmitter {
                     }
 
                     if(EstimationOpType.EST_POP.value().equals(optType)){
-                        estStatement.append(buildEstimationStatementFromAlgorithm(operationType.getAlgorithm()));
-                    }else if(EstimationOpType.EST_INDIV.value().equals(optType)){
+                        estStatement.append(buildEstimationStatementFromAlgorithm(getAlgorithmDefinition(operationType)));
+                    } else if(EstimationOpType.EST_INDIV.value().equals(optType)){
                         break;
+                    } else if(GENERIC_OPERATION.equals(optType)) {
+                        estStatement.append(buildEstimationStatementFromAlgorithm(getMethodForGenericOperation(operationType)));
                     }
                 }
             }
@@ -90,12 +98,34 @@ public class EstimationDetailsEmitter {
         setCovStatement(isCovFound);
     }
 
-    private StringBuilder buildEstimationStatementFromAlgorithm(Algorithm algorithm) {
+    private String getAlgorithmDefinition(EstimationOperation operationType) {
+        if(operationType.getAlgorithm()==null) {
+            return null;
+        }
+        return operationType.getAlgorithm().getDefinition();
+    }
+
+    private String getMethodForGenericOperation(EstimationOperation operationType) {
+        Collection<OperationProperty> found = Collections2.filter(operationType.getProperty(), new Predicate<OperationProperty>() {
+            @Override
+            public boolean apply(OperationProperty op) {
+                return GENERIC_OPERATION_ALGO_PROP.equals(op.getName());
+            }
+        });
+        if(found.size()==0) {
+            return null;
+        }
+        OperationProperty algo = found.iterator().next();
+        
+        return algo.getAssign().getScalar().valueToString();
+    }
+
+    private StringBuilder buildEstimationStatementFromAlgorithm(String method) {
         StringBuilder statement = new StringBuilder();
 
         statement.append(METHOD);
-        if (algorithm!=null) {
-            String methodDefinition =algorithm.getDefinition().trim().toUpperCase();
+        if (StringUtils.isNotBlank(method)) {
+            String methodDefinition = method.trim().toUpperCase();
             if (methodDefinition.equals(Method.FO.toString())) {
                 statement.append(EstConstant.FO_STATEMENT.getStatement());
             }

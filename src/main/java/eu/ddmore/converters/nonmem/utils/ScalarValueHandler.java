@@ -35,7 +35,7 @@ public final class ScalarValueHandler {
         }else if(rhs.getUniop()!=null){
             return getUniopValue(rhs.getUniop());
         } else{
-            throw new IllegalArgumentException("Scalar value doesn't exist as expected.");
+            throw new IllegalArgumentException(String.format("The expected scalar value doesn't exist %s [id = %s].", rhs, rhs.getId()));
         }
     }
 

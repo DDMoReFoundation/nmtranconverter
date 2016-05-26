@@ -27,6 +27,7 @@ public abstract class TestBase {
     final static String V_0_4_1_SUBDIR = "0.4.1/";
     final static String V_0_6_SUBDIR = "0.6.0/";
     final static String V_0_8_SUBDIR = "0.8.0/";
+    final static String V_0_8_1_SUBDIR = "0.8.1/";
 
 
     public TestBase() {
@@ -36,8 +37,6 @@ public abstract class TestBase {
         }
         deleteAllFiles(dir);
     }
-
-    public abstract void setUp() throws Exception;
 
     protected void deleteAllFiles(File directory) {
         for(File file: directory.listFiles()) file.delete();

@@ -10,7 +10,6 @@ import java.util.Set;
 
 import crx.converter.engine.FixedParameter;
 import crx.converter.spi.blocks.ObservationBlock;
-
 import eu.ddmore.converters.nonmem.ConversionContext;
 import eu.ddmore.converters.nonmem.utils.Formatter;
 import eu.ddmore.converters.nonmem.utils.Formatter.NmConstant;
@@ -19,7 +18,6 @@ import eu.ddmore.converters.nonmem.utils.RandomVariableHelper;
 import eu.ddmore.converters.nonmem.utils.ScalarValueHandler;
 import eu.ddmore.libpharmml.dom.modeldefn.ParameterRandomVariable;
 import eu.ddmore.libpharmml.dom.modellingsteps.ParameterEstimate;
-import eu.ddmore.libpharmml.dom.uncertml.PositiveRealValueType;
 
 /**
  * This class helps to build sigma statement for nmtran file.
@@ -99,14 +97,9 @@ public class SigmaStatementBuilder {
 
             Boolean isStdDev = false;
 
-            PositiveRealValueType stddevDistribution = RandomVariableHelper.getDistributionTypeStdDev(rv);
-            if(stddevDistribution!=null){
-                sigmaRepresentation = getSigmaFromStddevDistribution(stddevDistribution);
-            }
-
-            PositiveRealValueType varianceDistribution = RandomVariableHelper.getDistributionTypeVariance(rv);
-            if(varianceDistribution!=null){
-                sigmaRepresentation = getSigmaFromVarianceDistribution(varianceDistribution);
+            sigmaRepresentation = RandomVariableHelper.getDistributionTypeStdDev(rv);
+            if(sigmaRepresentation==null){
+                sigmaRepresentation = RandomVariableHelper.getDistributionTypeVariance(rv);
             }
 
             isStdDev = RandomVariableHelper.isParamFromStdDev(rv);
@@ -114,7 +107,7 @@ public class SigmaStatementBuilder {
             StringBuilder sigmaStatements = new StringBuilder();
             if(isNumeric(sigmaRepresentation)){
                 sigmaStatements.append(Double.parseDouble(sigmaRepresentation) +" "+NmConstant.FIX);
-                addAttributeForStdDev(sigmaStatements,isStdDev);
+                addAttributeForStdDev(sigmaStatements, isStdDev);
                 sigmaStatements.append(Formatter.endline());
             }else {
                 String sigmastatement = getSigmaFromInitialEstimate(sigmaRepresentation, isStdDev);
@@ -203,45 +196,6 @@ public class SigmaStatementBuilder {
         if(isStdDev){
             statement.append(" "+NmConstant.SD);
         }
-    }
-
-    /**
-     * Gets sigma representation for standard deviation distribution.
-     * 
-     * @param stddevDistribution
-     * @return
-     */
-    private String getSigmaFromStddevDistribution(PositiveRealValueType stddevDistribution) {
-        String sigmaRepresentation = new String();
-
-        if(stddevDistribution!=null){
-            if (stddevDistribution.getVar()!=null) {
-                sigmaRepresentation = stddevDistribution.getVar().getVarId();
-            } else if(stddevDistribution.getPrVal()!=null){
-                Double idVal = (stddevDistribution.getPrVal()*stddevDistribution.getPrVal());
-                sigmaRepresentation = idVal.toString();
-            }
-        }
-        return sigmaRepresentation;
-    }
-
-    /**
-     * Gets sigma representation for standard deviation variance.
-     * 
-     * @param varianceDistribution
-     * @return
-     */
-    private String getSigmaFromVarianceDistribution(PositiveRealValueType varianceDistribution) {
-        String sigmaRepresentation = new String();
-        if(varianceDistribution!=null){
-            if (varianceDistribution.getVar()!=null) {
-                sigmaRepresentation = varianceDistribution.getVar().getVarId();
-            } else if(varianceDistribution.getPrVal()!=null){
-                Double idVal = (varianceDistribution.getPrVal());
-                sigmaRepresentation = idVal.toString();
-            }
-        }
-        return sigmaRepresentation;
     }
 
     /**

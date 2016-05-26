@@ -3,9 +3,8 @@
  ******************************************************************************/
 package eu.ddmore.converters.nonmem.parameters;
 
-import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
-import static org.powermock.api.mockito.PowerMockito.when;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
+import static org.powermock.api.mockito.PowerMockito.when;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -13,7 +12,6 @@ import java.util.Set;
 
 import org.mockito.Matchers;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 
 import eu.ddmore.converters.nonmem.eta.Eta;
@@ -22,7 +20,6 @@ import eu.ddmore.converters.nonmem.statements.BasicTestSetup;
 import eu.ddmore.converters.nonmem.statements.InterOccVariabilityHandler;
 import eu.ddmore.converters.nonmem.utils.RandomVariableHelper;
 import eu.ddmore.libpharmml.dom.modeldefn.ParameterRandomVariable;
-import eu.ddmore.libpharmml.dom.uncertml.PositiveRealValueType;
 
 /**
  * Test Helper class which creates dummy objects and mocks for omega block related tests.
@@ -112,9 +109,7 @@ public class ParametersMockHelper extends BasicTestSetup {
     protected void mockRandomVarHelper() {
         mockStatic(RandomVariableHelper.class);
 
-        PositiveRealValueType valueType = Mockito.mock(PositiveRealValueType.class, RETURNS_DEEP_STUBS);
-        when(valueType.getVar().getVarId()).thenReturn("1");
-        when(RandomVariableHelper.getDistributionTypeStdDev(Matchers.any(ParameterRandomVariable.class))).thenReturn(valueType);
+        when(RandomVariableHelper.getDistributionTypeStdDev(Matchers.any(ParameterRandomVariable.class))).thenReturn("1");
     }
 
 }
