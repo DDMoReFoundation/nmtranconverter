@@ -7,7 +7,6 @@ import com.google.common.base.Preconditions;
 
 import crx.converter.spi.blocks.ParameterBlock;
 import crx.converter.spi.blocks.StructuralBlock;
-
 import eu.ddmore.converters.nonmem.ConversionContext;
 import eu.ddmore.converters.nonmem.IndividualDefinitionEmitter;
 import eu.ddmore.converters.nonmem.statements.DiffEquationStatementBuilder;
@@ -80,9 +79,10 @@ public class ModelStatementHelper {
 
             if(!block.getLocalVariables().isEmpty()){
                 for (VariableDefinition definitionType: block.getLocalVariables()){
-                    String rhs = context.getLocalParserHelper().parse(definitionType);
+
+                    String assignment = context.getLocalParserHelper().parse(definitionType);
                     if(!Formatter.isInDesBlock())
-                        varDefinitionsBlock.append(rhs);
+                        varDefinitionsBlock.append(assignment);
                 }
             }
         }

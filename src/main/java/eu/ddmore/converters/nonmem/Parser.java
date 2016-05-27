@@ -184,7 +184,7 @@ public class Parser extends BaseParser {
      * @param v Local Variable
      * @return String
      */
-    private String doLocalVariable(VariableDefinition v) { return z.get(v.getSymbId()); }
+    private String doLocalVariable(VariableDefinition v) { return replaceIfReservedVarible(z.get(v.getSymbId())); }
 
     /**
      * Get the logical operator symbol.
