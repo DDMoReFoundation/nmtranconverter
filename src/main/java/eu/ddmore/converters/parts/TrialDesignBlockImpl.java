@@ -21,6 +21,8 @@ import crx.converter.engine.common.DataFiles;
 import crx.converter.spi.ILexer;
 import crx.converter.spi.blocks.TrialDesignBlock;
 import eu.ddmore.libpharmml.dom.commontypes.DerivativeVariable;
+import eu.ddmore.libpharmml.dom.commontypes.PharmMLRootType;
+import eu.ddmore.libpharmml.dom.trialdesign.ArmDefinition;
 import eu.ddmore.libpharmml.dom.trialdesign.TrialDesign;
 
 /**
@@ -75,4 +77,40 @@ public class TrialDesignBlockImpl extends PartImpl implements TrialDesignBlock {
 
 	@Override
 	public List<DerivativeVariable> getStateVariablesWithDosing() { throw new UnsupportedOperationException(); }
+
+    @Override
+    public int getArmCount() {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    @Override
+    public List<ArmDefinition> getArms() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public int getArmSize(String oid) {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    @Override
+    public String getDoseStatement(String administration) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public PharmMLRootType getDoseTarget(String administration_oid) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public boolean hasOccassions() {
+        // TODO Auto-generated method stub
+        return false;
+    }
 }
