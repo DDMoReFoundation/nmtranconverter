@@ -25,14 +25,14 @@ public class EtaAndOmegaBlocksInitialiser {
     private final Set<Eta> allOrderedEtas = new TreeSet<Eta>();
     private final List<OmegaBlock> omegaBlocksInNonIOV;
     private final List<OmegaBlock> omegaBlocksInIOV;
-    private final ConversionContext context;
+    private final ConversionContext conversionContext;
     private final InterOccVariabilityHandler iovhandler;
 
     public EtaAndOmegaBlocksInitialiser(ConversionContext context, List<OmegaBlock> omegaBlocksInIOV, List<OmegaBlock> omegaBlocksInNonIOV){
         Preconditions.checkNotNull(context, "conversion context cannot be null");
         Preconditions.checkNotNull(omegaBlocksInIOV, "IOV omega blocks list cannot be null");
         Preconditions.checkNotNull(omegaBlocksInNonIOV, "Non-IOV omega blocks list cannot be null");
-        this.context = context;
+        this.conversionContext = context;
         this.omegaBlocksInIOV = omegaBlocksInIOV;
         this.omegaBlocksInNonIOV = omegaBlocksInNonIOV;
         this.iovhandler = context.getIovHandler();
@@ -44,7 +44,7 @@ public class EtaAndOmegaBlocksInitialiser {
      */
     public Set<Eta> populateOrderedEtaAndOmegaBlocks(){
 
-        EtaHandler etaHandler = new EtaHandler(context.getScriptDefinition());
+        EtaHandler etaHandler = new EtaHandler(conversionContext.getScriptDefinition());
         Set<Eta> allEtas = etaHandler.getAllEtas();
 
         if(!allEtas.isEmpty()){
@@ -64,11 +64,11 @@ public class EtaAndOmegaBlocksInitialiser {
 
         for(OmegaBlock omegaBlock : omegaBlocksInIOV){
             int iovEtaCount = 0;
-            for(Eta iovEta : omegaBlock.getEtasToOmegas().keySet()){
-                if(iovEta.getVarLevel().equals(VariabilityLevel.IOV) && iovEta.getOrder()==0){
+            for(Eta iovEta : omegaBlock.getOmegaBlockEtas()){
+                if(iovEta.getVariabilityLevel().equals(VariabilityLevel.IOV) && iovEta.getOrder()==0){
                     iovEta.setOrder(++etaCount);
                     iovEta.setOrderInCorr(++iovEtaCount);
-                    iovEta.setVarLevel(VariabilityLevel.IOV);
+                    iovEta.setVariabilityLevel(VariabilityLevel.IOV);
                     String etaSymbolForIOV = iovhandler.getIovColumn().getColumnId()+"_"+iovEta.getOmegaName();
                     iovEta.setEtaSymbolForIOV(etaSymbolForIOV);
                     allOrderedEtas.add(iovEta);
@@ -88,7 +88,7 @@ public class EtaAndOmegaBlocksInitialiser {
 
             OmegaBlock nonCorrOmegaBlock = new OmegaBlock();
             nonCorrOmegaBlock.addToOrderedEtas(nonCorrEta);
-            nonCorrOmegaBlock.addToEtaToOmegas(nonCorrEta, nonCorrEta.getOmegaName());
+            nonCorrOmegaBlock.addToOmegaBlockEtas(nonCorrEta);
             nonCorrOmegaBlock.setIsIOV(true);
             omegaBlocksInIOV.add(nonCorrOmegaBlock);
         }
@@ -99,12 +99,12 @@ public class EtaAndOmegaBlocksInitialiser {
         boolean isEtaSet = false;
 
         for(OmegaBlock omegaBlock : omegaBlocksInNonIOV){
-            if(omegaBlock.getEtasToOmegas().keySet().contains(eta)){
-                for(Eta nonIovEta : omegaBlock.getEtasToOmegas().keySet()){
+            if(omegaBlock.getOmegaBlockEtas().contains(eta)){
+                for(Eta nonIovEta : omegaBlock.getOmegaBlockEtas()){
                     if(eta.getEtaSymbol().equals(nonIovEta.getEtaSymbol()) ){
                         nonIovEta.setOrder(++etaCount);
                         nonIovEta.setOrderInCorr(omegaBlock.getOrderedEtas().size()+1);
-                        nonIovEta.setVarLevel(VariabilityLevel.IIV);
+                        nonIovEta.setVariabilityLevel(VariabilityLevel.IIV);
                         allOrderedEtas.add(nonIovEta);
                         omegaBlock.addToOrderedEtas(nonIovEta);
                         isEtaSet = true;
@@ -123,16 +123,16 @@ public class EtaAndOmegaBlocksInitialiser {
     private int addEtaToNonCorrIOVEtas(int etaCount, List<Eta> nonCorrIOVEtas, Eta eta) {
 
         for(OmegaBlock omegaBlock : omegaBlocksInIOV){
-            if(!omegaBlock.getEtasToOmegas().keySet().contains(eta)){
+            if(!omegaBlock.getOmegaBlockEtas().contains(eta)){
                 if(iovhandler.getOccasionRandomVariables().contains(eta.getEtaSymbol())){
-                    eta.setVarLevel(VariabilityLevel.IOV);
+                    eta.setVariabilityLevel(VariabilityLevel.IOV);
                     eta.setOrderInCorr(DEFAULT_CORR_ORDER);
                     String etaSymbolForIOV = iovhandler.getIovColumn().getColumnId()+"_"+eta.getOmegaName();
                     eta.setEtaSymbolForIOV(etaSymbolForIOV);
 
                     nonCorrIOVEtas.add(eta);
                 }else {
-                    eta.setVarLevel(VariabilityLevel.IIV);
+                    eta.setVariabilityLevel(VariabilityLevel.IIV);
                     eta.setOrder(++etaCount);
                     allOrderedEtas.add(eta);
                 }

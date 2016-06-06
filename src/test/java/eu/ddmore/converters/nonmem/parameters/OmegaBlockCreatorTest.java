@@ -30,7 +30,7 @@ public class OmegaBlockCreatorTest extends ParametersMockHelper {
         OmegaBlockPopulator blockCreator = new OmegaBlockPopulator(paramInitialiser, iovHandler.getIovColumnUniqueValues());
         blockCreator.populateOmegaBlock(omegaBlock);
 
-        assertFalse("Omega statements map should not be empty", omegaBlock.getOmegaParameters().isEmpty());
+        assertFalse("Omega statements map should not be empty", omegaBlock.getOrderedEtas().isEmpty());
     }
 
     @Test
@@ -38,8 +38,8 @@ public class OmegaBlockCreatorTest extends ParametersMockHelper {
         OmegaBlockPopulator blockCreator = new OmegaBlockPopulator(paramInitialiser, iovHandler.getIovColumnUniqueValues());
         blockCreator.populateOmegaBlock(omegaBlock);
 
-        for(Eta eta :omegaBlock.getOmegaParameters().keySet()){
-            List<OmegaParameter> omegas = omegaBlock.getOmegaParameters().get(eta);
+        for(Eta eta :omegaBlock.getOrderedEtas()){
+            List<OmegaParameter> omegas = eta.getOmegaParameters();
             if(eta.getEtaSymbol().equals(firstEta.getEtaSymbol())){
                 assertTrue("First row of omega block should have one omega",omegas.size()==1);
             }

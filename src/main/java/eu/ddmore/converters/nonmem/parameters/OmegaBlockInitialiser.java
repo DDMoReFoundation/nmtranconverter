@@ -15,17 +15,12 @@ import eu.ddmore.converters.nonmem.utils.RandomVariableHelper;
  * This class initialises omega block provided as parameter.
  */
 public class OmegaBlockInitialiser {
-    private final OmegaBlock omegaBlock;
-
-    OmegaBlockInitialiser(OmegaBlock omegaBlock){
-        Preconditions.checkNotNull(omegaBlock, "Omega block cannot be null");
-        this.omegaBlock = omegaBlock;
-    }
 
     /**
      * Initialise omega block with help of correlation and ordered etas.
      */
-    public void initialiseOmegaBlock(){
+    public void initialiseOmegaBlock(OmegaBlock omegaBlock){
+        Preconditions.checkNotNull(omegaBlock, "Omega block cannot be null");
         if(omegaBlock.getCorrelations()!=null && !omegaBlock.getCorrelations().isEmpty()){
             for(CorrelationsWrapper correlation : omegaBlock.getCorrelations()){
                 //Need to set SD attribute for whole block if even a single value is from std dev
@@ -36,15 +31,17 @@ public class OmegaBlockInitialiser {
 
         for(Iterator<Eta> it = omegaBlock.getOrderedEtas().iterator();it.hasNext();){
             Eta currentEta = it.next();
-            if(!omegaBlock.getEtasToOmegas().keySet().contains(currentEta)){
+            if(!omegaBlock.getOmegaBlockEtas().contains(currentEta)){
                 it.remove();
             }
         }
 
         for(Eta eta : omegaBlock.getOrderedEtas()){
             ArrayList<OmegaParameter> statements = new ArrayList<OmegaParameter>();
-            for(int i=0;i<eta.getOrderInCorr();i++) statements.add(null);
-            omegaBlock.addToEtaToOmegaParameter(eta, statements);
+            for(int i=0;i<eta.getOrderInCorr();i++) {
+                statements.add(null);
+            }
+            eta.setOmegaParameters(statements);
         }
     }
 

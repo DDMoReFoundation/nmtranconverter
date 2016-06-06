@@ -86,22 +86,22 @@ public class CorrelationHandler {
         }
         //add to correlations
         Eta firstEta = new Eta(firstVar);
-        firstEta.setVarLevel(level);
+        firstEta.setVariabilityLevel(level);
         firstEta.setCorrelationRelated(true);
         firstEta.setOmegaName(RandomVariableHelper.getNameFromParamRandomVariable(correlation.getFirstParamRandomVariable()));
 
         Eta secondEta = new Eta(secondVar);
-        secondEta.setVarLevel(level);
+        secondEta.setVariabilityLevel(level);
         secondEta.setCorrelationRelated(true);
         secondEta.setOmegaName(RandomVariableHelper.getNameFromParamRandomVariable(correlation.getSecondParamRandomVariable()));
 
         Eta coeffEta = new Eta(coefficient);
         coeffEta.setOmegaName(coefficient);
-        coeffEta.setVarLevel(VariabilityLevel.NONE);
+        coeffEta.setVariabilityLevel(VariabilityLevel.NONE);
 
-        omegaBlock.addToEtaToOmegas(firstEta,RandomVariableHelper.getNameFromParamRandomVariable(correlation.getFirstParamRandomVariable()));
-        omegaBlock.addToEtaToOmegas(secondEta,RandomVariableHelper.getNameFromParamRandomVariable(correlation.getSecondParamRandomVariable()));
-        omegaBlock.addToEtaToOmegas(coeffEta,coefficient);
+        omegaBlock.addToOmegaBlockEtas(firstEta);
+        omegaBlock.addToOmegaBlockEtas(secondEta);
+        omegaBlock.addToOmegaBlockEtas(coeffEta);
     }
 
     /**

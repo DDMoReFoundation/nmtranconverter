@@ -78,8 +78,8 @@ public class ParametersMockHelper extends BasicTestSetup {
         omegaBlock.addToOrderedEtas(firstEta);
         omegaBlock.addToOrderedEtas(secondEta);
 
-        omegaBlock.addToEtaToOmegas(firstEta, firstOmegaSymbol);
-        omegaBlock.addToEtaToOmegas(secondEta, secondOmegaSymbol);
+        omegaBlock.addToOmegaBlockEtas(firstEta);
+        omegaBlock.addToOmegaBlockEtas(secondEta);
     }
 
     protected void initialiseDummyEtasInCorrelation() {
@@ -88,14 +88,14 @@ public class ParametersMockHelper extends BasicTestSetup {
         firstEta.setOmegaName(firstOmegaSymbol);
         firstEta.setOrder(3);
         firstEta.setOrderInCorr(1);
-        firstEta.setVarLevel(VariabilityLevel.IIV);
+        firstEta.setVariabilityLevel(VariabilityLevel.IIV);
 
         secondEta = new Eta(secondEtaSymbol);
         secondEta.setCorrelationRelated(true);
         secondEta.setOmegaName(secondOmegaSymbol);
         secondEta.setOrder(4);
         secondEta.setOrderInCorr(2);
-        secondEta.setVarLevel(VariabilityLevel.IIV);
+        secondEta.setVariabilityLevel(VariabilityLevel.IIV);
     }
 
     protected void mockCorrelationWrapper() {

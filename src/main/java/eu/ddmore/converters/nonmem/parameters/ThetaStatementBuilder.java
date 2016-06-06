@@ -8,16 +8,19 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang.StringUtils;
+
 import com.google.common.base.Preconditions;
 
 import crx.converter.engine.FixedParameter;
 
+import eu.ddmore.converters.nonmem.eta.Eta;
 import eu.ddmore.converters.nonmem.utils.Formatter;
 import eu.ddmore.libpharmml.dom.commontypes.Rhs;
 import eu.ddmore.libpharmml.dom.modellingsteps.ParameterEstimate;
 
 /**
- * This class helps to build theta statement for nmtran file.
+ * This class builds theta statement for nmtran file.
  */
 public class ThetaStatementBuilder {
 
@@ -26,7 +29,7 @@ public class ThetaStatementBuilder {
 
     private final ParametersInitialiser parametersInitialiser;
     private final CorrelationHandler correlationHandler;
-    private final LinkedHashMap<String, OmegaParameter> omegaStatements;
+    private final Map<String, OmegaParameter> omegaStatements;
     private final List<String> verifiedSigmas;
 
     public ThetaStatementBuilder(ParametersBuilder parametersBuilder, CorrelationHandler correlationHandler, ParametersInitialiser parametersInitialiser) {
@@ -61,10 +64,8 @@ public class ThetaStatementBuilder {
         for(String paramName : parametersInitialiser.getPopulationParams().keySet()){
             Parameter param = parametersInitialiser.getParameters().get(paramName);
             Rhs scalar = param.getPopParameter().getAssign();
-            //Rhs scalar = parametersInitialiser.getRhsForSymbol(paramName);
             if(scalar !=null){
                 param.setInitialEstimate(scalar);
-                //parametersInitialiser.getInitialEstimates().put(paramName, scalar);
                 createAndAddThetaForValidParamToMap(unOrderedThetas, paramName, true);
             }
         }
@@ -90,10 +91,7 @@ public class ThetaStatementBuilder {
     }
 
     /**
-     * Creates Theta for the parameter name provided and add it to theta statement map 
-     * @param unOrderedThetas
-     * @param paramName
-     * @param isFixed
+     * Creates Theta for the parameter name provided and add it to theta statement map
      */
     private void addThetaToMap(final Map<String, ThetaParameter> unOrderedThetas, ThetaParameter thetaParameter, Boolean isFixed) {
         String paramName = thetaParameter.getSymbId();
@@ -123,14 +121,14 @@ public class ThetaStatementBuilder {
     }
 
     private boolean validateThetaParamForCorrOmegas(String paramName, List<OmegaBlock> omegaBlocks) {
-        boolean isValid = false;
         for(OmegaBlock omegaBlock :omegaBlocks){
-            isValid = omegaBlock.getEtasToOmegas().values().contains(paramName);
-            if(isValid){
-                return isValid;
+            for(Eta eta : omegaBlock.getOmegaBlockEtas()){
+                if(StringUtils.isNotEmpty(eta.getOmegaName()) && eta.getOmegaName().equals(paramName)){
+                    return true;
+                }
             }
         }
-        return isValid;
+        return false;
     }
 
     /**

@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import crx.converter.engine.FixedParameter;
@@ -23,7 +24,7 @@ import eu.ddmore.libpharmml.dom.modeldefn.ParameterRandomVariable;
  */
 public class OmegaStatementBuilder {
 
-    private final LinkedHashMap<String, OmegaParameter> omegaParameters = new LinkedHashMap<String, OmegaParameter>();
+    private final Map<String, OmegaParameter> omegaParameters = new LinkedHashMap<String, OmegaParameter>();
     private OmegaBlockStatement omegaBlockStatement;
     private final Set<ParameterRandomVariable> epsilonVars;
     private final ConversionContext context;
@@ -130,8 +131,6 @@ public class OmegaStatementBuilder {
 
     /**
      * Checks if omega statements list has any omega statements added
-     * 
-     * @return
      */
     public Boolean omegaDoesNotExist(){
         return (omegaParameters == null || omegaParameters.isEmpty());
@@ -143,7 +142,7 @@ public class OmegaStatementBuilder {
             if(omegaBlock.getOrderedEtas().size()>0){
                 omegaStatement.append(Formatter.endline(omegaBlock.getOmegaBlockTitle()));
                 for(Eta eta : omegaBlock.getOrderedEtas()){
-                    for(OmegaParameter omega : omegaBlock.getOmegaParameters().get(eta)){
+                    for(OmegaParameter omega : eta.getOmegaParameters()){
                         if(omega!=null){
                             omegaStatement.append(ParameterStatementHandler.addParameter(omega));
                         }
@@ -157,7 +156,7 @@ public class OmegaStatementBuilder {
         return omegaStatement;
     }
 
-    public LinkedHashMap<String, OmegaParameter> getOmegaStatements() {
+    public Map<String, OmegaParameter> getOmegaStatements() {
         return omegaParameters;
     }
 }

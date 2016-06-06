@@ -8,7 +8,7 @@ import java.io.PrintWriter;
 import crx.converter.engine.ScriptDefinition;
 
 /**
- * Creates and adds estimation statement to nonmem file from script definition.
+ * This class represents theta parameter in an nmtran model.
  */
 public class ThetaParameter extends Parameter {
 

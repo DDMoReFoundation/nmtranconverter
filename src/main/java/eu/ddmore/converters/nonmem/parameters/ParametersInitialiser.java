@@ -26,8 +26,8 @@ public class ParametersInitialiser {
 
     private final Map<String, PopulationParameter> populationParams = new HashMap<String, PopulationParameter>();
     private final Map<String, Parameter> parameters = new LinkedHashMap<String, Parameter>();
-    private List<ParameterEstimate> parametersToEstimate;
-    private List<FixedParameter> fixedParameters;
+    private final List<ParameterEstimate> parametersToEstimate = new ArrayList<>();
+    private final List<FixedParameter> fixedParameters = new ArrayList<>();
 
     public ParametersInitialiser(List<PopulationParameter> populationParameters, ScriptDefinition scriptDefinition) {
         Preconditions.checkNotNull(populationParameters, "Population Parameters cannot be null");
@@ -44,8 +44,8 @@ public class ParametersInitialiser {
         }
 
         final EstimationStep estimationStep = ScriptDefinitionAccessor.getEstimationStep(scriptDefinition);
-        parametersToEstimate = (estimationStep.hasParametersToEstimate())?estimationStep.getParametersToEstimate(): new ArrayList<ParameterEstimate>();
-        fixedParameters = (estimationStep.hasFixedParameters())?estimationStep.getFixedParameters(): new ArrayList<FixedParameter>();
+        parametersToEstimate.addAll((estimationStep.hasParametersToEstimate())?estimationStep.getParametersToEstimate(): new ArrayList<ParameterEstimate>());
+        fixedParameters.addAll((estimationStep.hasFixedParameters())?estimationStep.getFixedParameters(): new ArrayList<FixedParameter>());
 
         // Find any bounds and initial estimates
         setAllParameterBounds(parametersToEstimate);

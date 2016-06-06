@@ -6,7 +6,7 @@ package eu.ddmore.converters.nonmem.parameters;
 import crx.converter.engine.ScriptDefinition;
 
 /**
- * Creates and adds estimation statement to nonmem file from script definition.
+ * Represents omega parameter in an nmtran model.
  */
 public class OmegaParameter extends Parameter {
 

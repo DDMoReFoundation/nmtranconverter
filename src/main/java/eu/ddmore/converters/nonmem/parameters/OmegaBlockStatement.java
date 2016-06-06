@@ -20,17 +20,13 @@ public class OmegaBlockStatement {
     /**
      * Omega block statement creates omega blocks using omega statements using omega statements retrieved from correlations handler,
      * uses paramters initialiser to get omega statements if exists or create omega statement if required and list of unique values in IOV column with help of iov handler.
-     *   
-     * @param parameters
-     * @param correlationHandler
-     * @param iovHandler
      */
-    public OmegaBlockStatement(ParametersInitialiser parameters, CorrelationHandler correlationHandler, InterOccVariabilityHandler iovHandler) {
-        Preconditions.checkNotNull(parameters, "parameter should not be null");
+    public OmegaBlockStatement(ParametersInitialiser parametersInitialiser, CorrelationHandler correlationHandler, InterOccVariabilityHandler iovHandler) {
+        Preconditions.checkNotNull(parametersInitialiser, "parameter should not be null");
         Preconditions.checkNotNull(correlationHandler, "Correlation handler should not be null");
         Preconditions.checkNotNull(iovHandler, "IOV handler should not be null");
 
-        this.parameters = parameters;
+        this.parameters = parametersInitialiser;
         this.iovHandler = iovHandler;
         this.correlationHandler = correlationHandler;
     }

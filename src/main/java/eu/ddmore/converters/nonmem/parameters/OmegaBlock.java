@@ -4,10 +4,8 @@
 package eu.ddmore.converters.nonmem.parameters;
 
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -19,8 +17,7 @@ import eu.ddmore.converters.nonmem.eta.Eta;
 public class OmegaBlock {
 
     private final Set<Eta> orderedEtas = new TreeSet<Eta>();
-    private final Map<Eta, String> etasToOmegas = new LinkedHashMap<Eta, String>();
-    private final Map<Eta, List<OmegaParameter>> omegaParameters = new HashMap<Eta, List<OmegaParameter>>();
+    private final List<Eta> omegaBlockEtas = new LinkedList<Eta>();
     private List<CorrelationsWrapper> correlations = new ArrayList<>();
     private Boolean isOmegaBlockFromStdDev = false;
     private Boolean isCorrelation = false;
@@ -36,20 +33,16 @@ public class OmegaBlock {
         correlations.add(correlation);
     }
 
-    public void addToEtaToOmegas(Eta eta, String omega) {
-        etasToOmegas.put(eta, omega);
-    }
-
-    public void addToEtaToOmegaParameter(Eta eta, List<OmegaParameter> omega) {
-        omegaParameters.put(eta, omega);
+    public void addToOmegaBlockEtas(Eta eta) {
+        omegaBlockEtas.add(eta);
     }
 
     public Set<Eta> getOrderedEtas() {
         return orderedEtas;
     }
 
-    public Map<Eta, String> getEtasToOmegas() {
-        return etasToOmegas;
+    public List<Eta> getOmegaBlockEtas() {
+        return omegaBlockEtas;
     }
 
     public String getOmegaBlockTitle() {
@@ -74,10 +67,6 @@ public class OmegaBlock {
 
     public void setIsOmegaBlockFromStdDev(Boolean isOmegaBlockFromStdDev) {
         this.isOmegaBlockFromStdDev = isOmegaBlockFromStdDev;
-    }
-
-    public Map<Eta, List<OmegaParameter>> getOmegaParameters() {
-        return omegaParameters;
     }
 
     public List<CorrelationsWrapper> getCorrelations() {

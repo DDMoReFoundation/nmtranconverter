@@ -1,7 +1,11 @@
 package eu.ddmore.converters.nonmem.eta;
 
+import java.util.List;
+
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
+
+import eu.ddmore.converters.nonmem.parameters.OmegaParameter;
 
 /**
  * This class stores information about Etas in nmtran
@@ -9,17 +13,18 @@ import org.apache.commons.lang.builder.HashCodeBuilder;
 public class Eta implements Comparable<Eta> {
 
     private final String etaSymbol;
-    private VariabilityLevel varLevel;
+    private VariabilityLevel variabilityLevel;
     private Integer order=0;
     private Integer orderInCorrelation=0;
     private String etaSymbolForIOV;
     private String omegaName;
     private boolean isCorrelationRelated = false;
+    private List<OmegaParameter> omegaParameters;
 
     public Eta(String etaSymbol){
         this.etaSymbol = etaSymbol;
         //Currently this is default variability level.
-        varLevel = VariabilityLevel.IIV;
+        variabilityLevel = VariabilityLevel.IIV;
     }
 
     public String getEtaSymbol() {
@@ -27,9 +32,9 @@ public class Eta implements Comparable<Eta> {
     }
 
     public boolean isIOV() {
-        return (varLevel.equals(VariabilityLevel.IOV));
+        return (variabilityLevel.equals(VariabilityLevel.IOV));
     }
-    
+
     public String getEtaOrderSymbol(){
         return (isIOV())?getEtaSymbolForIOV():getOrder().toString();
     }
@@ -58,21 +63,17 @@ public class Eta implements Comparable<Eta> {
         this.orderInCorrelation = orderInCorr;
     }
 
-
-    public VariabilityLevel getVarLevel() {
-        return varLevel;
+    public VariabilityLevel getVariabilityLevel() {
+        return variabilityLevel;
     }
 
-
-    public void setVarLevel(VariabilityLevel varLevel) {
-        this.varLevel = varLevel;
+    public void setVariabilityLevel(VariabilityLevel variabilityLevel) {
+        this.variabilityLevel = variabilityLevel;
     }
-
 
     public String getOmegaName() {
         return omegaName;
     }
-
 
     public void setOmegaName(String omegaName) {
         this.omegaName = omegaName;
@@ -86,9 +87,17 @@ public class Eta implements Comparable<Eta> {
         this.isCorrelationRelated = isCorrelationRelated;
     }
 
+    public List<OmegaParameter> getOmegaParameters() {
+        return omegaParameters;
+    }
+
+    public void setOmegaParameters(List<OmegaParameter> omegaParameters) {
+        this.omegaParameters = omegaParameters;
+    }
+
     @Override
     public int compareTo(Eta secondEta) {
-            return Integer.compare(this.getOrder(), secondEta.getOrder());
+        return Integer.compare(this.getOrder(), secondEta.getOrder());
     }
 
     @Override
