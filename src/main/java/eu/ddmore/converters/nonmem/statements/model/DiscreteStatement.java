@@ -46,29 +46,20 @@ public class DiscreteStatement {
      * @param discreteHandler
      * @return model statement
      */
-    public StringBuilder getModelStatementForTTE(DiscreteHandler discreteHandler) {
+    public StringBuilder buildModelStatementForTTE(DiscreteHandler discreteHandler) {
         StringBuilder tteBlock = new StringBuilder();
-        tteBlock.append(Formatter.endline());
-        //$SUBS
-        tteBlock.append(Formatter.endline(Formatter.subs()+"ADVAN13 TOL=9"));
-        //$MODEL
-        tteBlock.append(Formatter.endline());
-        String modelStatement = Formatter.endline("$MODEL"+ Formatter.endline()+Formatter.addComment("One hardcoded compartment ")) +
-                Formatter.endline(Formatter.indent("COMP=COMP1"));
-        tteBlock.append(modelStatement);
-        //$PK
-        tteBlock.append(Formatter.endline()+Formatter.pk()); 
-        tteBlock.append(statementHelper.getPredCoreStatement().getStatement());
-        tteBlock.append(statementHelper.getAllIndividualParamAssignments());
-        //$DES
-        DiffEquationStatementBuilder desBuilder = statementHelper.getDiffEquationStatement(tteBlock);
-        Integer dadtEquationIndex = desBuilder.getDadtDefinitionsInDES().size()+1;
 
-        String hazardFunction = Formatter.renameVarForDES(discreteHandler.getHazardFunction());
-        tteBlock.append(Formatter.endline("HAZARD_FUNC_DES = "+hazardFunction));
-        tteBlock.append(Formatter.endline("DADT("+dadtEquationIndex+") = HAZARD_FUNC_DES"));
-        //Customised ERROR
-        //$ERROR
+        buildSubStatementForTTE(tteBlock);
+        buildModelBlockForTTE(tteBlock);
+        buildPkStatementForTTE(tteBlock);
+        DiffEquationStatementBuilder desBuilder = statementHelper.getDiffEquationStatement(tteBlock);
+        Integer dadtEquationIndex = buildDiffEquationStatementForTTE(discreteHandler, tteBlock, desBuilder);
+        buildErrorStatementForTTE(discreteHandler, tteBlock, desBuilder, dadtEquationIndex);
+        return tteBlock;
+    }
+
+    private void buildErrorStatementForTTE(DiscreteHandler discreteHandler, StringBuilder tteBlock,
+            DiffEquationStatementBuilder desBuilder, Integer dadtEquationIndex) {
         tteBlock.append(Formatter.endline()+Formatter.error());
         tteBlock.append(desBuilder.getVariableDefinitionsStatement(desBuilder.getAllVarDefinitions()));
         //TODO : change A(1) to A(n+1)
@@ -78,7 +69,34 @@ public class DiscreteStatement {
         tteBlock.append(discreteHandler.getDiscreteStatement());
 
         tteBlock.append(statementHelper.getErrorStatementHandler().getErrorStatement());
-        return tteBlock;
+    }
+
+    private Integer buildDiffEquationStatementForTTE(DiscreteHandler discreteHandler, StringBuilder tteBlock,
+            DiffEquationStatementBuilder desBuilder) {
+        Integer dadtEquationIndex = desBuilder.getDadtDefinitionsInDES().size()+1;
+
+        String hazardFunction = Formatter.renameVarForDES(discreteHandler.getHazardFunction());
+        tteBlock.append(Formatter.endline("HAZARD_FUNC_DES = "+hazardFunction));
+        tteBlock.append(Formatter.endline("DADT("+dadtEquationIndex+") = HAZARD_FUNC_DES"));
+        return dadtEquationIndex;
+    }
+
+    private void buildPkStatementForTTE(StringBuilder tteBlock) {
+        tteBlock.append(Formatter.endline()+Formatter.pk()); 
+        tteBlock.append(statementHelper.getPredCoreStatement().getStatement());
+        tteBlock.append(statementHelper.getAllIndividualParamAssignments());
+    }
+
+    private void buildModelBlockForTTE(StringBuilder tteBlock) {
+        tteBlock.append(Formatter.endline());
+        String modelStatement = Formatter.endline("$MODEL"+ Formatter.endline()+Formatter.addComment("One hardcoded compartment ")) +
+                Formatter.endline(Formatter.indent("COMP=COMP1"));
+        tteBlock.append(modelStatement);
+    }
+
+    private void buildSubStatementForTTE(StringBuilder tteBlock) {
+        tteBlock.append(Formatter.endline());
+        tteBlock.append(Formatter.endline(Formatter.subs()+"ADVAN13 TOL=9"));
     }
 
 }

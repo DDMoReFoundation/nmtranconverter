@@ -100,7 +100,7 @@ public class ContinuousStatementTest extends BasicTestSetup  {
     @Test
     public void testGetContinuousStatement() {
         continuousStatement = new ContinuousStatement(modelStatementHelper);
-        String contStatement = continuousStatement.getContinuousStatement().toString();
+        String contStatement = continuousStatement.buildContinuousStatement().toString();
 
         assertNotNull("Continuous statement should not be null", contStatement);
     }
@@ -108,7 +108,7 @@ public class ContinuousStatementTest extends BasicTestSetup  {
     @Test
     public void testGetcontinuousStatementWithComponent(){
         continuousStatement = new ContinuousStatement(modelStatementHelper);
-        String contStatement = continuousStatement.getContinuousStatement().toString();
+        String contStatement = continuousStatement.buildContinuousStatement().toString();
 
         assertNotNull("Continuous statement should not be null", contStatement);
         assertNotNull("Continuous statement should contain component", contStatement.contains(COMP1_EXAMPLE));
@@ -131,7 +131,7 @@ public class ContinuousStatementTest extends BasicTestSetup  {
     public void testGetcontinuousStatementWithPkMacro() throws Exception{
         mockPkMacroAnalyser();
         continuousStatement = new ContinuousStatement(modelStatementHelper);
-        String contStatement = continuousStatement.getContinuousStatement().toString();
+        String contStatement = continuousStatement.buildContinuousStatement().toString();
 
         assertNotNull("Continuous statement should not be null", contStatement);
         assertNotNull("Continuous statement should contain component", contStatement.contains(COMP1_EXAMPLE));

@@ -162,8 +162,6 @@ public class PkMacroAnalyser {
     /**
      * Determines if current elimination has Km as well as Vm.
      * If either or them is not present then it will return as false.  
-     * 
-     * @return
      */
     private boolean isKmAndVm(PkMacroDetails details){
         boolean isKm = false, isVm = false ;
@@ -187,7 +185,6 @@ public class PkMacroAnalyser {
 
     /**
      * Check if injection type is IV
-     * @return
      */
     private boolean isIV(PkMacroDetails details){
         if(!details.getIvs().isEmpty() && details.getAbsorptionOrals().isEmpty()){

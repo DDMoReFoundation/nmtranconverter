@@ -59,37 +59,38 @@ public class ContinuousStatement {
      * 
      * @return continuous statement
      */
-    public StringBuilder getContinuousStatement(){
+    public StringBuilder buildContinuousStatement(){
         StringBuilder continuousStatement = new StringBuilder();
         if(pkMacroDetails.getMacroAdvanType().equals(AdvanType.NONE)){
             int tolValue = (statementHelper.getContext().getEstimationEmitter().isSAEM())? TOL_VALUE_IF_SAEM:TOL_VALUE_IF_NOT_SAEM;
-            continuousStatement.append(getSubsStatement(AdvanType.ADVAN13, " TOL="+tolValue));
-            continuousStatement.append(getDerivativePredStatement());
+            continuousStatement.append(buildSubsStatement(AdvanType.ADVAN13, " TOL="+tolValue));
+            continuousStatement.append(buildDerivativePredStatement());
         }else{
             AdvanType advanType = pkMacroDetails.getMacroAdvanType();
-            continuousStatement.append(getSubsStatement(advanType, " TRANS=1"));
-            continuousStatement.append(getAdvanMacroStatement());
+            continuousStatement.append(buildSubsStatement(advanType, " TRANS=1"));
+            continuousStatement.append(buildAdvanMacroStatement());
         }
         return continuousStatement;
     }
 
-    private String getSubsStatement(AdvanType advanType, String additionalParams){
+    private String buildSubsStatement(AdvanType advanType, String additionalParams){
         return Formatter.endline()+Formatter.endline(Formatter.subs()+advanType+additionalParams);
     }
 
-    private StringBuilder getAdvanMacroStatement(){
+    private StringBuilder buildAdvanMacroStatement(){
         StringBuilder advanblock = new StringBuilder();
-        advanblock.append(getPKStatement());
+        advanblock.append(buildAbbreviatedStatement());
+        advanblock.append(buildPKStatement());
         advanblock.append(pkMacroEquationsEmitter.getPkMacroStatement());
 
         advanblock.append(Formatter.error());
         advanblock.append(pkMacroEquationsEmitter.getMacroEquation());
-        advanblock.append(getStructuralModelVarDefinitions());
+        advanblock.append(buildStructuralModelVarDefinitions());
         advanblock.append(statementHelper.getErrorStatementHandler().getErrorStatement());
         return advanblock;
     }
 
-    private StringBuilder getStructuralModelVarDefinitions() {
+    private StringBuilder buildStructuralModelVarDefinitions() {
         StringBuilder builder = new StringBuilder();
         if(!statementHelper.getContext().getScriptDefinition().getStructuralBlocks().isEmpty()){
             for(StructuralBlock block : statementHelper.getContext().getScriptDefinition().getStructuralBlocks()){
@@ -105,17 +106,16 @@ public class ContinuousStatement {
         return builder;
     }
 
-    private StringBuilder getDerivativePredStatement(){
-
+    private StringBuilder buildDerivativePredStatement() {
         StringBuilder derivativePredblock = new StringBuilder();
-        derivativePredblock.append(getModelStatement());
-        derivativePredblock.append(getAbbreviatedStatement());
-        derivativePredblock.append(getPKStatement());
+        derivativePredblock.append(buildModelStatement());
+        derivativePredblock.append(buildAbbreviatedStatement());
+        derivativePredblock.append(buildPKStatement());
 
         if(pkMacroDetails!=null && !pkMacroDetails.isEmpty()){
             derivativePredblock.append(pkMacroEquationsEmitter.getPkMacroEquations());
         }
-        derivativePredblock.append(getDifferentialInitialConditions());
+        derivativePredblock.append(buildDifferentialInitialConditions());
         DiffEquationStatementBuilder desBuilder = statementHelper.getDiffEquationStatement(derivativePredblock);
         //TODO: getAESStatement();
         derivativePredblock.append(Formatter.endline()+Formatter.error());
@@ -129,7 +129,7 @@ public class ContinuousStatement {
      * 
      * @return differential initial conditions
      */
-    private StringBuilder getDifferentialInitialConditions(){
+    private StringBuilder buildDifferentialInitialConditions(){
         StringBuilder builder = new StringBuilder();
         if(!statementHelper.getContext().getScriptDefinition().getStructuralBlocks().isEmpty()){
             InitConditionBuilder initBuilder = new InitConditionBuilder();
@@ -142,7 +142,7 @@ public class ContinuousStatement {
      * get model statement block for pred statement of nonmem file.
      * 
      */
-    private StringBuilder getModelStatement() {
+    private StringBuilder buildModelStatement() {
         StringBuilder modelBlock = new StringBuilder();
         boolean  isCMTColumn = false;
         InputColumn doseColumn = null;
@@ -194,7 +194,7 @@ public class ContinuousStatement {
         return "";
     }
 
-    private StringBuilder getAbbreviatedStatement() {
+    private StringBuilder buildAbbreviatedStatement() {
         StringBuilder abbrStatement = new StringBuilder();
         abbrStatement.append(Formatter.endline());
         int prevBlockValue = 0;
@@ -216,7 +216,21 @@ public class ContinuousStatement {
         return abbrStatement;
     }
 
-    //(<eta_order>, 1*<no_of_etas>+<eta_order>, 2*<no_of_etas>+<eta_order>, ... , <no_of_unique_occ_values>*<no_of_etas>+<eta_order>);
+    /**
+     * The ABBR statement should be,
+     * $ABBR REPLACE  ETA(<symbol>)= ETA(r, (1*n+r),(2*n+r),... ..., (u*n+r))
+     *      where 'r' is eta order number, 
+     *      'n' is total number of etas 
+     *      and 'u' us total number of unique values in occasion column in dataset provided.
+     * 
+     * This method calculates RHS part of equation for ABBR statement.
+     * It calculates iov eta value and also creates iov eta statement for current count using following formula.
+     * 
+     * @param iovEtasCount iov etas count number
+     * @param etaOrder eta order number
+     * @param etaValues iov eta values statement in string format
+     * @return iov Eta value in integer format
+     */
     private int getIovEtaValueForAbbr(int iovEtasCount, int etaOrder, StringBuilder etaValues) {
         int etaVal = 0;
         int uniqueOccValuesCount = statementHelper.getContext().getIovHandler().getIovColumnUniqueValues().size();
@@ -233,7 +247,7 @@ public class ContinuousStatement {
     /**
      * gets pk block for pred statement
      */
-    private StringBuilder getPKStatement() {
+    private StringBuilder buildPKStatement() {
         StringBuilder pkStatementBlock = new StringBuilder();
         pkStatementBlock.append(Formatter.endline());
         pkStatementBlock.append(Formatter.pk());

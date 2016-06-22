@@ -56,6 +56,7 @@ import java.util.Set;
 import javax.xml.bind.JAXBElement;
 
 import crx.converter.engine.Accessor;
+import crx.converter.engine.ConversionDetail_;
 import crx.converter.engine.Manager;
 import crx.converter.engine.ParameterContext;
 import crx.converter.engine.Part;
@@ -105,7 +106,6 @@ import eu.ddmore.convertertoolbox.api.domain.Version;
 import eu.ddmore.convertertoolbox.api.response.ConversionDetail;
 import eu.ddmore.convertertoolbox.api.response.ConversionReport;
 import eu.ddmore.convertertoolbox.api.response.ConversionReport.ConversionCode;
-import eu.ddmore.convertertoolbox.domain.ConversionDetailImpl;
 import eu.ddmore.convertertoolbox.domain.ConversionReportImpl;
 import eu.ddmore.convertertoolbox.domain.LanguageVersionImpl;
 import eu.ddmore.convertertoolbox.domain.VersionImpl;
@@ -1013,9 +1013,9 @@ public class ConverterProvider extends DependencyLexer implements ILexer {
      */
     private ConversionReport getCrxSuccessReport(File path) {
         ConversionReport report = new ConversionReportImpl();
-        ConversionDetail detail = new ConversionDetailImpl();
+        ConversionDetail_ detail = new ConversionDetail_();
         detail.addInfo("status", "script created.");
-        //if (path != null) detail.setFile(path);
+        if (path != null) detail.setFile(path);
         detail.setSeverity(ConversionDetail.Severity.INFO);
         report.addDetail(detail);
         report.setReturnCode(ConversionCode.SUCCESS);
@@ -1050,7 +1050,7 @@ public class ConverterProvider extends DependencyLexer implements ILexer {
 
         if (is_echo_exception) e.printStackTrace(System.err);
 
-        ConversionDetail detail = new ConversionDetailImpl();
+        ConversionDetail_ detail = new ConversionDetail_();
         detail.addInfo("error_message", e.getMessage());
         detail.setSeverity(ConversionDetail.Severity.ERROR);
         detail.setMessage(e.getMessage());

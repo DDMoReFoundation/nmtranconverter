@@ -74,8 +74,8 @@ public class DiscreteStatementTest extends BasicTestSetup {
         String hazardFunc = "HAZARD_FUNC = HAZ_VAR";
         discreteStatement = new DiscreteStatement(modelStatementHelper);
 
-        assertNotNull("Discrete statement should not be null", discreteStatement.getModelStatementForTTE(discreteHandler));
-        assertTrue("Should contain hazard function", discreteStatement.getModelStatementForTTE(discreteHandler).toString().contains(hazardFunc));
+        assertNotNull("Discrete statement should not be null", discreteStatement.buildModelStatementForTTE(discreteHandler));
+        assertTrue("Should contain hazard function", discreteStatement.buildModelStatementForTTE(discreteHandler).toString().contains(hazardFunc));
 
     }
 

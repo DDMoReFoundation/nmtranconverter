@@ -4,7 +4,7 @@
 package eu.ddmore.converters.nonmem.parameters;
 
 import java.util.ArrayList;
-import java.util.LinkedList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
@@ -17,7 +17,7 @@ import eu.ddmore.converters.nonmem.eta.Eta;
 public class OmegaBlock {
 
     private final Set<Eta> orderedEtas = new TreeSet<Eta>();
-    private final List<Eta> omegaBlockEtas = new LinkedList<Eta>();
+    private final Set<Eta> omegaBlockEtas = new LinkedHashSet<Eta>();
     private List<CorrelationsWrapper> correlations = new ArrayList<>();
     private Boolean isOmegaBlockFromStdDev = false;
     private Boolean isCorrelation = false;
@@ -41,7 +41,7 @@ public class OmegaBlock {
         return orderedEtas;
     }
 
-    public List<Eta> getOmegaBlockEtas() {
+    public Set<Eta> getOmegaBlockEtas() {
         return omegaBlockEtas;
     }
 

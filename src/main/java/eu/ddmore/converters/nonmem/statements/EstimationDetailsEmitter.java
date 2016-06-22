@@ -116,34 +116,38 @@ public class EstimationDetailsEmitter {
             return null;
         }
         OperationProperty algo = found.iterator().next();
-        
+
         return algo.getAssign().getScalar().valueToString();
     }
 
-    private StringBuilder buildEstimationStatementFromAlgorithm(String method) {
+    private StringBuilder buildEstimationStatementFromAlgorithm(String methodName) {
         StringBuilder statement = new StringBuilder();
 
         statement.append(METHOD);
-        if (StringUtils.isNotBlank(method)) {
-            String methodDefinition = method.trim().toUpperCase();
-            if (methodDefinition.equals(Method.FO.toString())) {
-                statement.append(EstConstant.FO_STATEMENT.getStatement());
-            }
-            else if(methodDefinition.equals(Method.FOCE.toString())) {
-                statement.append(EstConstant.FOCE_STATEMENT.getStatement());
-                statement.append(appendDiscreteEstOptions());
-            }
-            else if (methodDefinition.equals(Method.FOCEI.toString())) {
-                statement.append(EstConstant.FOCEI_STATEMENT.getStatement());
-                statement.append(appendDiscreteEstOptions());
-            }
-            else if (methodDefinition.equals(Method.SAEM.toString())) {
-                isSAEM = true;
-                statement.append(EstConstant.SAEM_STATEMENT.getStatement());
-                statement.append(appendDiscreteEstOptions());
-            }
-            else {
-                statement.append(methodDefinition);
+        if (StringUtils.isNotBlank(methodName)) {
+            String methodDefinition = methodName.trim().toUpperCase();
+            Method method = Method.valueOf(methodDefinition);
+
+            switch(method){
+                case FO:
+                    statement.append(EstConstant.FO_STATEMENT.getStatement());
+                    break;
+                case FOCE:
+                    statement.append(EstConstant.FOCE_STATEMENT.getStatement());
+                    statement.append(appendDiscreteEstOptions());
+                    break;
+                case FOCEI:
+                    statement.append(EstConstant.FOCEI_STATEMENT.getStatement());
+                    statement.append(appendDiscreteEstOptions());
+                    break;
+                case SAEM:
+                    isSAEM = true;
+                    statement.append(EstConstant.SAEM_STATEMENT.getStatement());
+                    statement.append(appendDiscreteEstOptions());
+                    break;
+                default:
+                    statement.append(methodDefinition);
+                    break;
             }
         } else {
             statement.append(EstConstant.DEFAULT_COND_STATEMENT.getStatement());
@@ -168,17 +172,13 @@ public class EstimationDetailsEmitter {
     /**
      * This method creates COV statement. 
      * this method is added here, as it is dependent on availability of EstFIM.
-     * @param fout
      */
     public String getCovStatement(){
         return Formatter.endline()+covStatement;
     }
 
     /**
-     * This method determines if covariate values will exist, depending upon value specified in equation
-     *  
-     * @param equation
-     * @return
+     * This method determines covariate property value, depending upon value specified in equation
      */
     private Boolean isCovPropertyForEstOperation(Scalar value) {
         return Boolean.parseBoolean(value.valueToString());
@@ -186,9 +186,6 @@ public class EstimationDetailsEmitter {
 
     /**
      * Checks if covariate statement exists for estimation operation type and return boolean result.
-     * 
-     * @param operationType
-     * @return boolean result
      */
     private Boolean checkForCovariateStatement(EstimationOperation operationType){
         String optType = operationType.getOpType();

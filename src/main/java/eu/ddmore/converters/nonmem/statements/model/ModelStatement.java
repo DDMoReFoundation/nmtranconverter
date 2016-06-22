@@ -45,14 +45,14 @@ public class ModelStatement {
                 predStatement.append(discreteStatement.getModelStatementForCountData(context.getDiscreteHandler()));
             }
             else if(context.getDiscreteHandler().isTimeToEventData()){
-                predStatement.append(discreteStatement.getModelStatementForTTE(context.getDiscreteHandler()));
+                predStatement.append(discreteStatement.buildModelStatementForTTE(context.getDiscreteHandler()));
             }
             else if(context.getDiscreteHandler().isCategoricalData()){
                 //TODO: add support for categorical data
             }
         }else if(!context.getDerivativeVars().isEmpty()){
             //DES
-            predStatement.append(continuousStatement.getContinuousStatement());
+            predStatement.append(continuousStatement.buildContinuousStatement());
         }else{
             //PRED
             predStatement.append(nonDerivativePredStatement.getPredStatement());

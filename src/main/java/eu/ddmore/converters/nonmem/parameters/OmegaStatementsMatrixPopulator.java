@@ -6,6 +6,7 @@ package eu.ddmore.converters.nonmem.parameters;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 import com.google.common.base.Preconditions;
 
@@ -26,10 +27,10 @@ public class OmegaStatementsMatrixPopulator {
      * Creates omega statements matrix using omega statements in omega block.
      */
     public void populateOmegaStatementMatrixForOmegaBlock(OmegaBlock omegaBlock, ParametersInitialiser parametersInitialiser){
-        List<Eta> etaToOmagas = omegaBlock.getOmegaBlockEtas(); 
+        Set<Eta> omegaBlockEtas = omegaBlock.getOmegaBlockEtas(); 
 
         if(omegaBlock.getCorrelations()!=null && !omegaBlock.getCorrelations().isEmpty()){
-            for(Eta eta : etaToOmagas){
+            for(Eta eta : omegaBlockEtas){
                 Iterator<CorrelationsWrapper> iterator = omegaBlock.getCorrelations().iterator();
 
                 while(iterator.hasNext()){
@@ -37,8 +38,8 @@ public class OmegaStatementsMatrixPopulator {
                     ParameterRandomVariable firstRandomVar = correlation.getFirstParamRandomVariable();
                     ParameterRandomVariable secondRandomVar = correlation.getSecondParamRandomVariable();
                     // row = i column = j
-                    int column = getOrderedEtaIndex(firstRandomVar.getSymbId(), etaToOmagas);
-                    int row = getOrderedEtaIndex(secondRandomVar.getSymbId(), etaToOmagas);
+                    int column = getOrderedEtaIndex(firstRandomVar.getSymbId(), omegaBlockEtas);
+                    int row = getOrderedEtaIndex(secondRandomVar.getSymbId(), omegaBlockEtas);
                     if(column > row){
                         firstRandomVar = correlation.getSecondParamRandomVariable();
                         secondRandomVar = correlation.getFirstParamRandomVariable();
@@ -47,8 +48,8 @@ public class OmegaStatementsMatrixPopulator {
                         row = swap;
                     }
 
-                    Eta firstEta = getEtaForRandomVar(firstRandomVar.getSymbId(),etaToOmagas);
-                    Eta secondEta = getEtaForRandomVar(secondRandomVar.getSymbId(),etaToOmagas);
+                    Eta firstEta = getEtaForRandomVar(firstRandomVar.getSymbId(),omegaBlockEtas);
+                    Eta secondEta = getEtaForRandomVar(secondRandomVar.getSymbId(),omegaBlockEtas);
                     createFirstCorrMatrixRow(eta, firstRandomVar, parametersInitialiser);
 
                     addVarToCorrMatrix(firstEta, column, parametersInitialiser);
@@ -59,8 +60,8 @@ public class OmegaStatementsMatrixPopulator {
                     iterator.remove();
                 }
             }
-        }else if(!etaToOmagas.isEmpty()){
-            for(Eta eta : etaToOmagas){
+        }else if(!omegaBlockEtas.isEmpty()){
+            for(Eta eta : omegaBlockEtas){
                 OmegaParameter omega = parametersInitialiser.createOmegaFromRandomVarName(eta.getOmegaName());
                 List<OmegaParameter> omegas = new ArrayList<OmegaParameter>();
                 omegas.add(omega);
@@ -76,7 +77,7 @@ public class OmegaStatementsMatrixPopulator {
      * @param omegaBlockEtas
      * @return ordered eta index
      */
-    private int getOrderedEtaIndex(String randomVariable, List<Eta> omegaBlockEtas) {
+    private int getOrderedEtaIndex(String randomVariable, Set<Eta> omegaBlockEtas) {
         Eta eta = getEtaForRandomVar(randomVariable, omegaBlockEtas);
         if(eta!=null){
             return (eta.getOrderInCorr()>0)?eta.getOrderInCorr()-1:0;
@@ -84,7 +85,7 @@ public class OmegaStatementsMatrixPopulator {
         return 0;
     }
 
-    private Eta getEtaForRandomVar(String randomVariable, List<Eta> omegaBlockEtas){
+    private Eta getEtaForRandomVar(String randomVariable, Set<Eta> omegaBlockEtas){
         for(Eta eta : omegaBlockEtas){
             if(eta.getEtaSymbol().equals(randomVariable)){
                 return eta;

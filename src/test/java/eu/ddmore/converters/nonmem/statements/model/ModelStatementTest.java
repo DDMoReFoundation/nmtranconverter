@@ -69,7 +69,7 @@ public class ModelStatementTest extends BasicTestSetup {
     public void shouldGetModelStatementForTimeToEvent() {
         when(discreteHandler.isDiscrete()).thenReturn(true);
         when(discreteHandler.isTimeToEventData()).thenReturn(true);
-        when(discreteStatement.getModelStatementForTTE(Matchers.any(DiscreteHandler.class))).thenReturn(new StringBuilder(MODEL_STMT_FOR_TTE));
+        when(discreteStatement.buildModelStatementForTTE(Matchers.any(DiscreteHandler.class))).thenReturn(new StringBuilder(MODEL_STMT_FOR_TTE));
 
         modelStatement = new ModelStatement(context);
         StringBuilder statement = modelStatement.getModelStatement();
@@ -83,7 +83,7 @@ public class ModelStatementTest extends BasicTestSetup {
         derivativeVars.add(derivativeVariable);
 
         when(discreteHandler.isDiscrete()).thenReturn(false);
-        when(continuousStatement.getContinuousStatement()).thenReturn(new StringBuilder(MODEL_STMT_WITH_DERIVATIVE_VAR));
+        when(continuousStatement.buildContinuousStatement()).thenReturn(new StringBuilder(MODEL_STMT_WITH_DERIVATIVE_VAR));
 
         modelStatement = new ModelStatement(context);
         StringBuilder statement = modelStatement.getModelStatement();
