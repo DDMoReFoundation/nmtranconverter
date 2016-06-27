@@ -90,7 +90,7 @@ public class PkMacrosEmitter {
                 for(MacroValue value : compMacro.getListOfValue()){
                     if(value.getArgument().equals(Arg.AMOUNT.toString())){
                         String equation = value.getAssign().getSymbRef().getSymbIdRef()+" = F";
-                        if(StringUtils.isNotEmpty(macroEquation)){
+                        if(StringUtils.isEmpty(macroEquation)){
                             macroEquation = Formatter.endline(equation);
                         }
                     }
