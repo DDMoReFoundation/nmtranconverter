@@ -55,6 +55,8 @@ import java.util.Set;
 
 import javax.xml.bind.JAXBElement;
 
+import org.apache.commons.lang.StringUtils;
+
 import crx.converter.engine.Accessor;
 import crx.converter.engine.ConversionDetail_;
 import crx.converter.engine.Manager;
@@ -115,6 +117,7 @@ import eu.ddmore.libpharmml.IValidationReport;
 import eu.ddmore.libpharmml.PharmMlFactory;
 import eu.ddmore.libpharmml.dom.IndependentVariable;
 import eu.ddmore.libpharmml.dom.PharmML;
+import eu.ddmore.libpharmml.dom.commontypes.AnnotationType;
 import eu.ddmore.libpharmml.dom.commontypes.CommonVariableDefinition;
 import eu.ddmore.libpharmml.dom.commontypes.DerivativeVariable;
 import eu.ddmore.libpharmml.dom.commontypes.FunctionDefinition;
@@ -636,7 +639,7 @@ public class ConverterProvider extends DependencyLexer implements ILexer {
         if (fout == null || outputDirectory == null) return;
         ConversionContext context = new ConversionContext(src, getParser(), this);
 
-        ProblemStatement problemStatement = new ProblemStatement(getModelName());
+        ProblemStatement problemStatement = new ProblemStatement(getProblemDescription());
         problemStatement.write(fout);
         fout.write(Formatter.endline());
 
@@ -1117,16 +1120,35 @@ public class ConverterProvider extends DependencyLexer implements ILexer {
             Name n = dom.getName();
             if (n == null) return name;
             else {
-                name = n.getValue();
-                if (name != null) {
-                    name = name.replaceAll("\n", "");
-                    name = name.replaceAll("\\s+", " ");
-                    name = name.replace('\\', '/'); 
-                }
-            }		
+                name = truncateString(n.getValue());
+            }
         }
-
         return name;
+    }
+
+    private String getProblemDescription(){
+        String modelName = getModelName();
+
+        String descriptionValue = modelName;
+        if (dom != null) {
+            AnnotationType description = dom.getDescription();
+            if (description == null) {
+                return descriptionValue;
+            }
+            else {
+                descriptionValue = truncateString(description.getValue());
+            }
+        }
+        return descriptionValue; 
+    }
+
+    private String truncateString(String descriptionValue) {
+        if (descriptionValue != null || StringUtils.isNotEmpty(descriptionValue)) {
+            descriptionValue = descriptionValue.replaceAll("\n", "");
+            descriptionValue = descriptionValue.replaceAll("\\s+", " ");
+            descriptionValue = descriptionValue.replace('\\', '/'); 
+        }
+        return descriptionValue;
     }
 
     @Override
