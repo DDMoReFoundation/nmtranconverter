@@ -141,7 +141,7 @@ public class FormatterTest extends BasicTestSetup {
 
     @Test
     public void shouldGetTitleForCov() {
-        final String expectedTitle = "$COV "+NEW_LINE;
+        final String expectedTitle = "$COV ";
         String outputTitle = Formatter.cov();
         verifyTitles(expectedTitle, outputTitle, errorMessage);
     }
