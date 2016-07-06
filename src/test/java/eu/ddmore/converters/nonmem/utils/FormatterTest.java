@@ -12,7 +12,9 @@ import eu.ddmore.converters.nonmem.utils.Formatter.ColumnConstant;
 import eu.ddmore.converters.nonmem.utils.Formatter.NmConstant;
 import eu.ddmore.converters.nonmem.utils.Formatter.Symbol;
 
-
+/**
+ * Unit test for {@link Formatter}
+ */
 public class FormatterTest extends BasicTestSetup {
 
     private static final String NEW_LINE = System.getProperty("line.separator");
