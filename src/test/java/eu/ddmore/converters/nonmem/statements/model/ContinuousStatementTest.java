@@ -5,6 +5,7 @@ package eu.ddmore.converters.nonmem.statements.model;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -80,7 +81,7 @@ public class ContinuousStatementTest extends BasicTestSetup  {
         Map<String, String> varCompartmentSequences = new HashMap<String, String>();
         varCompartmentSequences.put(COL_ID_1, COL_NUM_1.toString());
         when(context.getDerivativeVarCompSequences()).thenReturn(varCompartmentSequences);
-
+        when(context.getEstimationEmitter().getTolValue()).thenReturn("");
         when(context.getEstimationEmitter().isSAEM()).thenReturn(true);
     }
 
@@ -105,6 +106,17 @@ public class ContinuousStatementTest extends BasicTestSetup  {
         assertNotNull("Continuous statement should not be null", contStatement);
     }
 
+    @Test
+    public void testGetContinuousStatementWithTOLValueFromEstimation() {
+        when(context.getEstimationEmitter().getTolValue()).thenReturn("10");
+        continuousStatement = new ContinuousStatement(modelStatementHelper);
+        String contStatement = continuousStatement.buildContinuousStatement().toString();
+
+        String subroutineStatement = "$SUBS ADVAN13 TOL=10";
+        assertNotNull("Continuous statement should not be null", contStatement);
+        assertTrue("Continuous statement should contain subroutine statement as expected.",contStatement.contains(subroutineStatement));
+    }
+    
     @Test
     public void testGetcontinuousStatementWithComponent(){
         continuousStatement = new ContinuousStatement(modelStatementHelper);
