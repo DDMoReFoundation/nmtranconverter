@@ -211,7 +211,7 @@ public class Formatter {
      * @return block title
      */
     public static String cov() {
-        return String.format(newLineBlockTitle,Symbol.BLOCK,Block.COV);
+        return String.format(inLineBlockTitle,Symbol.BLOCK,Block.COV);
     }
     /**
      * Add <code>sub</code> title and then continue appending on the new line

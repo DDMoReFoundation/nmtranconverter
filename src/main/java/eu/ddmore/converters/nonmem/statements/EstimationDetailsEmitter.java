@@ -3,19 +3,18 @@
  ******************************************************************************/
 package eu.ddmore.converters.nonmem.statements;
 
-import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.lang.StringUtils;
-
-import com.google.common.base.Predicate;
-import com.google.common.collect.Collections2;
 
 import crx.converter.engine.ScriptDefinition;
 import crx.converter.spi.steps.EstimationStep;
 import eu.ddmore.converters.nonmem.utils.DiscreteHandler;
 import eu.ddmore.converters.nonmem.utils.Formatter;
 import eu.ddmore.converters.nonmem.utils.ScriptDefinitionAccessor;
+import eu.ddmore.libpharmml.dom.commontypes.BooleanValue;
 import eu.ddmore.libpharmml.dom.commontypes.Scalar;
 import eu.ddmore.libpharmml.dom.modellingsteps.EstimationOpType;
 import eu.ddmore.libpharmml.dom.modellingsteps.EstimationOperation;
@@ -26,147 +25,128 @@ import eu.ddmore.libpharmml.dom.modellingsteps.OperationProperty;
  */
 public class EstimationDetailsEmitter {
 
-    public enum EstConstant{
-        DEFAULT_COND_STATEMENT("COND"),
-        SAEM_STATEMENT("SAEM AUTO=1 PRINT=100 CINTERVAL=30 ATOL=6 SIGL=6"),
-        FOCEI_STATEMENT ("COND INTER NSIG=3 SIGL=9 MAXEVALS=9999 PRINT=10 NOABORT"),
-        FOCE_STATEMENT ("COND NSIG=3 SIGL=9 MAXEVALS=9999 PRINT=10 NOABORT"),
-        FO_STATEMENT ("ZERO NSIG=3 SIGL=9 MAXEVALS=9999 PRINT=10 NOABORT"),
-        TTE_DATA_LAPLACE_OPTION(" LIKELIHOOD LAPLACE NUMERICAL NOINTERACTION"),
-        COUNT_DATA_LAPLACE_OPTION(" -2LL LAPLACE NOINTERACTION");
-
-        private String statement;
-        EstConstant(String statement){
-            this.statement = statement;
-        }
-        public String getStatement() {
-            return statement;
-        }
-    }
-
-    public enum Method{
-        FO, FOCE, FOCEI, SAEM
-    }
-
-    private static final String METHOD = "METHOD=";
+    private static final String NONMEM_OPERATION = "NONMEM";
     private static final String GENERIC_OPERATION = "generic";
-    private static final String GENERIC_OPERATION_ALGO_PROP = "algo";
-    private final List<EstimationStep> estimationSteps;
-    private Boolean isSAEM = false;
+    private static final String ALGO_PROP = "algo";
+    private static final String TOL_PROP = "TOL";
+    private static final String SUB_TOL_PROP = "SUB_TOL";
+    private static final String COV_PREFIX = "COV_";
 
+    private final List<EstimationStep> estimationSteps;
     private final DiscreteHandler discreteHandler;
-    private StringBuilder estStatement = new StringBuilder();
-    private String covStatement;
+
+    private final StringBuilder estStatement = new StringBuilder();
+    private final CovStatementBuilder covStatementBuilder = new CovStatementBuilder();
+    private String tolValue = "";
+    private boolean isSAEM = false;
 
     public EstimationDetailsEmitter(ScriptDefinition scriptDefinition, DiscreteHandler discreteHandler){
         this.discreteHandler = discreteHandler;
         estimationSteps = ScriptDefinitionAccessor.getEstimationSteps(scriptDefinition);
         initialise();
-    }
 
-    private void initialise(){
-        processEstimationStatement();
     }
 
     /**
      * This method creates estimation statement for nonmem file from estimation steps collected from steps map.
      */
-    private void processEstimationStatement() {
-        Boolean isCovFound = false;
-        estStatement.append(Formatter.endline());
-
+    private void initialise() {
         if(estimationSteps!=null && !estimationSteps.isEmpty()){
-            estStatement.append(Formatter.est());
-            for(EstimationStep estStep : estimationSteps){
-                for(EstimationOperation operationType :estStep.getOperations()){
-                    String optType = operationType.getOpType();
-                    //If covariate is not found in any other operations or properties
-                    if(!isCovFound){
-                        isCovFound = checkForCovariateStatement(operationType);
-                    }
+            for (EstimationStep estStep : estimationSteps){
+                propcessEstimationStep(estStep);
+            }
+        }
+        covStatementBuilder.buildCovStatement();
+    }
 
-                    if(EstimationOpType.EST_POP.value().equals(optType)){
-                        estStatement.append(buildEstimationStatementFromAlgorithm(getAlgorithmDefinition(operationType)));
-                    } else if(EstimationOpType.EST_INDIV.value().equals(optType)){
-                        break;
-                    } else if(GENERIC_OPERATION.equals(optType)) {
-                        estStatement.append(buildEstimationStatementFromAlgorithm(getMethodForGenericOperation(operationType)));
-                    }
+    private void propcessEstimationStep(EstimationStep estStep) {
+        String methodName = new String();
+        Map<String, String> estOptions = new LinkedHashMap<String, String>();
+        for(EstimationOperation operationType :estStep.getOperations()){
+            String newMethodName = getMethodNameFromOperation(operationType);
+            if(StringUtils.isNotEmpty(newMethodName)){
+                methodName = newMethodName;
+            }
+            if (NONMEM_OPERATION.equals(operationType.getOpType())){
+                populateOptions(operationType, estOptions);
+            }else {
+                if(!covStatementBuilder.isCovFound()){
+                    covStatementBuilder.setCovFound(checkForCovariateStatement(operationType));
                 }
             }
         }
-        setCovStatement(isCovFound);
+        EstimationStatementBuilder statementBuilder = new EstimationStatementBuilder(discreteHandler, estOptions);
+        estStatement.append(statementBuilder.buildEstimationStatementFromAlgorithm(methodName)+Formatter.endline());
+        isSAEM = statementBuilder.isSAEM();
+    }
+
+    private void populateOptions(EstimationOperation operationType, Map<String, String> estOptions) {
+        for(OperationProperty property : operationType.getProperty()){
+            if(property.getAssign()!=null){
+                Scalar propertyValue = property.getAssign().getScalar();
+                if(property.getName().startsWith(COV_PREFIX)){
+                    String propertyName = property.getName().replaceFirst(COV_PREFIX, "");
+                    addOptionsFromProperty(propertyName, propertyValue, covStatementBuilder.getCovOptions());
+                    covStatementBuilder.setCovFound(true);
+                }else if(TOL_PROP.equalsIgnoreCase(property.getName()) 
+                        || SUB_TOL_PROP.equalsIgnoreCase(property.getName())){
+                    tolValue = propertyValue.valueToString();
+                }else if(!ALGO_PROP.equals(property.getName())){
+                    addOptionsFromProperty(property.getName(), propertyValue, estOptions);
+                }
+            }
+        }
+    }
+
+    private void addOptionsFromProperty(String propertyName, Scalar propertyValue, Map<String, String> options) {
+        if(propertyValue!=null){
+            if(propertyValue instanceof BooleanValue){
+                Boolean isAllowed = getBooleanValueFromScalar(propertyValue);
+                if(isAllowed){
+                    options.put(propertyName, "");
+                }
+            }else {
+                String optionValue = propertyValue.valueToString();
+                options.put(propertyName, optionValue);
+            }
+        }
+    }
+
+    private String getMethodNameFromOperation(EstimationOperation estOperation){
+        String optType = estOperation.getOpType();
+
+        if(EstimationOpType.EST_POP.value().equals(optType)){
+            return getAlgorithmDefinition(estOperation);
+        } else if(GENERIC_OPERATION.equals(optType) || NONMEM_OPERATION.equals(optType)){
+            return getMethodFromOperation(estOperation);
+        }
+        return "";
     }
 
     private String getAlgorithmDefinition(EstimationOperation operationType) {
         if(operationType.getAlgorithm()==null) {
-            return null;
+            return "";
         }
         return operationType.getAlgorithm().getDefinition();
     }
 
-    private String getMethodForGenericOperation(EstimationOperation operationType) {
-        Collection<OperationProperty> found = Collections2.filter(operationType.getProperty(), new Predicate<OperationProperty>() {
-            @Override
-            public boolean apply(OperationProperty op) {
-                return GENERIC_OPERATION_ALGO_PROP.equals(op.getName());
+    private String getMethodFromOperation(EstimationOperation operationType) {
+        for(OperationProperty property : operationType.getProperty()){
+            String methodName = getMethodNameFromProperty(property);
+            if(StringUtils.isNotEmpty(methodName)){
+                return methodName;
             }
-        });
-        if(found.size()==0) {
-            return null;
         }
-        OperationProperty algo = found.iterator().next();
-
-        return algo.getAssign().getScalar().valueToString();
+        return "";
     }
 
-    private StringBuilder buildEstimationStatementFromAlgorithm(String methodName) {
-        StringBuilder statement = new StringBuilder();
-
-        statement.append(METHOD);
-        if (StringUtils.isNotBlank(methodName)) {
-            String methodDefinition = methodName.trim().toUpperCase();
-            Method method = Method.valueOf(methodDefinition);
-
-            switch(method){
-                case FO:
-                    statement.append(EstConstant.FO_STATEMENT.getStatement());
-                    break;
-                case FOCE:
-                    statement.append(EstConstant.FOCE_STATEMENT.getStatement());
-                    statement.append(appendDiscreteEstOptions());
-                    break;
-                case FOCEI:
-                    statement.append(EstConstant.FOCEI_STATEMENT.getStatement());
-                    statement.append(appendDiscreteEstOptions());
-                    break;
-                case SAEM:
-                    isSAEM = true;
-                    statement.append(EstConstant.SAEM_STATEMENT.getStatement());
-                    statement.append(appendDiscreteEstOptions());
-                    break;
-                default:
-                    statement.append(methodDefinition);
-                    break;
+    private String getMethodNameFromProperty(OperationProperty property){
+        if(ALGO_PROP.equals(property.getName())){
+            if(property.getAssign()!=null && property.getAssign().getScalar()!=null){
+                return property.getAssign().getScalar().valueToString();
             }
-        } else {
-            statement.append(EstConstant.DEFAULT_COND_STATEMENT.getStatement());
         }
-        return statement;
-    }
-
-    private void setCovStatement(Boolean isCovFound){
-        covStatement = (isCovFound) ? Formatter.cov(): "";
-    }
-
-    private StringBuilder appendDiscreteEstOptions() {
-        StringBuilder statement = new StringBuilder();
-        if(discreteHandler.isCountData()){
-            statement.append(EstConstant.COUNT_DATA_LAPLACE_OPTION.getStatement());
-        }else if(discreteHandler.isTimeToEventData()){
-            statement.append(EstConstant.TTE_DATA_LAPLACE_OPTION.getStatement());
-        }
-        return statement;
+        return "";
     }
 
     /**
@@ -174,14 +154,18 @@ public class EstimationDetailsEmitter {
      * this method is added here, as it is dependent on availability of EstFIM.
      */
     public String getCovStatement(){
-        return Formatter.endline()+covStatement;
+        return covStatementBuilder.getCovStatement().toString();
     }
 
     /**
      * This method determines covariate property value, depending upon value specified in equation
      */
-    private Boolean isCovPropertyForEstOperation(Scalar value) {
-        return Boolean.parseBoolean(value.valueToString());
+    private Boolean getBooleanValueFromScalar(Scalar value) {
+        if(value instanceof BooleanValue){
+            return Boolean.parseBoolean(value.valueToString());
+        }else {
+            return false;
+        }
     }
 
     /**
@@ -195,12 +179,8 @@ public class EstimationDetailsEmitter {
             for(OperationProperty property : operationType.getProperty()){
                 if(property.getName().equals("cov") && property.getAssign()!=null){
                     if(property.getAssign().getScalar()!=null){
-                        return isCovPropertyForEstOperation(property.getAssign().getScalar());
+                        return getBooleanValueFromScalar(property.getAssign().getScalar());
                     }
-                    //else if(property.getAssign().getEquation()!=null){
-                    //Equation equation = property.getAssign().getEquation();
-                    //return isCovPropertyForEstOperation(equation.getScalar().getValue());
-                    //}
                 }
             };
         }
@@ -222,5 +202,9 @@ public class EstimationDetailsEmitter {
 
     public boolean isSAEM() {
         return isSAEM;
+    }
+
+    public String getTolValue() {
+        return tolValue;
     }
 }

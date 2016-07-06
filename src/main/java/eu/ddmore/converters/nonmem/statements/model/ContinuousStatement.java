@@ -7,6 +7,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.commons.lang.StringUtils;
+
 import com.google.common.base.Preconditions;
 
 import crx.converter.spi.blocks.StructuralBlock;
@@ -16,6 +18,7 @@ import eu.ddmore.converters.nonmem.LocalParserHelper;
 import eu.ddmore.converters.nonmem.eta.Eta;
 import eu.ddmore.converters.nonmem.parameters.OmegaBlock;
 import eu.ddmore.converters.nonmem.statements.DiffEquationStatementBuilder;
+import eu.ddmore.converters.nonmem.statements.EstimationDetailsEmitter;
 import eu.ddmore.converters.nonmem.statements.InitConditionBuilder;
 import eu.ddmore.converters.nonmem.statements.InputColumn;
 import eu.ddmore.converters.nonmem.statements.pkmacro.PkMacroAnalyser;
@@ -62,7 +65,11 @@ public class ContinuousStatement {
     public StringBuilder buildContinuousStatement(){
         StringBuilder continuousStatement = new StringBuilder();
         if(pkMacroDetails.getMacroAdvanType().equals(AdvanType.NONE)){
-            int tolValue = (statementHelper.getContext().getEstimationEmitter().isSAEM())? TOL_VALUE_IF_SAEM:TOL_VALUE_IF_NOT_SAEM;
+            EstimationDetailsEmitter emitter = statementHelper.getContext().getEstimationEmitter();
+            int tolValue = (emitter.isSAEM())? TOL_VALUE_IF_SAEM:TOL_VALUE_IF_NOT_SAEM;
+            if(StringUtils.isNotEmpty(emitter.getTolValue().trim())){
+                tolValue = Integer.parseInt(emitter.getTolValue());
+            }
             continuousStatement.append(buildSubsStatement(AdvanType.ADVAN13, " TOL="+tolValue));
             continuousStatement.append(buildDerivativePredStatement());
         }else{
