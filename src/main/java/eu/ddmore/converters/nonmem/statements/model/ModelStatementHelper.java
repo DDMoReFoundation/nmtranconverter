@@ -10,6 +10,7 @@ import crx.converter.spi.blocks.StructuralBlock;
 import eu.ddmore.converters.nonmem.ConversionContext;
 import eu.ddmore.converters.nonmem.IndividualDefinitionEmitter;
 import eu.ddmore.converters.nonmem.statements.DiffEquationStatementBuilder;
+import eu.ddmore.converters.nonmem.statements.error.ErrorStatementHandler;
 import eu.ddmore.converters.nonmem.utils.Formatter;
 import eu.ddmore.libpharmml.dom.commontypes.VariableDefinition;
 import eu.ddmore.libpharmml.dom.modeldefn.IndividualParameter;
@@ -30,8 +31,8 @@ public class ModelStatementHelper {
     }
 
     private void initialise(){
-        errorStatementHandler = new ErrorStatementHandler(context);
         predCoreStatement = new PredCoreStatement(context);
+        errorStatementHandler = new ErrorStatementHandler(context);
     }
 
     /**
@@ -79,7 +80,6 @@ public class ModelStatementHelper {
 
             if(!block.getLocalVariables().isEmpty()){
                 for (VariableDefinition definitionType: block.getLocalVariables()){
-
                     String assignment = context.getLocalParserHelper().parse(definitionType);
                     if(!Formatter.isInDesBlock())
                         varDefinitionsBlock.append(assignment);
@@ -87,10 +87,6 @@ public class ModelStatementHelper {
             }
         }
         return varDefinitionsBlock;
-    }
-
-    public ConversionContext getContext() {
-        return context;
     }
 
     public ErrorStatementHandler getErrorStatementHandler() {

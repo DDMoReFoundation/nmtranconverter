@@ -3,6 +3,8 @@
  ******************************************************************************/
 package eu.ddmore.converters.nonmem.statements;
 
+import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -14,7 +16,11 @@ import crx.converter.spi.blocks.ParameterBlock;
 
 import eu.ddmore.converters.nonmem.ConversionContext;
 import eu.ddmore.converters.nonmem.eta.Eta;
-import eu.ddmore.converters.nonmem.statements.ErrorStatement.ErrorConstant;
+import eu.ddmore.converters.nonmem.statements.error.ErrorStatement;
+import eu.ddmore.converters.nonmem.statements.error.GeneralObsErrorStatement;
+import eu.ddmore.converters.nonmem.statements.error.StructuralObsErrorStatement.ErrorConstant;
+import eu.ddmore.converters.nonmem.statements.input.InputColumn;
+import eu.ddmore.converters.nonmem.statements.input.InputColumnsProvider;
 import eu.ddmore.converters.nonmem.utils.Formatter;
 import eu.ddmore.converters.nonmem.utils.Formatter.ColumnConstant;
 import eu.ddmore.converters.nonmem.utils.Formatter.TableConstant;
@@ -100,7 +106,6 @@ public class TableStatement {
      * @return standard table statement
      */
     private StringBuilder getStdTableStatement(){
-
         StringBuilder stdTable = new StringBuilder();
         stdTable.append(SPACE+ColumnConstant.TIME);
 
@@ -117,30 +122,70 @@ public class TableStatement {
             }
         }
 
-        if(!context.getDiscreteHandler().isDiscrete()){
-            stdTable.append(SPACE + TableConstant.PRED + SPACE + ErrorConstant.IPRED + SPACE +
-                TableConstant.RES + SPACE + ErrorConstant.IRES + SPACE + TableConstant.WRES + 
-                SPACE + ErrorConstant.IWRES );
+        Set<String> columnNames = getColumnNamesForStabFromErrorDetails();
+
+        for(String columnName : columnNames){
+            stdTable.append(SPACE+Formatter.getReservedParam(columnName));
         }
-        stdTable.append(SPACE +ErrorConstant.Y + SPACE + TableConstant.DV);
         return stdTable;
+    }
+
+    private Set<String> getColumnNamesForStabFromErrorDetails() {
+        Set<String> columnNames = new LinkedHashSet<>();
+        boolean isStructuralObsError = false;
+        boolean isGeneralObsError = false;
+        Set<String> varsFromGeneralObsError= new HashSet<>();
+
+        for(ErrorStatement error : context.getModelStatementHelper().getErrorStatementHandler().getErrorStatements().values()){
+            if(error.isStructuralObsError()){
+                isStructuralObsError = true;
+            }else{
+                isGeneralObsError = true;
+                GeneralObsErrorStatement generalObsError = (GeneralObsErrorStatement) error;
+                varsFromGeneralObsError.addAll(generalObsError.getVarEquations().keySet());
+            }
+        }
+
+        if(isGeneralObsError){
+            addTableConstants(columnNames);
+            if(isStructuralObsError){
+                addErrorConstants(columnNames);
+            }
+            for(String variable: varsFromGeneralObsError){
+                columnNames.add(variable);
+            }
+        }else if(!context.getDiscreteHandler().isDiscrete()){
+            addTableConstants(columnNames);
+            addErrorConstants(columnNames);
+        }
+        return columnNames;
+    }
+
+    private void addErrorConstants(Set<String> columnNames) {
+        columnNames.add(ErrorConstant.IPRED.toString());
+        columnNames.add(ErrorConstant.IRES.toString());
+        columnNames.add(ErrorConstant.IWRES.toString());
+        columnNames.add(ErrorConstant.Y.toString());
+    }
+
+    private void addTableConstants(Set<String> columnNames) {
+        columnNames.add(TableConstant.PRED.toString());
+        columnNames.add(TableConstant.RES.toString());
+        columnNames.add(TableConstant.WRES.toString());
+        columnNames.add(TableConstant.DV.toString());
     }
 
     /**
      * Parameter table contains individual parameters as columns.
-     * 
      * @return parameter table statement
      */
     private StringBuilder getParamTableStatement(){
         List<ParameterBlock> blocks =  context.getScriptDefinition().getParameterBlocks();
         StringBuilder paramTable = new StringBuilder();
-
         InputColumn occColumn = context.getIovHandler().getIovColumn();
-
         if(occColumn!=null && StringUtils.isNotEmpty(occColumn.getColumnId())){
             paramTable.append(SPACE+Formatter.getReservedParam(occColumn.getColumnId()));
         }
-
         for(ParameterBlock block : blocks){
             List<IndividualParameter> indivParamTypes = block.getIndividualParameters();
             for(IndividualParameter parameterType: indivParamTypes){
@@ -156,34 +201,31 @@ public class TableStatement {
 
     /**
      * Categorical cov tables contains columns from nonmem dataset where, 
-     * 		columnType is "covariate" and valueType is "int"
-     * 		with FILE=catab.
+     * columnType is "covariate" and valueType is "int"
+     * with FILE=catab.
      * 
      * @return
      */
     private StringBuilder getCatCovTableStatement(){
         StringBuilder catCovTable = new StringBuilder();
-
         for(String column : inputColumns.getCatCovTableColumns()){
-            catCovTable.append(SPACE+Formatter.getReservedParam(column));	
+            catCovTable.append(SPACE+Formatter.getReservedParam(column));
         }
         return catCovTable;
     }
 
     /**
      * Continuous cov tables contains columns from nonmem dataset where, 
-     * 		columnType is "covariate" and valueType is "real"
-     * 		with FILE=cotab.
+     * columnType is "covariate" and valueType is "real"
+     * with FILE=cotab.
      * 
      * @return continuous cov statement
      */
     private StringBuilder getContCovTableStatement(){
         StringBuilder contCovTable = new StringBuilder();
-
         for(String column : inputColumns.getContCovTableColumns()){
             contCovTable.append(SPACE+Formatter.getReservedParam(column));	
         }
         return contCovTable;
     }
-
 }

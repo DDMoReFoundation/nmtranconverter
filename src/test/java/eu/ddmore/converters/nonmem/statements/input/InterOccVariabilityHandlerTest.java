@@ -1,7 +1,7 @@
 /*******************************************************************************
  * Copyright (C) 2015 Mango Solutions Ltd - All rights reserved.
  ******************************************************************************/
-package eu.ddmore.converters.nonmem.statements;
+package eu.ddmore.converters.nonmem.statements.input;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -24,7 +24,10 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 import crx.converter.spi.blocks.ParameterBlock;
 
 import eu.ddmore.converters.nonmem.ConversionContext;
-import eu.ddmore.converters.nonmem.statements.InterOccVariabilityHandler.OccRandomVariable;
+import eu.ddmore.converters.nonmem.statements.BasicTestSetup;
+import eu.ddmore.converters.nonmem.statements.input.InputColumn;
+import eu.ddmore.converters.nonmem.statements.input.InterOccVariabilityHandler;
+import eu.ddmore.converters.nonmem.statements.input.InterOccVariabilityHandler.OccRandomVariable;
 import eu.ddmore.converters.nonmem.utils.RandomVariableHelper;
 import eu.ddmore.libpharmml.dom.commontypes.LevelReference;
 import eu.ddmore.libpharmml.dom.commontypes.SymbolRef;

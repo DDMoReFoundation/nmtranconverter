@@ -13,6 +13,7 @@ import com.google.common.base.Preconditions;
 
 import eu.ddmore.converters.nonmem.eta.Eta;
 import eu.ddmore.converters.nonmem.utils.Formatter;
+import eu.ddmore.converters.nonmem.utils.Formatter.Block;
 import eu.ddmore.converters.nonmem.utils.Formatter.NmConstant;
 import eu.ddmore.converters.nonmem.utils.Formatter.Symbol;
 import eu.ddmore.libpharmml.dom.IndependentVariable;
@@ -224,7 +225,7 @@ public class IndividualDefinitionEmitter {
                 etas.append("+ ");
                 for(Eta eta : context.retrieveOrderedEtas()){
                     if(eta.getEtaSymbol().equals(randomEffect.getSymbRef().get(0).getSymbIdRef())){
-                        etas.append(Formatter.etaFor(eta.getEtaOrderSymbol()));
+                        etas.append(Formatter.buildEffectOrderSymbolFor(Block.ETA,eta.getEtaOrderSymbol()));
                         break;
                     }
                 }

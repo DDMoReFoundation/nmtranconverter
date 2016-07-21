@@ -5,7 +5,7 @@ package eu.ddmore.converters.nonmem.parameters;
 
 import com.google.common.base.Preconditions;
 
-import eu.ddmore.converters.nonmem.statements.InterOccVariabilityHandler;
+import eu.ddmore.converters.nonmem.statements.input.InterOccVariabilityHandler;
 import eu.ddmore.converters.nonmem.parameters.CorrelationHandler;
 
 /**

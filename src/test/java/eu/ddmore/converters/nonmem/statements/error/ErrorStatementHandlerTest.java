@@ -1,7 +1,7 @@
 /*******************************************************************************
  * Copyright (C) 2015 Mango Solutions Ltd - All rights reserved.
  ******************************************************************************/
-package eu.ddmore.converters.nonmem.statements.model;
+package eu.ddmore.converters.nonmem.statements.error;
 
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.mock;
@@ -29,8 +29,9 @@ import crx.converter.spi.blocks.ObservationBlock;
 import eu.ddmore.converters.nonmem.ConversionContext;
 import eu.ddmore.converters.nonmem.statements.BasicTestSetup;
 import eu.ddmore.converters.nonmem.statements.DiffEquationStatementBuilder;
-import eu.ddmore.converters.nonmem.statements.ErrorStatement;
-import eu.ddmore.converters.nonmem.statements.ErrorStatementEmitter;
+import eu.ddmore.converters.nonmem.statements.error.ErrorStatementHandler;
+import eu.ddmore.converters.nonmem.statements.error.StructuralObsErrorStatement;
+import eu.ddmore.converters.nonmem.statements.error.StructuralObsErrorStatementEmitter;
 import eu.ddmore.converters.nonmem.utils.Formatter;
 import eu.ddmore.converters.nonmem.utils.ScriptDefinitionAccessor;
 import eu.ddmore.libpharmml.dom.commontypes.SymbolRef;
@@ -46,8 +47,8 @@ public class ErrorStatementHandlerTest extends BasicTestSetup {
 
     private final String ERROR_STATEMENT_CONTENT = Formatter.endline()+"error";
     private final String varDefStatementString = new String("K = (CL/V)");
-    @Mock private ErrorStatement error;
-    @Mock private ErrorStatementEmitter errorStatementEmitter;
+    @Mock private StructuralObsErrorStatement structObsErrorStatement;
+    @Mock private StructuralObsErrorStatementEmitter errorStatementEmitter;
     @Mock private MultipleDvRef dvReference;
     @Mock private SymbolRef columnName;
     @Mock private DiffEquationStatementBuilder desBuilder;
@@ -66,17 +67,17 @@ public class ErrorStatementHandlerTest extends BasicTestSetup {
 
         mockErrorStatementsPreperation();
 
-        whenNew(ErrorStatementEmitter.class).withArguments(Matchers.any(ErrorStatement.class)).thenReturn(errorStatementEmitter);
+        whenNew(StructuralObsErrorStatementEmitter.class).withArguments(Matchers.any(StructuralObsErrorStatement.class)).thenReturn(errorStatementEmitter);
         when(errorStatementEmitter.getErrorStatementDetails()).thenReturn(new StringBuilder(ERROR_STATEMENT_CONTENT));
     }
 
     private void mockErrorStatementsPreperation() throws Exception{
-
         List<ObservationBlock> obsBlocks = new ArrayList<>();
         obsBlocks.add(observationBlock);
 
         when(scriptDefinition.getObservationBlocks()).thenReturn(obsBlocks);
         StructuredObsError errorType = Mockito.mock(StructuredObsError.class, RETURNS_DEEP_STUBS);
+        when(errorType.getSymbId()).thenReturn("Y");
         when(observationBlock.getObservationError()).thenReturn(errorType);
 
         ErrorModel errorModel = Mockito.mock(ErrorModel.class,RETURNS_DEEP_STUBS);
@@ -85,7 +86,9 @@ public class ErrorStatementHandlerTest extends BasicTestSetup {
         when(errorType.getOutput().getSymbRef().getSymbIdRef()).thenReturn("Y");
         when(errorModel.getAssign().getFunctionCall()).thenReturn(callType);
 
-        whenNew(ErrorStatement.class).withAnyArguments().thenReturn(error);
+        when(structObsErrorStatement.isStructuralObsError()).thenReturn(true);
+        when(structObsErrorStatement.getErrorStatement()).thenReturn(new StringBuilder(ERROR_STATEMENT_CONTENT));
+        whenNew(StructuralObsErrorStatement.class).withAnyArguments().thenReturn(structObsErrorStatement);
     }
 
     @Test
@@ -121,7 +124,6 @@ public class ErrorStatementHandlerTest extends BasicTestSetup {
     @Test
     public void shouldGetErrorStatementWithMultipleDV(){
         multipleDVSetup();
-
         errorStatementHandler = new ErrorStatementHandler(context);
         String errorStatement = errorStatementHandler.getErrorStatement();
         assertNotNull("Error statement should not be null", errorStatement);

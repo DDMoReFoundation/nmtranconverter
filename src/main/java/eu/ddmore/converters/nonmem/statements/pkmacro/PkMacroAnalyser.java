@@ -6,14 +6,18 @@ package eu.ddmore.converters.nonmem.statements.pkmacro;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.lang.StringUtils;
+
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 
 import crx.converter.engine.ScriptDefinition;
 import crx.converter.spi.blocks.StructuralBlock;
 import eu.ddmore.converters.nonmem.ConversionContext;
+import eu.ddmore.libpharmml.dom.modeldefn.pkmacro.AbsorptionMacro;
 import eu.ddmore.libpharmml.dom.modeldefn.pkmacro.AbsorptionOralMacro;
 import eu.ddmore.libpharmml.dom.modeldefn.pkmacro.CompartmentMacro;
+import eu.ddmore.libpharmml.dom.modeldefn.pkmacro.DepotMacro;
 import eu.ddmore.libpharmml.dom.modeldefn.pkmacro.EliminationMacro;
 import eu.ddmore.libpharmml.dom.modeldefn.pkmacro.IVMacro;
 import eu.ddmore.libpharmml.dom.modeldefn.pkmacro.MacroValue;
@@ -30,7 +34,7 @@ public class PkMacroAnalyser {
      * Enum with pk macro attributes and respective values for these attributes.
      */
     enum PkMacroAttribute{
-        P("F"), TLAG("ALAG"), KA("KA"), V("V"), CL("CL"), K("K");
+        P("F"), TLAG("ALAG"), KA("KA"), V("V"), CL("CL"), K("K"), TARGET("TARGET");
 
         private String value;
 
@@ -56,8 +60,8 @@ public class PkMacroAnalyser {
      */
     public PkMacroDetails analyse(ConversionContext context) {
         Preconditions.checkNotNull(context, "Conversion Context cannot be null");
-        PkMacroDetails details = processPkMacros(context.getScriptDefinition());
-        if(!details.isEmpty()){
+        PkMacroDetails details = processPkMacros(context);
+        if(!details.isEmpty() ){ //&& context.getDerivativeVars().isEmpty()
             details.setMacroAdvanType(captureAdvanType(details));
         }
         return details;
@@ -67,7 +71,8 @@ public class PkMacroAnalyser {
      * This method processes compartments, eliminations, iv/orals and peripherals from all the pk macros.
      * Also it will determine and set pk macro advan type.
      */
-    private PkMacroDetails processPkMacros(ScriptDefinition scriptDefinition){
+    private PkMacroDetails processPkMacros(ConversionContext context){
+        ScriptDefinition scriptDefinition = context.getScriptDefinition();
         Preconditions.checkNotNull(scriptDefinition, "Script definition cannot be null");
 
         PkMacroDetails details = new PkMacroDetails();
@@ -86,6 +91,29 @@ public class PkMacroAnalyser {
                 details.setCompartmentCompNumber(++compCount);
             }else if(pkMacro instanceof EliminationMacro){
                 details.getEliminations().add((EliminationMacro) pkMacro);
+            }else if(pkMacro instanceof DepotMacro){
+                boolean isOral = false;
+                for(MacroValue value : pkMacro.getListOfValue()){
+                    String valueArgument = value.getArgument().toUpperCase().trim();
+                    if(StringUtils.isNotEmpty(valueArgument)){
+                        if(valueArgument.equals(PkMacroAttribute.KA.name())){
+                            isOral = true;
+                        }
+                    }
+                }
+                if(isOral){
+                    AbsorptionOralMacro absMacro = new AbsorptionMacro();
+                    absMacro.getListOfValue().addAll(pkMacro.getListOfValue());
+                    details.getAbsorptionOrals().add(absMacro);
+                }else {
+                    for(MacroValue value : pkMacro.getListOfValue()){
+                        if(value.getArgument().equalsIgnoreCase(PkMacroAttribute.TARGET.name())){
+                        }
+                    }
+                    IVMacro ivMacro = new IVMacro();
+                    ivMacro.getListOfValue().addAll(pkMacro.getListOfValue());
+                    details.getIvs().add(ivMacro);
+                }
             }else if(pkMacro instanceof IVMacro){
                 details.getIvs().add((IVMacro) pkMacro);
             }else if(pkMacro instanceof AbsorptionOralMacro){

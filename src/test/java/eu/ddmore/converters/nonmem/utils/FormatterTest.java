@@ -8,6 +8,7 @@ import java.util.Map;
 import org.junit.Test;
 
 import eu.ddmore.converters.nonmem.statements.BasicTestSetup;
+import eu.ddmore.converters.nonmem.utils.Formatter.Block;
 import eu.ddmore.converters.nonmem.utils.Formatter.ColumnConstant;
 import eu.ddmore.converters.nonmem.utils.Formatter.NmConstant;
 import eu.ddmore.converters.nonmem.utils.Formatter.Symbol;
@@ -211,9 +212,16 @@ public class FormatterTest extends BasicTestSetup {
 
     @Test
     public void shouldGetFormattedEtaSymbol() {
-        final String expectedEta = " ETA("+COL_ID_1+")";
-        String outputEta = Formatter.etaFor(String.valueOf(COL_ID_1));
+        final String expectedEta = "ETA("+COL_ID_1+")";
+        String outputEta = Formatter.buildEffectOrderSymbolFor(Block.ETA, String.valueOf(COL_ID_1));
         verifyTitles(expectedEta, outputEta, errorMessage);
+    }
+
+    @Test
+    public void shouldBuildEffectDefinition() {
+        final String expectedEffectDefinition = COL_ID_1+" = "+Block.EPS+"("+COL_NUM_1+")";
+        String outputDefinition = Formatter.buildEffectsDefinitionFor(Block.EPS, COL_ID_1, COL_NUM_1.toString()).trim();
+        verifyTitles(expectedEffectDefinition, outputDefinition, errorMessage);
     }
 
     @Test

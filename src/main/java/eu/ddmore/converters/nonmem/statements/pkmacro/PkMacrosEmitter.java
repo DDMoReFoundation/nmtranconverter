@@ -3,6 +3,8 @@
  ******************************************************************************/
 package eu.ddmore.converters.nonmem.statements.pkmacro;
 
+import java.util.List;
+
 import org.apache.commons.lang.StringUtils;
 import org.python.google.common.base.Preconditions;
 
@@ -14,6 +16,7 @@ import eu.ddmore.converters.nonmem.utils.Formatter;
 import eu.ddmore.libpharmml.dom.modeldefn.pkmacro.AbsorptionOralMacro;
 import eu.ddmore.libpharmml.dom.modeldefn.pkmacro.CompartmentMacro;
 import eu.ddmore.libpharmml.dom.modeldefn.pkmacro.CompartmentMacro.Arg;
+import eu.ddmore.libpharmml.dom.modeldefn.pkmacro.DepotMacro;
 import eu.ddmore.libpharmml.dom.modeldefn.pkmacro.EliminationMacro;
 import eu.ddmore.libpharmml.dom.modeldefn.pkmacro.IVMacro;
 import eu.ddmore.libpharmml.dom.modeldefn.pkmacro.MacroValue;
@@ -104,8 +107,9 @@ public class PkMacrosEmitter {
 
         if(!pkMacroDetails.getAbsorptionOrals().isEmpty()){
             for(AbsorptionOralMacro oralMacro : pkMacroDetails.getAbsorptionOrals()){
+                int compartmentNumber = getCompartmentNumberForMacro(oralMacro.getListOfValue());
                 for(MacroValue value : oralMacro.getListOfValue()){
-                    String macroEquation = getMacroEquation(value, pkMacroDetails.getAbsOralCompNumber());
+                    String macroEquation = getMacroEquation(value, compartmentNumber);
                     if(StringUtils.isNotEmpty(macroEquation)){
                         builder.append(Formatter.endline(macroEquation));
                     }
@@ -115,9 +119,10 @@ public class PkMacrosEmitter {
         }
 
         if(!pkMacroDetails.getIvs().isEmpty()){
-            for(IVMacro oralMacro : pkMacroDetails.getIvs()){
-                for(MacroValue value : oralMacro.getListOfValue()){
-                    String macroEquation = getMacroEquation(value, 1);
+            for(IVMacro ivMacro : pkMacroDetails.getIvs()){
+                int compartmentNumber = getCompartmentNumberForMacro(ivMacro.getListOfValue());
+                for(MacroValue value : ivMacro.getListOfValue()){
+                    String macroEquation = getMacroEquation(value, compartmentNumber);
                     if(StringUtils.isNotEmpty(macroEquation)){
                         builder.append(Formatter.endline(macroEquation));
                     }
@@ -128,10 +133,47 @@ public class PkMacrosEmitter {
         return builder;
     }
 
+    //TODO : this is supposed to change when florent will add his change from values list to map.
+    private int getCompartmentNumberForMacro(List<MacroValue> macroValues){
+        int compartmentNumber = 0;
+        for (MacroValue value : macroValues){
+            if(value.getArgument().equals(DepotMacro.Arg.TARGET.toString())){
+                // the value will have compartment name so get order number and use it as cmt number
+                String compartmentId = value.getAssign().getSymbRef().getSymbIdRef();
+                compartmentNumber = Integer.parseInt(context.getDerivativeVarCompSequences().get(compartmentId));
+            }else if(value.getArgument().equals(IVMacro.Arg.CMT.toString())){
+                int currentMacroCmtNumber = Integer.parseInt(value.getAssign().getScalar().valueToString());
+                compartmentNumber = getRelatedModelCompartmentNumber(currentMacroCmtNumber);
+            }
+        }
+        return compartmentNumber;
+    }
+
+    private int getRelatedModelCompartmentNumber(int currentMacroCmtNumber) {
+        for(CompartmentMacro macro :pkMacroDetails.getCompartments()){
+            String compartmentId = "";
+            int cmtNum = 0;
+            for(MacroValue macroValue : macro.getListOfValue()){
+                if(macroValue.getArgument().equals(CompartmentMacro.Arg.AMOUNT.toString())){
+                    compartmentId = macroValue.getAssign().getSymbRef().getSymbIdRef(); 
+                }
+                if(macroValue.getArgument().equals(CompartmentMacro.Arg.CMT.toString())){
+                    cmtNum = Integer.parseInt(macroValue.getAssign().getScalar().valueToString());
+                }
+            }
+            if(cmtNum == currentMacroCmtNumber){
+                return Integer.parseInt(context.getDerivativeVarCompSequences().get(compartmentId));
+                //look for model compartment number
+            }
+        }
+        return 0;
+    }
+
     private String getMacroEquation(MacroValue value, Integer compartmentNumber) {
         String valueArgument = value.getArgument().toUpperCase().trim();
         if(StringUtils.isNotEmpty(valueArgument) 
-                && !valueArgument.equals(PkMacroAttribute.KA.name()) 
+                && !valueArgument.equals(PkMacroAttribute.KA.name())
+                && !valueArgument.equals(PkMacroAttribute.TARGET.name())
                 && value.getAssign().getSymbRef()!=null) {
 
             PkMacroAttribute attribute= PkMacroAttribute.valueOf(valueArgument);
@@ -140,7 +182,6 @@ public class PkMacrosEmitter {
         }
         return "";
     }
-
 
     public String getMacroEquation() {
         return macroEquation;

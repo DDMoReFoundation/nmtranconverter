@@ -1,7 +1,7 @@
 /*******************************************************************************
  * Copyright (C) 2015 Mango Solutions Ltd - All rights reserved.
  ******************************************************************************/
-package eu.ddmore.converters.nonmem.statements;
+package eu.ddmore.converters.nonmem.statements.input;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -15,8 +15,13 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
+import eu.ddmore.converters.nonmem.statements.BasicTestSetup;
+import eu.ddmore.converters.nonmem.statements.input.InputColumn;
+import eu.ddmore.converters.nonmem.statements.input.InputColumnsHandler;
+import eu.ddmore.converters.nonmem.statements.input.InputColumnsProvider;
 import eu.ddmore.libpharmml.dom.commontypes.SymbolType;
 import eu.ddmore.libpharmml.dom.dataset.ColumnDefinition;
+import eu.ddmore.libpharmml.dom.dataset.ColumnMapping;
 import eu.ddmore.libpharmml.dom.dataset.ColumnType;
 import eu.ddmore.libpharmml.dom.dataset.DataSet;
 import eu.ddmore.libpharmml.dom.dataset.HeaderColumnsDefinition;
@@ -36,6 +41,7 @@ public class InputColumnsHandlerTest extends BasicTestSetup {
     List<ExternalDataSet> dataSets = new ArrayList<>();
     List<CovariateDefinition> covDefinitions = new ArrayList<>();
     List<ColumnDefinition> dataColumns = new ArrayList<>();
+    List<ColumnMapping> columnMappings = new ArrayList<>();
 
     //should get added in between first column (1) and last column (5)
     InputColumn expectedDropColumn = new InputColumn(DROP, false, COL_NUM_1.intValue()+1, ColumnType.UNDEFINED);
@@ -47,10 +53,15 @@ public class InputColumnsHandlerTest extends BasicTestSetup {
         dataColumns.add(AMT);
         dataColumns.add(EVID);
 
+        columnMappings.add(ID_colMapping);
+        columnMappings.add(EVID_colMapping);
+        columnMappings.add(AMT_colMapping);
+
         when(definition.getListOfColumn()).thenReturn(dataColumns);
         when(dataSet.getDefinition()).thenReturn(definition);
 
         when(externalDataSet.getDataSet()).thenReturn(dataSet);
+        when(externalDataSet.getListOfColumnMapping()).thenReturn(columnMappings);
         dataSets.add(externalDataSet);
     }
 
