@@ -90,10 +90,10 @@ import crx.converter.tree.NestedTreeRef;
 import crx.converter.tree.Node;
 import crx.converter.tree.TreeMaker;
 import eu.ddmore.converters.nonmem.statements.DataStatement;
-import eu.ddmore.converters.nonmem.statements.EstimationStatement;
-import eu.ddmore.converters.nonmem.statements.InputStatement;
 import eu.ddmore.converters.nonmem.statements.ProblemStatement;
 import eu.ddmore.converters.nonmem.statements.TableStatement;
+import eu.ddmore.converters.nonmem.statements.estimation.EstimationStatement;
+import eu.ddmore.converters.nonmem.statements.input.InputStatement;
 import eu.ddmore.converters.nonmem.statements.model.ModelStatement;
 import eu.ddmore.converters.nonmem.utils.Formatter;
 import eu.ddmore.converters.parts.CovariateBlockImpl;
@@ -1405,37 +1405,37 @@ public class ConverterProvider extends DependencyLexer implements ILexer {
 
 
 
-    @Override
-    public VariableDeclarationContext guessContext(VariableDefinition v) {
-        if (v == null) return VariableDeclarationContext.UNKNOWN;
-
-        if (v.getAssign() != null) return VariableDeclarationContext.ASSIGNED;
-
-        String symbol = v.getSymbId();
-        if (symbol == null) return VariableDeclarationContext.UNKNOWN;
-
-        if (hasEstimation()) {
-            EstimationStep est = getEstimationStep();
-            if (est.hasTemporalDoseEvent()) {
-                PharmMLRootType element = est.getTemporalDoseEvent().getTargetElement();
-                if (isLocalVariable(element)) {
-                    VariableDefinition o = (VariableDefinition) element;
-                    if (symbol.equals(o.getSymbId())) {
-                        return VariableDeclarationContext.DT; 
-                    }
-                }
-            }
-        }
-
-        EstimationStep est = getEstimationStep();
-        boolean isConditionalDoseEventTarget = false;
-
-        if (est != null) if (est.isConditionalDoseEventTarget(v)) isConditionalDoseEventTarget = true; 
-        if (isConditionalDoseEventTarget) return VariableDeclarationContext.DOSE; 
-        if (guessColumnDoseContext(est, v)) return VariableDeclarationContext.DOSE;
-
-        return VariableDeclarationContext.UNKNOWN;
-    }
+    //    @Override
+    //    public VariableDeclarationContext guessContext(VariableDefinition v) {
+    //        if (v == null) return VariableDeclarationContext.UNKNOWN;
+    //
+    //        if (v.getAssign() != null) return VariableDeclarationContext.ASSIGNED;
+    //
+    //        String symbol = v.getSymbId();
+    //        if (symbol == null) return VariableDeclarationContext.UNKNOWN;
+    //
+    //        if (hasEstimation()) {
+    //            EstimationStep est = getEstimationStep();
+    //            if (est.hasTemporalDoseEvent()) {
+    //                PharmMLRootType element = est.getTemporalDoseEvent().getTargetElement();
+    //                if (isLocalVariable(element)) {
+    //                    VariableDefinition o = (VariableDefinition) element;
+    //                    if (symbol.equals(o.getSymbId())) {
+    //                        return VariableDeclarationContext.DT; 
+    //                    }
+    //                }
+    //            }
+    //        }
+    //
+    //        EstimationStep est = getEstimationStep();
+    //        boolean isConditionalDoseEventTarget = false;
+    //
+    //        if (est != null) if (est.isConditionalDoseEventTarget(v)) isConditionalDoseEventTarget = true; 
+    //        if (isConditionalDoseEventTarget) return VariableDeclarationContext.DOSE; 
+    //        if (guessColumnDoseContext(est, v)) return VariableDeclarationContext.DOSE;
+    //
+    //        return VariableDeclarationContext.UNKNOWN;
+    //    }
 
     @Override
     public boolean hasDoneEstimation() { throw new UnsupportedOperationException(); }
@@ -1519,6 +1519,7 @@ public class ConverterProvider extends DependencyLexer implements ILexer {
     public boolean hasWashout() { throw new UnsupportedOperationException(); }
 
     private void initialise() {
+        setIsolateGloballyScopedVariables(true);
         setSortParameterModelByContext(true);
         setSortStructuralModel(true);
         setValidateXML(true);
@@ -2264,6 +2265,17 @@ public class ConverterProvider extends DependencyLexer implements ILexer {
         List<StructuralModel> sms = def.getListOfStructuralModel();
 
         Accessor a = new Accessor(dom);
+
+        // Coping with no T.
+        IndependentVariable idv =  a.getIndependentVariable();
+
+        // Here's the magic
+        if (idv == null) {
+            IndependentVariable t = new IndependentVariable("T"); // Use 'time' symbol preferred symbol in the target language.
+            dom.getListOfIndependentVariable().add(t); // "Poof, T now in model"
+        }
+
+
         for (StructuralModel sm : sms) {
             if (sm == null) continue;
 
@@ -2279,7 +2291,8 @@ public class ConverterProvider extends DependencyLexer implements ILexer {
 
         for (StructuralModel sm : sms_with_macros) {
             try {
-                MacroOutput output = tr.translate(sm, target_level);
+                //corrected only to remove deprecated method and opt new definition.
+                MacroOutput output = tr.translate(sm, target_level, null);
                 StructuralModel sm_translated = output.getStructuralModel();
                 if(!replace(dom, sm, sm_translated))
                     throw new IllegalStateException("PK macros translation failed (blkId='" + sm.getBlkId() + "')");
@@ -2334,4 +2347,70 @@ public class ConverterProvider extends DependencyLexer implements ILexer {
 
     @Override
     public void setAddPlottingBlock(boolean addPlottingBlock) { throw new UnsupportedOperationException(); }
+
+    // New property
+    private boolean isolate_globally_scoped_variables = false;
+
+    // New Method 
+    public boolean isIsolateGloballyScopedVariables() { return isolate_globally_scoped_variables; }
+
+    // New Method
+    public void setIsolateGloballyScopedVariables(boolean decision) { isolate_globally_scoped_variables = decision; }
+
+    // new Method.
+    private boolean isGlobalScopeVariable(VariableDefinition v) {
+        if (v == null) return false;
+        else {
+            TrialDesignBlock tdb = getTrialDesign();
+            if (tdb == null) return false;
+            TrialDesign td = tdb.getModel();
+            if (td == null) return false;
+
+            for (ExternalDataSet exd : td.getListOfExternalDataSet()) {
+                if (exd == null) continue;
+                for (ColumnMapping mapping : exd.getListOfColumnMapping()) {
+                    if (mapping == null) continue;
+                    if (mapping.getSymbRef() != null) {
+                        PharmMLElement element = accessor.fetchElement(mapping.getSymbRef());
+                        if (isLocalVariable(element)) if (v.equals(element)) return true; 
+                    }
+                }
+            }
+        }
+
+        return false;
+    }
+
+    // Updated method
+    public VariableDeclarationContext guessContext(VariableDefinition v) {
+        if (v == null) return VariableDeclarationContext.UNKNOWN;
+
+        if (v.getAssign() != null) return VariableDeclarationContext.ASSIGNED;
+
+        String symbol = v.getSymbId();
+        if (symbol == null) return VariableDeclarationContext.UNKNOWN;
+
+        if (hasEstimation()) {
+            EstimationStep est = getEstimationStep();
+            if (est.hasTemporalDoseEvent()) {
+                PharmMLRootType element = est.getTemporalDoseEvent().getTargetElement();
+                if (isLocalVariable(element)) {
+                    VariableDefinition o = (VariableDefinition) element;
+                    if (symbol.equals(o.getSymbId())) {
+                        return VariableDeclarationContext.DT; 
+                    }
+                }
+            }
+        }
+
+        EstimationStep est = getEstimationStep();
+        boolean isConditionalDoseEventTarget = false;
+
+        if (est != null) if (est.isConditionalDoseEventTarget(v)) isConditionalDoseEventTarget = true; 
+        if (isConditionalDoseEventTarget) return VariableDeclarationContext.DOSE; 
+        if (guessColumnDoseContext(est, v)) return VariableDeclarationContext.DOSE;
+        if (isGlobalScopeVariable(v)) return VariableDeclarationContext.GLOBAL_SCOPE;
+
+        return VariableDeclarationContext.UNKNOWN;
+    }
 }

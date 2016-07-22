@@ -17,7 +17,7 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 import eu.ddmore.converters.nonmem.eta.Eta;
 import eu.ddmore.converters.nonmem.eta.VariabilityLevel;
 import eu.ddmore.converters.nonmem.statements.BasicTestSetup;
-import eu.ddmore.converters.nonmem.statements.InterOccVariabilityHandler;
+import eu.ddmore.converters.nonmem.statements.input.InterOccVariabilityHandler;
 import eu.ddmore.converters.nonmem.utils.RandomVariableHelper;
 import eu.ddmore.libpharmml.dom.modeldefn.ParameterRandomVariable;
 

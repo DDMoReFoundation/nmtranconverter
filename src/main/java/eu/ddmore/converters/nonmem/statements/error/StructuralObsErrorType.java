@@ -1,9 +1,12 @@
 /*******************************************************************************
  * Copyright (C) 2015 Mango Solutions Ltd - All rights reserved.
  ******************************************************************************/
-package eu.ddmore.converters.nonmem.statements;
+package eu.ddmore.converters.nonmem.statements.error;
 
-public enum ErrorType {
+/**
+ * enum with Error types associated with structural obervation error 
+ */
+public enum StructuralObsErrorType {
     COMBINED_ERROR_1("combinedError1"),
     COMBINED_ERROR_2("combinedError2"),
     COMBINED_ERROR_3("combinedError3"),
@@ -13,7 +16,7 @@ public enum ErrorType {
 
     private String error;
 
-    ErrorType(String error) {
+    StructuralObsErrorType(String error) {
         this.error = error;	
     }
 
@@ -21,8 +24,8 @@ public enum ErrorType {
         return this.error;
     }
     
-    public static ErrorType fromErrorType(final String errorTypeString) {
-        for (final ErrorType et : values()) {
+    public static StructuralObsErrorType fromErrorType(final String errorTypeString) {
+        for (final StructuralObsErrorType et : values()) {
             if (et.getErrorType().equals(errorTypeString)) {
                 return et;
             }

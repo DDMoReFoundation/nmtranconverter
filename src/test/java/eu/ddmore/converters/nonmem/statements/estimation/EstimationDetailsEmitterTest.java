@@ -1,7 +1,7 @@
 /*******************************************************************************
  * Copyright (C) 2015 Mango Solutions Ltd - All rights reserved.
  ******************************************************************************/
-package eu.ddmore.converters.nonmem.statements;
+package eu.ddmore.converters.nonmem.statements.estimation;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -23,8 +23,11 @@ import org.mockito.Mock;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 
 import crx.converter.spi.steps.EstimationStep;
-import eu.ddmore.converters.nonmem.statements.EstimationStatementBuilder.EstConstant;
-import eu.ddmore.converters.nonmem.statements.EstimationStatementBuilder.Method;
+import eu.ddmore.converters.nonmem.statements.BasicTestSetup;
+import eu.ddmore.converters.nonmem.statements.estimation.CovStatementBuilder;
+import eu.ddmore.converters.nonmem.statements.estimation.EstimationDetailsEmitter;
+import eu.ddmore.converters.nonmem.statements.estimation.EstimationStatementBuilder.EstConstant;
+import eu.ddmore.converters.nonmem.statements.estimation.EstimationStatementBuilder.Method;
 import eu.ddmore.converters.nonmem.utils.DiscreteHandler;
 import eu.ddmore.converters.nonmem.utils.Formatter;
 import eu.ddmore.converters.nonmem.utils.ScriptDefinitionAccessor;

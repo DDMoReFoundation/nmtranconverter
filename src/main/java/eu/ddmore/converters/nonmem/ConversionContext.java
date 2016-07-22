@@ -23,9 +23,10 @@ import eu.ddmore.converters.nonmem.parameters.CorrelationHandler;
 import eu.ddmore.converters.nonmem.parameters.ParametersBuilder;
 import eu.ddmore.converters.nonmem.parameters.ParametersInitialiser;
 import eu.ddmore.converters.nonmem.statements.DataSetHandler;
-import eu.ddmore.converters.nonmem.statements.EstimationDetailsEmitter;
-import eu.ddmore.converters.nonmem.statements.InputColumnsHandler;
-import eu.ddmore.converters.nonmem.statements.InterOccVariabilityHandler;
+import eu.ddmore.converters.nonmem.statements.estimation.EstimationDetailsEmitter;
+import eu.ddmore.converters.nonmem.statements.input.InputColumnsHandler;
+import eu.ddmore.converters.nonmem.statements.input.InterOccVariabilityHandler;
+import eu.ddmore.converters.nonmem.statements.model.ModelStatementHelper;
 import eu.ddmore.converters.nonmem.utils.DiscreteHandler;
 import eu.ddmore.converters.nonmem.utils.Formatter;
 import eu.ddmore.converters.nonmem.utils.Formatter.NmConstant;
@@ -59,6 +60,7 @@ public class ConversionContext {
     private final InputColumnsHandler inputColumnsHandler;
     private final DataSetHandler dataSetHandler;
     private final ParametersInitialiser parameterInitialiser;
+    private final ModelStatementHelper modelStatementHelper;
 
     ConversionContext(File srcFile, IParser parser, ILexer lexer) throws IOException{
         Preconditions.checkNotNull(srcFile, "source file cannot be null");
@@ -89,6 +91,7 @@ public class ConversionContext {
 
         this.conditionalEventHandler = new ConditionalEventHandler(this);
         this.muReferenceHandler = new MuReferenceHandler(this);
+        this.modelStatementHelper = new ModelStatementHelper(this);
 
         initialise();
     }
@@ -273,5 +276,10 @@ public class ConversionContext {
     
     public List<ColumnMapping> getColumnMappings() {
         return dataSetHandler.getColumnMappings();
+    }
+
+    
+    public ModelStatementHelper getModelStatementHelper() {
+        return modelStatementHelper;
     }
 }

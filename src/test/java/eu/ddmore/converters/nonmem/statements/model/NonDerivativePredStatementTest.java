@@ -11,6 +11,7 @@ import org.junit.Test;
 import org.mockito.Mock;
 
 import eu.ddmore.converters.nonmem.statements.BasicTestSetup;
+import eu.ddmore.converters.nonmem.statements.error.ErrorStatementHandler;
 import eu.ddmore.converters.nonmem.utils.Formatter;
 
 /**

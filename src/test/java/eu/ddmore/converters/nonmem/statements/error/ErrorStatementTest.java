@@ -1,7 +1,7 @@
 /*******************************************************************************
  * Copyright (C) 2015 Mango Solutions Ltd - All rights reserved.
  ******************************************************************************/
-package eu.ddmore.converters.nonmem.statements;
+package eu.ddmore.converters.nonmem.statements.error;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -21,7 +21,10 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 
-import eu.ddmore.converters.nonmem.statements.ErrorStatement.FunctionArg;
+import eu.ddmore.converters.nonmem.statements.BasicTestSetup;
+import eu.ddmore.converters.nonmem.statements.error.StructuralObsErrorType;
+import eu.ddmore.converters.nonmem.statements.error.StructuralObsErrorStatement;
+import eu.ddmore.converters.nonmem.statements.error.StructuralObsErrorStatement.FunctionArg;
 import eu.ddmore.converters.nonmem.utils.ScalarValueHandler;
 import eu.ddmore.libpharmml.dom.commontypes.IntValue;
 import eu.ddmore.libpharmml.dom.commontypes.SymbolRef;
@@ -48,13 +51,14 @@ public class ErrorStatementTest extends BasicTestSetup {
 
     Integer value = new Integer("1");
     String output = "outputVariablePlaceHolder";
-    ErrorStatement errorStatement;
+    String epsilonVar = "EPS_Y";
+    StructuralObsErrorStatement errorStatement;
     List<FunctionArgument> args = new ArrayList<FunctionArgument>();
 
     @Before
     public void setUp() throws Exception {
         mockStatic(ScalarValueHandler.class);
-        when(symbolRef.getSymbIdRef()).thenReturn(ErrorType.COMBINED_ERROR_1.getErrorType());
+        when(symbolRef.getSymbIdRef()).thenReturn(StructuralObsErrorType.COMBINED_ERROR_1.getErrorType());
         when(functionCallType.getSymbRef()).thenReturn(symbolRef);
 
         additiveArg = mock(FunctionArgument.class,RETURNS_DEEP_STUBS);
@@ -78,7 +82,7 @@ public class ErrorStatementTest extends BasicTestSetup {
     @Test
     public void shouldGetFunctionArgumentDetails() {
 
-        errorStatement = new ErrorStatement(functionCallType, output);
+        errorStatement = new StructuralObsErrorStatement(functionCallType, output, epsilonVar, true);
 
         assertNotNull("Function name should not be null", errorStatement.getFunctionName());
 
@@ -86,7 +90,7 @@ public class ErrorStatementTest extends BasicTestSetup {
         assertEquals("Should return expected function name", RUV_PROP_VAR, errorStatement.getProportional());
         assertEquals("Should return expected function name", OUTPUT_VAR, errorStatement.getFunctionName());
 
-        assertEquals("Should return expected function name", ErrorType.COMBINED_ERROR_1.getErrorType(), errorStatement.getErrorType());
+        assertEquals("Should return expected function name", StructuralObsErrorType.COMBINED_ERROR_1.getErrorType(), errorStatement.getErrorType());
     }
 
     @Test
@@ -98,7 +102,7 @@ public class ErrorStatementTest extends BasicTestSetup {
 
         when(val.getValue()).thenReturn(value);
 
-        errorStatement = new ErrorStatement(functionCallType, output);
+        errorStatement = new StructuralObsErrorStatement(functionCallType, output, epsilonVar, true);
 
         assertNotNull("Function name should not be null", errorStatement.getFunctionName());
 
@@ -106,7 +110,7 @@ public class ErrorStatementTest extends BasicTestSetup {
         assertEquals("Should return expected function name", "0.0", errorStatement.getProportional());
         assertEquals("Should return expected function name", OUTPUT_VAR, errorStatement.getFunctionName());
 
-        assertEquals("Should return expected function name", ErrorType.COMBINED_ERROR_1.getErrorType(), errorStatement.getErrorType());
+        assertEquals("Should return expected function name", StructuralObsErrorType.COMBINED_ERROR_1.getErrorType(), errorStatement.getErrorType());
     }
 
 }

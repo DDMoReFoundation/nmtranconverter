@@ -18,14 +18,15 @@ import eu.ddmore.converters.nonmem.LocalParserHelper;
 import eu.ddmore.converters.nonmem.eta.Eta;
 import eu.ddmore.converters.nonmem.parameters.OmegaBlock;
 import eu.ddmore.converters.nonmem.statements.DiffEquationStatementBuilder;
-import eu.ddmore.converters.nonmem.statements.EstimationDetailsEmitter;
 import eu.ddmore.converters.nonmem.statements.InitConditionBuilder;
-import eu.ddmore.converters.nonmem.statements.InputColumn;
+import eu.ddmore.converters.nonmem.statements.estimation.EstimationDetailsEmitter;
+import eu.ddmore.converters.nonmem.statements.input.InputColumn;
 import eu.ddmore.converters.nonmem.statements.pkmacro.PkMacroAnalyser;
 import eu.ddmore.converters.nonmem.statements.pkmacro.PkMacrosEmitter;
 import eu.ddmore.converters.nonmem.statements.pkmacro.PkMacroAnalyser.AdvanType;
 import eu.ddmore.converters.nonmem.statements.pkmacro.PkMacroAnalyser.PkMacroDetails;
 import eu.ddmore.converters.nonmem.utils.Formatter;
+import eu.ddmore.converters.nonmem.utils.Formatter.Block;
 import eu.ddmore.libpharmml.dom.commontypes.DerivativeVariable;
 import eu.ddmore.libpharmml.dom.commontypes.VariableDefinition;
 import eu.ddmore.libpharmml.dom.dataset.ColumnMapping;
@@ -41,20 +42,20 @@ public class ContinuousStatement {
     private static final int TOL_VALUE_IF_SAEM = 6;
     private static final String DEFDOSE = "DEFDOSE";
 
-    private final ModelStatementHelper statementHelper;
+    private final ConversionContext context;
     private PkMacrosEmitter pkMacroEquationsEmitter;
     private PkMacroDetails pkMacroDetails;
 
-    public ContinuousStatement(ModelStatementHelper statementHelper){
-        Preconditions.checkNotNull(statementHelper,"model statement helper cannot be null");
-        this.statementHelper = statementHelper;
+    public ContinuousStatement(ConversionContext context){
+        Preconditions.checkNotNull(context,"model statement helper cannot be null");
+        this.context = context;
         initialise();
     }
 
     private void initialise(){
         PkMacroAnalyser analyser = new PkMacroAnalyser();
-        pkMacroDetails = analyser.analyse(statementHelper.getContext());
-        pkMacroEquationsEmitter = new PkMacrosEmitter(statementHelper.getContext(), pkMacroDetails);
+        pkMacroDetails = analyser.analyse(context);
+        pkMacroEquationsEmitter = new PkMacrosEmitter(context, pkMacroDetails);
     }
 
     /**
@@ -65,7 +66,7 @@ public class ContinuousStatement {
     public StringBuilder buildContinuousStatement(){
         StringBuilder continuousStatement = new StringBuilder();
         if(pkMacroDetails.getMacroAdvanType().equals(AdvanType.NONE)){
-            EstimationDetailsEmitter emitter = statementHelper.getContext().getEstimationEmitter();
+            EstimationDetailsEmitter emitter = context.getEstimationEmitter();
             int tolValue = (emitter.isSAEM())? TOL_VALUE_IF_SAEM:TOL_VALUE_IF_NOT_SAEM;
             if(StringUtils.isNotEmpty(emitter.getTolValue().trim())){
                 tolValue = Integer.parseInt(emitter.getTolValue());
@@ -93,18 +94,18 @@ public class ContinuousStatement {
         advanblock.append(Formatter.error());
         advanblock.append(pkMacroEquationsEmitter.getMacroEquation());
         advanblock.append(buildStructuralModelVarDefinitions());
-        advanblock.append(statementHelper.getErrorStatementHandler().getErrorStatement());
+        advanblock.append(context.getModelStatementHelper().getErrorStatementHandler().getErrorStatement());
         return advanblock;
     }
 
     private StringBuilder buildStructuralModelVarDefinitions() {
         StringBuilder builder = new StringBuilder();
-        if(!statementHelper.getContext().getScriptDefinition().getStructuralBlocks().isEmpty()){
-            for(StructuralBlock block : statementHelper.getContext().getScriptDefinition().getStructuralBlocks()){
+        if(!context.getScriptDefinition().getStructuralBlocks().isEmpty()){
+            for(StructuralBlock block : context.getScriptDefinition().getStructuralBlocks()){
                 Map<String, String> allVarDefinitions = new HashMap<String, String>();
                 for (VariableDefinition definitionType: block.getLocalVariables()){
                     String variable = definitionType.getSymbId().toUpperCase();
-                    String rhs = statementHelper.getContext().getLocalParserHelper().parse(definitionType);
+                    String rhs = context.getLocalParserHelper().parse(definitionType);
                     allVarDefinitions.put(variable, rhs);
                     builder.append(rhs);
                 }
@@ -123,10 +124,10 @@ public class ContinuousStatement {
             derivativePredblock.append(pkMacroEquationsEmitter.getPkMacroEquations());
         }
         derivativePredblock.append(buildDifferentialInitialConditions());
-        DiffEquationStatementBuilder desBuilder = statementHelper.getDiffEquationStatement(derivativePredblock);
+        DiffEquationStatementBuilder desBuilder = context.getModelStatementHelper().getDiffEquationStatement(derivativePredblock);
         //TODO: getAESStatement();
         derivativePredblock.append(Formatter.endline()+Formatter.error());
-        derivativePredblock.append(statementHelper.getErrorStatementHandler().getErrorStatement(desBuilder));
+        derivativePredblock.append(context.getModelStatementHelper().getErrorStatementHandler().getErrorStatement(desBuilder));
 
         return derivativePredblock;
     }
@@ -138,9 +139,9 @@ public class ContinuousStatement {
      */
     private StringBuilder buildDifferentialInitialConditions(){
         StringBuilder builder = new StringBuilder();
-        if(!statementHelper.getContext().getScriptDefinition().getStructuralBlocks().isEmpty()){
+        if(!context.getScriptDefinition().getStructuralBlocks().isEmpty()){
             InitConditionBuilder initBuilder = new InitConditionBuilder();
-            builder = initBuilder.getDifferentialInitialConditions(statementHelper.getContext().getScriptDefinition().getStructuralBlocks());
+            builder = initBuilder.getDifferentialInitialConditions(context.getScriptDefinition().getStructuralBlocks());
         }
         return builder;
     }
@@ -156,7 +157,6 @@ public class ContinuousStatement {
 
         modelBlock.append(Formatter.endline());
         modelBlock.append(Formatter.model());
-        ConversionContext context = statementHelper.getContext();
 
         for(InputColumn column : context.getInputColumnsHandler().getInputColumnsProvider().getInputHeaders()){
             if(column.getColumnType().equals(ColumnType.CMT)){
@@ -186,12 +186,12 @@ public class ContinuousStatement {
     }
 
     private String getDoseColumnRelatedColumnMappingSymbol(InputColumn doseColumn) {
-        for(ColumnMapping columnMapping :statementHelper.getContext().getColumnMappings()){
+        for(ColumnMapping columnMapping :context.getColumnMappings()){
             if(doseColumn.getColumnId().equals(columnMapping.getColumnRef().getColumnIdRef())){
                 if(columnMapping.getSymbRef()!=null && columnMapping.getSymbRef().getSymbIdRef()!=null ){
                     return columnMapping.getSymbRef().getSymbIdRef().trim();
                 }else if(columnMapping.getPiecewise()!=null){
-                    LocalParserHelper localParser = new LocalParserHelper(statementHelper.getContext());
+                    LocalParserHelper localParser = new LocalParserHelper(context);
                     ExpressionValue value = columnMapping.getPiecewise().getListOfPiece().get(0).getValue();
                     String columnMappingSymbol = localParser.getParsedValueForExpressionValue(value);
                     return columnMappingSymbol.trim();
@@ -206,7 +206,7 @@ public class ContinuousStatement {
         abbrStatement.append(Formatter.endline());
         int prevBlockValue = 0;
 
-        for(OmegaBlock omegaBlock : statementHelper.getContext().getCorrelationHandler().getOmegaBlocksInIOV()){
+        for(OmegaBlock omegaBlock : context.getCorrelationHandler().getOmegaBlocksInIOV()){
             abbrStatement.append(Formatter.endline());
             Set<Eta> etas =  omegaBlock.getOrderedEtas();
             int iovEtasCount = etas.size();
@@ -216,8 +216,8 @@ public class ContinuousStatement {
                 int etaOrder = (isFirstBlock)?iovEta.getOrder():++prevBlockValue;
                 StringBuilder etaValues = new StringBuilder();
                 prevBlockValue = getIovEtaValueForAbbr(iovEtasCount, etaOrder, etaValues);
-                String nextAbbr = Formatter.abbr()+"REPLACE "+Formatter.etaFor(iovEta.getEtaOrderSymbol());
-                abbrStatement.append(Formatter.endline(nextAbbr+"="+Formatter.etaFor(etaValues.toString())));
+                String nextAbbr = Formatter.abbr()+"REPLACE "+Formatter.buildEffectOrderSymbolFor(Block.ETA, iovEta.getEtaOrderSymbol());
+                abbrStatement.append(Formatter.endline(nextAbbr+"="+Formatter.buildEffectOrderSymbolFor(Block.ETA, etaValues.toString())));
             }
         }
         return abbrStatement;
@@ -240,7 +240,7 @@ public class ContinuousStatement {
      */
     private int getIovEtaValueForAbbr(int iovEtasCount, int etaOrder, StringBuilder etaValues) {
         int etaVal = 0;
-        int uniqueOccValuesCount = statementHelper.getContext().getIovHandler().getIovColumnUniqueValues().size();
+        int uniqueOccValuesCount = context.getIovHandler().getIovColumnUniqueValues().size();
         for(int i=0;i<uniqueOccValuesCount;i++){
             etaVal = i*iovEtasCount+etaOrder;
             etaValues.append(etaVal);
@@ -258,8 +258,8 @@ public class ContinuousStatement {
         StringBuilder pkStatementBlock = new StringBuilder();
         pkStatementBlock.append(Formatter.endline());
         pkStatementBlock.append(Formatter.pk());
-        pkStatementBlock.append(statementHelper.getPredCoreStatement().getStatement());
-        pkStatementBlock.append(statementHelper.getAllIndividualParamAssignments());
+        pkStatementBlock.append(context.getModelStatementHelper().getPredCoreStatement().getStatement());
+        pkStatementBlock.append(context.getModelStatementHelper().getAllIndividualParamAssignments());
         return new StringBuilder(pkStatementBlock.toString().toUpperCase());
     }
 }
