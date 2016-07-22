@@ -5,11 +5,11 @@
 	<parent>
 		<groupId>eu.ddmore</groupId>
 		<artifactId>converter-parent</artifactId>
-		<version>1.5.0-SNAPSHOT</version>
+		<version>1.4.0-SNAPSHOT</version>
 	</parent>
 	<modelVersion>4.0.0</modelVersion>
 	<artifactId>converter-nonmem</artifactId>
-	<version>0.4.0-SNAPSHOT</version>
+	<version>0.5.0-SNAPSHOT</version>
 	<name>PharmML to Nonmem Converter</name>
 	<description>PharmML to Nonmem Converter</description>
 
@@ -59,7 +59,7 @@
 		<dependency>
 			<groupId>eu.ddmore.testdata</groupId>
 			<artifactId>test-models</artifactId>
-			<version>0.4.0-SNAPSHOT</version>
+			<version>0.5.0-SNAPSHOT</version>
 			<scope>test</scope>
 		</dependency>
 
