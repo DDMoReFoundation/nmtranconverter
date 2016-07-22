@@ -61,7 +61,7 @@ public class PkMacroAnalyser {
     public PkMacroDetails analyse(ConversionContext context) {
         Preconditions.checkNotNull(context, "Conversion Context cannot be null");
         PkMacroDetails details = processPkMacros(context);
-        if(!details.isEmpty() ){ //&& context.getDerivativeVars().isEmpty()
+        if(!details.isEmpty() ){
             details.setMacroAdvanType(captureAdvanType(details));
         }
         return details;
@@ -146,9 +146,13 @@ public class PkMacroAnalyser {
     @VisibleForTesting
     AdvanType captureAdvanType(PkMacroDetails details) {
 
+        /*
+         * TODO: We need to get next version of libpharmml-pkmacro (0.2.2), 
+         * where pkmacro-derivative vars and non-pkmacro derivative vars are differentiated. 
+         * Then this can be enabled to throw exception when non-pkmacro derivative vars are not present.
         if(details.getCompartments().isEmpty() || details.getEliminations().isEmpty()){
             throw new IllegalArgumentException("The compartment missing from pk macro specified");
-        }
+        }*/
 
         AdvanType advanType = AdvanType.NONE;
         if(details.getCompartments().size()>1){
