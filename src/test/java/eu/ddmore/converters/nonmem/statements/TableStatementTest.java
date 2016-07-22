@@ -53,7 +53,7 @@ public class TableStatementTest extends BasicTestSetup {
     private TableStatement statement;
 
     String expectedTableStatement = Formatter.endline()+
-            Formatter.endline("$TABLE  ID TIME NM_PRED RES WRES DV NM_IPRED NM_IRES NM_IWRES NM_Y NOAPPEND NOPRINT FILE=sdtab")+
+            Formatter.endline("$TABLE  ID TIME PRED RES WRES DV IPRED IRES IWRES Y NOAPPEND NOPRINT FILE=sdtab")+
             Formatter.endline()+Formatter.endline("$TABLE  ID "+CL+" "+ETA_CL +" NOAPPEND NOPRINT FILE=patab")+
             Formatter.endline()+Formatter.endline("$TABLE  ID "+TWT+" NOAPPEND NOPRINT FILE=catab")+
             Formatter.endline()+Formatter.endline("$TABLE  ID "+LOGTWT+" NOAPPEND NOPRINT FILE=cotab");
@@ -101,7 +101,7 @@ public class TableStatementTest extends BasicTestSetup {
 
     @Test
     public void shouldGetTableStatementWhenNoColumnsAvailable() {
-        String expectedDefaultTableStatement = Formatter.endline()+Formatter.endline("$TABLE  ID TIME NM_PRED RES WRES DV NM_IPRED NM_IRES NM_IWRES NM_Y NOAPPEND NOPRINT FILE=sdtab");
+        String expectedDefaultTableStatement = Formatter.endline()+Formatter.endline("$TABLE  ID TIME PRED RES WRES DV IPRED IRES IWRES Y NOAPPEND NOPRINT FILE=sdtab");
 
         statement = new TableStatement(context);
         assertNotNull("should return table statement", statement.getStatements());

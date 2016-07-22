@@ -17,13 +17,16 @@ import crx.converter.tree.TreeMaker;
 import eu.ddmore.converters.nonmem.ConversionContext;
 import eu.ddmore.converters.nonmem.LocalParserHelper;
 import eu.ddmore.converters.nonmem.statements.DiffEquationStatementBuilder;
+import eu.ddmore.converters.nonmem.utils.Formatter;
 import eu.ddmore.converters.nonmem.utils.ScriptDefinitionAccessor;
+import eu.ddmore.converters.nonmem.utils.Formatter.Block;
 import eu.ddmore.libpharmml.dom.commontypes.PharmMLElement;
 import eu.ddmore.libpharmml.dom.commontypes.SymbolRef;
 import eu.ddmore.libpharmml.dom.maths.FunctionCallType;
 import eu.ddmore.libpharmml.dom.modeldefn.ContinuousObservationModel;
 import eu.ddmore.libpharmml.dom.modeldefn.GeneralObsError;
 import eu.ddmore.libpharmml.dom.modeldefn.ObservationError;
+import eu.ddmore.libpharmml.dom.modeldefn.ParameterRandomVariable;
 import eu.ddmore.libpharmml.dom.modeldefn.StructuredObsError;
 import eu.ddmore.libpharmml.dom.modeldefn.StructuredObsError.ErrorModel;
 
@@ -102,6 +105,20 @@ public class ErrorStatementHandler {
         return getErrorStatement(null);
     }
 
+    private StringBuilder buildEpsilonDefinitions() {
+        Integer order = 1;
+        StringBuilder epsilonVarDefinitions = new StringBuilder();
+        for(ParameterRandomVariable randomVariable : 
+            ScriptDefinitionAccessor.getEpsilonRandomVariables(context.getScriptDefinition())){
+            if(StringUtils.isNotEmpty(randomVariable.getSymbId())){
+                String equation = Formatter.buildEffectsDefinitionFor(Block.EPS, randomVariable.getSymbId(), (order++).toString());
+                epsilonVarDefinitions.append(equation);
+            }
+        }
+        epsilonVarDefinitions.append(Formatter.endline());
+        return epsilonVarDefinitions;
+    }
+
     /**
      * Gets Error statement for nonmem pred block.
      * This block will rename function name if it is already defined in DES and also redefine it in ERROR block.
@@ -111,7 +128,11 @@ public class ErrorStatementHandler {
      */
     public String getErrorStatement(DiffEquationStatementBuilder desBuilder) {
 
+
         StringBuilder errorBlock = new StringBuilder();
+
+        errorBlock.append(buildEpsilonDefinitions());
+
         if(desBuilder!=null){
             errorBlock.append(desBuilder.getVariableDefinitionsStatement(desBuilder.getAllVarDefinitions()));
         }

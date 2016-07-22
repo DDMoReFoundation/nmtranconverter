@@ -125,7 +125,7 @@ public class TableStatement {
         Set<String> columnNames = getColumnNamesForStabFromErrorDetails();
 
         for(String columnName : columnNames){
-            stdTable.append(SPACE+Formatter.getReservedParam(columnName));
+            stdTable.append(SPACE+columnName);
         }
         return stdTable;
     }

@@ -25,7 +25,6 @@ import eu.ddmore.converters.nonmem.utils.ScriptDefinitionAccessor;
 import eu.ddmore.libpharmml.dom.modeldefn.ContinuousCovariate;
 import eu.ddmore.libpharmml.dom.modeldefn.CovariateDefinition;
 import eu.ddmore.libpharmml.dom.modeldefn.CovariateTransformation;
-import eu.ddmore.libpharmml.dom.modeldefn.ParameterRandomVariable;
 import eu.ddmore.libpharmml.dom.modeldefn.PopulationParameter;
 
 /**
@@ -58,25 +57,10 @@ public class PredCoreStatement {
         }else{
             predCoreBlock.append(buildEtaAssignments()+Formatter.endline());
         }
-        predCoreBlock.append(buildEpsilonDefinitions());
         predCoreBlock.append(getTransformedCovStatement());
         predCoreBlock.append(getSimpleParamAssignments()+Formatter.endline());
 
         return predCoreBlock;
-    }
-
-    private StringBuilder buildEpsilonDefinitions() {
-        Integer order = 1;
-        StringBuilder epsilonVarDefinitions = new StringBuilder();
-        for(ParameterRandomVariable randomVariable : 
-            ScriptDefinitionAccessor.getEpsilonRandomVariables(context.getScriptDefinition())){
-            if(StringUtils.isNotEmpty(randomVariable.getSymbId())){
-                String equation = Formatter.buildEffectsDefinitionFor(Block.EPS, randomVariable.getSymbId(), (order++).toString());
-                epsilonVarDefinitions.append(equation);
-            }
-        }
-        epsilonVarDefinitions.append(Formatter.endline());
-        return epsilonVarDefinitions;
     }
 
     /**

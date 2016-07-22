@@ -94,9 +94,9 @@ public class ErrorStatementHandlerTest extends BasicTestSetup {
     @Test
     public void shouldGetErrorStatementWithNoParameters() throws Exception {
         errorStatementHandler = new ErrorStatementHandler(context);
-        String errorStatement = errorStatementHandler.getErrorStatement();
+        String errorStatement = errorStatementHandler.getErrorStatement().trim();
         assertNotNull("Error statement should not be null", errorStatement);
-        assertEquals("expected Error statement should be returned",ERROR_STATEMENT_CONTENT, errorStatement);
+        assertEquals("expected Error statement should be returned",ERROR_STATEMENT_CONTENT.trim(), errorStatement);
     }
 
     private void setUpForErrorStatementWithDes(){
@@ -107,7 +107,7 @@ public class ErrorStatementHandlerTest extends BasicTestSetup {
     public void shouldGetErrorStatementWithDes(){
         setUpForErrorStatementWithDes();
         errorStatementHandler = new ErrorStatementHandler(context);
-        String errorStatement = errorStatementHandler.getErrorStatement(desBuilder);
+        String errorStatement = errorStatementHandler.getErrorStatement(desBuilder).trim();
         assertNotNull("Error statement should not be null", errorStatement) ;
         assertEquals("expected Error statement should be returned",varDefStatementString+ERROR_STATEMENT_CONTENT, errorStatement);
     }
@@ -125,8 +125,8 @@ public class ErrorStatementHandlerTest extends BasicTestSetup {
     public void shouldGetErrorStatementWithMultipleDV(){
         multipleDVSetup();
         errorStatementHandler = new ErrorStatementHandler(context);
-        String errorStatement = errorStatementHandler.getErrorStatement();
+        String errorStatement = errorStatementHandler.getErrorStatement().trim();
         assertNotNull("Error statement should not be null", errorStatement);
-        assertEquals("expected Error statement should be returned",ERROR_STATEMENT_CONTENT, errorStatement);
+        assertEquals("expected Error statement should be returned",ERROR_STATEMENT_CONTENT.trim(), errorStatement);
     }
 }
