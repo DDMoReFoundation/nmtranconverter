@@ -1,7 +1,7 @@
 /*******************************************************************************
  * Copyright (C) 2016 Mango Solutions Ltd - All rights reserved.
  ******************************************************************************/
-package eu.ddmore.converters.nonmem.statements;
+package eu.ddmore.converters.nonmem.statements.estimation;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -10,6 +10,8 @@ import static org.junit.Assert.assertNotNull;
 import org.junit.Before;
 import org.junit.Test;
 
+import eu.ddmore.converters.nonmem.statements.BasicTestSetup;
+import eu.ddmore.converters.nonmem.statements.estimation.CovStatementBuilder;
 import eu.ddmore.converters.nonmem.utils.Formatter;
 
 /**

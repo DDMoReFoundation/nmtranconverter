@@ -1,26 +1,27 @@
 /*******************************************************************************
  * Copyright (C) 2015 Mango Solutions Ltd - All rights reserved.
  ******************************************************************************/
-package eu.ddmore.converters.nonmem.statements;
+package eu.ddmore.converters.nonmem.statements.error;
 
 import com.google.common.base.Preconditions;
 
-import eu.ddmore.converters.nonmem.statements.ErrorStatement.ErrorConstant;
+import eu.ddmore.converters.nonmem.statements.error.StructuralObsErrorStatement.ErrorConstant;
 import eu.ddmore.converters.nonmem.utils.Formatter;
 
 /**
- * Error statement emmitter uses error statement properties and create error statement for error type specified.
+ * Error statement emmitter uses structural observation error statement properties and create error statement for error type specified.
  */
-public class ErrorStatementEmitter {
-    private final ErrorStatement error;
-    private final String DEFAULT_Y = ErrorConstant.IPRED+"+"+ErrorConstant.W+"*EPS(1)";
+public class StructuralObsErrorStatementEmitter {
+    private final StructuralObsErrorStatement error;
+    private final String DEFAULT_Y = ErrorConstant.IPRED+"+"+ErrorConstant.W;
     private final String DEFAULT_WEIGHT = " "+ErrorConstant.W;
     private final String DEFAULT_IRES = ErrorConstant.DV+" - "+ErrorConstant.IPRED;
     private final String DEFAULT_IWRES = ErrorConstant.IRES+"/"+ErrorConstant.W;
 
-    public ErrorStatementEmitter(ErrorStatement errorStatement){
-        Preconditions.checkNotNull(errorStatement, "Error statement cannot be null");
-        this.error = errorStatement; 
+    public StructuralObsErrorStatementEmitter(ErrorStatement error){
+        Preconditions.checkNotNull(error, "Error statement cannot be null");
+        Preconditions.checkArgument(error.isStructuralObsError(), "Error statement should be structural observation error type");
+        this.error = (StructuralObsErrorStatement) error;
     }
 
     /**
@@ -29,13 +30,12 @@ public class ErrorStatementEmitter {
      * @return {@link StringBuilder} containing the text for the error statement block
      */
     public StringBuilder getErrorStatementDetails() {
-        final ErrorType errorType = ErrorType.fromErrorType(error.getErrorType());
+        final StructuralObsErrorType errorType = StructuralObsErrorType.fromErrorType(error.getErrorType());
         switch (errorType) {
 
         case COMBINED_ERROR_1 :
             return createErrorStatement(
-                error.getAdditive() + "+" + error.getProportional() + "*" + ErrorConstant.IPRED
-                    );
+                error.getAdditive() + "+" + error.getProportional() + "*" + ErrorConstant.IPRED);
 
         case COMBINED_ERROR_2 :
         {
@@ -102,7 +102,7 @@ public class ErrorStatementEmitter {
 
         errorModel.append(ErrorConstant.IPRED   +" = "+ addStatement(iPred,error.getFunctionName()));
         errorModel.append(ErrorConstant.W       +" = "+ addStatement(weight,DEFAULT_WEIGHT));
-        errorModel.append(ErrorConstant.Y       +" = "+ Formatter.endline(DEFAULT_Y));
+        errorModel.append(ErrorConstant.Y       +" = "+ Formatter.endline(DEFAULT_Y+"*"+error.getEpsilonVariable()));
         errorModel.append(ErrorConstant.IRES    +" = "+ Formatter.endline(DEFAULT_IRES));
         errorModel.append(ErrorConstant.IWRES   +" = "+ Formatter.endline(DEFAULT_IWRES));
 

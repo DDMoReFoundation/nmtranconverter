@@ -1,7 +1,7 @@
 /*******************************************************************************
  * Copyright (C) 2015 Mango Solutions Ltd - All rights reserved.
  ******************************************************************************/
-package eu.ddmore.converters.nonmem.statements;
+package eu.ddmore.converters.nonmem.statements.estimation;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -12,6 +12,9 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 
+import eu.ddmore.converters.nonmem.statements.BasicTestSetup;
+import eu.ddmore.converters.nonmem.statements.estimation.EstimationDetailsEmitter;
+import eu.ddmore.converters.nonmem.statements.estimation.EstimationStatement;
 import eu.ddmore.converters.nonmem.utils.Formatter;
 
 public class EstimationStatementTest extends BasicTestSetup {

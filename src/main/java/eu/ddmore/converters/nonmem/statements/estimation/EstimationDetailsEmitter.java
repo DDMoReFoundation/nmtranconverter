@@ -1,7 +1,7 @@
 /*******************************************************************************
  * Copyright (C) 2015 Mango Solutions Ltd - All rights reserved.
  ******************************************************************************/
-package eu.ddmore.converters.nonmem.statements;
+package eu.ddmore.converters.nonmem.statements.estimation;
 
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -44,7 +44,6 @@ public class EstimationDetailsEmitter {
         this.discreteHandler = discreteHandler;
         estimationSteps = ScriptDefinitionAccessor.getEstimationSteps(scriptDefinition);
         initialise();
-
     }
 
     /**

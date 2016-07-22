@@ -1,7 +1,7 @@
 /*******************************************************************************
  * Copyright (C) 2015 Mango Solutions Ltd - All rights reserved.
  ******************************************************************************/
-package eu.ddmore.converters.nonmem.statements;
+package eu.ddmore.converters.nonmem.statements.error;
 
 import com.google.common.base.Preconditions;
 
@@ -10,9 +10,9 @@ import eu.ddmore.libpharmml.dom.maths.FunctionCallType;
 import eu.ddmore.libpharmml.dom.maths.FunctionCallType.FunctionArgument;
 
 /**
- * Initialises and stores error statement and related information for nmtran
+ * Initialises and stores structural observation error statement and related information for nmtran
  */
-public class ErrorStatement {
+public class StructuralObsErrorStatement extends ErrorStatement {
 
     public enum ErrorConstant{
         DV,	IWRES, IRES, IPRED, Y, W;
@@ -37,12 +37,16 @@ public class ErrorStatement {
     private FunctionCallType functionCallType = null;
     private String functionName = new String();
     private String errorType = new String();
+    private String epsilonVariable = new String();
 
-    public ErrorStatement(FunctionCallType functionCallType, String output){
+    public StructuralObsErrorStatement(FunctionCallType functionCallType, String output, String epsilonVar, boolean isStructuralObsError){
+        super(isStructuralObsError);
         Preconditions.checkNotNull(functionCallType, "functional call type cannot be null");
 
         this.functionCallType = functionCallType;
+        this.epsilonVariable = epsilonVar;
         initParamsFromFunctionDetails(output);
+        populateErrorStatement();
     }
 
     /**
@@ -87,6 +91,11 @@ public class ErrorStatement {
         return paramValue;
     }
 
+    private void populateErrorStatement(){
+        StructuralObsErrorStatementEmitter statementEmitter = new StructuralObsErrorStatementEmitter(this);
+        super.setErrorStatement(statementEmitter.getErrorStatementDetails());
+    }
+
     public String getFunctionName() {
         return functionName;
     }
@@ -105,5 +114,13 @@ public class ErrorStatement {
 
     public String getErrorType() {
         return errorType;
+    }
+
+    public String getEpsilonVariable() {
+        return epsilonVariable;
+    }
+
+    public void setEpsilonVariable(String epsilonVariable) {
+        this.epsilonVariable = epsilonVariable;
     }
 }

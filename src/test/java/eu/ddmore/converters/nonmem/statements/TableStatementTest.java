@@ -22,6 +22,8 @@ import crx.converter.spi.blocks.ParameterBlock;
 
 import eu.ddmore.converters.nonmem.ConversionContext;
 import eu.ddmore.converters.nonmem.eta.Eta;
+import eu.ddmore.converters.nonmem.statements.input.InputColumn;
+import eu.ddmore.converters.nonmem.statements.input.InputColumnsProvider;
 import eu.ddmore.converters.nonmem.utils.Formatter;
 import eu.ddmore.libpharmml.dom.dataset.ColumnType;
 import eu.ddmore.libpharmml.dom.modeldefn.IndividualParameter;
@@ -51,7 +53,7 @@ public class TableStatementTest extends BasicTestSetup {
     private TableStatement statement;
 
     String expectedTableStatement = Formatter.endline()+
-            Formatter.endline("$TABLE  ID TIME PRED IPRED RES IRES WRES IWRES Y DV NOAPPEND NOPRINT FILE=sdtab")+
+            Formatter.endline("$TABLE  ID TIME NM_PRED RES WRES DV NM_IPRED NM_IRES NM_IWRES NM_Y NOAPPEND NOPRINT FILE=sdtab")+
             Formatter.endline()+Formatter.endline("$TABLE  ID "+CL+" "+ETA_CL +" NOAPPEND NOPRINT FILE=patab")+
             Formatter.endline()+Formatter.endline("$TABLE  ID "+TWT+" NOAPPEND NOPRINT FILE=catab")+
             Formatter.endline()+Formatter.endline("$TABLE  ID "+LOGTWT+" NOAPPEND NOPRINT FILE=cotab");
@@ -99,11 +101,10 @@ public class TableStatementTest extends BasicTestSetup {
 
     @Test
     public void shouldGetTableStatementWhenNoColumnsAvailable() {
-        String expectedDefaultTableStatement = Formatter.endline()+Formatter.endline("$TABLE  ID TIME PRED IPRED RES IRES WRES IWRES Y DV NOAPPEND NOPRINT FILE=sdtab");
+        String expectedDefaultTableStatement = Formatter.endline()+Formatter.endline("$TABLE  ID TIME NM_PRED RES WRES DV NM_IPRED NM_IRES NM_IWRES NM_Y NOAPPEND NOPRINT FILE=sdtab");
 
         statement = new TableStatement(context);
         assertNotNull("should return table statement", statement.getStatements());
         assertEquals("Should return sdtab table statement as expected.", expectedDefaultTableStatement, statement.getStatements().toString());
     }
-
 }

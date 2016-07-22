@@ -24,6 +24,7 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
 import eu.ddmore.converters.nonmem.ConversionContext;
 import eu.ddmore.converters.nonmem.statements.BasicTestSetup;
 import eu.ddmore.converters.nonmem.statements.DiffEquationStatementBuilder;
+import eu.ddmore.converters.nonmem.statements.error.ErrorStatementHandler;
 import eu.ddmore.converters.nonmem.statements.pkmacro.PkMacroAnalyser;
 import eu.ddmore.converters.nonmem.statements.pkmacro.PkMacroAnalyser.AdvanType;
 import eu.ddmore.converters.nonmem.statements.pkmacro.PkMacroAnalyser.PkMacroDetails;
@@ -77,6 +78,7 @@ public class ContinuousStatementTest extends BasicTestSetup  {
         derivativeVars.add(derivativeVar);
         when(derivativeVar.getSymbId()).thenReturn(COL_ID_1);
         when(context.getDerivativeVars()).thenReturn(derivativeVars);
+        when(context.getModelStatementHelper()).thenReturn(modelStatementHelper);
 
         Map<String, String> varCompartmentSequences = new HashMap<String, String>();
         varCompartmentSequences.put(COL_ID_1, COL_NUM_1.toString());
@@ -87,8 +89,8 @@ public class ContinuousStatementTest extends BasicTestSetup  {
 
     private void mockModelStatementHelper(){
         when(desBuilder.getVariableDefinitionsStatement(varDefs)).thenReturn(new StringBuilder(VAR_DEF_EXAMPLE));
-        when(modelStatementHelper.getContext()).thenReturn(context);
 
+        //context.getModelStatementHelper().getPredCoreStatement().getStatement()
         when(predCoreStatement.getStatement()).thenReturn(new StringBuilder(PRED_EXAMPLE));
         when(modelStatementHelper.getAllIndividualParamAssignments()).thenReturn(new StringBuilder(IDV_EXAMPLE));
         when(modelStatementHelper.getPredCoreStatement()).thenReturn(predCoreStatement);
@@ -100,7 +102,7 @@ public class ContinuousStatementTest extends BasicTestSetup  {
 
     @Test
     public void testGetContinuousStatement() {
-        continuousStatement = new ContinuousStatement(modelStatementHelper);
+        continuousStatement = new ContinuousStatement(context);
         String contStatement = continuousStatement.buildContinuousStatement().toString();
 
         assertNotNull("Continuous statement should not be null", contStatement);
@@ -109,17 +111,17 @@ public class ContinuousStatementTest extends BasicTestSetup  {
     @Test
     public void testGetContinuousStatementWithTOLValueFromEstimation() {
         when(context.getEstimationEmitter().getTolValue()).thenReturn("10");
-        continuousStatement = new ContinuousStatement(modelStatementHelper);
+        continuousStatement = new ContinuousStatement(context);
         String contStatement = continuousStatement.buildContinuousStatement().toString();
 
         String subroutineStatement = "$SUBS ADVAN13 TOL=10";
         assertNotNull("Continuous statement should not be null", contStatement);
         assertTrue("Continuous statement should contain subroutine statement as expected.",contStatement.contains(subroutineStatement));
     }
-    
+
     @Test
     public void testGetcontinuousStatementWithComponent(){
-        continuousStatement = new ContinuousStatement(modelStatementHelper);
+        continuousStatement = new ContinuousStatement(context);
         String contStatement = continuousStatement.buildContinuousStatement().toString();
 
         assertNotNull("Continuous statement should not be null", contStatement);
@@ -132,7 +134,6 @@ public class ContinuousStatementTest extends BasicTestSetup  {
         cmtMacros.add(new CompartmentMacro());
         eliminationMacros.add(new EliminationMacro());
         oralMacros.add(new OralMacro());
-        when(modelStatementHelper.getContext()).thenReturn(context);
         whenNew(PkMacroAnalyser.class).withNoArguments().thenReturn(analyser);
         whenNew(PkMacroDetails.class).withNoArguments().thenReturn(pkMacroDetails);
         when(analyser.analyse(context)).thenReturn(pkMacroDetails);
@@ -142,7 +143,7 @@ public class ContinuousStatementTest extends BasicTestSetup  {
     @Test
     public void testGetcontinuousStatementWithPkMacro() throws Exception{
         mockPkMacroAnalyser();
-        continuousStatement = new ContinuousStatement(modelStatementHelper);
+        continuousStatement = new ContinuousStatement(context);
         String contStatement = continuousStatement.buildContinuousStatement().toString();
 
         assertNotNull("Continuous statement should not be null", contStatement);

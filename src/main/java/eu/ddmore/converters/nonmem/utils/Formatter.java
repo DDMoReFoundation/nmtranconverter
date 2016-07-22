@@ -14,8 +14,8 @@ import eu.ddmore.converters.nonmem.handlers.PropertiesHandler;
 public class Formatter {
 
     public enum Block{
-        ABBR, PK, ERROR, DES, MODEL, PRED, DATA, EST, 
-        PROBLEM, SIM, TABLE, INPUT, SUBS, SUB, 
+        ABBR, PK, ERROR, DES, MODEL, PRED, DATA, EST, EPS,
+        PROBLEM, SIM, TABLE, INPUT, SUBS, SUB, ETA,
         COV, THETA, OMEGA, SIGMA, BLOCK, SAME, SIZE;
     }
 
@@ -300,13 +300,29 @@ public class Formatter {
     }
 
     /**
-     * Formats ETA variable as "ETA(<value>)" for eta value provided. 
-     * @param etaVal
-     * @return formatted Eta variable
+     * Build variable definitions for fixed and random effects.
+     * 
+     * @param effect enum with name of effect
+     * @param varSymbol variable for the effect
+     * @param order order of the variable with other effect variables.
+     * @return equation with definition of variable
      */
-    public static String etaFor(String etaVal){
-        return " ETA("+etaVal+")";
+    public static String buildEffectsDefinitionFor(Block effect, String varSymbol, String order) {
+        String effectVariableSymbol = Formatter.getReservedParam(varSymbol);
+        String equation = Formatter.endline(effectVariableSymbol+ " = "+buildEffectOrderSymbolFor(effect, order));
+        return equation;
     }
+
+    /**
+     * Build effect order symbol for effect with order specified.
+     * @param effect enum with name of effect
+     * @param order order of the variable with other effect variables.
+     * @return effect order symbol
+     */
+    public static String buildEffectOrderSymbolFor(Block effect, String order){
+        return String.format(effect+"(%s)",order);
+    }
+
     /**
      * Return the formatted symbol and also gets appropriate time symbol if its TIME symbol.
      * 

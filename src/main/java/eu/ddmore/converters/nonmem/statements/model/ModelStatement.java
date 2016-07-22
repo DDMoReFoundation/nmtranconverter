@@ -13,7 +13,6 @@ import eu.ddmore.converters.nonmem.ConversionContext;
 public class ModelStatement {
 
     private final ConversionContext context;
-    private ModelStatementHelper statementHelper;
     private ContinuousStatement continuousStatement;
     private DiscreteStatement discreteStatement;
     private NonDerivativePredStatement nonDerivativePredStatement;
@@ -25,10 +24,9 @@ public class ModelStatement {
     }
 
     private void initialise(){
-        statementHelper = new ModelStatementHelper(context);
-        continuousStatement = new ContinuousStatement(statementHelper);
-        discreteStatement = new DiscreteStatement(statementHelper);
-        nonDerivativePredStatement = new NonDerivativePredStatement(statementHelper);
+        continuousStatement = new ContinuousStatement(context);
+        discreteStatement = new DiscreteStatement(context.getModelStatementHelper());
+        nonDerivativePredStatement = new NonDerivativePredStatement(context.getModelStatementHelper());
     }
 
     /**

@@ -22,7 +22,7 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 import eu.ddmore.converters.nonmem.eta.Eta;
 import eu.ddmore.converters.nonmem.statements.BasicTestSetup;
-import eu.ddmore.converters.nonmem.statements.InterOccVariabilityHandler;
+import eu.ddmore.converters.nonmem.statements.input.InterOccVariabilityHandler;
 import eu.ddmore.converters.nonmem.utils.EtaHandler;
 import eu.ddmore.libpharmml.dom.modeldefn.ParameterRandomVariable;
 

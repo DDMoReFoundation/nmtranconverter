@@ -30,7 +30,6 @@ import crx.converter.engine.common.DerivativeEvent;
 import crx.converter.spi.ILexer;
 import crx.converter.spi.blocks.OrderableBlock;
 import crx.converter.spi.blocks.StructuralBlock;
-import crx.converter.spi.steps.EstimationStep;
 import crx.converter.tree.BinaryTree;
 import crx.converter.tree.TreeMaker;
 import eu.ddmore.libpharmml.dom.commontypes.CommonVariableDefinition;
@@ -68,15 +67,15 @@ public class StructuralBlockImpl extends PartImpl implements StructuralBlock, Or
 
     private Accessor a = null;
     private List<BinaryTree> bts =  new ArrayList<BinaryTree>();
-    private List<PharmMLRootType> cached_declaration_list = new ArrayList<PharmMLRootType>(); 
+    private List<PharmMLRootType> cached_declaration_list = new ArrayList<PharmMLRootType>();
     private VariableDefinition doseTimingVariable = null;
     private List<DerivativeEvent> events = new ArrayList<DerivativeEvent>();
+    private List<VariableDefinition> globals = new ArrayList<VariableDefinition>();
     private Map<String, VariableDefinition> local_map_name = new HashMap<String, VariableDefinition>();
     private List<VariableDefinition> locals = new ArrayList<VariableDefinition>();
     private List<PKMacro> macro_list = null;
     private MacroOutput macro_output = null;
     private List<PopulationParameter> params = new ArrayList<PopulationParameter>();
-
     private StructuralModel sm = null;
     private Map<CommonVariableDefinition, Integer> state_map_idx = new HashMap<CommonVariableDefinition, Integer>();
     private Map<String, CommonVariableDefinition> state_map_name = new HashMap<String, CommonVariableDefinition>();
@@ -120,9 +119,6 @@ public class StructuralBlockImpl extends PartImpl implements StructuralBlock, Or
             }
         }
 
-        EstimationStep est = lexer.getEstimationStep();
-
-
         for (Object v : sm.getListOfStructuralModelElements()) {
             if (isLocalVariable(v)) {
                 VariableDefinition local = (VariableDefinition) v;
@@ -133,17 +129,22 @@ public class StructuralBlockImpl extends PartImpl implements StructuralBlock, Or
                 // Isolate as required from the locals list.
                 boolean isConditionalDoseEventTarget = false;
 
-                if (est != null) if (est.isConditionalDoseEventTarget(local)) isConditionalDoseEventTarget = true; 
+                VariableDeclarationContext ctx = lexer.guessContext(local);
+
                 if (lexer.isIsolatingDoseTimingVariable()) {
-                    if (VariableDeclarationContext.DT.equals(lexer.guessContext(local))) {
+                    if (VariableDeclarationContext.DT.equals(ctx)) {
                         doseTimingVariable = local;
                         continue;
-                    }
-                }
+                    } else if (VariableDeclarationContext.DOSE.equals(ctx)) continue;
+                } 
 
                 if (isConditionalDoseEventTarget && lexer.isIsolateConditionalDoseVariable()) continue; // Skip so it doesn't get added to the locals list.
 
-                locals.add(local);
+                if (lexer.isIsolateGloballyScopedVariables() && VariableDeclarationContext.GLOBAL_SCOPE.equals(ctx)) 
+                    globals.add(local);
+                else 
+                    locals.add(local);
+
                 local_map_name.put(symbolId, local);
             }
         }
@@ -177,6 +178,7 @@ public class StructuralBlockImpl extends PartImpl implements StructuralBlock, Or
     private void clearAllVariableLists() {
         params.clear();
         locals.clear();
+        states.clear();
     }
 
     /**
@@ -254,6 +256,9 @@ public class StructuralBlockImpl extends PartImpl implements StructuralBlock, Or
      */
     public List<DerivativeEvent> getEvents() { return events; }
 
+    @Override
+    public List<VariableDefinition> getGlobalVariables() { return globals; }
+
     /**
      * All of the declared variables in the structural model.
      * @return List<PharmMLRootType>
@@ -311,7 +316,22 @@ public class StructuralBlockImpl extends PartImpl implements StructuralBlock, Or
     public List<PKMacro> getPKMacros() { return macro_list; }
 
     @Override
-    public Integer getStateVariableIndex(String name) { return null; }
+    public List<CommonVariableDefinition> getRegressors() { throw new UnsupportedOperationException(); }
+
+    @Override
+    public Integer getStateVariableIndex(String name) {
+        Integer idx = -1;
+        if (name == null) return idx;
+
+        if (state_map_name.containsKey(name)) {
+            CommonVariableDefinition s = (state_map_name.get(name));
+            if (s != null) {
+                if (state_map_idx.containsKey(s)) idx = state_map_idx.get(s);
+            }
+        }
+
+        return idx; 
+    }
 
     /**
      * Get a list of derivatvies
@@ -341,6 +361,9 @@ public class StructuralBlockImpl extends PartImpl implements StructuralBlock, Or
      * @return boolean
      */
     public boolean hasEvents() { return events.size() > 0; }
+
+    @Override
+    public boolean hasGlobalVariables() { return globals.size() > 0; }
 
     /**
      * Flag that the structural model has parameters.
@@ -385,7 +408,7 @@ public class StructuralBlockImpl extends PartImpl implements StructuralBlock, Or
                 String v_name = p.getSymbId();
                 if (v_name == null) continue;
                 else if (v_name.equals(name)) return true;
-            }	 
+            }
         }
 
         return false;
@@ -395,7 +418,7 @@ public class StructuralBlockImpl extends PartImpl implements StructuralBlock, Or
      * Flag that the model is a delayed-event ODE.
      * @return boolean
      */
-    public boolean isDDE() { throw new UnsupportedOperationException(); }
+    public boolean isDDE() { return false; }
 
     @Override
     public boolean isMixedEffect() { throw new UnsupportedOperationException(); }
@@ -410,7 +433,10 @@ public class StructuralBlockImpl extends PartImpl implements StructuralBlock, Or
      * Flag that model is plain function, i.e. no derivatives.
      * @return boolean
      */
-    public boolean isPlainFunction() { return states.size() == 0; }
+    public boolean isPlainFunction() { return states.size() == 0; } 
+
+    @Override
+    public boolean isRegressor(CommonVariableDefinition v) { throw new UnsupportedOperationException(); }
 
     /**
      * Test if variable is a derivative.
@@ -443,6 +469,14 @@ public class StructuralBlockImpl extends PartImpl implements StructuralBlock, Or
      */
     public boolean isUsingUntranslatedPKMacros() { throw new UnsupportedOperationException(); }
 
+    private void resetDerivativeIndices() {
+        Integer idx = 1; // R so index from one.
+        for (DerivativeVariable dv : states) {
+            state_map_idx.remove(dv);
+            state_map_idx.put(dv, idx++);
+        }
+    }
+
     /**
      * Set the ordered variable list within the structural block.<br/>
      * This is set outside of the StructuralBlock, hence this accessor function.
@@ -469,15 +503,19 @@ public class StructuralBlockImpl extends PartImpl implements StructuralBlock, Or
             } else if (isLocalVariable(ordered_variable)) {
                 VariableDefinition v = (VariableDefinition) ordered_variable;
                 if (old_locals.contains(v)) locals.add(v);
+            } else if (isDerivative(ordered_variable)) {
+                DerivativeVariable dv = (DerivativeVariable) ordered_variable;;
+                if (old_states.contains(dv)) states.add(dv);
             }
         }
-
 
         cached_declaration_list.clear();
         for (PharmMLElement o : ordered_variables) {
             if (isPopulationParameter(o) || isLocalVariable(o) || isDerivative(o)) cached_declaration_list.add((PharmMLRootType) o);
         }
-    } 
+
+        resetDerivativeIndices();
+    }
 
     /**
      * Get the raw macro outputs generated by the translator component.
@@ -491,10 +529,4 @@ public class StructuralBlockImpl extends PartImpl implements StructuralBlock, Or
      * @param macro_list_ PK Macro list
      */
     public void setPKMacros(List<PKMacro> macro_list_) { macro_list = macro_list_; }
-
-    @Override
-    public List<CommonVariableDefinition> getRegressors() { throw new UnsupportedOperationException(); }
-
-    @Override
-    public boolean isRegressor(CommonVariableDefinition v) { throw new UnsupportedOperationException(); }
 }

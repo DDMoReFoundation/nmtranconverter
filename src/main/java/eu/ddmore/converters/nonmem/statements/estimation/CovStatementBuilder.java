@@ -1,7 +1,7 @@
 /*******************************************************************************
  * Copyright (C) 2016 Mango Solutions Ltd - All rights reserved.
  ******************************************************************************/
-package eu.ddmore.converters.nonmem.statements;
+package eu.ddmore.converters.nonmem.statements.estimation;
 
 import java.util.LinkedHashMap;
 import java.util.Map;

@@ -25,6 +25,7 @@ import eu.ddmore.converters.nonmem.utils.ScriptDefinitionAccessor;
 import eu.ddmore.libpharmml.dom.modeldefn.ContinuousCovariate;
 import eu.ddmore.libpharmml.dom.modeldefn.CovariateDefinition;
 import eu.ddmore.libpharmml.dom.modeldefn.CovariateTransformation;
+import eu.ddmore.libpharmml.dom.modeldefn.ParameterRandomVariable;
 import eu.ddmore.libpharmml.dom.modeldefn.PopulationParameter;
 
 /**
@@ -47,7 +48,6 @@ public class PredCoreStatement {
      */
     public StringBuilder getStatement() {
         StringBuilder predCoreBlock = new StringBuilder();
-
         predCoreBlock.append(getConditionalDoseDetails());
         predCoreBlock.append(buildThetaAssignments()+Formatter.endline());
 
@@ -58,10 +58,25 @@ public class PredCoreStatement {
         }else{
             predCoreBlock.append(buildEtaAssignments()+Formatter.endline());
         }
+        predCoreBlock.append(buildEpsilonDefinitions());
         predCoreBlock.append(getTransformedCovStatement());
         predCoreBlock.append(getSimpleParamAssignments()+Formatter.endline());
 
         return predCoreBlock;
+    }
+
+    private StringBuilder buildEpsilonDefinitions() {
+        Integer order = 1;
+        StringBuilder epsilonVarDefinitions = new StringBuilder();
+        for(ParameterRandomVariable randomVariable : 
+            ScriptDefinitionAccessor.getEpsilonRandomVariables(context.getScriptDefinition())){
+            if(StringUtils.isNotEmpty(randomVariable.getSymbId())){
+                String equation = Formatter.buildEffectsDefinitionFor(Block.EPS, randomVariable.getSymbId(), (order++).toString());
+                epsilonVarDefinitions.append(equation);
+            }
+        }
+        epsilonVarDefinitions.append(Formatter.endline());
+        return epsilonVarDefinitions;
     }
 
     /**
@@ -118,10 +133,9 @@ public class PredCoreStatement {
         List<String> thetas = new ArrayList<String>(context.getParametersBuilder().getThetasBuilder().getThetaParameters().keySet());
 
         for(String theta : thetas){
-            String thetaSymbol = Formatter.getReservedParam(theta);
-            String symbol = String.format(Block.THETA+"(%s)",thetas.indexOf(theta)+1);
-
-            thetaAssignmentBlock.append(Formatter.endline(thetaSymbol+ " = "+symbol));
+            Integer order = thetas.indexOf(theta)+1;
+            String equation = Formatter.buildEffectsDefinitionFor(Block.THETA, theta, order.toString());
+            thetaAssignmentBlock.append(equation);
         }
         return thetaAssignmentBlock;
     }
@@ -134,7 +148,7 @@ public class PredCoreStatement {
         StringBuilder etaAssignment = new StringBuilder();
         Set<Eta> orderedThetas = context.retrieveOrderedEtas();
         for(Eta eta : orderedThetas){
-            etaAssignment.append(Formatter.endline(eta.getEtaSymbol()+ " = "+Formatter.etaFor(eta.getEtaOrderSymbol())));
+            etaAssignment.append(Formatter.endline(eta.getEtaSymbol()+ " = "+Formatter.buildEffectOrderSymbolFor(Block.ETA, eta.getEtaOrderSymbol())));
         }
         return etaAssignment;
     }
