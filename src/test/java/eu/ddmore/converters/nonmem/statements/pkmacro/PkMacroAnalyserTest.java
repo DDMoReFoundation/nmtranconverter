@@ -80,7 +80,7 @@ public class PkMacroAnalyserTest extends BasicTestSetup {
         eliminationMacros.add(new EliminationMacro());
         ivMacros.add(new IVMacro());
 
-        AdvanType capturedAdvanType = analyser.captureAdvanType(details);
+        AdvanType capturedAdvanType = analyser.captureAdvanType(details,AdvanType.ADVAN1.getAssociatedDECount());
         verifyAdvanType(PkMacroAnalyser.AdvanType.ADVAN1, capturedAdvanType);
     }
 
@@ -90,7 +90,7 @@ public class PkMacroAnalyserTest extends BasicTestSetup {
         eliminationMacros.add(new EliminationMacro());
         oralMacros.add(new OralMacro());
 
-        AdvanType capturedAdvanType = analyser.captureAdvanType(details);
+        AdvanType capturedAdvanType = analyser.captureAdvanType(details, AdvanType.ADVAN2.getAssociatedDECount());
         verifyAdvanType(PkMacroAnalyser.AdvanType.ADVAN2, capturedAdvanType);
     }
 
@@ -101,7 +101,7 @@ public class PkMacroAnalyserTest extends BasicTestSetup {
         ivMacros.add(new IVMacro());
         peripheralMacros.add(new PeripheralMacro());
 
-        AdvanType capturedAdvanType = analyser.captureAdvanType(details);
+        AdvanType capturedAdvanType = analyser.captureAdvanType(details, AdvanType.ADVAN3.getAssociatedDECount());
         verifyAdvanType(PkMacroAnalyser.AdvanType.ADVAN3, capturedAdvanType);
     }
 
@@ -112,7 +112,7 @@ public class PkMacroAnalyserTest extends BasicTestSetup {
         oralMacros.add(new OralMacro());
         peripheralMacros.add(new PeripheralMacro());
 
-        AdvanType capturedAdvanType = analyser.captureAdvanType(details);
+        AdvanType capturedAdvanType = analyser.captureAdvanType(details, AdvanType.ADVAN4.getAssociatedDECount());
         verifyAdvanType(PkMacroAnalyser.AdvanType.ADVAN4, capturedAdvanType);
     }
 
@@ -124,7 +124,7 @@ public class PkMacroAnalyserTest extends BasicTestSetup {
         peripheralMacros.add(new PeripheralMacro());
         peripheralMacros.add(new PeripheralMacro());
 
-        AdvanType capturedAdvanType = analyser.captureAdvanType(details);
+        AdvanType capturedAdvanType = analyser.captureAdvanType(details, AdvanType.ADVAN11.getAssociatedDECount());
         verifyAdvanType(PkMacroAnalyser.AdvanType.ADVAN11, capturedAdvanType);
     }
 
@@ -136,7 +136,7 @@ public class PkMacroAnalyserTest extends BasicTestSetup {
         peripheralMacros.add(new PeripheralMacro());
         peripheralMacros.add(new PeripheralMacro());
 
-        AdvanType capturedAdvanType = analyser.captureAdvanType(details);
+        AdvanType capturedAdvanType = analyser.captureAdvanType(details, AdvanType.ADVAN12.getAssociatedDECount());
         verifyAdvanType(PkMacroAnalyser.AdvanType.ADVAN12, capturedAdvanType);
     }
 
