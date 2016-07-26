@@ -6,6 +6,8 @@ package eu.ddmore.converters.nonmem.statements.input;
 import java.util.ArrayList;
 import java.util.List;
 
+import eu.ddmore.libpharmml.dom.dataset.ColumnType;
+
 /**
  * This class stores associated information retrieved for input headers, associated categorical or continuous cov table colums 
  * and to be used by other statement blocks.
@@ -16,6 +18,7 @@ public class InputColumnsProvider {
     private final List<String> catCovTableColumns = new ArrayList<String>();
     private final List<String> contCovTableColumns = new ArrayList<String>();
     private final List<InputColumn> inputHeaders = new ArrayList<InputColumn>();
+    private boolean isCMTColumnPresent = false;
 
     /**
      * This method is to add continuous covariate table column to cotab table columns list.
@@ -38,7 +41,16 @@ public class InputColumnsProvider {
      * @param inputHeader input header column
      */
     public void addInputHeaders(InputColumn inputHeader){
-       inputHeaders.add(inputHeader);
+        isCMTColumnPresent = (!isCMTColumnPresent)?inputHeader.getColumnType().equals(ColumnType.CMT):isCMTColumnPresent;
+        inputHeaders.add(inputHeader);
+    }
+
+    public boolean isCMTColumnPresent() {
+        return isCMTColumnPresent;
+    }
+
+    public void setCMTColumnPresent(boolean isCMTColumnPresent) {
+        this.isCMTColumnPresent = isCMTColumnPresent;
     }
 
     public List<String> getCatCovTableColumns() {
@@ -52,5 +64,4 @@ public class InputColumnsProvider {
     public List<InputColumn> getInputHeaders() {
         return inputHeaders;
     }
-    
 }

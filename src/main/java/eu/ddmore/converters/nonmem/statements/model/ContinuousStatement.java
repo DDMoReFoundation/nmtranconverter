@@ -152,16 +152,13 @@ public class ContinuousStatement {
      */
     private StringBuilder buildModelStatement() {
         StringBuilder modelBlock = new StringBuilder();
-        boolean  isCMTColumn = false;
+        boolean  isCMTColumn = context.getInputColumnsHandler().getInputColumnsProvider().isCMTColumnPresent();
         InputColumn doseColumn = null;
 
         modelBlock.append(Formatter.endline());
         modelBlock.append(Formatter.model());
 
         for(InputColumn column : context.getInputColumnsHandler().getInputColumnsProvider().getInputHeaders()){
-            if(column.getColumnType().equals(ColumnType.CMT)){
-                isCMTColumn = true; 
-            }
             if(column.getColumnType().equals(ColumnType.DOSE)){
                 doseColumn = column;
             }

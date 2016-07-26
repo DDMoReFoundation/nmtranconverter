@@ -49,9 +49,7 @@ public class PkMacroAnalyser {
 
     }
 
-    //    public enum AdvanType{
-    //        ADVAN1,ADVAN2,ADVAN3,ADVAN4,ADVAN10,ADVAN11,ADVAN12,ADVAN13, NONE;
-    //    };
+    private boolean isCMTColumnPresent = false;
 
     /**
      * This method will process pk macros to collect information and set macro advan type and other details. 
@@ -63,6 +61,7 @@ public class PkMacroAnalyser {
         Preconditions.checkNotNull(context, "Conversion Context cannot be null");
         PkMacroDetails details = processPkMacros(context);
         List<DerivativeVariable> derivativeVars = context.getDerivativeVars();
+        isCMTColumnPresent = context.getInputColumnsHandler().getInputColumnsProvider().isCMTColumnPresent();
         if(!details.isEmpty() ){
             details.setMacroAdvanType(captureAdvanType(details, derivativeVars.size()));
         }
@@ -130,7 +129,7 @@ public class PkMacroAnalyser {
     }
 
     public enum AdvanType{
-        ADVAN1(1),ADVAN2(1),ADVAN3(1),ADVAN4(1),ADVAN10(1),ADVAN11(1),ADVAN12(1),ADVAN13(0), NONE(0);
+        ADVAN1(1),ADVAN2(2),ADVAN3(2),ADVAN4(3),ADVAN10(2),ADVAN11(3),ADVAN12(4),ADVAN13(0), NONE(0);
 
         int associatedDECount;
 
@@ -182,11 +181,9 @@ public class PkMacroAnalyser {
 
         switch(details.getPeripherals().size()){
         case 0:
-            if(isIV(details)){
+            if(isIV(details) && areMoreThanOneIVsPresent(details.getIvs().size())){
                 if(isKmAndVm(details)){
-                    
                     if(isAdvanWithCorrectDEsCount(AdvanType.ADVAN10, diffEquationsCount)){
-                        
                         advanType = AdvanType.ADVAN10;
                     }
                 }else{
@@ -194,31 +191,31 @@ public class PkMacroAnalyser {
                         advanType = AdvanType.ADVAN1;
                     }
                 }
-            }else if(isOral(details)){
+            }else if(isOral(details) && areAnyIVsPresent(details.getIvs().size())){
                 if(isAdvanWithCorrectDEsCount(AdvanType.ADVAN2, diffEquationsCount)){
                     advanType = AdvanType.ADVAN2;
                 }
             }
             break;
         case 1:
-            if(isIV(details)){
+            if(isIV(details) && areMoreThanOneIVsPresent(details.getIvs().size())){
                 if(isAdvanWithCorrectDEsCount(AdvanType.ADVAN3, diffEquationsCount)){
-                advanType = AdvanType.ADVAN3;
+                    advanType = AdvanType.ADVAN3;
                 }
-            }else if(isOral(details)){
+            }else if(isOral(details) && areAnyIVsPresent(details.getIvs().size())){
                 if(isAdvanWithCorrectDEsCount(AdvanType.ADVAN4, diffEquationsCount)){
-                advanType = AdvanType.ADVAN4;
+                    advanType = AdvanType.ADVAN4;
                 }
             }
             break;
         case 2:
-            if(isIV(details)){
+            if(isIV(details) && areMoreThanOneIVsPresent(details.getIvs().size())){
                 if(isAdvanWithCorrectDEsCount(AdvanType.ADVAN11, diffEquationsCount)){
-                advanType = AdvanType.ADVAN11;
+                    advanType = AdvanType.ADVAN11;
                 }
-            }else if(isOral(details)){
+            }else if(isOral(details) && areAnyIVsPresent(details.getIvs().size())){
                 if(isAdvanWithCorrectDEsCount(AdvanType.ADVAN12, diffEquationsCount)){
-                advanType = AdvanType.ADVAN12;
+                    advanType = AdvanType.ADVAN12;
                 }
             }
             break;
@@ -238,17 +235,18 @@ public class PkMacroAnalyser {
      */
     private boolean isKmAndVm(PkMacroDetails details){
         boolean isKm = false, isVm = false ;
-        final List<MacroValue> eliminationMacroValues = details.getEliminations().get(0).getListOfValue();
-        if(eliminationMacroValues != null && !eliminationMacroValues.isEmpty()){
-            for(MacroValue vals : eliminationMacroValues){
-
-                if(vals.getSymbRef()!=null){
-                    String variable = vals.getSymbRef().getSymbIdRef();
-                    if(variable.equalsIgnoreCase("Km")){
-                        isKm = true;
-                    }
-                    if(variable.equalsIgnoreCase("Vm")){
-                        isVm = true;
+        if(!details.getEliminations().isEmpty()){
+            final List<MacroValue> eliminationMacroValues = details.getEliminations().get(0).getListOfValue();
+            if(eliminationMacroValues != null && !eliminationMacroValues.isEmpty()){
+                for(MacroValue vals : eliminationMacroValues){
+                    if(vals.getSymbRef()!=null){
+                        String variable = vals.getSymbRef().getSymbIdRef();
+                        if(variable.equalsIgnoreCase("Km")){
+                            isKm = true;
+                        }
+                        if(variable.equalsIgnoreCase("Vm")){
+                            isVm = true;
+                        }
                     }
                 }
             }
@@ -258,13 +256,45 @@ public class PkMacroAnalyser {
 
     /**
      * Check if injection type is IV
+     * @param details pkmacro details
+     * @return flag representing if IV present while AbsorptionOral is absent
      */
     private boolean isIV(PkMacroDetails details){
         if(!details.getIvs().isEmpty() && details.getAbsorptionOrals().isEmpty()){
-            if(details.getIvs().size()==1){
-                return true;
-            }
+            return true;
         }
+        return false;
+    }
+
+    /**
+     * [+] -> if more then one IV is present then there has to be CMT column.
+     * 
+     * @param numberOfIVs number of IVs present
+     * @return flag representing "is IV or IVs present"
+     */
+    private boolean areMoreThanOneIVsPresent(int numberOfIVs){
+        if(numberOfIVs==1){
+            return true;
+        }else if(numberOfIVs>1 && isCMTColumnPresent){
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * [*] -> if any IV is present then there has to be CMT column.
+     * 
+     * @param numberOfIVs number of IVs present
+     * @return flag representing "is IV or IVs present" 
+     */
+    private boolean areAnyIVsPresent(int numberOfIVs){
+        if(numberOfIVs==0){
+            return true;
+        }else if(numberOfIVs>0 && isCMTColumnPresent){
+            return true;
+        }
+
         return false;
     }
 
@@ -272,7 +302,7 @@ public class PkMacroAnalyser {
      * Check if injection type is Oral
      */
     private boolean isOral(PkMacroDetails details){
-        if(details.getIvs().isEmpty() && !details.getAbsorptionOrals().isEmpty()){
+        if(!details.getAbsorptionOrals().isEmpty()){
             if(details.getAbsorptionOrals().size()==1){
                 return true;
             }

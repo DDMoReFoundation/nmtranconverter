@@ -37,6 +37,7 @@ import static crx.converter.engine.PharmMLTypeChecker.isObservationModel;
 import static crx.converter.engine.PharmMLTypeChecker.isParameterEstimate;
 import static crx.converter.engine.PharmMLTypeChecker.isPiece;
 import static crx.converter.engine.PharmMLTypeChecker.isPiecewise;
+import static crx.converter.engine.PharmMLTypeChecker.isGeneralError;
 import static crx.converter.engine.PharmMLTypeChecker.isPopulationParameter;
 import static crx.converter.engine.PharmMLTypeChecker.isRandomVariable;
 import static crx.converter.engine.PharmMLTypeChecker.isReal;
@@ -92,6 +93,7 @@ import eu.ddmore.libpharmml.dom.maths.Piecewise;
 import eu.ddmore.libpharmml.dom.maths.Uniop;
 import eu.ddmore.libpharmml.dom.modeldefn.CovariateDefinition;
 import eu.ddmore.libpharmml.dom.modeldefn.CovariateTransformation;
+import eu.ddmore.libpharmml.dom.modeldefn.GeneralObsError;
 import eu.ddmore.libpharmml.dom.modeldefn.IndividualParameter;
 import eu.ddmore.libpharmml.dom.modeldefn.ParameterRandomVariable;
 import eu.ddmore.libpharmml.dom.modeldefn.PopulationParameter;
@@ -452,6 +454,9 @@ public class Parser extends BaseParser {
             String current_value = "", current_symbol = "";
             if(isLocalVariable(context)){
                 current_symbol = getSymbol(context).toUpperCase();
+                current_value = getValueWhenPiecewise(leaf, inPiecewise, current_symbol);
+            }else if(isGeneralError(context)){
+                current_symbol = ((GeneralObsError) context).getSymbId();
                 current_value = getValueWhenPiecewise(leaf, inPiecewise, current_symbol);
             }else if (isDerivative(context) || isPopulationParameter(context)) {
                 current_symbol = getSymbol(context);

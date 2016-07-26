@@ -72,12 +72,13 @@ public class ErrorStatementHandler {
         TreeMaker treeMaker = context.getLexer().getTreeMaker();
 
         for(PharmMLElement element : contModel.getListOfObservationModelElement()){
-            String[] equation = parserHelper.parse(element, treeMaker.newInstance(element)).split("=");
-            varEquations.put(equation[0], equation[1]);
+            String parsedEquation = parserHelper.parse(element, treeMaker.newInstance(element));
+            String variable = parsedEquation.split("=")[0];
+            varEquations.put(variable, parsedEquation);
         }
-        String rhs = parserHelper.getParsedValueForRhs(error.getAssign());
-        varEquations.put(error.getSymbId(), rhs);
+        String rhs = parserHelper.parse(error, treeMaker.newInstance(error.getAssign()));
 
+        varEquations.put(error.getSymbId(), rhs);
         GeneralObsErrorStatement errorStatement = new GeneralObsErrorStatement(varEquations, false);
         return errorStatement;
     }
@@ -127,8 +128,6 @@ public class ErrorStatementHandler {
      * @return error statement
      */
     public String getErrorStatement(DiffEquationStatementBuilder desBuilder) {
-
-
         StringBuilder errorBlock = new StringBuilder();
 
         errorBlock.append(buildEpsilonDefinitions());

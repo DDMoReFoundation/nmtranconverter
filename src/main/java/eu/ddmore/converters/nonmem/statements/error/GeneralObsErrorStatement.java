@@ -23,8 +23,8 @@ public class GeneralObsErrorStatement extends ErrorStatement {
 
     private void populateErrorStatement(){
         StringBuilder variableEquations = new StringBuilder();
-        for(String variable : varEquations.keySet()){
-            variableEquations.append(Formatter.endline(variable+"="+varEquations.get(variable)));
+        for(String rhs : varEquations.values()){
+            variableEquations.append(Formatter.endline(rhs));
         }
         super.setErrorStatement(variableEquations);
     }
