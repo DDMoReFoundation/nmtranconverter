@@ -13,12 +13,13 @@ public class PropertiesHandlerTest extends BasicTestSetup {
 
     @Test
     public void shouldGetColumnNameForColumnType() {
-        final String cmtColumn = "CMT"; //CMT
+        final String cmtColumn = "ADM"; //CMT
+        final String cmtColumnSymbol = "CMT";
 
         propertiesHandler = new PropertiesHandler();
         String resultedColumn = propertiesHandler.getColumnNameForColumnType(cmtColumn);
         assertNotNull("column name for column type should not be null.", resultedColumn);
-        assertTrue("Should get column name for column type.", resultedColumn.equals(cmtColumn));
+        assertTrue("Should get column name for column type.", resultedColumn.equals(cmtColumnSymbol));
     }
 
     @Test

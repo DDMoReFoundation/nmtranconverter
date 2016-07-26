@@ -14,6 +14,7 @@ import com.google.common.base.Preconditions;
 import crx.converter.engine.ScriptDefinition;
 import crx.converter.spi.blocks.StructuralBlock;
 import eu.ddmore.converters.nonmem.ConversionContext;
+import eu.ddmore.libpharmml.dom.commontypes.DerivativeVariable;
 import eu.ddmore.libpharmml.dom.modeldefn.pkmacro.AbsorptionMacro;
 import eu.ddmore.libpharmml.dom.modeldefn.pkmacro.AbsorptionOralMacro;
 import eu.ddmore.libpharmml.dom.modeldefn.pkmacro.CompartmentMacro;
@@ -48,9 +49,9 @@ public class PkMacroAnalyser {
 
     }
 
-    public enum AdvanType{
-        ADVAN1,ADVAN2,ADVAN3,ADVAN4,ADVAN10,ADVAN11,ADVAN12,ADVAN13, NONE;
-    };
+    //    public enum AdvanType{
+    //        ADVAN1,ADVAN2,ADVAN3,ADVAN4,ADVAN10,ADVAN11,ADVAN12,ADVAN13, NONE;
+    //    };
 
     /**
      * This method will process pk macros to collect information and set macro advan type and other details. 
@@ -61,8 +62,9 @@ public class PkMacroAnalyser {
     public PkMacroDetails analyse(ConversionContext context) {
         Preconditions.checkNotNull(context, "Conversion Context cannot be null");
         PkMacroDetails details = processPkMacros(context);
+        List<DerivativeVariable> derivativeVars = context.getDerivativeVars();
         if(!details.isEmpty() ){
-            details.setMacroAdvanType(captureAdvanType(details));
+            details.setMacroAdvanType(captureAdvanType(details, derivativeVars.size()));
         }
         return details;
     }
@@ -127,24 +129,43 @@ public class PkMacroAnalyser {
         return details;
     }
 
+    public enum AdvanType{
+        ADVAN1(1),ADVAN2(1),ADVAN3(1),ADVAN4(1),ADVAN10(1),ADVAN11(1),ADVAN12(1),ADVAN13(0), NONE(0);
+
+        int associatedDECount;
+
+        AdvanType(int associatedDECount){
+            this.associatedDECount = associatedDECount;
+        }
+
+        public int getAssociatedDECount(){
+            return associatedDECount;
+        }
+    };
+
     /*
-     *             CMT     IV      ORAL    PERIF   ELIM
-     * ADVAN-1      1       1       0       0       1   k
-     * ADVAN-2      1       0       1       0       1   k
-     * ADVAN-3      1       1       0       1       1   k
-     * ADVAN-4      1       0       1       1       1   k
-     * ADVAN-10     1       1       0       0       1   km & vm
-     * ADVAN-11     1       1       0       2       1   k
-     * ADVAN-12     1       0       1       2       1   k
+     *              CMT     IV      ORAL    PERIF   ELIM    No.ofDEs
+     * ADVAN-1      1       1        0       0       1          1       k
+     * ADVAN-2      1      [*]       1       0       1          2       k
+     * ADVAN-3      1      [+]       0       1       1          2       k
+     * ADVAN-4      1      [*]       1       1       1          3       k
+     * ADVAN-10     1      [+]       0       0       1          2       km & vm
+     * ADVAN-11     1      [+]       0       2       1          3       k
+     * ADVAN-12     1      [*]       1       2       1          4       k
+     * 
+     * [+] -> if more then one IV is present then there has to be CMT column.
+     * [*] -> if any IV is present then there has to be CMT column.
+
      */
 
     /**
      * Retrieves advan type from compartments, eliminations and peripherals available for pk macro.
+     * @param diffEquationsCount 
      * 
      * @return advan type
      */
     @VisibleForTesting
-    AdvanType captureAdvanType(PkMacroDetails details) {
+    AdvanType captureAdvanType(PkMacroDetails details, int diffEquationsCount) {
 
         /*
          * TODO: We need to get next version of libpharmml-pkmacro (0.2.2), 
@@ -163,32 +184,52 @@ public class PkMacroAnalyser {
         case 0:
             if(isIV(details)){
                 if(isKmAndVm(details)){
-                    advanType = AdvanType.ADVAN10;
+                    
+                    if(isAdvanWithCorrectDEsCount(AdvanType.ADVAN10, diffEquationsCount)){
+                        
+                        advanType = AdvanType.ADVAN10;
+                    }
                 }else{
-                    advanType = AdvanType.ADVAN1;
+                    if(isAdvanWithCorrectDEsCount(AdvanType.ADVAN11, diffEquationsCount)){
+                        advanType = AdvanType.ADVAN1;
+                    }
                 }
             }else if(isOral(details)){
-                advanType = AdvanType.ADVAN2;
+                if(isAdvanWithCorrectDEsCount(AdvanType.ADVAN2, diffEquationsCount)){
+                    advanType = AdvanType.ADVAN2;
+                }
             }
             break;
         case 1:
             if(isIV(details)){
+                if(isAdvanWithCorrectDEsCount(AdvanType.ADVAN3, diffEquationsCount)){
                 advanType = AdvanType.ADVAN3;
+                }
             }else if(isOral(details)){
+                if(isAdvanWithCorrectDEsCount(AdvanType.ADVAN4, diffEquationsCount)){
                 advanType = AdvanType.ADVAN4;
+                }
             }
             break;
         case 2:
             if(isIV(details)){
+                if(isAdvanWithCorrectDEsCount(AdvanType.ADVAN11, diffEquationsCount)){
                 advanType = AdvanType.ADVAN11;
+                }
             }else if(isOral(details)){
+                if(isAdvanWithCorrectDEsCount(AdvanType.ADVAN12, diffEquationsCount)){
                 advanType = AdvanType.ADVAN12;
+                }
             }
             break;
         default:
             advanType = AdvanType.NONE;
         }
         return advanType;
+    }
+
+    private boolean isAdvanWithCorrectDEsCount(AdvanType advanType, int associatedDEsCount){
+        return advanType.getAssociatedDECount() == associatedDEsCount;
     }
 
     /**

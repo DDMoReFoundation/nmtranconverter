@@ -2292,7 +2292,7 @@ public class ConverterProvider extends DependencyLexer implements ILexer {
         for (StructuralModel sm : sms_with_macros) {
             try {
                 //corrected only to remove deprecated method and opt new definition.
-                MacroOutput output = tr.translate(sm, target_level, null);
+                MacroOutput output = tr.translate(sm, target_level, idv);
                 StructuralModel sm_translated = output.getStructuralModel();
                 if(!replace(dom, sm, sm_translated))
                     throw new IllegalStateException("PK macros translation failed (blkId='" + sm.getBlkId() + "')");
