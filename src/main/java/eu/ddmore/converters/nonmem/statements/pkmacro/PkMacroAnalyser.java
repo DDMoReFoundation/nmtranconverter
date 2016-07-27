@@ -154,7 +154,6 @@ public class PkMacroAnalyser {
      * 
      * [+] -> if more then one IV is present then there has to be CMT column.
      * [*] -> if any IV is present then there has to be CMT column.
-
      */
 
     /**
@@ -175,7 +174,7 @@ public class PkMacroAnalyser {
         }*/
 
         AdvanType advanType = AdvanType.NONE;
-        if(details.getCompartments().size()>1){
+        if(details.getCompartments().size()!=1 || details.getEliminations().size()!=1){
             return advanType;
         }
 
@@ -235,18 +234,16 @@ public class PkMacroAnalyser {
      */
     private boolean isKmAndVm(PkMacroDetails details){
         boolean isKm = false, isVm = false ;
-        if(!details.getEliminations().isEmpty()){
-            final List<MacroValue> eliminationMacroValues = details.getEliminations().get(0).getListOfValue();
-            if(eliminationMacroValues != null && !eliminationMacroValues.isEmpty()){
-                for(MacroValue vals : eliminationMacroValues){
-                    if(vals.getSymbRef()!=null){
-                        String variable = vals.getSymbRef().getSymbIdRef();
-                        if(variable.equalsIgnoreCase("Km")){
-                            isKm = true;
-                        }
-                        if(variable.equalsIgnoreCase("Vm")){
-                            isVm = true;
-                        }
+        final List<MacroValue> eliminationMacroValues = details.getEliminations().get(0).getListOfValue();
+        if(eliminationMacroValues != null && !eliminationMacroValues.isEmpty()){
+            for(MacroValue vals : eliminationMacroValues){
+                if(vals.getSymbRef()!=null){
+                    String variable = vals.getSymbRef().getSymbIdRef();
+                    if(variable.equalsIgnoreCase("Km")){
+                        isKm = true;
+                    }
+                    if(variable.equalsIgnoreCase("Vm")){
+                        isVm = true;
                     }
                 }
             }
@@ -273,12 +270,9 @@ public class PkMacroAnalyser {
      * @return flag representing "is IV or IVs present"
      */
     private boolean areMoreThanOneIVsPresent(int numberOfIVs){
-        if(numberOfIVs==1){
-            return true;
-        }else if(numberOfIVs>1 && isCMTColumnPresent){
+        if(numberOfIVs==1 || (numberOfIVs>1 && isCMTColumnPresent)){
             return true;
         }
-
         return false;
     }
 
@@ -289,12 +283,9 @@ public class PkMacroAnalyser {
      * @return flag representing "is IV or IVs present" 
      */
     private boolean areAnyIVsPresent(int numberOfIVs){
-        if(numberOfIVs==0){
-            return true;
-        }else if(numberOfIVs>0 && isCMTColumnPresent){
+        if(numberOfIVs==0 || (numberOfIVs>0 && isCMTColumnPresent)){
             return true;
         }
-
         return false;
     }
 
