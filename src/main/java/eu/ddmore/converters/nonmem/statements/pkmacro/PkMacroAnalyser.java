@@ -198,7 +198,7 @@ public class PkMacroAnalyser {
                         advanType = AdvanType.ADVAN10;
                     }
                 }else{
-                    if(isAdvanWithCorrectDEsCount(AdvanType.ADVAN11, diffEquationsCount)){
+                    if(isAdvanWithCorrectDEsCount(AdvanType.ADVAN1, diffEquationsCount)){
                         advanType = AdvanType.ADVAN1;
                     }
                 }

@@ -17,6 +17,8 @@ package eu.ddmore.converters.nonmem.statements.pkmacro;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
+import static org.mockito.Mockito.mock;
 import static org.powermock.api.mockito.PowerMockito.when;
 
 import java.util.ArrayList;
@@ -60,6 +62,8 @@ public class PkMacroAnalyserTest extends BasicTestSetup {
     @Before
     public void setUp() throws Exception {
 
+        context = mock(ConversionContext.class,RETURNS_DEEP_STUBS);
+        
         List<StructuralBlock> blocks = new ArrayList<StructuralBlock>();
         blocks.add(block);
         when(scriptDefinition.getStructuralBlocks()).thenReturn(blocks);
@@ -70,6 +74,10 @@ public class PkMacroAnalyserTest extends BasicTestSetup {
         when(details.getAbsorptionOrals()).thenReturn(oralMacros);
         when(details.getPeripherals()).thenReturn(peripheralMacros);
         when(context.getScriptDefinition()).thenReturn(scriptDefinition);
+        
+        //
+        when(context.getInputColumnsHandler().getInputColumnsProvider().isCMTColumnPresent()).thenReturn(false);
+        
     }
 
     @Test
