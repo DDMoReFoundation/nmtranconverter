@@ -1,17 +1,17 @@
 /*******************************************************************************
  * Copyright (C) 2016 Mango Business Solutions Ltd, [http://www.mango-solutions.com]
-*
-* This program is free software: you can redistribute it and/or modify it under
-* the terms of the GNU Affero General Public License as published by the
-* Free Software Foundation, version 3.
-*
-* This program is distributed in the hope that it will be useful, 
-* but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
-* or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License 
-* for more details.
-*
-* You should have received a copy of the GNU Affero General Public License along 
-* with this program. If not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
+ *
+ * This program is free software: you can redistribute it and/or modify it under
+ * the terms of the GNU Affero General Public License as published by the
+ * Free Software Foundation, version 3.
+ *
+ * This program is distributed in the hope that it will be useful, 
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
+ * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License 
+ * for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License along 
+ * with this program. If not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
  ******************************************************************************/
 package eu.ddmore.converters.nonmem.statements.pkmacro;
 
@@ -26,7 +26,6 @@ import com.google.common.base.Preconditions;
 import crx.converter.engine.ScriptDefinition;
 import crx.converter.spi.blocks.StructuralBlock;
 import eu.ddmore.converters.nonmem.ConversionContext;
-import eu.ddmore.libpharmml.dom.commontypes.DerivativeVariable;
 import eu.ddmore.libpharmml.dom.modeldefn.pkmacro.AbsorptionMacro;
 import eu.ddmore.libpharmml.dom.modeldefn.pkmacro.AbsorptionOralMacro;
 import eu.ddmore.libpharmml.dom.modeldefn.pkmacro.CompartmentMacro;
@@ -50,15 +49,12 @@ public class PkMacroAnalyser {
         P("F"), TLAG("ALAG"), KA("KA"), V("V"), CL("CL"), K("K"), TARGET("TARGET");
 
         private String value;
-
         private PkMacroAttribute(String value) {
             this.value = value;
         }
-
         public String getValue(){
             return value;
         }
-
     }
 
     private boolean isCMTColumnPresent = false;
@@ -72,10 +68,9 @@ public class PkMacroAnalyser {
     public PkMacroDetails analyse(ConversionContext context) {
         Preconditions.checkNotNull(context, "Conversion Context cannot be null");
         PkMacroDetails details = processPkMacros(context);
-        List<DerivativeVariable> derivativeVars = context.getDerivativeVars();
         isCMTColumnPresent = context.getInputColumnsHandler().getInputColumnsProvider().isCMTColumnPresent();
-        if(!details.isEmpty() ){
-            details.setMacroAdvanType(captureAdvanType(details, derivativeVars.size()));
+        if(!details.isEmpty() && context.getNonPkMacroDerivativeVars().isEmpty()){
+            details.setMacroAdvanType(captureAdvanType(details, context.getPkMacroDerivativeVars().size()));
         }
         return details;
     }
@@ -96,12 +91,9 @@ public class PkMacroAnalyser {
             }
         }
 
-        int compCount=0;
         for(PKMacro pkMacro : allPkMacros){
             if(pkMacro instanceof CompartmentMacro){
                 details.getCompartments().add((CompartmentMacro) pkMacro);
-                //add compartment number depending upon order of occurrence.
-                details.setCompartmentCompNumber(++compCount);
             }else if(pkMacro instanceof EliminationMacro){
                 details.getEliminations().add((EliminationMacro) pkMacro);
             }else if(pkMacro instanceof DepotMacro){
@@ -119,10 +111,6 @@ public class PkMacroAnalyser {
                     absMacro.getListOfValue().addAll(pkMacro.getListOfValue());
                     details.getAbsorptionOrals().add(absMacro);
                 }else {
-                    for(MacroValue value : pkMacro.getListOfValue()){
-                        if(value.getArgument().equalsIgnoreCase(PkMacroAttribute.TARGET.name())){
-                        }
-                    }
                     IVMacro ivMacro = new IVMacro();
                     ivMacro.getListOfValue().addAll(pkMacro.getListOfValue());
                     details.getIvs().add(ivMacro);
@@ -131,8 +119,6 @@ public class PkMacroAnalyser {
                 details.getIvs().add((IVMacro) pkMacro);
             }else if(pkMacro instanceof AbsorptionOralMacro){
                 details.getAbsorptionOrals().add((AbsorptionOralMacro) pkMacro);
-                //add absorption compartment number depending upon order of occurrence.
-                details.setAbsOralCompNumber(++compCount);
             }else if(pkMacro instanceof PeripheralMacro){
                 details.getPeripherals().add((PeripheralMacro) pkMacro);
             }
@@ -177,13 +163,9 @@ public class PkMacroAnalyser {
     @VisibleForTesting
     AdvanType captureAdvanType(PkMacroDetails details, int diffEquationsCount) {
 
-        /*
-         * TODO: We need to get next version of libpharmml-pkmacro (0.2.2), 
-         * where pkmacro-derivative vars and non-pkmacro derivative vars are differentiated. 
-         * Then this can be enabled to throw exception when non-pkmacro derivative vars are not present.
         if(details.getCompartments().isEmpty() || details.getEliminations().isEmpty()){
             throw new IllegalArgumentException("The compartment missing from pk macro specified");
-        }*/
+        }
 
         AdvanType advanType = AdvanType.NONE;
         if(details.getCompartments().size()!=1 || details.getEliminations().size()!=1){
@@ -323,8 +305,6 @@ public class PkMacroAnalyser {
         private final List<IVMacro> ivs = new ArrayList<IVMacro>();
         private final List<AbsorptionOralMacro> orals = new ArrayList<AbsorptionOralMacro>();
         private final List<PeripheralMacro> peripherals = new ArrayList<PeripheralMacro>();
-        private int absOralCompNumber=0;
-        private int cmtCompNumber=0;
 
         private AdvanType macroAdvanType = AdvanType.NONE;
 
@@ -356,24 +336,7 @@ public class PkMacroAnalyser {
             return peripherals;
         }
 
-        public int getAbsOralCompNumber() {
-            return absOralCompNumber;
-        }
-
-        public void setAbsOralCompNumber(int absOralCompNumber) {
-            this.absOralCompNumber = absOralCompNumber;
-        }
-
-        public int getCompartmentCompNumber() {
-            return cmtCompNumber;
-        }
-
-        public void setCompartmentCompNumber(int cmtCompNumber) {
-            this.cmtCompNumber = cmtCompNumber;
-        }
-
         public boolean isEmpty(){
-
             return (getCompartments().isEmpty() 
                     && getEliminations().isEmpty() 
                     && getIvs().isEmpty() 

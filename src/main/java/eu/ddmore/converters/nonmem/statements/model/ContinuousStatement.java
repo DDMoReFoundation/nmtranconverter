@@ -39,7 +39,6 @@ import eu.ddmore.converters.nonmem.statements.pkmacro.PkMacroAnalyser.AdvanType;
 import eu.ddmore.converters.nonmem.statements.pkmacro.PkMacroAnalyser.PkMacroDetails;
 import eu.ddmore.converters.nonmem.utils.Formatter;
 import eu.ddmore.converters.nonmem.utils.Formatter.Block;
-import eu.ddmore.libpharmml.dom.commontypes.DerivativeVariable;
 import eu.ddmore.libpharmml.dom.commontypes.VariableDefinition;
 import eu.ddmore.libpharmml.dom.dataset.ColumnMapping;
 import eu.ddmore.libpharmml.dom.dataset.ColumnType;
@@ -181,8 +180,7 @@ public class ContinuousStatement {
             doseColumnReatedColumnMapping = getDoseColumnRelatedColumnMappingSymbol(doseColumn);
         }
 
-        for(DerivativeVariable stateVariable :context.getDerivativeVars()){
-            String compartmentSymbol = stateVariable.getSymbId().toUpperCase();
+        for(String compartmentSymbol : context.getDerivativeVarCompSequences().keySet()){
             String compartmentNumber = context.getDerivativeVarCompSequences().get(compartmentSymbol);
             String defDoseSymbol = "";
             if(doseColumnReatedColumnMapping.equals(compartmentSymbol) && !isCMTColumn){
