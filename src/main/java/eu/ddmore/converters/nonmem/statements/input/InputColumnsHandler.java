@@ -1,5 +1,17 @@
 /*******************************************************************************
- * Copyright (C) 2015 Mango Solutions Ltd - All rights reserved.
+ * Copyright (C) 2016 Mango Business Solutions Ltd, [http://www.mango-solutions.com]
+*
+* This program is free software: you can redistribute it and/or modify it under
+* the terms of the GNU Affero General Public License as published by the
+* Free Software Foundation, version 3.
+*
+* This program is distributed in the hope that it will be useful, 
+* but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
+* or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License 
+* for more details.
+*
+* You should have received a copy of the GNU Affero General Public License along 
+* with this program. If not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
  ******************************************************************************/
 package eu.ddmore.converters.nonmem.statements.input;
 
@@ -102,12 +114,20 @@ public class InputColumnsHandler {
 
                 InputColumn inputHeader = new InputColumn(formattedColumnId, isDropped, columnNumber, columnType);
                 orderedColumns.put(columnNumber, inputHeader);
+                checkIfCMTColumnPresent(inputHeader);
 
                 populateCovTableDetails(columnType,dataColumn.getValueType(),formattedColumnId);
                 columnSequence++;
             }
         }
         return orderedColumns;
+    }
+
+    private void checkIfCMTColumnPresent(InputColumn inputHeader) {
+        if(!inputColumnsProvider.isCMTColumnPresent()){
+            boolean isCMT = (inputHeader.getColumnType().equals(ColumnType.CMT) || inputHeader.getColumnType().equals(ColumnType.ADM));
+            inputColumnsProvider.setCMTColumnPresent(isCMT);
+        }
     }
 
     private Integer pupulateOrderedColumns(Integer columnSequence, Map<Integer, InputColumn> orderedColumns, Integer columnNumber) {

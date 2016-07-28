@@ -1,10 +1,24 @@
 /*******************************************************************************
- * Copyright (C) 2015 Mango Solutions Ltd - All rights reserved.
+ * Copyright (C) 2016 Mango Business Solutions Ltd, [http://www.mango-solutions.com]
+*
+* This program is free software: you can redistribute it and/or modify it under
+* the terms of the GNU Affero General Public License as published by the
+* Free Software Foundation, version 3.
+*
+* This program is distributed in the hope that it will be useful, 
+* but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
+* or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License 
+* for more details.
+*
+* You should have received a copy of the GNU Affero General Public License along 
+* with this program. If not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
  ******************************************************************************/
 package eu.ddmore.converters.nonmem.statements.pkmacro;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
+import static org.mockito.Mockito.mock;
 import static org.powermock.api.mockito.PowerMockito.when;
 
 import java.util.ArrayList;
@@ -48,6 +62,8 @@ public class PkMacroAnalyserTest extends BasicTestSetup {
     @Before
     public void setUp() throws Exception {
 
+        context = mock(ConversionContext.class,RETURNS_DEEP_STUBS);
+        
         List<StructuralBlock> blocks = new ArrayList<StructuralBlock>();
         blocks.add(block);
         when(scriptDefinition.getStructuralBlocks()).thenReturn(blocks);
@@ -58,6 +74,10 @@ public class PkMacroAnalyserTest extends BasicTestSetup {
         when(details.getAbsorptionOrals()).thenReturn(oralMacros);
         when(details.getPeripherals()).thenReturn(peripheralMacros);
         when(context.getScriptDefinition()).thenReturn(scriptDefinition);
+        
+        //
+        when(context.getInputColumnsHandler().getInputColumnsProvider().isCMTColumnPresent()).thenReturn(false);
+        
     }
 
     @Test

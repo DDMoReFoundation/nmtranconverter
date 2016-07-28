@@ -1,12 +1,24 @@
 /*******************************************************************************
- * Copyright (C) 2015 Mango Solutions Ltd - All rights reserved.
+ * Copyright (C) 2016 Mango Business Solutions Ltd, [http://www.mango-solutions.com]
+ *
+ * This program is free software: you can redistribute it and/or modify it under
+ * the terms of the GNU Affero General Public License as published by the
+ * Free Software Foundation, version 3.
+ *
+ * This program is distributed in the hope that it will be useful, 
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
+ * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License 
+ * for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License along 
+ * with this program. If not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
  ******************************************************************************/
 package eu.ddmore.converters.nonmem;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -35,6 +47,10 @@ import eu.ddmore.converters.nonmem.utils.OrderedThetasHandler;
 import eu.ddmore.libpharmml.dom.commontypes.DerivativeVariable;
 import eu.ddmore.libpharmml.dom.dataset.ColumnMapping;
 import eu.ddmore.libpharmml.dom.modeldefn.PopulationParameter;
+import eu.ddmore.libpharmml.dom.modeldefn.pkmacro.AbsorptionOralMacro;
+import eu.ddmore.libpharmml.dom.modeldefn.pkmacro.CompartmentMacro;
+import eu.ddmore.libpharmml.dom.modeldefn.pkmacro.DepotMacro;
+import eu.ddmore.libpharmml.dom.modeldefn.pkmacro.PeripheralMacro;
 import eu.ddmore.libpharmml.dom.trialdesign.ExternalDataSet;
 
 /**
@@ -52,7 +68,9 @@ public class ConversionContext {
     private final DiscreteHandler discreteHandler;
     private final CorrelationHandler correlationHandler;
     private final List<DerivativeVariable> derivativeVars = new ArrayList<DerivativeVariable>();
-    private final Map<String, String> derivativeVarCompSequences = new HashMap<String, String>();
+    private final List<DerivativeVariable> nonPkMacroDerivativeVars = new ArrayList<DerivativeVariable>();
+    private final List<DerivativeVariable> pkMacroDerivativeVars = new ArrayList<DerivativeVariable>();
+    private final Map<String, String> derivativeVarCompSequences = new LinkedHashMap<String, String>();
     private final ConditionalEventHandler conditionalEventHandler;
     private final MuReferenceHandler muReferenceHandler;
     private final EstimationDetailsEmitter estimationEmitter;
@@ -107,6 +125,14 @@ public class ConversionContext {
         parametersBuilder.initialiseAllParameters();
 
         derivativeVars.addAll(getAllStateVariables());
+        for(DerivativeVariable derivativeVar : derivativeVars){
+            if(derivativeVar.isOriginatedFromMacro()){
+                pkMacroDerivativeVars.add(derivativeVar);
+            }else{
+                nonPkMacroDerivativeVars.add(derivativeVar);
+            }
+        }
+
         setDerivativeVarCompartmentSequence();
     }
 
@@ -172,12 +198,40 @@ public class ConversionContext {
     }
 
     private Map<String, String> setDerivativeVarCompartmentSequence(){
-        int i=1;
-        for (DerivativeVariable variableType : derivativeVars){
-            String variable = variableType.getSymbId().toUpperCase();
-            derivativeVarCompSequences.put(variable, Integer.toString(i++));
+
+        List<DerivativeVariable> absMacroDerivativeVars = new ArrayList<>();
+        List<DerivativeVariable> cmtMacroDerivativeVars = new ArrayList<>();
+        List<DerivativeVariable> perifMacroDerivativeVars = new ArrayList<>();
+        List<DerivativeVariable> depotMacroDerivativeVars = new ArrayList<>();
+
+        for(DerivativeVariable derivativeVar : pkMacroDerivativeVars){
+            if(derivativeVar.getOriginMacro() instanceof AbsorptionOralMacro){
+                absMacroDerivativeVars.add(derivativeVar);
+            }else if(derivativeVar.getOriginMacro() instanceof DepotMacro){
+                depotMacroDerivativeVars.add(derivativeVar);
+            }else if(derivativeVar.getOriginMacro() instanceof CompartmentMacro){
+                cmtMacroDerivativeVars.add(derivativeVar);
+            }else if(derivativeVar.getOriginMacro() instanceof PeripheralMacro){
+                perifMacroDerivativeVars.add(derivativeVar);
+            }
         }
+
+        int i=1;
+        i = addDerivativeVarsToCompSequence(absMacroDerivativeVars, i);
+        i = addDerivativeVarsToCompSequence(depotMacroDerivativeVars, i);
+        i = addDerivativeVarsToCompSequence(cmtMacroDerivativeVars, i);
+        i = addDerivativeVarsToCompSequence(perifMacroDerivativeVars, i);
+
+        addDerivativeVarsToCompSequence(nonPkMacroDerivativeVars, i);
+
         return derivativeVarCompSequences;
+    }
+
+    private int addDerivativeVarsToCompSequence(List<DerivativeVariable> MacroDerivativeVars, int i) {
+        for(DerivativeVariable derivativeVar : MacroDerivativeVars){
+            derivativeVarCompSequences.put(derivativeVar.getSymbId().toUpperCase(), Integer.toString(i++));
+        }
+        return i;
     }
 
     /**
@@ -273,13 +327,20 @@ public class ConversionContext {
     public ParametersInitialiser getParameterInitialiser() {
         return parameterInitialiser;
     }
-    
+
     public List<ColumnMapping> getColumnMappings() {
         return dataSetHandler.getColumnMappings();
     }
 
-    
     public ModelStatementHelper getModelStatementHelper() {
         return modelStatementHelper;
+    }
+
+    public List<DerivativeVariable> getNonPkMacroDerivativeVars() {
+        return nonPkMacroDerivativeVars;
+    }
+
+    public List<DerivativeVariable> getPkMacroDerivativeVars() {
+        return pkMacroDerivativeVars;
     }
 }

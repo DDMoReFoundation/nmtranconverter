@@ -1,5 +1,17 @@
 /*******************************************************************************
- * Copyright (C) 2016 Mango Solutions Ltd - All rights reserved.
+ * Copyright (C) 2016 Mango Business Solutions Ltd, [http://www.mango-solutions.com]
+*
+* This program is free software: you can redistribute it and/or modify it under
+* the terms of the GNU Affero General Public License as published by the
+* Free Software Foundation, version 3.
+*
+* This program is distributed in the hope that it will be useful, 
+* but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
+* or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License 
+* for more details.
+*
+* You should have received a copy of the GNU Affero General Public License along 
+* with this program. If not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
  ******************************************************************************/
 package eu.ddmore.converters.nonmem.statements.error;
 
@@ -72,12 +84,13 @@ public class ErrorStatementHandler {
         TreeMaker treeMaker = context.getLexer().getTreeMaker();
 
         for(PharmMLElement element : contModel.getListOfObservationModelElement()){
-            String[] equation = parserHelper.parse(element, treeMaker.newInstance(element)).split("=");
-            varEquations.put(equation[0], equation[1]);
+            String parsedEquation = parserHelper.parse(element, treeMaker.newInstance(element));
+            String variable = parsedEquation.split("=")[0];
+            varEquations.put(variable, parsedEquation);
         }
-        String rhs = parserHelper.getParsedValueForRhs(error.getAssign());
-        varEquations.put(error.getSymbId(), rhs);
+        String rhs = parserHelper.parse(error, treeMaker.newInstance(error.getAssign()));
 
+        varEquations.put(error.getSymbId(), rhs);
         GeneralObsErrorStatement errorStatement = new GeneralObsErrorStatement(varEquations, false);
         return errorStatement;
     }
@@ -127,8 +140,6 @@ public class ErrorStatementHandler {
      * @return error statement
      */
     public String getErrorStatement(DiffEquationStatementBuilder desBuilder) {
-
-
         StringBuilder errorBlock = new StringBuilder();
 
         errorBlock.append(buildEpsilonDefinitions());

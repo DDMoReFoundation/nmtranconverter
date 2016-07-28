@@ -1,10 +1,24 @@
 /*******************************************************************************
- * Copyright (C) 2015 Mango Solutions Ltd - All rights reserved.
+ * Copyright (C) 2016 Mango Business Solutions Ltd, [http://www.mango-solutions.com]
+*
+* This program is free software: you can redistribute it and/or modify it under
+* the terms of the GNU Affero General Public License as published by the
+* Free Software Foundation, version 3.
+*
+* This program is distributed in the hope that it will be useful, 
+* but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
+* or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License 
+* for more details.
+*
+* You should have received a copy of the GNU Affero General Public License along 
+* with this program. If not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
  ******************************************************************************/
 package eu.ddmore.converters.nonmem.statements.input;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import eu.ddmore.libpharmml.dom.dataset.ColumnType;
 
 /**
  * This class stores associated information retrieved for input headers, associated categorical or continuous cov table colums 
@@ -16,6 +30,7 @@ public class InputColumnsProvider {
     private final List<String> catCovTableColumns = new ArrayList<String>();
     private final List<String> contCovTableColumns = new ArrayList<String>();
     private final List<InputColumn> inputHeaders = new ArrayList<InputColumn>();
+    private boolean isCMTColumnPresent = false;
 
     /**
      * This method is to add continuous covariate table column to cotab table columns list.
@@ -38,7 +53,16 @@ public class InputColumnsProvider {
      * @param inputHeader input header column
      */
     public void addInputHeaders(InputColumn inputHeader){
-       inputHeaders.add(inputHeader);
+        isCMTColumnPresent = (!isCMTColumnPresent)?inputHeader.getColumnType().equals(ColumnType.CMT):isCMTColumnPresent;
+        inputHeaders.add(inputHeader);
+    }
+
+    public boolean isCMTColumnPresent() {
+        return isCMTColumnPresent;
+    }
+
+    public void setCMTColumnPresent(boolean isCMTColumnPresent) {
+        this.isCMTColumnPresent = isCMTColumnPresent;
     }
 
     public List<String> getCatCovTableColumns() {
@@ -52,5 +76,4 @@ public class InputColumnsProvider {
     public List<InputColumn> getInputHeaders() {
         return inputHeaders;
     }
-    
 }

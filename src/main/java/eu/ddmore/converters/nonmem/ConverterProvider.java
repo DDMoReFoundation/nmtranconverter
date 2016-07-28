@@ -1132,10 +1132,7 @@ public class ConverterProvider extends DependencyLexer implements ILexer {
         String descriptionValue = modelName;
         if (dom != null) {
             AnnotationType description = dom.getDescription();
-            if (description == null) {
-                return descriptionValue;
-            }
-            else {
+            if (description != null) {
                 descriptionValue = truncateString(description.getValue());
             }
         }

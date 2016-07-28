@@ -1,5 +1,17 @@
 /*******************************************************************************
- * Copyright (C) 2016 Mango Solutions Ltd - All rights reserved.
+ * Copyright (C) 2016 Mango Business Solutions Ltd, [http://www.mango-solutions.com]
+ *
+ * This program is free software: you can redistribute it and/or modify it under
+ * the terms of the GNU Affero General Public License as published by the
+ * Free Software Foundation, version 3.
+ *
+ * This program is distributed in the hope that it will be useful, 
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
+ * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License 
+ * for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License along 
+ * with this program. If not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
  ******************************************************************************/
 package eu.ddmore.converters.nonmem.statements.pkmacro;
 
@@ -13,9 +25,11 @@ import eu.ddmore.converters.nonmem.LocalParserHelper;
 import eu.ddmore.converters.nonmem.statements.pkmacro.PkMacroAnalyser.PkMacroAttribute;
 import eu.ddmore.converters.nonmem.statements.pkmacro.PkMacroAnalyser.PkMacroDetails;
 import eu.ddmore.converters.nonmem.utils.Formatter;
+import eu.ddmore.libpharmml.dom.commontypes.DerivativeVariable;
 import eu.ddmore.libpharmml.dom.modeldefn.pkmacro.AbsorptionOralMacro;
 import eu.ddmore.libpharmml.dom.modeldefn.pkmacro.CompartmentMacro;
 import eu.ddmore.libpharmml.dom.modeldefn.pkmacro.CompartmentMacro.Arg;
+import eu.ddmore.libpharmml.dom.modeldefn.pkmacro.AbsorptionMacro;
 import eu.ddmore.libpharmml.dom.modeldefn.pkmacro.DepotMacro;
 import eu.ddmore.libpharmml.dom.modeldefn.pkmacro.EliminationMacro;
 import eu.ddmore.libpharmml.dom.modeldefn.pkmacro.IVMacro;
@@ -102,16 +116,23 @@ public class PkMacrosEmitter {
         }
     }
 
+    /**
+     * This method looks into absorption oral and IVs to get pk macro equations.
+     * @return pk macro equations
+     */
     public StringBuilder getPkMacroEquations() {
         StringBuilder builder = new StringBuilder();
 
         if(!pkMacroDetails.getAbsorptionOrals().isEmpty()){
             for(AbsorptionOralMacro oralMacro : pkMacroDetails.getAbsorptionOrals()){
-                int compartmentNumber = getCompartmentNumberForMacro(oralMacro.getListOfValue());
-                for(MacroValue value : oralMacro.getListOfValue()){
-                    String macroEquation = getMacroEquation(value, compartmentNumber);
-                    if(StringUtils.isNotEmpty(macroEquation)){
-                        builder.append(Formatter.endline(macroEquation));
+                String compartmentId = getCompartmentNameForAbsOral(oralMacro);
+                if(StringUtils.isNotEmpty(compartmentId)){
+                    String compartmentNumber = context.getDerivativeVarCompSequences().get(compartmentId.toUpperCase());
+                    for(MacroValue value : oralMacro.getListOfValue()){
+                        String macroEquation = getMacroEquation(value, Integer.parseInt(compartmentNumber));
+                        if(StringUtils.isNotEmpty(macroEquation)){
+                            builder.append(Formatter.endline(macroEquation));
+                        }
                     }
                 }
             }
@@ -133,7 +154,24 @@ public class PkMacrosEmitter {
         return builder;
     }
 
-    //TODO : this is supposed to change when florent will add his change from values list to map.
+    private String getCompartmentNameForAbsOral(AbsorptionOralMacro oralMacro) {
+        for(DerivativeVariable var : context.getPkMacroDerivativeVars()){
+            if(var.getOriginMacro() instanceof AbsorptionOralMacro){
+                if(var.getOriginMacro().equals(oralMacro)){
+                    return var.getSymbId();
+                }
+            }
+            if(var.getOriginMacro() instanceof DepotMacro){
+                AbsorptionOralMacro absMacro = new AbsorptionMacro();
+                absMacro.getListOfValue().addAll(var.getOriginMacro().getListOfValue());
+                if(absMacro.toString().equals(oralMacro.toString())){
+                    return var.getSymbId();
+                }
+            }
+        }
+        return "";
+    }
+
     private int getCompartmentNumberForMacro(List<MacroValue> macroValues){
         int compartmentNumber = 0;
         for (MacroValue value : macroValues){
