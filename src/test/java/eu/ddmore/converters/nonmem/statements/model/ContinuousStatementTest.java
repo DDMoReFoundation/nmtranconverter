@@ -66,13 +66,14 @@ public class ContinuousStatementTest extends BasicTestSetup  {
     private List<AbsorptionOralMacro> oralMacros = new  ArrayList<AbsorptionOralMacro>();
 
     private Map<String, String> varDefs = new HashMap<String, String>();
+    private static final String expectedInitAmountWithSymbol = "A_0(1) = SYMBOL"+Formatter.endline();
     private static final String EXAMPLE_OUTPUT = Formatter.endline()+Formatter.endline("$SUBS ADVAN13 TOL=6")+
             Formatter.endline()+Formatter.endline("$MODEL ")+
             Formatter.endline(COMP1_EXAMPLE)+
             Formatter.endline()+Formatter.endline()+Formatter.endline("$PK ")+
             Formatter.endline("PRED BLOCK")+
             Formatter.endline("MU_1 = LOG(POP_KA)")+Formatter.endline("KA =  EXP(MU_1 +  ETA(1)) ;")+
-            Formatter.endline()+Formatter.endline()+
+            Formatter.endline(expectedInitAmountWithSymbol)+
             Formatter.endline("$ERROR ")+Formatter.endline("error");
 
     ContinuousStatement continuousStatement;
@@ -109,6 +110,8 @@ public class ContinuousStatementTest extends BasicTestSetup  {
         when(modelStatementHelper.getVarDefinitionTypesForNonDES()).thenReturn(new StringBuilder(VAR_DEF_EXAMPLE));
         when(modelStatementHelper.getDiffEquationStatement((StringBuilder) Matchers.any())).thenReturn(desBuilder);
         when(modelStatementHelper.getErrorStatementHandler()).thenReturn(errorStatementHandler);
+        when(modelStatementHelper.getDifferentialInitialConditions()).thenReturn(new StringBuilder(expectedInitAmountWithSymbol));
+        
         when(errorStatementHandler.getErrorStatement(desBuilder)).thenReturn(ERROR_EXAMPLE);
     }
 

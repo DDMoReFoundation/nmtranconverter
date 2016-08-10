@@ -55,6 +55,13 @@ public class PkMacroAnalyser {
         public String getValue(){
             return value;
         }
+
+        public static boolean containsMacroWithValue(String macroValue) {
+            for(PkMacroAttribute macroVal : values())
+                if (macroVal.name().equals(macroValue)) 
+                    return true;
+            return false;
+        }
     }
 
     private boolean isCMTColumnPresent = false;
