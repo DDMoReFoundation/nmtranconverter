@@ -61,12 +61,19 @@ public class DiscreteStatement {
     public StringBuilder buildModelStatementForTTE(DiscreteHandler discreteHandler) {
         StringBuilder tteBlock = new StringBuilder();
 
+        StringBuilder dadtTTEBlock = new StringBuilder();
+        DiffEquationStatementBuilder desBuilder = statementHelper.getDiffEquationStatement(dadtTTEBlock);
+        Integer totalCompartmentCount = buildDiffEquationStatementForTTE(discreteHandler, dadtTTEBlock, desBuilder);
+        StringBuilder errorTTEBlock = new StringBuilder();
+        buildErrorStatementForTTE(discreteHandler, errorTTEBlock, desBuilder, totalCompartmentCount);
+
         buildSubStatementForTTE(tteBlock);
-        buildModelBlockForTTE(tteBlock);
+        tteBlock.append(statementHelper.buildModelStatement());
+        buildModelBlockForTTE(tteBlock, totalCompartmentCount);
         buildPkStatementForTTE(tteBlock);
-        DiffEquationStatementBuilder desBuilder = statementHelper.getDiffEquationStatement(tteBlock);
-        Integer dadtEquationIndex = buildDiffEquationStatementForTTE(discreteHandler, tteBlock, desBuilder);
-        buildErrorStatementForTTE(discreteHandler, tteBlock, desBuilder, dadtEquationIndex);
+        tteBlock.append(statementHelper.getDifferentialInitialConditions());
+        tteBlock.append(dadtTTEBlock);
+        tteBlock.append(errorTTEBlock);
         return tteBlock;
     }
 
@@ -86,23 +93,23 @@ public class DiscreteStatement {
     private Integer buildDiffEquationStatementForTTE(DiscreteHandler discreteHandler, StringBuilder tteBlock,
             DiffEquationStatementBuilder desBuilder) {
         Integer dadtEquationIndex = desBuilder.getDadtDefinitionsInDES().size()+1;
-
         String hazardFunction = Formatter.renameVarForDES(discreteHandler.getHazardFunction());
         tteBlock.append(Formatter.endline("HAZARD_FUNC_DES = "+hazardFunction));
+        for(String dadtEquations : desBuilder.getDadtDefinitionsInDES().values()){
+            tteBlock.append(dadtEquations);
+        }
         tteBlock.append(Formatter.endline("DADT("+dadtEquationIndex+") = HAZARD_FUNC_DES"));
         return dadtEquationIndex;
     }
 
     private void buildPkStatementForTTE(StringBuilder tteBlock) {
-        tteBlock.append(Formatter.endline()+Formatter.pk()); 
+        tteBlock.append(Formatter.endline()+Formatter.pk());
         tteBlock.append(statementHelper.getPredCoreStatement().getStatement());
         tteBlock.append(statementHelper.getAllIndividualParamAssignments());
     }
 
-    private void buildModelBlockForTTE(StringBuilder tteBlock) {
-        tteBlock.append(Formatter.endline());
-        String modelStatement = Formatter.endline("$MODEL"+ Formatter.endline()+Formatter.addComment("One hardcoded compartment ")) +
-                Formatter.endline(Formatter.indent("COMP=COMP1"));
+    private void buildModelBlockForTTE(StringBuilder tteBlock, Integer dadtEquationIndex) {
+        String modelStatement = Formatter.endline("COMP (COMP"+dadtEquationIndex+")"+Formatter.addComment("One hardcoded compartment "));
         tteBlock.append(modelStatement);
     }
 

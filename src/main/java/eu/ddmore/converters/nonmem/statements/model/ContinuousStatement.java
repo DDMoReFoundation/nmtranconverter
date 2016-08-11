@@ -30,7 +30,6 @@ import eu.ddmore.converters.nonmem.LocalParserHelper;
 import eu.ddmore.converters.nonmem.eta.Eta;
 import eu.ddmore.converters.nonmem.parameters.OmegaBlock;
 import eu.ddmore.converters.nonmem.statements.DiffEquationStatementBuilder;
-import eu.ddmore.converters.nonmem.statements.InitConditionBuilder;
 import eu.ddmore.converters.nonmem.statements.estimation.EstimationDetailsEmitter;
 import eu.ddmore.converters.nonmem.statements.input.InputColumn;
 import eu.ddmore.converters.nonmem.statements.pkmacro.PkMacroAnalyser;
@@ -134,27 +133,13 @@ public class ContinuousStatement {
         if(pkMacroDetails!=null && !pkMacroDetails.isEmpty()){
             derivativePredblock.append(pkMacroEquationsEmitter.getPkMacroEquations());
         }
-        derivativePredblock.append(buildDifferentialInitialConditions());
+        derivativePredblock.append(context.getModelStatementHelper().getDifferentialInitialConditions());
         DiffEquationStatementBuilder desBuilder = context.getModelStatementHelper().getDiffEquationStatement(derivativePredblock);
         //TODO: getAESStatement();
         derivativePredblock.append(Formatter.endline()+Formatter.error());
         derivativePredblock.append(context.getModelStatementHelper().getErrorStatementHandler().getErrorStatement(desBuilder));
 
         return derivativePredblock;
-    }
-
-    /**
-     * Creates DES statement block from differential initial conditions.
-     * 
-     * @return differential initial conditions
-     */
-    private StringBuilder buildDifferentialInitialConditions(){
-        StringBuilder builder = new StringBuilder();
-        if(!context.getScriptDefinition().getStructuralBlocks().isEmpty()){
-            InitConditionBuilder initBuilder = new InitConditionBuilder();
-            builder = initBuilder.getDifferentialInitialConditions(context.getScriptDefinition().getStructuralBlocks());
-        }
-        return builder;
     }
 
     /**

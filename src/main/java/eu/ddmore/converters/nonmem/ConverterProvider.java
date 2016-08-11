@@ -48,10 +48,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 
 import javax.xml.bind.JAXBElement;
 
@@ -71,6 +73,7 @@ import crx.converter.engine.assoc.DependencyLexer;
 import crx.converter.engine.assoc.DependencyRef;
 import crx.converter.engine.common.DataFiles;
 import crx.converter.engine.common.ObservationParameter;
+import crx.converter.engine.common.StateVariableRef;
 import crx.converter.engine.common.TabularDataset;
 import crx.converter.engine.common.TemporalDoseEvent;
 import crx.converter.spi.ILexer;
@@ -2237,10 +2240,40 @@ public class ConverterProvider extends DependencyLexer implements ILexer {
 
         g.sort();
 
-        List<PharmMLElement> ordered_variables = g.getSortedElements();
+        List<PharmMLElement> ordered_variables = rearrangeDerivativeVarsInOrderedVariables(g.getSortedElements());
         if (ordered_variables.isEmpty()) return;
 
         sb.setOrderedVariableList(ordered_variables);
+    }
+
+    private List<PharmMLElement> rearrangeDerivativeVarsInOrderedVariables(List<PharmMLElement> orderedVariables){
+        Map<Integer, PharmMLElement> pkMacroDerivativeVariables = new TreeMap<Integer, PharmMLElement>();
+        List<PharmMLElement> nonPkMacroDerivativeVariables = new ArrayList<PharmMLElement>();
+        List<PharmMLElement> list = new ArrayList<PharmMLElement>();
+
+        for (PharmMLElement variable : orderedVariables) {
+            if (variable instanceof StateVariableRef) continue;
+            if (variable instanceof DerivativeVariable) {
+                DerivativeVariable derivativeVar = (DerivativeVariable) variable;
+                if(derivativeVar.getOrder()==null){
+                    nonPkMacroDerivativeVariables.add(variable);
+                }else {
+                    pkMacroDerivativeVariables.put(derivativeVar.getOrder(), derivativeVar);
+                }
+            }else{
+                list.add(variable);
+            }
+        }
+
+        if(!pkMacroDerivativeVariables.isEmpty()){
+            List<PharmMLElement> dvList = new ArrayList<>(pkMacroDerivativeVariables.values());
+            Collections.reverse(dvList);
+            list.addAll(dvList);
+        }
+        if(!nonPkMacroDerivativeVariables.isEmpty()){
+            list.addAll(nonPkMacroDerivativeVariables);
+        }
+        return list;
     }
 
     @Override

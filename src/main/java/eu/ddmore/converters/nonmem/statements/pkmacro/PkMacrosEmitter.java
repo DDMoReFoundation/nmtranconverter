@@ -214,9 +214,10 @@ public class PkMacrosEmitter {
                 && !valueArgument.equals(PkMacroAttribute.TARGET.name())
                 && value.getAssign().getSymbRef()!=null) {
 
-            PkMacroAttribute attribute= PkMacroAttribute.valueOf(valueArgument);
+            valueArgument = (PkMacroAttribute.containsMacroWithValue(valueArgument))?
+                PkMacroAttribute.valueOf(valueArgument).getValue():valueArgument;
             String variable = Formatter.getReservedParam(value.getAssign().getSymbRef().getSymbIdRef());
-            return attribute.getValue()+ compartmentNumber+ " = "+ variable;
+            return valueArgument+ compartmentNumber+ " = "+ variable;
         }
         return "";
     }

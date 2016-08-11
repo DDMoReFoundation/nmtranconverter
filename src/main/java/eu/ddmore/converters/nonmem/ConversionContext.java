@@ -109,9 +109,8 @@ public class ConversionContext {
 
         this.conditionalEventHandler = new ConditionalEventHandler(this);
         this.muReferenceHandler = new MuReferenceHandler(this);
-        this.modelStatementHelper = new ModelStatementHelper(this);
-
         initialise();
+        this.modelStatementHelper = new ModelStatementHelper(this);
     }
 
     /**
@@ -124,8 +123,7 @@ public class ConversionContext {
         orderedThetasHandler.createOrderedThetasToEta(retrieveOrderedEtas());
         parametersBuilder.initialiseAllParameters();
 
-        derivativeVars.addAll(getAllStateVariables());
-        for(DerivativeVariable derivativeVar : derivativeVars){
+        for(DerivativeVariable derivativeVar : getAllStateVariables()){
             if(derivativeVar.isOriginatedFromMacro()){
                 pkMacroDerivativeVars.add(derivativeVar);
             }else{
@@ -227,8 +225,9 @@ public class ConversionContext {
         return derivativeVarCompSequences;
     }
 
-    private int addDerivativeVarsToCompSequence(List<DerivativeVariable> MacroDerivativeVars, int i) {
-        for(DerivativeVariable derivativeVar : MacroDerivativeVars){
+    private int addDerivativeVarsToCompSequence(List<DerivativeVariable> derivativeVarsToAdd, int i) {
+        for(DerivativeVariable derivativeVar : derivativeVarsToAdd){
+            derivativeVars.add(derivativeVar);
             derivativeVarCompSequences.put(derivativeVar.getSymbId().toUpperCase(), Integer.toString(i++));
         }
         return i;
